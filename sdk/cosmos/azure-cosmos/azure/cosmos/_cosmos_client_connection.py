@@ -24,11 +24,14 @@
 
 """Document client class for the Azure Cosmos database service.
 """
-from typing import Dict, Any, Optional
+# https://github.com/PyCQA/pylint/issues/3112
+# Currently pylint is locked to 2.3.3 and this is fixed in 2.4.4
+from typing import Dict, Any, Optional # pylint: disable=unused-import
 import six
 from urllib3.util.retry import Retry
 from azure.core.paging import ItemPaged  # type: ignore
 from azure.core import PipelineClient  # type: ignore
+from azure.core.exceptions import raise_with_traceback  # type: ignore
 from azure.core.pipeline.policies import (  # type: ignore
     HTTPPolicy,
     ContentDecodePolicy,
@@ -37,6 +40,7 @@ from azure.core.pipeline.policies import (  # type: ignore
     NetworkTraceLoggingPolicy,
     CustomHookPolicy,
     DistributedTracingPolicy,
+    HttpLoggingPolicy,
     ProxyPolicy)
 
 from . import _base as base
@@ -184,8 +188,9 @@ class CosmosClientConnection(object):  # pylint: disable=too-many-public-methods
             ContentDecodePolicy(),
             retry_policy,
             CustomHookPolicy(**kwargs),
-            DistributedTracingPolicy(),
             NetworkTraceLoggingPolicy(**kwargs),
+            DistributedTracingPolicy(**kwargs),
+            HttpLoggingPolicy(**kwargs),
             ]
 
         transport = kwargs.pop("transport", None)
@@ -1067,7 +1072,7 @@ class CosmosClientConnection(object):  # pylint: disable=too-many-public-methods
         # not each time the function is called (like it is in say, Ruby). This means
         # that if you use a mutable default argument and mutate it, you will and have
         # mutated that object for all future calls to the function as well. So, using
-        # a non-mutable deafult in this case(None) and assigning an empty dict(mutable)
+        # a non-mutable default in this case(None) and assigning an empty dict(mutable)
         # inside the method For more details on this gotcha, please refer
         # http://docs.python-guide.org/en/latest/writing/gotchas/
         if options is None:
@@ -1075,12 +1080,13 @@ class CosmosClientConnection(object):  # pylint: disable=too-many-public-methods
 
         # We check the link to be document collection link since it can be database
         # link in case of client side partitioning
-        if base.IsItemContainerLink(database_or_container_link):
-            options = self._AddPartitionKey(database_or_container_link, document, options)
-
         collection_id, document, path = self._GetContainerIdWithPathForItem(
             database_or_container_link, document, options
         )
+
+        if base.IsItemContainerLink(database_or_container_link):
+            options = self._AddPartitionKey(database_or_container_link, document, options)
+
         return self.Create(document, path, "docs", collection_id, None, options, **kwargs)
 
     def UpsertItem(self, database_or_container_link, document, options=None, **kwargs):
@@ -2476,11 +2482,14 @@ class CosmosClientConnection(object):  # pylint: disable=too-many-public-methods
     def __ValidateResource(resource):
         id_ = resource.get("id")
         if id_:
-            if id_.find("/") != -1 or id_.find("\\") != -1 or id_.find("?") != -1 or id_.find("#") != -1:
-                raise ValueError("Id contains illegal chars.")
+            try:
+                if id_.find("/") != -1 or id_.find("\\") != -1 or id_.find("?") != -1 or id_.find("#") != -1:
+                    raise ValueError("Id contains illegal chars.")
 
-            if id_[-1] == " ":
-                raise ValueError("Id ends with a space.")
+                if id_[-1] == " ":
+                    raise ValueError("Id ends with a space.")
+            except AttributeError:
+                raise_with_traceback(TypeError, message="Id type must be a string.")
 
     # Adds the partition key to options
     def _AddPartitionKey(self, collection_link, document, options):

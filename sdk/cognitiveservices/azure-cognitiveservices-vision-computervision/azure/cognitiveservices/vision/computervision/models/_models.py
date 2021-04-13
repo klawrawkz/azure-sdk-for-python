@@ -53,6 +53,62 @@ class AdultInfo(Model):
         self.gore_score = kwargs.get('gore_score', None)
 
 
+class AnalyzeResults(Model):
+    """Analyze batch operation result.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :param version: Required. Version of schema used for this result.
+    :type version: str
+    :param model_version: Required. Version of the OCR model used for text
+     extraction.
+    :type model_version: str
+    :param read_results: Required. Text extracted from the input.
+    :type read_results:
+     list[~azure.cognitiveservices.vision.computervision.models.ReadResult]
+    """
+
+    _validation = {
+        'version': {'required': True},
+        'model_version': {'required': True},
+        'read_results': {'required': True},
+    }
+
+    _attribute_map = {
+        'version': {'key': 'version', 'type': 'str'},
+        'model_version': {'key': 'modelVersion', 'type': 'str'},
+        'read_results': {'key': 'readResults', 'type': '[ReadResult]'},
+    }
+
+    def __init__(self, **kwargs):
+        super(AnalyzeResults, self).__init__(**kwargs)
+        self.version = kwargs.get('version', None)
+        self.model_version = kwargs.get('model_version', None)
+        self.read_results = kwargs.get('read_results', None)
+
+
+class Appearance(Model):
+    """An object representing the appearance of the text line.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :param style: Required. An object representing the style of the text line.
+    :type style: ~azure.cognitiveservices.vision.computervision.models.Style
+    """
+
+    _validation = {
+        'style': {'required': True},
+    }
+
+    _attribute_map = {
+        'style': {'key': 'style', 'type': 'Style'},
+    }
+
+    def __init__(self, **kwargs):
+        super(Appearance, self).__init__(**kwargs)
+        self.style = kwargs.get('style', None)
+
+
 class AreaOfInterestResult(Model):
     """Result of AreaOfInterest operation.
 
@@ -68,6 +124,8 @@ class AreaOfInterestResult(Model):
     :param metadata:
     :type metadata:
      ~azure.cognitiveservices.vision.computervision.models.ImageMetadata
+    :param model_version:
+    :type model_version: str
     """
 
     _validation = {
@@ -78,6 +136,7 @@ class AreaOfInterestResult(Model):
         'area_of_interest': {'key': 'areaOfInterest', 'type': 'BoundingRect'},
         'request_id': {'key': 'requestId', 'type': 'str'},
         'metadata': {'key': 'metadata', 'type': 'ImageMetadata'},
+        'model_version': {'key': 'modelVersion', 'type': 'str'},
     }
 
     def __init__(self, **kwargs):
@@ -85,6 +144,7 @@ class AreaOfInterestResult(Model):
         self.area_of_interest = None
         self.request_id = kwargs.get('request_id', None)
         self.metadata = kwargs.get('metadata', None)
+        self.model_version = kwargs.get('model_version', None)
 
 
 class BoundingRect(Model):
@@ -188,32 +248,6 @@ class CelebritiesModel(Model):
         self.face_rectangle = kwargs.get('face_rectangle', None)
 
 
-class CelebrityResults(Model):
-    """Result of domain-specific classifications for the domain of celebrities.
-
-    :param celebrities: List of celebrities recognized in the image.
-    :type celebrities:
-     list[~azure.cognitiveservices.vision.computervision.models.CelebritiesModel]
-    :param request_id: Id of the REST API request.
-    :type request_id: str
-    :param metadata:
-    :type metadata:
-     ~azure.cognitiveservices.vision.computervision.models.ImageMetadata
-    """
-
-    _attribute_map = {
-        'celebrities': {'key': 'celebrities', 'type': '[CelebritiesModel]'},
-        'request_id': {'key': 'requestId', 'type': 'str'},
-        'metadata': {'key': 'metadata', 'type': 'ImageMetadata'},
-    }
-
-    def __init__(self, **kwargs):
-        super(CelebrityResults, self).__init__(**kwargs)
-        self.celebrities = kwargs.get('celebrities', None)
-        self.request_id = kwargs.get('request_id', None)
-        self.metadata = kwargs.get('metadata', None)
-
-
 class ColorInfo(Model):
     """An object providing additional metadata describing color attributes.
 
@@ -247,6 +281,112 @@ class ColorInfo(Model):
 
 
 class ComputerVisionError(Model):
+    """The API request error.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :param code: Required. The error code. Possible values include:
+     'InvalidRequest', 'InvalidArgument', 'InternalServerError',
+     'ServiceUnavailable'
+    :type code: str or
+     ~azure.cognitiveservices.vision.computervision.models.ComputerVisionErrorCodes
+    :param message: Required. A message explaining the error reported by the
+     service.
+    :type message: str
+    :param innererror: Inner error contains more specific information.
+    :type innererror:
+     ~azure.cognitiveservices.vision.computervision.models.ComputerVisionInnerError
+    """
+
+    _validation = {
+        'code': {'required': True},
+        'message': {'required': True},
+    }
+
+    _attribute_map = {
+        'code': {'key': 'code', 'type': 'str'},
+        'message': {'key': 'message', 'type': 'str'},
+        'innererror': {'key': 'innererror', 'type': 'ComputerVisionInnerError'},
+    }
+
+    def __init__(self, **kwargs):
+        super(ComputerVisionError, self).__init__(**kwargs)
+        self.code = kwargs.get('code', None)
+        self.message = kwargs.get('message', None)
+        self.innererror = kwargs.get('innererror', None)
+
+
+class ComputerVisionErrorResponse(Model):
+    """The API error response.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :param error: Required. Error contents.
+    :type error:
+     ~azure.cognitiveservices.vision.computervision.models.ComputerVisionError
+    """
+
+    _validation = {
+        'error': {'required': True},
+    }
+
+    _attribute_map = {
+        'error': {'key': 'error', 'type': 'ComputerVisionError'},
+    }
+
+    def __init__(self, **kwargs):
+        super(ComputerVisionErrorResponse, self).__init__(**kwargs)
+        self.error = kwargs.get('error', None)
+
+
+class ComputerVisionErrorResponseException(HttpOperationError):
+    """Server responsed with exception of type: 'ComputerVisionErrorResponse'.
+
+    :param deserialize: A deserializer
+    :param response: Server response to be deserialized.
+    """
+
+    def __init__(self, deserialize, response, *args):
+
+        super(ComputerVisionErrorResponseException, self).__init__(deserialize, response, 'ComputerVisionErrorResponse', *args)
+
+
+class ComputerVisionInnerError(Model):
+    """Details about the API request error.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :param code: Required. The error code. Possible values include:
+     'InvalidImageFormat', 'UnsupportedMediaType', 'InvalidImageUrl',
+     'NotSupportedFeature', 'NotSupportedImage', 'Timeout',
+     'InternalServerError', 'InvalidImageSize', 'BadArgument',
+     'DetectFaceError', 'NotSupportedLanguage', 'InvalidThumbnailSize',
+     'InvalidDetails', 'InvalidModel', 'CancelledRequest',
+     'NotSupportedVisualFeature', 'FailedToProcess', 'Unspecified',
+     'StorageException'
+    :type code: str or
+     ~azure.cognitiveservices.vision.computervision.models.ComputerVisionInnerErrorCodeValue
+    :param message: Required. Error message.
+    :type message: str
+    """
+
+    _validation = {
+        'code': {'required': True},
+        'message': {'required': True},
+    }
+
+    _attribute_map = {
+        'code': {'key': 'code', 'type': 'str'},
+        'message': {'key': 'message', 'type': 'str'},
+    }
+
+    def __init__(self, **kwargs):
+        super(ComputerVisionInnerError, self).__init__(**kwargs)
+        self.code = kwargs.get('code', None)
+        self.message = kwargs.get('message', None)
+
+
+class ComputerVisionOcrError(Model):
     """Details about the API request error.
 
     All required parameters must be populated in order to send to Azure.
@@ -272,14 +412,14 @@ class ComputerVisionError(Model):
     }
 
     def __init__(self, **kwargs):
-        super(ComputerVisionError, self).__init__(**kwargs)
+        super(ComputerVisionOcrError, self).__init__(**kwargs)
         self.code = kwargs.get('code', None)
         self.message = kwargs.get('message', None)
         self.request_id = kwargs.get('request_id', None)
 
 
-class ComputerVisionErrorException(HttpOperationError):
-    """Server responsed with exception of type: 'ComputerVisionError'.
+class ComputerVisionOcrErrorException(HttpOperationError):
+    """Server responsed with exception of type: 'ComputerVisionOcrError'.
 
     :param deserialize: A deserializer
     :param response: Server response to be deserialized.
@@ -287,7 +427,7 @@ class ComputerVisionErrorException(HttpOperationError):
 
     def __init__(self, deserialize, response, *args):
 
-        super(ComputerVisionErrorException, self).__init__(deserialize, response, 'ComputerVisionError', *args)
+        super(ComputerVisionOcrErrorException, self).__init__(deserialize, response, 'ComputerVisionOcrError', *args)
 
 
 class DetectedBrand(Model):
@@ -379,6 +519,8 @@ class DetectResult(Model):
     :param metadata:
     :type metadata:
      ~azure.cognitiveservices.vision.computervision.models.ImageMetadata
+    :param model_version:
+    :type model_version: str
     """
 
     _validation = {
@@ -389,6 +531,7 @@ class DetectResult(Model):
         'objects': {'key': 'objects', 'type': '[DetectedObject]'},
         'request_id': {'key': 'requestId', 'type': 'str'},
         'metadata': {'key': 'metadata', 'type': 'ImageMetadata'},
+        'model_version': {'key': 'modelVersion', 'type': 'str'},
     }
 
     def __init__(self, **kwargs):
@@ -396,6 +539,7 @@ class DetectResult(Model):
         self.objects = None
         self.request_id = kwargs.get('request_id', None)
         self.metadata = kwargs.get('metadata', None)
+        self.model_version = kwargs.get('model_version', None)
 
 
 class DomainModelResults(Model):
@@ -409,12 +553,15 @@ class DomainModelResults(Model):
     :param metadata:
     :type metadata:
      ~azure.cognitiveservices.vision.computervision.models.ImageMetadata
+    :param model_version:
+    :type model_version: str
     """
 
     _attribute_map = {
         'result': {'key': 'result', 'type': 'object'},
         'request_id': {'key': 'requestId', 'type': 'str'},
         'metadata': {'key': 'metadata', 'type': 'ImageMetadata'},
+        'model_version': {'key': 'modelVersion', 'type': 'str'},
     }
 
     def __init__(self, **kwargs):
@@ -422,6 +569,7 @@ class DomainModelResults(Model):
         self.result = kwargs.get('result', None)
         self.request_id = kwargs.get('request_id', None)
         self.metadata = kwargs.get('metadata', None)
+        self.model_version = kwargs.get('model_version', None)
 
 
 class FaceDescription(Model):
@@ -522,6 +670,8 @@ class ImageAnalysis(Model):
     :param metadata:
     :type metadata:
      ~azure.cognitiveservices.vision.computervision.models.ImageMetadata
+    :param model_version:
+    :type model_version: str
     """
 
     _attribute_map = {
@@ -536,6 +686,7 @@ class ImageAnalysis(Model):
         'brands': {'key': 'brands', 'type': '[DetectedBrand]'},
         'request_id': {'key': 'requestId', 'type': 'str'},
         'metadata': {'key': 'metadata', 'type': 'ImageMetadata'},
+        'model_version': {'key': 'modelVersion', 'type': 'str'},
     }
 
     def __init__(self, **kwargs):
@@ -551,6 +702,7 @@ class ImageAnalysis(Model):
         self.brands = kwargs.get('brands', None)
         self.request_id = kwargs.get('request_id', None)
         self.metadata = kwargs.get('metadata', None)
+        self.model_version = kwargs.get('model_version', None)
 
 
 class ImageCaption(Model):
@@ -587,6 +739,8 @@ class ImageDescription(Model):
     :param metadata:
     :type metadata:
      ~azure.cognitiveservices.vision.computervision.models.ImageMetadata
+    :param model_version:
+    :type model_version: str
     """
 
     _attribute_map = {
@@ -594,6 +748,7 @@ class ImageDescription(Model):
         'captions': {'key': 'description.captions', 'type': '[ImageCaption]'},
         'request_id': {'key': 'requestId', 'type': 'str'},
         'metadata': {'key': 'metadata', 'type': 'ImageMetadata'},
+        'model_version': {'key': 'modelVersion', 'type': 'str'},
     }
 
     def __init__(self, **kwargs):
@@ -602,6 +757,7 @@ class ImageDescription(Model):
         self.captions = kwargs.get('captions', None)
         self.request_id = kwargs.get('request_id', None)
         self.metadata = kwargs.get('metadata', None)
+        self.model_version = kwargs.get('model_version', None)
 
 
 class ImageDescriptionDetails(Model):
@@ -717,32 +873,6 @@ class ImageUrl(Model):
         self.url = kwargs.get('url', None)
 
 
-class LandmarkResults(Model):
-    """Result of domain-specific classifications for the domain of landmarks.
-
-    :param landmarks: List of landmarks recognized in the image.
-    :type landmarks:
-     list[~azure.cognitiveservices.vision.computervision.models.LandmarksModel]
-    :param request_id: Id of the REST API request.
-    :type request_id: str
-    :param metadata:
-    :type metadata:
-     ~azure.cognitiveservices.vision.computervision.models.ImageMetadata
-    """
-
-    _attribute_map = {
-        'landmarks': {'key': 'landmarks', 'type': '[LandmarksModel]'},
-        'request_id': {'key': 'requestId', 'type': 'str'},
-        'metadata': {'key': 'metadata', 'type': 'ImageMetadata'},
-    }
-
-    def __init__(self, **kwargs):
-        super(LandmarkResults, self).__init__(**kwargs)
-        self.landmarks = kwargs.get('landmarks', None)
-        self.request_id = kwargs.get('request_id', None)
-        self.metadata = kwargs.get('metadata', None)
-
-
 class LandmarksModel(Model):
     """A landmark recognized in the image.
 
@@ -767,24 +897,42 @@ class LandmarksModel(Model):
 class Line(Model):
     """An object representing a recognized text line.
 
-    :param bounding_box: Bounding box of a recognized line.
+    All required parameters must be populated in order to send to Azure.
+
+    :param language: The BCP-47 language code of the recognized text line.
+     Only provided where the language of the line differs from the page's.
+    :type language: str
+    :param bounding_box: Required. Bounding box of a recognized line.
     :type bounding_box: list[float]
-    :param text: The text content of the line.
+    :param appearance: Appearance of the text line.
+    :type appearance:
+     ~azure.cognitiveservices.vision.computervision.models.Appearance
+    :param text: Required. The text content of the line.
     :type text: str
-    :param words: List of words in the text line.
+    :param words: Required. List of words in the text line.
     :type words:
      list[~azure.cognitiveservices.vision.computervision.models.Word]
     """
 
+    _validation = {
+        'bounding_box': {'required': True},
+        'text': {'required': True},
+        'words': {'required': True},
+    }
+
     _attribute_map = {
+        'language': {'key': 'language', 'type': 'str'},
         'bounding_box': {'key': 'boundingBox', 'type': '[float]'},
+        'appearance': {'key': 'appearance', 'type': 'Appearance'},
         'text': {'key': 'text', 'type': 'str'},
         'words': {'key': 'words', 'type': '[Word]'},
     }
 
     def __init__(self, **kwargs):
         super(Line, self).__init__(**kwargs)
+        self.language = kwargs.get('language', None)
         self.bounding_box = kwargs.get('bounding_box', None)
+        self.appearance = kwargs.get('appearance', None)
         self.text = kwargs.get('text', None)
         self.words = kwargs.get('words', None)
 
@@ -943,6 +1091,8 @@ class OcrResult(Model):
      of recognized text.
     :type regions:
      list[~azure.cognitiveservices.vision.computervision.models.OcrRegion]
+    :param model_version:
+    :type model_version: str
     """
 
     _attribute_map = {
@@ -950,6 +1100,7 @@ class OcrResult(Model):
         'text_angle': {'key': 'textAngle', 'type': 'float'},
         'orientation': {'key': 'orientation', 'type': 'str'},
         'regions': {'key': 'regions', 'type': '[OcrRegion]'},
+        'model_version': {'key': 'modelVersion', 'type': 'str'},
     }
 
     def __init__(self, **kwargs):
@@ -958,6 +1109,7 @@ class OcrResult(Model):
         self.text_angle = kwargs.get('text_angle', None)
         self.orientation = kwargs.get('orientation', None)
         self.regions = kwargs.get('regions', None)
+        self.model_version = kwargs.get('model_version', None)
 
 
 class OcrWord(Model):
@@ -989,24 +1141,120 @@ class ReadOperationResult(Model):
     """OCR result of the read operation.
 
     :param status: Status of the read operation. Possible values include:
-     'NotStarted', 'Running', 'Failed', 'Succeeded'
+     'notStarted', 'running', 'failed', 'succeeded'
     :type status: str or
-     ~azure.cognitiveservices.vision.computervision.models.TextOperationStatusCodes
-    :param recognition_results: An array of text recognition result of the
-     read operation.
-    :type recognition_results:
-     list[~azure.cognitiveservices.vision.computervision.models.TextRecognitionResult]
+     ~azure.cognitiveservices.vision.computervision.models.OperationStatusCodes
+    :param created_date_time: Get UTC date time the batch operation was
+     submitted.
+    :type created_date_time: str
+    :param last_updated_date_time: Get last updated UTC date time of this
+     batch operation.
+    :type last_updated_date_time: str
+    :param analyze_result: Analyze batch operation result.
+    :type analyze_result:
+     ~azure.cognitiveservices.vision.computervision.models.AnalyzeResults
     """
 
     _attribute_map = {
-        'status': {'key': 'status', 'type': 'TextOperationStatusCodes'},
-        'recognition_results': {'key': 'recognitionResults', 'type': '[TextRecognitionResult]'},
+        'status': {'key': 'status', 'type': 'OperationStatusCodes'},
+        'created_date_time': {'key': 'createdDateTime', 'type': 'str'},
+        'last_updated_date_time': {'key': 'lastUpdatedDateTime', 'type': 'str'},
+        'analyze_result': {'key': 'analyzeResult', 'type': 'AnalyzeResults'},
     }
 
     def __init__(self, **kwargs):
         super(ReadOperationResult, self).__init__(**kwargs)
         self.status = kwargs.get('status', None)
-        self.recognition_results = kwargs.get('recognition_results', None)
+        self.created_date_time = kwargs.get('created_date_time', None)
+        self.last_updated_date_time = kwargs.get('last_updated_date_time', None)
+        self.analyze_result = kwargs.get('analyze_result', None)
+
+
+class ReadResult(Model):
+    """Text extracted from a page in the input document.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :param page: Required. The 1-based page number of the recognition result.
+    :type page: int
+    :param language: The BCP-47 language code of the recognized text page.
+    :type language: str
+    :param angle: Required. The orientation of the image in degrees in the
+     clockwise direction. Range between [-180, 180).
+    :type angle: float
+    :param width: Required. The width of the image in pixels or the PDF in
+     inches.
+    :type width: float
+    :param height: Required. The height of the image in pixels or the PDF in
+     inches.
+    :type height: float
+    :param unit: Required. The unit used in the Width, Height and BoundingBox.
+     For images, the unit is 'pixel'. For PDF, the unit is 'inch'. Possible
+     values include: 'pixel', 'inch'
+    :type unit: str or
+     ~azure.cognitiveservices.vision.computervision.models.TextRecognitionResultDimensionUnit
+    :param lines: Required. A list of recognized text lines.
+    :type lines:
+     list[~azure.cognitiveservices.vision.computervision.models.Line]
+    """
+
+    _validation = {
+        'page': {'required': True},
+        'angle': {'required': True},
+        'width': {'required': True},
+        'height': {'required': True},
+        'unit': {'required': True},
+        'lines': {'required': True},
+    }
+
+    _attribute_map = {
+        'page': {'key': 'page', 'type': 'int'},
+        'language': {'key': 'language', 'type': 'str'},
+        'angle': {'key': 'angle', 'type': 'float'},
+        'width': {'key': 'width', 'type': 'float'},
+        'height': {'key': 'height', 'type': 'float'},
+        'unit': {'key': 'unit', 'type': 'TextRecognitionResultDimensionUnit'},
+        'lines': {'key': 'lines', 'type': '[Line]'},
+    }
+
+    def __init__(self, **kwargs):
+        super(ReadResult, self).__init__(**kwargs)
+        self.page = kwargs.get('page', None)
+        self.language = kwargs.get('language', None)
+        self.angle = kwargs.get('angle', None)
+        self.width = kwargs.get('width', None)
+        self.height = kwargs.get('height', None)
+        self.unit = kwargs.get('unit', None)
+        self.lines = kwargs.get('lines', None)
+
+
+class Style(Model):
+    """An object representing the style of the text line.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :param name: Required. The text line style name, including handwriting and
+     other. Possible values include: 'other', 'handwriting'
+    :type name: str or
+     ~azure.cognitiveservices.vision.computervision.models.TextStyle
+    :param confidence: Required. The confidence of text line style.
+    :type confidence: float
+    """
+
+    _validation = {
+        'name': {'required': True},
+        'confidence': {'required': True},
+    }
+
+    _attribute_map = {
+        'name': {'key': 'name', 'type': 'str'},
+        'confidence': {'key': 'confidence', 'type': 'float'},
+    }
+
+    def __init__(self, **kwargs):
+        super(Style, self).__init__(**kwargs)
+        self.name = kwargs.get('name', None)
+        self.confidence = kwargs.get('confidence', None)
 
 
 class TagResult(Model):
@@ -1021,12 +1269,15 @@ class TagResult(Model):
     :param metadata:
     :type metadata:
      ~azure.cognitiveservices.vision.computervision.models.ImageMetadata
+    :param model_version:
+    :type model_version: str
     """
 
     _attribute_map = {
         'tags': {'key': 'tags', 'type': '[ImageTag]'},
         'request_id': {'key': 'requestId', 'type': 'str'},
         'metadata': {'key': 'metadata', 'type': 'ImageMetadata'},
+        'model_version': {'key': 'modelVersion', 'type': 'str'},
     }
 
     def __init__(self, **kwargs):
@@ -1034,76 +1285,7 @@ class TagResult(Model):
         self.tags = kwargs.get('tags', None)
         self.request_id = kwargs.get('request_id', None)
         self.metadata = kwargs.get('metadata', None)
-
-
-class TextOperationResult(Model):
-    """Result of recognition text operation.
-
-    :param status: Status of the text operation. Possible values include:
-     'NotStarted', 'Running', 'Failed', 'Succeeded'
-    :type status: str or
-     ~azure.cognitiveservices.vision.computervision.models.TextOperationStatusCodes
-    :param recognition_result: Text recognition result of the text operation.
-    :type recognition_result:
-     ~azure.cognitiveservices.vision.computervision.models.TextRecognitionResult
-    """
-
-    _attribute_map = {
-        'status': {'key': 'status', 'type': 'TextOperationStatusCodes'},
-        'recognition_result': {'key': 'recognitionResult', 'type': 'TextRecognitionResult'},
-    }
-
-    def __init__(self, **kwargs):
-        super(TextOperationResult, self).__init__(**kwargs)
-        self.status = kwargs.get('status', None)
-        self.recognition_result = kwargs.get('recognition_result', None)
-
-
-class TextRecognitionResult(Model):
-    """An object representing a recognized text region.
-
-    All required parameters must be populated in order to send to Azure.
-
-    :param page: The 1-based page number of the recognition result.
-    :type page: int
-    :param clockwise_orientation: The orientation of the image in degrees in
-     the clockwise direction. Range between [0, 360).
-    :type clockwise_orientation: float
-    :param width: The width of the image in pixels or the PDF in inches.
-    :type width: float
-    :param height: The height of the image in pixels or the PDF in inches.
-    :type height: float
-    :param unit: The unit used in the Width, Height and BoundingBox. For
-     images, the unit is 'pixel'. For PDF, the unit is 'inch'. Possible values
-     include: 'pixel', 'inch'
-    :type unit: str or
-     ~azure.cognitiveservices.vision.computervision.models.TextRecognitionResultDimensionUnit
-    :param lines: Required. A list of recognized text lines.
-    :type lines:
-     list[~azure.cognitiveservices.vision.computervision.models.Line]
-    """
-
-    _validation = {
-        'lines': {'required': True},
-    }
-
-    _attribute_map = {
-        'page': {'key': 'page', 'type': 'int'},
-        'clockwise_orientation': {'key': 'clockwiseOrientation', 'type': 'float'},
-        'width': {'key': 'width', 'type': 'float'},
-        'height': {'key': 'height', 'type': 'float'},
-        'unit': {'key': 'unit', 'type': 'TextRecognitionResultDimensionUnit'},
-        'lines': {'key': 'lines', 'type': '[Line]'},
-    }
-
-    def __init__(self, **kwargs):
-        super(TextRecognitionResult, self).__init__(**kwargs)
-        self.page = kwargs.get('page', None)
-        self.clockwise_orientation = kwargs.get('clockwise_orientation', None)
-        self.width = kwargs.get('width', None)
-        self.height = kwargs.get('height', None)
-        self.unit = kwargs.get('unit', None)
-        self.lines = kwargs.get('lines', None)
+        self.model_version = kwargs.get('model_version', None)
 
 
 class Word(Model):
@@ -1115,21 +1297,20 @@ class Word(Model):
     :type bounding_box: list[float]
     :param text: Required. The text content of the word.
     :type text: str
-    :param confidence: Qualitative confidence measure. Possible values
-     include: 'High', 'Low'
-    :type confidence: str or
-     ~azure.cognitiveservices.vision.computervision.models.TextRecognitionResultConfidenceClass
+    :param confidence: Required. Qualitative confidence measure.
+    :type confidence: float
     """
 
     _validation = {
         'bounding_box': {'required': True},
         'text': {'required': True},
+        'confidence': {'required': True},
     }
 
     _attribute_map = {
         'bounding_box': {'key': 'boundingBox', 'type': '[float]'},
         'text': {'key': 'text', 'type': 'str'},
-        'confidence': {'key': 'confidence', 'type': 'TextRecognitionResultConfidenceClass'},
+        'confidence': {'key': 'confidence', 'type': 'float'},
     }
 
     def __init__(self, **kwargs):

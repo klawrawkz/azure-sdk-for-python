@@ -5,11 +5,11 @@
 from typing import TYPE_CHECKING
 
 from ... import CredentialUnavailableError
-from ..._constants import AZURE_CLI_CLIENT_ID
+from ..._constants import DEVELOPER_SIGN_ON_CLIENT_ID
 from ..._internal.shared_token_cache import NO_TOKEN, SharedTokenCacheBase
+from .._internal import AsyncContextManager
 from .._internal.aad_client import AadClient
-from .._internal.exception_wrapper import wrap_exceptions
-from .base import AsyncCredentialBase
+from .._internal.decorators import log_get_token_async
 
 if TYPE_CHECKING:
     from typing import Any
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from ..._internal.aad_client import AadClientBase
 
 
-class SharedTokenCacheCredential(SharedTokenCacheBase, AsyncCredentialBase):
+class SharedTokenCacheCredential(SharedTokenCacheBase, AsyncContextManager):
     """Authenticates using tokens in the local cache shared between Microsoft applications.
 
     :param str username:
@@ -25,10 +25,13 @@ class SharedTokenCacheCredential(SharedTokenCacheBase, AsyncCredentialBase):
         may contain tokens for multiple identities.
 
     :keyword str authority: Authority of an Azure Active Directory endpoint, for example 'login.microsoftonline.com',
-        the authority for Azure Public Cloud (which is the default). :class:`~azure.identity.KnownAuthorities`
+        the authority for Azure Public Cloud (which is the default). :class:`~azure.identity.AzureAuthorityHosts`
         defines authorities for other clouds.
     :keyword str tenant_id: an Azure Active Directory tenant ID. Used to select an account when the cache contains
         tokens for multiple identities.
+    :keyword cache_persistence_options: configuration for persistent token caching. If not provided, the credential
+        will use the persistent cache shared by Microsoft development applications
+    :paramtype cache_persistence_options: ~azure.identity.TokenCachePersistenceOptions
     """
 
     async def __aenter__(self):
@@ -42,15 +45,15 @@ class SharedTokenCacheCredential(SharedTokenCacheBase, AsyncCredentialBase):
         if self._client:
             await self._client.__aexit__()
 
-    @wrap_exceptions
+    @log_get_token_async
     async def get_token(self, *scopes: str, **kwargs: "Any") -> "AccessToken":  # pylint:disable=unused-argument
         """Get an access token for `scopes` from the shared cache.
 
         If no access token is cached, attempt to acquire one using a cached refresh token.
 
-        .. note:: This method is called by Azure SDK clients. It isn't intended for use in application code.
+        This method is called automatically by Azure SDK clients.
 
-        :param str scopes: desired scopes for the token
+        :param str scopes: desired scopes for the access token. This method requires at least one scope.
         :rtype: :class:`azure.core.credentials.AccessToken`
         :raises ~azure.identity.CredentialUnavailableError: the cache is unavailable or contains insufficient user
             information
@@ -58,18 +61,27 @@ class SharedTokenCacheCredential(SharedTokenCacheBase, AsyncCredentialBase):
           attribute gives a reason. Any error response from Azure Active Directory is available as the error's
           ``response`` attribute.
         """
+        if not scopes:
+            raise ValueError("'get_token' requires at least one scope")
+
+        if not self._initialized:
+            self._initialize()
 
         if not self._client:
             raise CredentialUnavailableError(message="Shared token cache unavailable")
 
         account = self._get_account(self._username, self._tenant_id)
 
+        token = self._get_cached_access_token(scopes, account)
+        if token:
+            return token
+
         # try each refresh token, returning the first access token acquired
         for refresh_token in self._get_refresh_tokens(account):
-            token = await self._client.obtain_token_by_refresh_token(refresh_token, scopes)
+            token = await self._client.obtain_token_by_refresh_token(scopes, refresh_token)
             return token
 
         raise CredentialUnavailableError(message=NO_TOKEN.format(account.get("username")))
 
     def _get_auth_client(self, **kwargs: "Any") -> "AadClientBase":
-        return AadClient(tenant_id="common", client_id=AZURE_CLI_CLIENT_ID, **kwargs)
+        return AadClient(client_id=DEVELOPER_SIGN_ON_CLIENT_ID, **kwargs)

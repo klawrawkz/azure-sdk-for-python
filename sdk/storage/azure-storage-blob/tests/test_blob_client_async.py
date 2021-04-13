@@ -8,6 +8,7 @@ import pytest
 import platform
 import asyncio
 
+from azure.core.credentials import AzureSasCredential
 from azure.storage.blob import VERSION
 from azure.storage.blob.aio import (
     BlobServiceClient,
@@ -99,6 +100,34 @@ class StorageClientTestAsync(AsyncStorageTestCase):
             self.assertTrue(service.url.startswith('https://' + storage_account.name + '.blob.core.windows.net'))
             self.assertTrue(service.url.endswith(self.sas_token))
             self.assertIsNone(service.credential)
+
+    @GlobalStorageAccountPreparer()
+    def test_create_service_with_sas_credential_async(self, resource_group, location, storage_account, storage_account_key):
+        # Arrange
+        sas_credential = AzureSasCredential(self.sas_token)
+
+        for service_type in SERVICES:
+            # Act
+            service = service_type(
+                self.account_url(storage_account, "blob"), credential=sas_credential, container_name='foo', blob_name='bar')
+
+            # Assert
+            self.assertIsNotNone(service)
+            self.assertEqual(service.account_name, storage_account.name)
+            self.assertTrue(service.url.startswith('https://' + storage_account.name + '.blob.core.windows.net'))
+            self.assertFalse(service.url.endswith(self.sas_token))
+            self.assertEqual(service.credential, sas_credential)
+
+    @GlobalStorageAccountPreparer()
+    def test_create_service_with_sas_credential_url_raises_if_sas_is_in_uri_async(self, resource_group, location, storage_account, storage_account_key):
+        # Arrange
+        sas_credential = AzureSasCredential(self.sas_token)
+
+        for service_type in SERVICES:
+            # Act
+            with self.assertRaises(ValueError):
+                service = service_type(
+                    self.account_url(storage_account, "blob") + "?sig=foo", credential=sas_credential, container_name='foo', blob_name='bar')
 
     @GlobalStorageAccountPreparer()
     def test_create_service_with_token_async(self, resource_group, location, storage_account, storage_account_key):
@@ -449,6 +478,18 @@ class StorageClientTestAsync(AsyncStorageTestCase):
         self.assertEqual(service.primary_hostname, 'local-machine:11002/custom/account/path')
         self.assertEqual(service.url, 'http://local-machine:11002/custom/account/path/foo/bar?snapshot=baz')
 
+    def test_create_blob_client_with_sub_directory_path_in_blob_name(self):
+        blob_url = "https://testaccount.blob.core.windows.net/containername/dir1/sub000/2010_Unit150_Ivan097_img0003.jpg"
+        blob_client = BlobClient.from_blob_url(blob_url)
+        self.assertEqual(blob_client.container_name, "containername")
+        self.assertEqual(blob_client.blob_name, "dir1/sub000/2010_Unit150_Ivan097_img0003.jpg")
+
+        blob_emulator_url = 'http://127.0.0.1:1000/devstoreaccount1/containername/dir1/sub000/2010_Unit150_Ivan097_img0003.jpg'
+        blob_client = BlobClient.from_blob_url(blob_emulator_url)
+        self.assertEqual(blob_client.container_name, "containername")
+        self.assertEqual(blob_client.blob_name, "dir1/sub000/2010_Unit150_Ivan097_img0003.jpg")
+        self.assertEqual(blob_client.url, blob_emulator_url)
+
     @GlobalStorageAccountPreparer()
     @AsyncStorageTestCase.await_prepared_test
     async def test_request_callback_signed_header_async(self, resource_group, location, storage_account, storage_account_key):
@@ -493,12 +534,7 @@ class StorageClientTestAsync(AsyncStorageTestCase):
 
         def callback(response):
             self.assertTrue('User-Agent' in response.http_request.headers)
-            self.assertEqual(
-                response.http_request.headers['User-Agent'],
-                "azsdk-python-storage-blob/{} Python/{} ({})".format(
-                    VERSION,
-                    platform.python_version(),
-                    platform.platform()))
+            assert "azsdk-python-storage-blob/{}".format(VERSION) in response.http_request.headers['User-Agent']
 
         await service.get_service_properties(raw_response_hook=callback)
 
@@ -511,23 +547,19 @@ class StorageClientTestAsync(AsyncStorageTestCase):
 
         def callback(response):
             self.assertTrue('User-Agent' in response.http_request.headers)
-            self.assertEqual(
-                response.http_request.headers['User-Agent'],
-                "TestApp/v1.0 azsdk-python-storage-blob/{} Python/{} ({})".format(
+            assert ("TestApp/v1.0 azsdk-python-storage-blob/{} Python/{} ({})".format(
                     VERSION,
                     platform.python_version(),
-                    platform.platform()))
+                    platform.platform())) in response.http_request.headers['User-Agent']
 
         await service.get_service_properties(raw_response_hook=callback)
 
         def callback(response):
             self.assertTrue('User-Agent' in response.http_request.headers)
-            self.assertEqual(
-                response.http_request.headers['User-Agent'],
-                "TestApp/v2.0 azsdk-python-storage-blob/{} Python/{} ({})".format(
+            assert ("TestApp/v2.0 TestApp/v1.0 azsdk-python-storage-blob/{} Python/{} ({})".format(
                     VERSION,
                     platform.python_version(),
-                    platform.platform()))
+                    platform.platform())) in response.http_request.headers['User-Agent']
 
         await service.get_service_properties(raw_response_hook=callback, user_agent="TestApp/v2.0")
 
@@ -538,15 +570,12 @@ class StorageClientTestAsync(AsyncStorageTestCase):
 
         def callback(response):
             self.assertTrue('User-Agent' in response.http_request.headers)
-            self.assertEqual(
-                response.http_request.headers['User-Agent'],
-                "azsdk-python-storage-blob/{} Python/{} ({}) customer_user_agent".format(
+            assert ("customer_user_agent azsdk-python-storage-blob/{} Python/{} ({})".format(
                     VERSION,
                     platform.python_version(),
-                    platform.platform()))
+                    platform.platform())) in response.http_request.headers['User-Agent']
 
-        custom_headers = {'User-Agent': 'customer_user_agent'}
-        await service.get_service_properties(raw_response_hook=callback, headers=custom_headers)
+        await service.get_service_properties(raw_response_hook=callback, user_agent='customer_user_agent')
 
     @GlobalStorageAccountPreparer()
     @AsyncStorageTestCase.await_prepared_test

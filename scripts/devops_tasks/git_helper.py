@@ -15,12 +15,17 @@ logging.getLogger().setLevel(logging.INFO)
 
 # Oldest release of SDK packages that should be skipped
 EXCLUDED_PACKAGE_VERSIONS = {
-    'azure-storage-file-share': ['12.0.0', '12.0.0b5'],
-    'azure-storage-queue': ['0.37.0', '1.0.0', '1.1.0', '1.2.0rc1', '1.3.0', '1.4.0', '2.0.0', '2.0.1', '2.1.0'],
-    'azure-storage-file': ['0.37.0', '1.0.0', '1.1.0', '1.2.0rc1', '1.3.0', '1.3.1', '1.4.0', '2.0.0', '2.0.1', '2.1.0'],
-    'azure-storage-blob': ['0.37.0', '0.37.1', '1.0.0', '1.1.0', '1.2.0rc1', '1.3.0', '1.3.1', '1.4.0', '1.5.0', '2.0.0', '2.0.1', '2.1.0',],
-    'azure-eventhub': ['0.2.0', '1.0.0', '1.1.0', '1.1.1', '1.2.0rc1', '1.2.0', '1.3.0', '1.3.1', '1.3.2', '1.3.3',],
-    'azure-cosmos': ['3.0.0', '3.0.1', '3.0.2', '3.1.0', '3.1.1', '3.1.2'],
+    'azure-storage-file-share': '12.0.0',
+    'azure-storage-queue': '2.1.0',
+    'azure-storage-file': '2.1.0',
+    'azure-storage-blob': '2.1.0',
+    'azure-eventhub': '1.3.3',
+    'azure-cosmos': '3.2.0',
+    'azure-servicebus': '0.50.3',
+    'azure-eventgrid': '1.3.0',
+    'azure-schemaregistry-avroserializer': '1.0.0b1',
+    'azure-storage-blob-changefeed' : '12.0.0b2',
+    'azure-storage-file-datalake': '12.2.0b1'
 }
 
 # This method identifies release tag for latest or oldest released version of a given package
@@ -30,15 +35,20 @@ def get_release_tag(dep_pkg_name, isLatest):
     from pypi_tools.pypi import PyPIClient
 
     client = PyPIClient()
-    versions = [str(v) for v in client.get_ordered_versions(dep_pkg_name)]
-    logging.info("Versions for {0} is: {1}".format(dep_pkg_name, versions))
+    versions = []
+    try:
+        versions = [str(v) for v in client.get_ordered_versions(dep_pkg_name)]
+        logging.info("Versions available on PyPI for {0} are: {1}".format(dep_pkg_name, versions))
+    except:
+        logging.error("Package {} is not available on PyPI".format(dep_pkg_name))
+        return None
 
     # filter excluded versions
     if dep_pkg_name in EXCLUDED_PACKAGE_VERSIONS:
-        versions = [v for v in versions if  v not in EXCLUDED_PACKAGE_VERSIONS[dep_pkg_name]]
+        versions = [v for v in versions if  parse(v) > parse(EXCLUDED_PACKAGE_VERSIONS[dep_pkg_name])]
         logging.info("Filtered versions for {0} is: {1}".format(dep_pkg_name, versions))
 
-    if len(versions) == 0:
+    if not versions:
         logging.info(
             "Released version info for package {} is not available".format(dep_pkg_name)
         )

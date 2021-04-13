@@ -3,8 +3,8 @@
 # Licensed under the MIT License.
 # -------------------------------------
 from collections import namedtuple
-from ._shared import parse_vault_id
-from ._shared._generated.v7_0.models import JsonWebKey as _JsonWebKey
+from ._shared import parse_key_vault_id
+from ._generated.v7_1.models import JsonWebKey as _JsonWebKey
 
 try:
     from typing import TYPE_CHECKING
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     # pylint:disable=unused-import
     from typing import Any, Dict, Optional
     from datetime import datetime
-    from ._shared._generated.v7_0 import models as _models
+    from ._generated.v7_0 import models as _models
     from ._enums import KeyOperation
 
 KeyOperationResult = namedtuple("KeyOperationResult", ["id", "value"])
@@ -68,7 +68,7 @@ class KeyProperties(object):
         # type: (str, Optional[_models.KeyAttributes], **Any) -> None
         self._attributes = attributes
         self._id = key_id
-        self._vault_id = parse_vault_id(key_id)
+        self._vault_id = parse_key_vault_id(key_id)
         self._managed = kwargs.get("managed", None)
         self._tags = kwargs.get("tags", None)
 
@@ -170,6 +170,18 @@ class KeyProperties(object):
         :rtype: str
         """
         return self._vault_id.vault_url
+
+    @property
+    def recoverable_days(self):
+        # type: () -> Optional[int]
+        """The number of days the key is retained before being deleted from a soft-delete enabled Key Vault.
+
+        :rtype: int
+        """
+        # recoverable_days was added in 7.1-preview
+        if self._attributes and hasattr(self._attributes, "recoverable_days"):
+            return self._attributes.recoverable_days
+        return None
 
     @property
     def recovery_level(self):

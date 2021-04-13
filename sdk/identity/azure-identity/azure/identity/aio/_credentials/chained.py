@@ -3,20 +3,23 @@
 # Licensed under the MIT License.
 # ------------------------------------
 import asyncio
+import logging
 from typing import TYPE_CHECKING
 
 from azure.core.exceptions import ClientAuthenticationError
-from .base import AsyncCredentialBase
+from .._internal import AsyncContextManager
 from ... import CredentialUnavailableError
 from ..._credentials.chained import _get_error_message
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, Optional
     from azure.core.credentials import AccessToken
     from azure.core.credentials_async import AsyncTokenCredential
 
+_LOGGER = logging.getLogger(__name__)
 
-class ChainedTokenCredential(AsyncCredentialBase):
+
+class ChainedTokenCredential(AsyncContextManager):
     """A sequence of credentials that is itself a credential.
 
     Its :func:`get_token` method calls ``get_token`` on each credential in the sequence, in order, returning the first
@@ -29,6 +32,8 @@ class ChainedTokenCredential(AsyncCredentialBase):
     def __init__(self, *credentials: "AsyncTokenCredential") -> None:
         if not credentials:
             raise ValueError("at least one credential is required")
+
+        self._successful_credential = None  # type: Optional[AsyncTokenCredential]
         self.credentials = credentials
 
     async def close(self):
@@ -42,22 +47,34 @@ class ChainedTokenCredential(AsyncCredentialBase):
         If no credential provides a token, raises :class:`azure.core.exceptions.ClientAuthenticationError`
         with an error message from each credential.
 
-        .. note:: This method is called by Azure SDK clients. It isn't intended for use in application code.
+        This method is called automatically by Azure SDK clients.
 
-        :param str scopes: desired scopes for the token
+        :param str scopes: desired scopes for the access token. This method requires at least one scope.
         :raises ~azure.core.exceptions.ClientAuthenticationError: no credential in the chain provided a token
         """
         history = []
         for credential in self.credentials:
             try:
-                return await credential.get_token(*scopes, **kwargs)
+                token = await credential.get_token(*scopes, **kwargs)
+                _LOGGER.info("%s acquired a token from %s", self.__class__.__name__, credential.__class__.__name__)
+                self._successful_credential = credential
+                return token
             except CredentialUnavailableError as ex:
                 # credential didn't attempt authentication because it lacks required data or state -> continue
                 history.append((credential, ex.message))
+                _LOGGER.info("%s - %s is unavailable", self.__class__.__name__, credential.__class__.__name__)
             except Exception as ex:  # pylint: disable=broad-except
                 # credential failed to authenticate, or something unexpectedly raised -> break
                 history.append((credential, str(ex)))
+                _LOGGER.warning(
+                    '%s.get_token failed: %s raised unexpected error "%s"',
+                    self.__class__.__name__,
+                    credential.__class__.__name__,
+                    ex,
+                    exc_info=_LOGGER.isEnabledFor(logging.DEBUG),
+                )
                 break
 
-        error_message = _get_error_message(history)
-        raise ClientAuthenticationError(message=error_message)
+        attempts = _get_error_message(history)
+        message = self.__class__.__name__ + " failed to retrieve a token from the included credentials." + attempts
+        raise ClientAuthenticationError(message=message)

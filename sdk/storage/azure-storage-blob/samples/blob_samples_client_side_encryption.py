@@ -87,8 +87,8 @@ class RSAKeyWrapper:
         if algorithm == 'RSA':
             return self.public_key.encrypt(key,
                                            OAEP(
-                                               mgf=MGF1(algorithm=SHA1()),
-                                               algorithm=SHA1(),
+                                               mgf=MGF1(algorithm=SHA1()),  # nosec
+                                               algorithm=SHA1(),    # nosec
                                                label=None)
                                            )
         raise ValueError('Unknown key wrap algorithm.')
@@ -97,8 +97,8 @@ class RSAKeyWrapper:
         if algorithm == 'RSA':
             return self.private_key.decrypt(key,
                                             OAEP(
-                                                mgf=MGF1(algorithm=SHA1()),
-                                                algorithm=SHA1(),
+                                                mgf=MGF1(algorithm=SHA1()), # nosec
+                                                algorithm=SHA1(),   # nosec
                                                 label=None)
                                             )
         raise ValueError('Unknown key wrap algorithm.')
@@ -142,7 +142,7 @@ class BlobEncryptionSamples():
             # this property will tell the service to encrypt the blob. Blob encryption
             # is supported only for uploading whole blobs and only at the time of creation.
             kek = KeyWrapper('key1')
-            self.container_client.key_resolver_function = kek
+            self.container_client.key_encryption_key = kek
 
             self.container_client.upload_blob(block_blob_name, u'ABC', )
 

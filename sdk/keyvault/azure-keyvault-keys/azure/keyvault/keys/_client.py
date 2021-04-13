@@ -7,7 +7,7 @@ from azure.core.tracing.decorator import distributed_trace
 
 from ._shared import KeyVaultClientBase
 from ._shared.exceptions import error_map as _error_map
-from ._shared._polling import DeletePollingMethod, RecoverDeletedPollingMethod, KeyVaultOperationPoller
+from ._shared._polling import DeleteRecoverPollingMethod, KeyVaultOperationPoller
 from ._models import KeyVaultKey, KeyProperties, DeletedKey
 
 try:
@@ -29,7 +29,8 @@ class KeyClient(KeyVaultClientBase):
     :param str vault_url: URL of the vault the client will access. This is also called the vault's "DNS Name".
     :param credential: An object which can provide an access token for the vault, such as a credential from
         :mod:`azure.identity`
-    :keyword str api_version: version of the Key Vault API to use. Defaults to the most recent.
+    :keyword api_version: version of the Key Vault API to use. Defaults to the most recent.
+    :paramtype api_version: ~azure.keyvault.keys.ApiVersion
     :keyword transport: transport to use. Defaults to :class:`~azure.core.pipeline.transport.RequestsTransport`.
     :paramtype transport: ~azure.core.pipeline.transport.HttpTransport
 
@@ -82,17 +83,23 @@ class KeyClient(KeyVaultClientBase):
         not_before = kwargs.pop("not_before", None)
         expires_on = kwargs.pop("expires_on", None)
         if enabled is not None or not_before is not None or expires_on is not None:
-            attributes = self._client.models.KeyAttributes(enabled=enabled, not_before=not_before, expires=expires_on)
+            attributes = self._models.KeyAttributes(enabled=enabled, not_before=not_before, expires=expires_on)
         else:
             attributes = None
 
-        bundle = self._client.create_key(
-            vault_base_url=self.vault_url,
-            key_name=name,
+        parameters = self._models.KeyCreateParameters(
             kty=key_type,
             key_size=kwargs.pop("size", None),
             key_attributes=attributes,
             key_ops=kwargs.pop("key_operations", None),
+            tags=kwargs.pop("tags", None),
+            curve=kwargs.pop("curve", None)
+        )
+
+        bundle = self._client.create_key(
+            vault_base_url=self.vault_url,
+            key_name=name,
+            parameters=parameters,
             error_map=_error_map,
             **kwargs
         )
@@ -198,17 +205,16 @@ class KeyClient(KeyVaultClientBase):
         deleted_key = DeletedKey._from_deleted_key_bundle(
             self._client.delete_key(self.vault_url, name, error_map=_error_map, **kwargs)
         )
-        sd_disabled = deleted_key.recovery_id is None
+
         command = partial(self.get_deleted_key, name=name, **kwargs)
-        delete_key_polling_method = DeletePollingMethod(
+        polling_method = DeleteRecoverPollingMethod(
+            # no recovery ID means soft-delete is disabled, in which case we initialize the poller as finished
+            finished=deleted_key.recovery_id is None,
             command=command,
             final_resource=deleted_key,
-            initial_status="deleting",
-            finished_status="deleted",
-            sd_disabled=sd_disabled,
             interval=polling_interval,
         )
-        return KeyVaultOperationPoller(delete_key_polling_method)
+        return KeyVaultOperationPoller(polling_method)
 
     @distributed_trace
     def get_key(self, name, version=None, **kwargs):
@@ -397,14 +403,12 @@ class KeyClient(KeyVaultClientBase):
             )
         )
         command = partial(self.get_key, name=name, **kwargs)
-        recover_key_polling_method = RecoverDeletedPollingMethod(
-            command=command,
-            final_resource=recovered_key,
-            initial_status="recovering",
-            finished_status="recovered",
-            interval=polling_interval,
+        polling_method = DeleteRecoverPollingMethod(
+            finished=False, command=command, final_resource=recovered_key, interval=polling_interval,
         )
-        return KeyVaultOperationPoller(recover_key_polling_method)
+
+        return KeyVaultOperationPoller(polling_method)
+
 
     @distributed_trace
     def update_key_properties(self, name, version=None, **kwargs):
@@ -438,15 +442,21 @@ class KeyClient(KeyVaultClientBase):
         not_before = kwargs.pop("not_before", None)
         expires_on = kwargs.pop("expires_on", None)
         if enabled is not None or not_before is not None or expires_on is not None:
-            attributes = self._client.models.KeyAttributes(enabled=enabled, not_before=not_before, expires=expires_on)
+            attributes = self._models.KeyAttributes(enabled=enabled, not_before=not_before, expires=expires_on)
         else:
             attributes = None
+
+        parameters = self._models.KeyUpdateParameters(
+            key_ops=kwargs.pop("key_operations", None),
+            key_attributes=attributes,
+            tags=kwargs.pop("tags", None)
+        )
+
         bundle = self._client.update_key(
             self.vault_url,
             name,
             key_version=version or "",
-            key_ops=kwargs.pop("key_operations", None),
-            key_attributes=attributes,
+            parameters=parameters,
             error_map=_error_map,
             **kwargs
         )
@@ -502,7 +512,12 @@ class KeyClient(KeyVaultClientBase):
                 :caption: Restore a key backup
                 :dedent: 8
         """
-        bundle = self._client.restore_key(self.vault_url, backup, error_map=_error_map, **kwargs)
+        bundle = self._client.restore_key(
+            self.vault_url,
+            parameters=self._models.KeyRestoreParameters(key_bundle_backup=backup),
+            error_map=_error_map,
+            **kwargs
+        )
         return KeyVaultKey._from_key_bundle(bundle)
 
     @distributed_trace
@@ -529,15 +544,21 @@ class KeyClient(KeyVaultClientBase):
         not_before = kwargs.pop("not_before", None)
         expires_on = kwargs.pop("expires_on", None)
         if enabled is not None or not_before is not None or expires_on is not None:
-            attributes = self._client.models.KeyAttributes(enabled=enabled, not_before=not_before, expires=expires_on)
+            attributes = self._models.KeyAttributes(enabled=enabled, not_before=not_before, expires=expires_on)
         else:
             attributes = None
-        bundle = self._client.import_key(
-            self.vault_url,
-            name,
+
+        parameters = self._models.KeyImportParameters(
             key=key._to_generated_model(),
             key_attributes=attributes,
             hsm=kwargs.pop("hardware_protected", None),
+            tags=kwargs.pop("tags", None)
+        )
+
+        bundle = self._client.import_key(
+            self.vault_url,
+            name,
+            parameters=parameters,
             error_map=_error_map,
             **kwargs
         )

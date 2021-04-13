@@ -7,12 +7,18 @@ from .chained import ChainedTokenCredential
 from .default import DefaultAzureCredential
 from .environment import EnvironmentCredential
 from .managed_identity import ManagedIdentityCredential
-from .client_credential import CertificateCredential, ClientSecretCredential
+from .certificate import CertificateCredential
+from .client_secret import ClientSecretCredential
 from .shared_cache import SharedTokenCacheCredential
+from .azure_arc import AzureArcCredential
+from .azure_cli import AzureCliCredential
+from .vscode import VisualStudioCodeCredential
 
 
 __all__ = [
     "AuthorizationCodeCredential",
+    "AzureArcCredential",
+    "AzureCliCredential",
     "CertificateCredential",
     "ChainedTokenCredential",
     "ClientSecretCredential",
@@ -20,4 +26,5 @@ __all__ = [
     "EnvironmentCredential",
     "ManagedIdentityCredential",
     "SharedTokenCacheCredential",
+    "VisualStudioCodeCredential",
 ]

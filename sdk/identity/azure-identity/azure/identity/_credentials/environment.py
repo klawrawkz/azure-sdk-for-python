@@ -2,12 +2,16 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 # ------------------------------------
+import logging
 import os
+
 
 from .. import CredentialUnavailableError
 from .._constants import EnvironmentVariables
-from .client_credential import CertificateCredential, ClientSecretCredential
-from .user import UsernamePasswordCredential
+from .._internal.decorators import log_get_token
+from .certificate import CertificateCredential
+from .client_secret import ClientSecretCredential
+from .user_password import UsernamePasswordCredential
 
 
 try:
@@ -21,25 +25,7 @@ if TYPE_CHECKING:
 
     EnvironmentCredentialTypes = Union["CertificateCredential", "ClientSecretCredential", "UsernamePasswordCredential"]
 
-
-def get_credential_unavailable_message():
-    # type: () -> str
-    message = (
-        "Incomplete environment configuration. See "
-        + "https://aka.ms/python-sdk-identity#environment-variables for expected environment variables"
-    )
-
-    all_variables = {
-        _
-        for _ in EnvironmentVariables.CLIENT_SECRET_VARS
-        + EnvironmentVariables.CERT_VARS
-        + EnvironmentVariables.USERNAME_PASSWORD_VARS
-    }
-    set_variables = ", ".join(v for v in all_variables if v in os.environ)
-    if set_variables:
-        message += ". Currently set variables: {}".format(set_variables)
-
-    return message
+_LOGGER = logging.getLogger(__name__)
 
 
 class EnvironmentCredential(object):
@@ -71,7 +57,6 @@ class EnvironmentCredential(object):
     def __init__(self, **kwargs):
         # type: (Mapping[str, Any]) -> None
         self._credential = None  # type: Optional[EnvironmentCredentialTypes]
-        self._unavailable_message = ""
 
         if all(os.environ.get(v) is not None for v in EnvironmentVariables.CLIENT_SECRET_VARS):
             self._credential = ClientSecretCredential(
@@ -92,23 +77,40 @@ class EnvironmentCredential(object):
                 client_id=os.environ[EnvironmentVariables.AZURE_CLIENT_ID],
                 username=os.environ[EnvironmentVariables.AZURE_USERNAME],
                 password=os.environ[EnvironmentVariables.AZURE_PASSWORD],
-                tenant=os.environ.get(EnvironmentVariables.AZURE_TENANT_ID),  # optional for username/password auth
+                tenant_id=os.environ.get(EnvironmentVariables.AZURE_TENANT_ID),  # optional for username/password auth
                 **kwargs
             )
 
-        if not self._credential:
-            self._unavailable_message = get_credential_unavailable_message()
+        if self._credential:
+            _LOGGER.info("Environment is configured for %s", self._credential.__class__.__name__)
+        else:
+            expected_variables = set(
+                EnvironmentVariables.CERT_VARS
+                + EnvironmentVariables.CLIENT_SECRET_VARS
+                + EnvironmentVariables.USERNAME_PASSWORD_VARS
+            )
+            set_variables = [v for v in expected_variables if v in os.environ]
+            if set_variables:
+                _LOGGER.warning(
+                    "Incomplete environment configuration. These variables are set: %s", ", ".join(set_variables)
+                )
+            else:
+                _LOGGER.info("No environment configuration found.")
 
+    @log_get_token("EnvironmentCredential")
     def get_token(self, *scopes, **kwargs):  # pylint:disable=unused-argument
         # type: (*str, **Any) -> AccessToken
         """Request an access token for `scopes`.
 
-        .. note:: This method is called by Azure SDK clients. It isn't intended for use in application code.
+        This method is called automatically by Azure SDK clients.
 
-        :param str scopes: desired scopes for the token
+        :param str scopes: desired scopes for the access token. This method requires at least one scope.
         :rtype: :class:`azure.core.credentials.AccessToken`
         :raises ~azure.identity.CredentialUnavailableError: environment variable configuration is incomplete
         """
         if not self._credential:
-            raise CredentialUnavailableError(message=self._unavailable_message)
+            message = (
+                "EnvironmentCredential authentication unavailable. Environment variables are not fully configured."
+            )
+            raise CredentialUnavailableError(message=message)
         return self._credential.get_token(*scopes, **kwargs)

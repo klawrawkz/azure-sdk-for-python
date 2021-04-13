@@ -13,12 +13,16 @@ DESCRIPTION:
     This sample demonstrates how to detect language in a batch of different
     documents.
 
+    In this sample, we own a hotel with a lot of international clientele. We
+    are looking to catalog the reviews we have for our hotel by language, so
+    we can translate these reviews into English.
+
 USAGE:
     python sample_detect_language.py
 
     Set the environment variables with your own values before running the sample:
-    1) AZURE_TEXT_ANALYTICS_ENDPOINT - the endpoint to your cognitive services resource.
-    2) AZURE_TEXT_ANALYTICS_KEY - your text analytics subscription key
+    1) AZURE_TEXT_ANALYTICS_ENDPOINT - the endpoint to your Cognitive Services resource.
+    2) AZURE_TEXT_ANALYTICS_KEY - your Text Analytics subscription key
 """
 
 import os
@@ -26,68 +30,53 @@ import os
 
 class DetectLanguageSample(object):
 
-    endpoint = os.getenv("AZURE_TEXT_ANALYTICS_ENDPOINT")
-    key = os.getenv("AZURE_TEXT_ANALYTICS_KEY")
-
     def detect_language(self):
-        # [START batch_detect_language]
-        from azure.ai.textanalytics import TextAnalyticsClient, TextAnalyticsApiKeyCredential
-        text_analytics_client = TextAnalyticsClient(endpoint=self.endpoint, credential=TextAnalyticsApiKeyCredential(self.key))
+        print(
+            "In this sample we own a hotel with customers from all around the globe. We want to eventually "
+            "translate these reviews into English so our manager can read them. However, we first need to know which language "
+            "they are in for more accurate translation. This is the step we will be covering in this sample\n"
+        )
+        # [START detect_language]
+        from azure.core.credentials import AzureKeyCredential
+        from azure.ai.textanalytics import TextAnalyticsClient
+
+        endpoint = os.environ["AZURE_TEXT_ANALYTICS_ENDPOINT"]
+        key = os.environ["AZURE_TEXT_ANALYTICS_KEY"]
+
+        text_analytics_client = TextAnalyticsClient(endpoint=endpoint, credential=AzureKeyCredential(key))
         documents = [
-            "This document is written in English.",
-            "Este es un document escrito en Español.",
-            "这是一个用中文写的文件",
-            "Dies ist ein Dokument in englischer Sprache.",
-            "Detta är ett dokument skrivet på engelska."
+            """
+            The concierge Paulette was extremely helpful. Sadly when we arrived the elevator was broken, but with Paulette's help we barely noticed this inconvenience.
+            She arranged for our baggage to be brought up to our room with no extra charge and gave us a free meal to refurbish all of the calories we lost from
+            walking up the stairs :). Can't say enough good things about my experience!
+            """,
+            """
+            最近由于工作压力太大，我们决定去富酒店度假。那儿的温泉实在太舒服了，我跟我丈夫都完全恢复了工作前的青春精神！加油！
+            """
         ]
 
         result = text_analytics_client.detect_language(documents)
+        reviewed_docs = [doc for doc in result if not doc.is_error]
 
-        for idx, doc in enumerate(result):
-            if not doc.is_error:
-                print("Document text: {}".format(documents[idx]))
-                print("Language detected: {}".format(doc.primary_language.name))
-                print("ISO6391 name: {}".format(doc.primary_language.iso6391_name))
-                print("Confidence score: {}\n".format(doc.primary_language.score))
+        print("Let's see what language each review is in!")
+
+        for idx, doc in enumerate(reviewed_docs):
+            print("Review #{} is in '{}', which has ISO639-1 name '{}'\n".format(
+                idx, doc.primary_language.name, doc.primary_language.iso6391_name
+            ))
             if doc.is_error:
                 print(doc.id, doc.error)
-        # [END batch_detect_language]
-
-    def alternative_scenario_detect_language(self):
-        """This sample demonstrates how to retrieve batch statistics, the
-        model version used, and the raw response returned from the service.
-
-        It additionally shows an alternative way to pass in the input documents
-        using a list[DetectLanguageInput] and supplying your own IDs and country hints along
-        with the text.
-        """
-        from azure.ai.textanalytics import TextAnalyticsClient, TextAnalyticsApiKeyCredential
-        text_analytics_client = TextAnalyticsClient(endpoint=self.endpoint, credential=TextAnalyticsApiKeyCredential(self.key))
-
-        documents = [
-            {"id": "0", "country_hint": "US", "text": "This is a document written in English."},
-            {"id": "1", "country_hint": "MX", "text": "Este es un document escrito en Español."},
-            {"id": "2", "country_hint": "CN", "text": "这是一个用中文写的文件"},
-            {"id": "3", "country_hint": "DE", "text": "Dies ist ein Dokument in englischer Sprache."},
-            {"id": "4", "country_hint": "SE",  "text": "Detta är ett dokument skrivet på engelska."}
-        ]
-
-        extras = []
-
-        def callback(resp):
-            extras.append(resp.statistics)
-            extras.append(resp.model_version)
-            extras.append(resp.raw_response)
-
-        result = text_analytics_client.detect_language(
-            documents,
-            show_stats=True,
-            model_version="latest",
-            response_hook=callback
+        # [END detect_language]
+        print(
+            "When actually storing the reviews, we want to map the review to their ISO639-1 name "
+            "so everything is more standardized"
         )
+
+        review_to_language = {}
+        for idx, doc in enumerate(reviewed_docs):
+            review_to_language[documents[idx]] = doc.primary_language.iso6391_name
 
 
 if __name__ == '__main__':
     sample = DetectLanguageSample()
     sample.detect_language()
-    sample.alternative_scenario_detect_language()

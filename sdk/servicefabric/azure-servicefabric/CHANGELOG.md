@@ -1,5 +1,17 @@
 # Release History
 
+## 7.2.0.46 (2020-10-29)
+
+**Features**
+
+  - Added `update_partition_load` method to update the loads of provided partitions.
+
+## 7.1.0.45 (2020-05-14)
+
+**Bugfix**
+
+  - Fix ContainerCodePackageProperties entrypoint to entry_point
+
 ## 7.0.0.0 (2019-12-13)
 
 This is re-release of 6.6.0.0 to match the actual API version used

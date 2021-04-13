@@ -14,7 +14,7 @@ import json
 #    https://docs.microsoft.com/azure/cosmos-db/create-sql-api-python#create-a-database-account
 #
 # 2. Microsoft Azure Cosmos
-#    pip install azure-cosmos==4.0.0b6
+#    pip install azure-cosmos>=4.0.0
 # ----------------------------------------------------------------------------------------------------------
 # Sample - how to get and use resource token that allows restricted access to data
 # ----------------------------------------------------------------------------------------------------------
@@ -24,7 +24,8 @@ import json
 # Each time a Container is created the account will be billed for 1 hour of usage based on
 # the provisioned throughput (RU/s) of that account.
 # ----------------------------------------------------------------------------------------------------------
-
+# Adding region name to use the code sample in docs 
+#<configureConnectivity>
 HOST = config.settings["host"]
 MASTER_KEY = config.settings["master_key"]
 
@@ -116,6 +117,8 @@ def token_client_query(container, username):
 
 def run_sample():
     client = cosmos_client.CosmosClient(HOST, {"masterKey": MASTER_KEY})
+#</configureConnectivity>
+
 
     try:
         try:
@@ -141,7 +144,7 @@ def run_sample():
 
         permission = create_permission_if_not_exists(user, permission_definition)
         token = {}
-        token[container.id] = permission.properties["_token"]
+        token[container.container_link] = permission.properties["_token"]
 
         # Use token to connect to database
         token_client = cosmos_client.CosmosClient(HOST, token)
@@ -177,7 +180,7 @@ def run_sample():
         }
         permission = create_permission_if_not_exists(user_2, permission_definition)
         read_token = {}
-        read_token[container.id] = permission.properties["_token"]
+        read_token[container.container_link] = permission.properties["_token"]
 
         # Use token to connect to database
         token_client = cosmos_client.CosmosClient(HOST, read_token)
@@ -209,7 +212,7 @@ def run_sample():
         permission = create_permission_if_not_exists(user_2, permission_definition)
 
         item_token = {}
-        item_token[container.id] = permission.properties["_token"]
+        item_token[container.container_link] = permission.properties["_token"]
 
         # Use token to connect to database
         token_client = cosmos_client.CosmosClient(HOST, item_token)

@@ -25,7 +25,7 @@
 # --------------------------------------------------------------------------
 
 from ._base import HTTPPolicy, SansIOHTTPPolicy, RequestHistory
-from ._authentication import BearerTokenCredentialPolicy
+from ._authentication import BearerTokenCredentialPolicy, AzureKeyCredentialPolicy, AzureSasCredentialPolicy
 from ._custom_hook import CustomHookPolicy
 from ._redirect import RedirectPolicy
 from ._retry import RetryPolicy, RetryMode
@@ -44,6 +44,8 @@ __all__ = [
     'HTTPPolicy',
     'SansIOHTTPPolicy',
     'BearerTokenCredentialPolicy',
+    'AzureKeyCredentialPolicy',
+    'AzureSasCredentialPolicy',
     'HeadersPolicy',
     'UserAgentPolicy',
     'NetworkTraceLoggingPolicy',

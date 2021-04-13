@@ -1,5 +1,101 @@
 # Release History
 
+## 15.0.0 (2021-02-01)
+
+- Fix changelog
+
+## 15.0.0b1 (2021-01-28)
+
+**Features**
+
+  - Added new extensions property to VirtualMachineConfiguration on pools to specify virtual machine extensions for nodes
+  - Added the ability to specify availability zones using a new property node_placement_configuration on VirtualMachineConfiguration
+  - Added a new identity property on Pool to specify a managed identity
+  - Added a new user_assigned_identities on BatchAccountIdentity to specify a user managed identity
+  - Added certificate operation method PoolOperations.create
+  - Added certificate operation method CertificateOperations.create
+
+**Breaking changes**
+
+  - Removed certificate operation method PoolOperations.begin_create. Certificate operations are not long running operations so this was incorrect.
+  - Removed certificate operation method CertificateOperations.begin_create. Certificate operations are not long running operations so this was incorrect.
+
+## 14.0.0 (2020-12-22)
+
+- GA release
+
+## 14.0.0b1 (2020-10-23)
+
+This is beta preview version.
+
+This version uses a next-generation code generator that introduces important breaking changes, but also important new features (like unified authentication and async programming).
+
+**General breaking changes**
+
+- Credential system has been completly revamped:
+
+  - `azure.common.credentials` or `msrestazure.azure_active_directory` instances are no longer supported, use the `azure-identity` classes instead: https://pypi.org/project/azure-identity/
+  - `credentials` parameter has been renamed `credential`
+
+- The `config` attribute no longer exists on a client, configuration should be passed as kwarg. Example: `MyClient(credential, subscription_id, enable_logging=True)`. For a complete set of
+  supported options, see the [parameters accept in init documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
+- You can't import a `version` module anymore, use `__version__` instead
+- Operations that used to return a `msrest.polling.LROPoller` now returns a `azure.core.polling.LROPoller` and are prefixed with `begin_`.
+- Exceptions tree have been simplified and most exceptions are now `azure.core.exceptions.HttpResponseError` (`CloudError` has been removed).
+- Most of the operation kwarg have changed. Some of the most noticeable:
+
+  - `raw` has been removed. Equivalent feature can be found using `cls`, a callback that will give access to internal HTTP response for advanced user
+  - For a complete set of
+  supported options, see the [parameters accept in Request documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
+
+**General new features**
+
+- Type annotations support using `typing`. SDKs are mypy ready.
+- This client has now stable and official support for async. Check the `aio` namespace of your package to find the async client.
+- This client now support natively tracing library like OpenCensus or OpenTelemetry. See this [tracing quickstart](https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/core/azure-core-tracing-opentelemetry) for an overview.
+
+## 9.0.0 (2020-05-29)
+### REST API version
+- This version targets REST API version 2020-05-01.
+
+### Features
+- Added ability to access the Batch DataPlane API without needing a public DNS entry for the account via the new `public_network_access` property on `BatchAccount`.
+- Added new `PrivateLinkResource` and `PrivateEndpointConnection` resource types. These are both only used when the `public_network_access` property on `BatchAccount` is set to `Disabled`.
+  - When `public_network_access` is set to `Disabled` a new `PrivateLinkResource` is visible in that account, which can be used to connect to the account using an ARM Private Endpoint in your VNET.
+- Added ability to encrypt `ComputeNode` disk drives using the new `disk_encryption_configuration` property of `VirtualMachineConfiguration`.
+- **[Breaking]** The `id` property of `ImageReference` can now only refer to a Shared Image Gallery image.
+- **[Breaking]** Pools can now be provisioned without a public IP using the new `public_ip_configuration` property of `NetworkConfiguration`.
+  - The `public_ips` property of `NetworkConfiguration` has moved in to `PublicIPAddressConfiguration` as well. This property can only be specified if `IPAddressProvisioningType` is `UserManaged`.
+- Adds a new property `identity` of type `BatchAccountIdentity` to `BatchAccount`. This can be used to configure how customer data is encrypted inside the Batch account.
+    - This new property is configurable at  the account level on create and update through a new `identity` property on `BatchAccountCreateParameters` and `BatchAccountUpdateParameters`
+
+### Fixes
+- [Breaking] Move tags from being an argument on create and update pool parameters to being a part of `BatchAccountCreateParameters` and `BatchAccountUpdateParameters` to properly reflect the REST API
+
+## 8.0.1 (2020-05-26) [Deprecated]
+### Notices
+- This version targeted an invalid REST API. This version does not honor the associated REST API contract.
+
+### Bugfixes
+- Fix issues in PrivateEndpointConnection get and update methods due to mistakes in the Swagger specification causing validation to fail. It is advised to use version 9+ to make use of the features added in this version.
+
+## 8.0.0 (2020-04-10) [Deprecated]
+### Notices
+- This version targeted an invalid REST API. Currently the PrivateEndpoint get() and update() functions do not function correctly. It is advised to use version 9+ to make use of the features added in this version.
+
+### REST API version
+- This version targets REST API version 2020-03-01.
+
+### Features
+- Added ability to access the Batch DataPlane API without needing a public DNS entry for the account via the new `public_network_access` property on `BatchAccount`.
+- Added new `PrivateLinkResource` and `PrivateEndpointConnection` resource types. These are both only used when the `public_network_access` property on `BatchAccount` is set to `Disabled`.
+  - When `public_network_access` is set to `Disabled` a new `PrivateLinkResource` is visible in that account, which can be used to connect to the account using an ARM Private Endpoint in your VNET.
+- Added ability to encrypt `ComputeNode` disk drives using the new `disk_encryption_configuration` property of `VirtualMachineConfiguration`.
+- **[Breaking]** The `id` property of `ImageReference` can now only refer to a Shared Image Gallery image.
+- **[Breaking]** Pools can now be provisioned without a public IP using the new `public_ip_configuration` property of `NetworkConfiguration`.
+  - The `public_ips` property of `NetworkConfiguration` has moved in to `PublicIPAddressConfiguration` as well. This property can only be specified if `IPAddressProvisioningType` is `UserManaged`.
+
+
 ## 7.0.0 (2019-08-05)
 
   - Added ability to specify a collection of public IPs on

@@ -6,44 +6,129 @@
 ###########
 
 # Catch all
-/sdk/ @mayurid
+/sdk/ @mayurid @lmazuel
 
 # Core
-/sdk/core/ @lmazuel @xiangyan99 @johanste
-/sdk/core/azure-core/ @xiangyan99 @bryevdv
+# PRLabel: %Azure.Core
+/sdk/core/                                                           @lmazuel @xiangyan99 @johanste @rakshith91
+/sdk/core/azure-core/                                                @xiangyan99 @lmazuel
 
+####
 # Service team
-/sdk/identity/ @chlowell @schaabs
-/sdk/eventhub/ @annatisch @yunhaoling @YijunXieMS
-/sdk/storage/ @zezha-msft @annatisch @rakshith91 @xiafu-msft
-/sdk/applicationinsights/ @alexeldeib
-/sdk/batch/ @bgklein @matthchr @xingwu1
-/sdk/cognitiveservices/azure-cognitiveservices-vision-customvision/ @areddish
-/sdk/keyvault/ @schaabs @chlowell @iscai-msft
-/sdk/loganalytics/ @alexeldeib
-/sdk/consumption/ @sandeepnl
-/sdk/containerinstance/ @samkreter @xizhamsft
-/sdk/containerregistry/ @djyou
-/sdk/containerservice/ @samkreter @zqingqing1 @GaneshaThirumurthi
-/sdk/cosmos/ @shurd
-/sdk/datafactory/ @hvermis
-/sdk/datalake/ @ro-joowan
-/sdk/datadatamigration/ @vchske
-/sdk/eventgrid/ @kalyanaj
-/sdk/hdinsight/ @idear1203
-/sdk/machinelearningcompute/ @shutchings
-/sdk/recoveryservices/ @DheerendraRathor
-/sdk/servicefabric/ @QingChenmsft @samedder
-/sql/sql/ @jaredmoo
-/sdk/servicebus/ @annatisch @yunhaoling @YijunXieMS @KieranBrantnerMagee
-/sdk/synapse/ @aim-for-better @idear1203
+####
+# PRLabel: %Azure.Identity
+/sdk/identity/                                                       @chlowell @mccoyp @schaabs
+
+# PRLabel: %Event Hubs
+/sdk/eventhub/                                                       @annatisch @yunhaoling @swathipil @rakshith91
+
+# PRLabel: %Storage
+/sdk/storage/                                                        @amishra-dev @zezha-msft @annatisch @xiafu-msft @tasherif-msft @kasobol-msft
+
+# PRLabel: %App Configuration
+/sdk/appconfiguration/                                               @xiangyan99 @seankane-msft
+
+/sdk/applicationinsights/azure-applicationinsights/                  @divya-jay @geneh @alongafni
+/sdk/loganalytics/azure-loganalytics/                                @divya-jay @geneh @alongafni
+
+# PRLabel: %Batch
+/sdk/batch/                                                          @cRui861 @paterasMSFT @dpwatrous @gingi @zfengms
+/sdk/cognitiveservices/azure-cognitiveservices-vision-customvision/  @areddish
+
+# PRLabel: %Communication
+/sdk/communication/                                                  @turalf @ankitarorabit @memontic-ms @Azure/azure-sdk-communication-code-reviewers
+
+# PRLabel: %KeyVault
+/sdk/keyvault/                                                       @schaabs @chlowell @mccoyp
+
+# PRLabel: %Monitor - LogAnalytics
+/sdk/loganalytics/                                                   @alexeldeib
+
+# PRLabel: %Monitor - Exporter
+/sdk/monitor/azure-monitor-opentelemetry-exporter                    @rakshith91 @lmazuel @lzchen
+
+# PRLabel: %Consumption
+/sdk/consumption/                                                    @sandeepnl
+
+# PRLabel: %Container Instances
+/sdk/containerinstance/                                              @samkreter @xizhamsft
+
+# PRLabel: %Container Registry
+/sdk/containerregistry/                                              @djyou
+/sdk/containerservice/                                               @samkreter @zqingqing1 @GaneshaThirumurthi
+
+# PRLabel: %Cosmos
+/sdk/cosmos/                                                         @southpolesteve @zfoster
+
+# PRLabel: %Data Factory
+/sdk/datafactory/                                                    @hvermis
+/sdk/datalake/                                                       @ro-joowan
+/sdk/datadatamigration/                                              @vchske
+
+# PRLabel: %Event Grid
+/sdk/eventgrid/                                                      @lmazuel @yunhaoling @swathipil @rakshith91
+
+# PRLabel: %HDInsight
+/sdk/hdinsight/                                                      @idear1203
+
+# PRLabel: %Machine Learning Compute
+/sdk/machinelearningcompute/                                         @shutchings
+
+# PRLabel: %Recovery Services
+/sdk/recoveryservices/                                               @DheerendraRathor
+
+# PRLabel: %Schema Registry
+/sdk/schemaregistry/                                                 @yunhaoling
+
+# PRLabel: %Search
+/sdk/search/                                                         @xiangyan99
+
+# PRLabel: %Service Fabric
+/sdk/servicefabric/                                                  @QingChenmsft @samedder
+
+# PRLabel: %SQL
+/sql/sql/                                                            @jaredmoo
+
+# PRLabel: %Service Bus
+/sdk/servicebus/                                                     @annatisch @yunhaoling @swathipil @rakshith91
+
+# PRLabel: %Synapse
+/sdk/synapse/                                                        @aim-for-better @idear1203
+
+# PRLabel: %EngSys
+/sdk/template/                                                       @Azure/azure-sdk-eng
+
+# PRLabel: %Cognitive - Text Analytics
+/sdk/textanalytics/                                                  @kristapratico @iscai-msft @abhahn
+
+# PRLabel: %Cognitive - Form Recognizer
+/sdk/formrecognizer/                                                 @kristapratico @iscai-msft @catalinaperalta
+
+# PRLabel: %Cognitive - Metrics Advisor
+/sdk/metricsadvisor/                                                 @xiangyan99 @kristapratico
+
+# PRLabel: %Cognitive - Translator
+/sdk/translation/                                                    @kristapratico @mohamedshabanofficial
+
+# PRLabel: %Tables
+/sdk/tables/                                                         @seankane-msft
+
+# PRLabel: %Media
+/sdk/media/                                                          @naiteeks @bennage @giakas
+
+# PRLabel: %Container Registry
+/sdk/containerregistry/                                              @seankane-msft
+
+# Smoke Tests
+/common/smoketest/                                                   @lmazuel @chlowell @annatisch @rakshith91 @shurd @southpolesteve
 
 # Management Plane
-/**/*mgmt*/ @zikalino
+/**/*mgmt*/     @00Kai0 @msyyc @jsntcy @changlong-liu
+
 
 ###########
 # Eng Sys
 ###########
-/eng/   @weshaggard @scbedd @mitchdenny @danieljurek
+/eng/           @weshaggard @scbedd @mitchdenny @danieljurek
 /**/tests.yml   @danieljurek
 /**/ci.yml      @mitchdenny

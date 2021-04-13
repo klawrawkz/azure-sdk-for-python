@@ -22,7 +22,8 @@ from azure.core.pipeline.policies import (
     UserAgentPolicy,
 )
 from azure.core.pipeline.transport import RequestsTransport, HttpRequest
-from ._constants import AZURE_CLI_CLIENT_ID, KnownAuthorities
+from ._constants import DEVELOPER_SIGN_ON_CLIENT_ID, DEFAULT_REFRESH_OFFSET, DEFAULT_TOKEN_REFRESH_RETRY_DELAY
+from ._internal import get_default_authority, normalize_authority
 from ._internal.user_agent import USER_AGENT
 
 try:
@@ -38,10 +39,12 @@ except ImportError:
 if TYPE_CHECKING:
     # pylint:disable=unused-import,ungrouped-imports
     from time import struct_time
-    from typing import Any, Dict, Iterable, Mapping, Optional, Union
+    from typing import Any, Dict, Iterable, List, Mapping, Optional, Union
     from azure.core.pipeline import PipelineResponse
     from azure.core.pipeline.transport import HttpTransport
-    from azure.core.pipeline.policies import HTTPPolicy
+    from azure.core.pipeline.policies import HTTPPolicy, SansIOHTTPPolicy
+
+    PolicyListType = List[Union[HTTPPolicy, SansIOHTTPPolicy]]
 
 
 class AuthnClientBase(ABC):
@@ -61,9 +64,12 @@ class AuthnClientBase(ABC):
         else:
             if not tenant:
                 raise ValueError("'tenant' is required")
-            authority = authority or KnownAuthorities.AZURE_PUBLIC_CLOUD
-            self._auth_url = "https://" + "/".join((authority.strip("/"), tenant.strip("/"), "oauth2/v2.0/token"))
+            authority = normalize_authority(authority) if authority else get_default_authority()
+            self._auth_url = "/".join((authority, tenant.strip("/"), "oauth2/v2.0/token"))
         self._cache = kwargs.get("cache") or TokenCache()  # type: TokenCache
+        self._token_refresh_retry_delay = DEFAULT_TOKEN_REFRESH_RETRY_DELAY
+        self._token_refresh_offset = DEFAULT_REFRESH_OFFSET
+        self._last_refresh_time = 0
 
     @property
     def auth_url(self):
@@ -74,7 +80,7 @@ class AuthnClientBase(ABC):
         tokens = self._cache.find(TokenCache.CredentialType.ACCESS_TOKEN, target=list(scopes))
         for token in tokens:
             expires_on = int(token["expires_on"])
-            if expires_on - 300 > int(time.time()):
+            if expires_on > int(time.time()):
                 return AccessToken(token["secret"], expires_on)
         return None
 
@@ -83,7 +89,7 @@ class AuthnClientBase(ABC):
             "grant_type": "refresh_token",
             "refresh_token": refresh_token["secret"],
             "scope": " ".join(scopes),
-            "client_id": AZURE_CLI_CLIENT_ID,  # TODO: first-party app for SDK?
+            "client_id": DEVELOPER_SIGN_ON_CLIENT_ID,
         }
         return self._prepare_request(form_data=data)
 
@@ -101,7 +107,9 @@ class AuthnClientBase(ABC):
         if not payload or "access_token" not in payload or not ("expires_in" in payload or "expires_on" in payload):
             if payload and "access_token" in payload:
                 payload["access_token"] = "****"
-            raise ClientAuthenticationError(message="Unexpected response '{}'".format(payload))
+            raise ClientAuthenticationError(
+                message="Unexpected response '{}'".format(payload), response=response.http_response
+            )
 
         token = payload["access_token"]
 
@@ -148,10 +156,9 @@ class AuthnClientBase(ABC):
 
         raise ValueError("'{}' doesn't match the expected format".format(expires_on))
 
-    # TODO: public, factor out of request_token
     def _prepare_request(
         self,
-        method="POST",  # type: Optional[str]
+        method="POST",  # type: str
         headers=None,  # type: Optional[Mapping[str, str]]
         form_data=None,  # type: Optional[Mapping[str, str]]
         params=None,  # type: Optional[Dict[str, str]]
@@ -182,7 +189,7 @@ class AuthnClient(AuthnClientBase):
     def __init__(
         self,
         config=None,  # type: Optional[Configuration]
-        policies=None,  # type: Optional[Iterable[HTTPPolicy]]
+        policies=None,  # type: Optional[PolicyListType]
         transport=None,  # type: Optional[HttpTransport]
         **kwargs  # type: Any
     ):
@@ -199,13 +206,13 @@ class AuthnClient(AuthnClientBase):
         ]
         if not transport:
             transport = RequestsTransport(**kwargs)
-        self._pipeline = Pipeline(transport=transport, policies=policies)
+        self._pipeline = Pipeline(transport=transport, policies=policies)  # type: Pipeline
         super(AuthnClient, self).__init__(**kwargs)
 
     def request_token(
         self,
         scopes,  # type: Iterable[str]
-        method="POST",  # type: Optional[str]
+        method="POST",  # type: str
         headers=None,  # type: Optional[Mapping[str, str]]
         form_data=None,  # type: Optional[Mapping[str, str]]
         params=None,  # type: Optional[Dict[str, str]]
@@ -214,6 +221,7 @@ class AuthnClient(AuthnClientBase):
         # type: (...) -> AccessToken
         request = self._prepare_request(method, headers=headers, form_data=form_data, params=params)
         request_time = int(time.time())
+        self._last_refresh_time = request_time   # no matter succeed or not, update the last refresh time
         response = self._pipeline.run(request, stream=False, **kwargs)
         token = self._deserialize_and_cache_token(response=response, scopes=scopes, request_time=request_time)
         return token

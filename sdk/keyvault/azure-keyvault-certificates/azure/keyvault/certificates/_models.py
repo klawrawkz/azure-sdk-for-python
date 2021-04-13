@@ -4,8 +4,8 @@
 # ------------------------------------
 
 # pylint: disable=too-many-lines,too-many-public-methods
-from ._shared import parse_vault_id
-from ._shared._generated.v7_0 import models
+from ._shared import parse_key_vault_id
+from ._generated.v7_1 import models
 from ._enums import(
     CertificatePolicyAction,
     KeyUsageType,
@@ -147,7 +147,7 @@ class CertificateProperties(object):
         # type: (**Any) -> None
         self._attributes = kwargs.pop("attributes", None)
         self._id = kwargs.pop("cert_id", None)
-        self._vault_id = parse_vault_id(self._id)
+        self._vault_id = parse_key_vault_id(self._id)
         self._x509_thumbprint = kwargs.pop("x509_thumbprint", None)
         self._tags = kwargs.pop("tags", None)
 
@@ -230,6 +230,18 @@ class CertificateProperties(object):
         return self._attributes.updated if self._attributes else None
 
     @property
+    def recoverable_days(self):
+        # type: () -> Optional[int]
+        """The number of days the certificate is retained before being deleted from a soft-delete enabled Key Vault.
+
+        :rtype: int
+        """
+        # recoverable_days was added in 7.1-preview
+        if self._attributes and hasattr(self._attributes, "recoverable_days"):
+            return self._attributes.recoverable_days
+        return None
+
+    @property
     def recovery_level(self):
         # type: () -> models.DeletionRecoveryLevel
         """The deletion recovery level currently in effect for the certificate.
@@ -308,11 +320,17 @@ class KeyVaultCertificate(object):
         # type: (models.CertificateBundle) -> KeyVaultCertificate
         """Construct a certificate from an autorest-generated certificateBundle"""
         # pylint:disable=protected-access
+
+        if certificate_bundle.policy:
+            policy = CertificatePolicy._from_certificate_policy_bundle(certificate_bundle.policy)
+        else:
+            policy = None
+
         return cls(
             properties=CertificateProperties._from_certificate_item(certificate_bundle),
             key_id=certificate_bundle.kid,
             secret_id=certificate_bundle.sid,
-            policy=CertificatePolicy._from_certificate_policy_bundle(certificate_bundle.policy),
+            policy=policy,
             cer=certificate_bundle.cer,
         )
 
@@ -412,7 +430,7 @@ class CertificateOperation(object):
     ):
         # type: (...) -> None
         self._id = cert_operation_id
-        self._vault_id = parse_vault_id(cert_operation_id)
+        self._vault_id = parse_key_vault_id(cert_operation_id)
         self._issuer_name = issuer_name
         self._certificate_type = certificate_type
         self._certificate_transparency = certificate_transparency
@@ -432,21 +450,18 @@ class CertificateOperation(object):
     def _from_certificate_operation_bundle(cls, certificate_operation_bundle):
         # type: (models.CertificateOperation) -> CertificateOperation
         """Construct a CertificateOperation from an autorest-generated CertificateOperation"""
+
+        issuer_parameters = certificate_operation_bundle.issuer_parameters
         return cls(
             cert_operation_id=certificate_operation_bundle.id,
-            issuer_name=(certificate_operation_bundle.issuer_parameters.name
-                if certificate_operation_bundle.issuer_parameters
-                else None),
+            issuer_name=issuer_parameters.name,
             certificate_type=(
                 certificate_operation_bundle.issuer_parameters.certificate_type
                 if certificate_operation_bundle.issuer_parameters
                 else None
             ),
-            certificate_transparency=(
-                certificate_operation_bundle.issuer_parameters.certificate_transparency
-                if certificate_operation_bundle.issuer_parameters
-                else None
-            ),
+            # 2016-10-01 IssuerParameters doesn't have certificate_transparency
+            certificate_transparency=getattr(issuer_parameters, "certificate_transparency", None),
             csr=certificate_operation_bundle.csr,
             cancellation_requested=certificate_operation_bundle.cancellation_requested,
             status=certificate_operation_bundle.status,
@@ -649,7 +664,7 @@ class CertificatePolicy(object):
             issuer_parameters = models.IssuerParameters(
                 name=self.issuer_name,
                 certificate_type=self.certificate_type,
-                certificate_transparency=self.certificate_transparency,
+                certificate_transparency=self.certificate_transparency,  # 2016-10-01 model will ignore this
             )
         else:
             issuer_parameters = None
@@ -757,27 +772,23 @@ class CertificatePolicy(object):
         else:
             key_usage = None
         key_properties = certificate_policy_bundle.key_properties
+        curve_name = getattr(key_properties, "curve", None)  # missing from 2016-10-01 KeyProperties
+        if curve_name:
+            curve_name = KeyCurveName(curve_name)
+
+        issuer_parameters = certificate_policy_bundle.issuer_parameters
         return cls(
-            issuer_name=(certificate_policy_bundle.issuer_parameters.name
-                if certificate_policy_bundle.issuer_parameters else None
-            ),
+            issuer_name=issuer_parameters.name,
             subject=(x509_certificate_properties.subject if x509_certificate_properties else None),
-            certificate_type=(
-                certificate_policy_bundle.issuer_parameters.certificate_type
-                if certificate_policy_bundle.issuer_parameters
-                else None
-            ),
-            certificate_transparency=(
-                certificate_policy_bundle.issuer_parameters.certificate_transparency
-                if certificate_policy_bundle.issuer_parameters
-                else None
-            ),
+            certificate_type=issuer_parameters.certificate_type,
+            # 2016-10-01 IssuerParameters doesn't have certificate_transparency
+            certificate_transparency=getattr(issuer_parameters, "certificate_transparency", None),
             lifetime_actions=lifetime_actions,
             exportable=key_properties.exportable if key_properties else None,
             key_type=KeyType(key_properties.key_type) if key_properties and key_properties.key_type else None,
             key_size=key_properties.key_size if key_properties else None,
             reuse_key=key_properties.reuse_key if key_properties else None,
-            key_curve_name=KeyCurveName(key_properties.curve) if key_properties and key_properties.curve else None,
+            key_curve_name=curve_name,
             enhanced_key_usage=x509_certificate_properties.ekus if x509_certificate_properties else None,
             key_usage=key_usage,
             content_type=(
@@ -1047,7 +1058,7 @@ class IssuerProperties(object):
     def __init__(self, provider=None, **kwargs):
         # type: (Optional[str], **Any) -> None
         self._id = kwargs.pop("issuer_id", None)
-        self._vault_id = parse_vault_id(self._id)
+        self._vault_id = parse_key_vault_id(self._id)
         self._provider = provider
 
     def __repr__(self):
@@ -1109,7 +1120,7 @@ class CertificateIssuer(object):
         self._organization_id = organization_id
         self._admin_contacts = admin_contacts
         self._id = kwargs.pop("issuer_id", None)
-        self._vault_id = parse_vault_id(self._id)
+        self._vault_id = parse_key_vault_id(self._id)
 
     def __repr__(self):
         # type () -> str
@@ -1146,9 +1157,9 @@ class CertificateIssuer(object):
     @property
     def name(self):
         # type: () -> str
-        # Issuer name is listed under version under vault_id
-        # This is because the id we pass to parse_vault_id has an extra segment, so where most cases the version of
-        # The general pattern is certificates/name/version, but here we have certificates/issuers/name/version
+        # Issuer name is listed under version under vault_id.
+        # This is because the id we pass to parse_key_vault_id has an extra segment, so where most cases the version of
+        # the general pattern is certificates/name/version, but here we have certificates/issuers/name/version.
         # Issuers are not versioned.
         """:rtype: str"""
         return self._vault_id.version

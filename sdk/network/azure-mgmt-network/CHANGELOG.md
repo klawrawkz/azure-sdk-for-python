@@ -1,5 +1,271 @@
 # Release History
 
+## 18.0.0 (2021-03-08)
+
+**Features**
+
+  - Model VpnConnection has a new parameter traffic_selector_policies
+  - Model VirtualNetworkGateway has a new parameter virtual_network_extended_location
+  - Model VirtualNetworkGateway has a new parameter v_net_extended_location_resource_id
+  - Model VpnClientConfiguration has a new parameter vpn_authentication_types
+  - Model LoadBalancerBackendAddress has a new parameter subnet
+  - Model ServiceEndpointPolicy has a new parameter kind
+  - Model FirewallPolicy has a new parameter snat
+  - Model FirewallPolicy has a new parameter insights
+  - Added operation VirtualNetworkGatewayConnectionsOperations.begin_reset_connection
+  - Added operation VpnLinkConnectionsOperations.begin_get_ike_sas
+  - Added operation VpnLinkConnectionsOperations.begin_reset_connection
+
+**Breaking changes**
+
+  - Model VirtualNetworkGateway no longer has parameter extended_location
+  - Model VirtualNetworkGateway no longer has parameter virtual_network_extended_location_resource_id
+
+## 17.1.0 (2021-01-26)
+
+**Features**
+  - Model PrivateEndpoint has a new parameter extended_location
+  - Model VpnGateway has a new parameter nat_rules
+  - Model ExpressRouteConnection has a new parameter express_route_gateway_bypass
+  - Model SecurityRule has a new parameter type
+  - Model PrivateLinkService has a new parameter extended_location
+  - Model Route has a new parameter type
+  - Model Route has a new parameter has_bgp_override
+  - Model RouteTable has a new parameter resource_guid
+  - Model VpnSiteLinkConnection has a new parameter ingress_nat_rules
+  - Model VpnSiteLinkConnection has a new parameter vpn_link_connection_mode
+  - Model VpnSiteLinkConnection has a new parameter egress_nat_rules
+  - Model BackendAddressPool has a new parameter location
+  - Model CustomIpPrefix has a new parameter extended_location
+  - Added operation ExpressRouteGatewaysOperations.begin_update_tags
+  - Added operation VirtualNetworkGatewayConnectionsOperations.begin_get_ike_sas
+  - Added operation group NatRulesOperations
+
+## 17.0.0 (2020-11-25)
+
+**Features**
+
+  - Model PublicIPPrefix has a new parameter extended_location
+  - Model PublicIPPrefixSku has a new parameter tier
+  - Model NatRule has a new parameter translated_fqdn
+  - Model NetworkInterface has a new parameter extended_location
+  - Model ApplicationRule has a new parameter terminate_tls
+  - Model ApplicationRule has a new parameter web_categories
+  - Model ApplicationRule has a new parameter target_urls
+  - Model VirtualNetworkGatewayConnection has a new parameter connection_mode
+  - Model LoadBalancer has a new parameter extended_location
+  - Model PublicIPAddress has a new parameter extended_location
+  - Model LoadBalancerSku has a new parameter tier
+  - Model VirtualNetwork has a new parameter extended_location
+  - Model P2SVpnGateway has a new parameter is_routing_preference_internet
+  - Model IpGroup has a new parameter firewall_policies
+  - Model VpnGateway has a new parameter is_routing_preference_internet
+  - Model VirtualNetworkGateway has a new parameter extended_location
+  - Model VirtualNetworkGateway has a new parameter virtual_network_extended_location_resource_id
+  - Model VirtualNetworkGatewayConnectionListEntity has a new parameter connection_mode
+  - Model FirewallPolicy has a new parameter sku
+  - Model FirewallPolicy has a new parameter transport_security
+  - Model FirewallPolicy has a new parameter identity
+  - Model FirewallPolicy has a new parameter intrusion_detection
+  - Model VirtualHub has a new parameter allow_branch_to_branch_traffic
+  - Model PublicIPAddressSku has a new parameter tier
+  - Model ServiceTagsListResult has a new parameter next_link
+  - Model LoadBalancerBackendAddress has a new parameter load_balancer_frontend_ip_configuration
+  - Added operation NetworkInterfacesOperations.list_cloud_service_network_interfaces
+  - Added operation NetworkInterfacesOperations.get_cloud_service_network_interface
+  - Added operation NetworkInterfacesOperations.list_cloud_service_role_instance_network_interfaces
+  - Added operation PublicIPAddressesOperations.list_cloud_service_role_instance_public_ip_addresses
+  - Added operation PublicIPAddressesOperations.list_cloud_service_public_ip_addresses
+  - Added operation PublicIPAddressesOperations.get_cloud_service_public_ip_address
+  - Added operation group WebCategoriesOperations
+
+**Breaking changes**
+
+  - Operation ConnectionMonitorsOperations.begin_create_or_update has a new signature
+  - Model VirtualHub no longer has parameter enable_virtual_router_route_propogation
+  
+## 16.0.0 (2020-09-15)
+
+**Features**
+
+  - Model VirtualNetworkPeering has a new parameter remote_bgp_communities
+  - Model VirtualHub has a new parameter virtual_router_asn
+  - Model VirtualHub has a new parameter routing_state
+  - Model VirtualHub has a new parameter ip_configurations
+  - Model VirtualHub has a new parameter virtual_router_ips
+  - Model VirtualHub has a new parameter enable_virtual_router_route_propogation
+  - Model VirtualHub has a new parameter bgp_connections
+  - Model FirewallPolicyRule has a new parameter description
+  - Model ExpressRouteLinkMacSecConfig has a new parameter sci_state
+  - Model VpnGateway has a new parameter ip_configurations
+  - Model P2SConnectionConfiguration has a new parameter enable_internet_security
+  - Model ConnectionMonitorEndpoint has a new parameter type
+  - Model ConnectionMonitorEndpoint has a new parameter coverage_level
+  - Model ConnectionMonitorEndpoint has a new parameter scope
+  - Model FirewallPolicy has a new parameter rule_collection_groups
+  - Model FirewallPolicy has a new parameter dns_settings
+  - Model NetworkInterface has a new parameter dscp_configuration
+  - Model NetworkVirtualAppliance has a new parameter address_prefix
+  - Model NetworkVirtualAppliance has a new parameter cloud_init_configuration_blobs
+  - Model NetworkVirtualAppliance has a new parameter boot_strap_configuration_blobs
+  - Model NetworkVirtualAppliance has a new parameter cloud_init_configuration
+  - Model NetworkVirtualAppliance has a new parameter inbound_security_rules
+  - Model NetworkVirtualAppliance has a new parameter nva_sku
+  - Model NetworkVirtualAppliance has a new parameter virtual_appliance_sites
+  - Model ConnectionMonitorTcpConfiguration has a new parameter destination_port_behavior
+  - Model ApplicationGatewayHttpListener has a new parameter ssl_profile
+  - Model P2SVpnGateway has a new parameter custom_dns_servers
+  - Model ApplicationGateway has a new parameter private_link_configurations
+  - Model ApplicationGateway has a new parameter trusted_client_certificates
+  - Model ApplicationGateway has a new parameter private_endpoint_connections
+  - Model ApplicationGateway has a new parameter ssl_profiles
+  - Model HubIPAddresses has a new parameter public_i_ps
+  - Model PublicIPPrefix has a new parameter custom_ip_prefix
+  - Model ApplicationGatewayFrontendIPConfiguration has a new parameter private_link_configuration
+  - Model VpnSite has a new parameter o365_policy
+  - Model ConnectivityHop has a new parameter previous_links
+  - Model ConnectivityHop has a new parameter previous_hop_ids
+  - Model ConnectivityHop has a new parameter links
+  - Added operation ExpressRoutePortsOperations.generate_loa
+  - Added operation FlowLogsOperations.update_tags
+  - Added operation HubVirtualNetworkConnectionsOperations.begin_create_or_update
+  - Added operation HubVirtualNetworkConnectionsOperations.begin_delete
+  - Added operation VpnGatewaysOperations.begin_stop_packet_capture
+  - Added operation VpnGatewaysOperations.begin_start_packet_capture
+  - Added operation VpnGatewaysOperations.begin_update_tags
+  - Added operation VpnConnectionsOperations.begin_stop_packet_capture
+  - Added operation VpnConnectionsOperations.begin_start_packet_capture
+  - Added operation PrivateLinkServicesOperations.begin_check_private_link_service_visibility_by_resource_group
+  - Added operation PrivateLinkServicesOperations.begin_check_private_link_service_visibility
+  - Added operation VirtualHubsOperations.begin_get_effective_virtual_hub_routes
+  - Added operation P2SVpnGatewaysOperations.begin_reset
+  - Added operation P2SVpnGatewaysOperations.begin_update_tags
+  - Added operation group CustomIPPrefixesOperations
+  - Added operation group VirtualApplianceSitesOperations
+  - Added operation group DscpConfigurationOperations
+  - Added operation group VirtualHubIpConfigurationOperations
+  - Added operation group VirtualHubBgpConnectionOperations
+  - Added operation group InboundSecurityRuleOperations
+  - Added operation group VirtualApplianceSkusOperations
+  - Added operation group ApplicationGatewayPrivateLinkResourcesOperations
+  - Added operation group ApplicationGatewayPrivateEndpointConnectionsOperations
+  - Added operation group FirewallPolicyRuleCollectionGroupsOperations
+  - Added operation group VirtualHubBgpConnectionsOperations
+
+**Breaking changes**
+
+  - Model VirtualHub no longer has parameter virtual_network_connections
+  - Model FirewallPolicyRule no longer has parameter priority
+  - Model FirewallPolicy no longer has parameter transport_security
+  - Model FirewallPolicy no longer has parameter rule_groups
+  - Model FirewallPolicy no longer has parameter intrusion_system_mode
+  - Model FirewallPolicy no longer has parameter identity
+  - Model NetworkVirtualAppliance no longer has parameter boot_strap_configuration_blob
+  - Model NetworkVirtualAppliance no longer has parameter sku
+  - Model NetworkVirtualAppliance no longer has parameter cloud_init_configuration_blob
+  - Model NatRuleCondition no longer has parameter terminate_tls
+  - Model HubIPAddresses no longer has parameter public_ip_addresses
+  - Model ApplicationRuleCondition no longer has parameter target_urls
+  - Removed operation VpnGatewaysOperations.update_tags
+  - Removed operation PrivateLinkServicesOperations.check_private_link_service_visibility_by_resource_group
+  - Removed operation PrivateLinkServicesOperations.check_private_link_service_visibility
+  - Removed operation P2SVpnGatewaysOperations.update_tags
+
+## 16.0.0b1 (2020-06-17)
+
+This is beta preview version.
+For detailed changelog please refer to equivalent stable version 10.2.0 (https://pypi.org/project/azure-mgmt-network/10.2.0/)
+
+This version uses a next-generation code generator that introduces important breaking changes, but also important new features (like unified authentication and async programming).
+
+**General breaking changes**
+
+- Credential system has been completly revamped:
+
+  - `azure.common.credentials` or `msrestazure.azure_active_directory` instances are no longer supported, use the `azure-identity` classes instead: https://pypi.org/project/azure-identity/
+  - `credentials` parameter has been renamed `credential`
+
+- The `config` attribute no longer exists on a client, configuration should be passed as kwarg. Example: `MyClient(credential, subscription_id, enable_logging=True)`. For a complete set of
+  supported options, see the [parameters accept in init documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
+- You can't import a `version` module anymore, use `__version__` instead
+- Operations that used to return a `msrest.polling.LROPoller` now returns a `azure.core.polling.LROPoller` and are prefixed with `begin_`.
+- Exceptions tree have been simplified and most exceptions are now `azure.core.exceptions.HttpResponseError` (`CloudError` has been removed).
+- Most of the operation kwarg have changed. Some of the most noticeable:
+
+  - `raw` has been removed. Equivalent feature can be found using `cls`, a callback that will give access to internal HTTP response for advanced user
+  - For a complete set of
+  supported options, see the [parameters accept in Request documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
+
+**General new features**
+
+- Type annotations support using `typing`. SDKs are mypy ready.
+- This client has now stable and official support for async. Check the `aio` namespace of your package to find the async client.
+- This client now support natively tracing library like OpenCensus or OpenTelemetry. See this [tracing quickstart](https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/core/azure-core-tracing-opentelemetry) for an overview.
+
+
+## 10.2.0 (2020-04-10)
+
+**Features**
+
+  - Model VpnConnection has a new parameter routing_configuration
+  - Model NatRuleCondition has a new parameter terminate_tls
+  - Model HubVirtualNetworkConnection has a new parameter routing_configuration
+  - Model ExpressRouteConnection has a new parameter routing_configuration
+  - Model FirewallPolicy has a new parameter transport_security
+  - Model FirewallPolicy has a new parameter identity
+  - Model FirewallPolicy has a new parameter threat_intel_whitelist
+  - Model ApplicationRuleCondition has a new parameter target_urls
+  - Model P2SConnectionConfiguration has a new parameter routing_configuration
+  - Model BackendAddressPool has a new parameter load_balancer_backend_addresses
+  - Added operation LoadBalancerBackendAddressPoolsOperations.create_or_update
+  - Added operation LoadBalancerBackendAddressPoolsOperations.delete
+  - Added operation group HubRouteTablesOperations
+
+## 10.1.0 (2020-04-10)
+
+**Features**
+
+  - Model VpnConnection has a new parameter dpd_timeout_seconds
+  - Model FirewallPolicy has a new parameter intrusion_system_mode
+  - Model Subnet has a new parameter ip_allocations
+  - Model ApplicationGateway has a new parameter force_firewall_policy_association
+  - Model PrivateEndpoint has a new parameter custom_dns_configs
+  - Model VirtualNetworkGatewayConnection has a new parameter dpd_timeout_seconds
+  - Model VpnClientConfiguration has a new parameter radius_servers
+  - Model VirtualNetwork has a new parameter ip_allocations
+  - Model VirtualHub has a new parameter security_partner_provider
+  - Model VpnServerConfiguration has a new parameter radius_servers
+  - Added operation group PrivateDnsZoneGroupsOperations
+  - Added operation group SecurityPartnerProvidersOperations
+  - Added operation group IpAllocationsOperations
+
+## 10.0.0 (2020-03-31)
+
+**Features**
+
+  - Model VirtualNetworkGatewayConnection has a new parameter use_local_azure_ip_address
+  - Model NetworkRuleCondition has a new parameter source_ip_groups
+  - Model NetworkRuleCondition has a new parameter destination_ip_groups
+  - Model VirtualNetworkGatewayIPConfiguration has a new parameter private_ip_address
+  - Model BgpSettings has a new parameter bgp_peering_addresses
+  - Model ExpressRouteCircuitConnection has a new parameter ipv6_circuit_connection_config
+  - Model ApplicationGatewayHttpListener has a new parameter host_names
+  - Model ApplicationRuleCondition has a new parameter source_ip_groups
+  - Model VirtualNetworkGateway has a new parameter enable_private_ip_address
+  - Model LocalNetworkGateway has a new parameter fqdn
+  - Model VpnSiteLink has a new parameter fqdn
+  - Model NetworkSecurityGroup has a new parameter flow_logs
+  - Added operation NetworkManagementClientOperationsMixin.put_bastion_shareable_link
+  - Added operation NetworkManagementClientOperationsMixin.get_bastion_shareable_link
+  - Added operation NetworkManagementClientOperationsMixin.delete_bastion_shareable_link
+  - Added operation NetworkManagementClientOperationsMixin.disconnect_active_sessions
+  - Added operation NetworkManagementClientOperationsMixin.get_active_sessions
+  - Added operation group NetworkVirtualAppliancesOperations
+
+**Breaking changes**
+
+  - Model ApplicationGatewayHttpListener no longer has parameter hostnames
+
 ## 9.0.0 (2020-01-17)
 
 **Features**

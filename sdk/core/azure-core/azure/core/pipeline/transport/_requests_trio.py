@@ -27,8 +27,8 @@ from collections.abc import AsyncIterator
 import functools
 import logging
 from typing import Any, Callable, Union, Optional, AsyncIterator as AsyncIteratorType
-import trio  # type: ignore
-import urllib3  # type: ignore
+import trio
+import urllib3
 
 import requests
 
@@ -68,59 +68,29 @@ class TrioStreamDownloadGenerator(AsyncIterator):
         return self.content_length
 
     async def __anext__(self):
-        retry_active = True
-        retry_total = 3
-        while retry_active:
+        try:
             try:
-                try:
-                    chunk = await trio.to_thread.run_sync(
-                        _iterate_response_content,
-                        self.iter_content_func,
-                    )
-                except AttributeError:  # trio < 0.12.1
-                    chunk = await trio.run_sync_in_worker_thread(  # pylint: disable=no-member
-                        _iterate_response_content,
-                        self.iter_content_func,
-                    )
-                if not chunk:
-                    raise _ResponseStopIteration()
-                self.downloaded += self.block_size
-                return chunk
-            except _ResponseStopIteration:
-                self.response.internal_response.close()
-                raise StopAsyncIteration()
-            except (requests.exceptions.ChunkedEncodingError,
-                    requests.exceptions.ConnectionError):
-                retry_total -= 1
-                if retry_total <= 0:
-                    retry_active = False
-                else:
-                    await trio.sleep(1000)
-                    headers = {'range': 'bytes=' + str(self.downloaded) + '-'}
-                    resp = self.pipeline.run(self.request, stream=True, headers=headers)
-                    if resp.status_code == 416:
-                        raise
-                    try:
-                        chunk = await trio.to_thread.run_sync(
-                            _iterate_response_content,
-                            self.iter_content_func,
-                        )
-                    except AttributeError:  # trio < 0.12.1
-                        chunk = await trio.run_sync_in_worker_thread(  # pylint: disable=no-member
-                            _iterate_response_content,
-                            self.iter_content_func,
-                        )
-                    if not chunk:
-                        raise StopIteration()
-                    self.downloaded += len(chunk)
-                    return chunk
-                continue
-            except requests.exceptions.StreamConsumedError:
-                raise
-            except Exception as err:
-                _LOGGER.warning("Unable to stream download: %s", err)
-                self.response.internal_response.close()
-                raise
+                chunk = await trio.to_thread.run_sync(
+                    _iterate_response_content,
+                    self.iter_content_func,
+                )
+            except AttributeError:  # trio < 0.12.1
+                chunk = await trio.run_sync_in_worker_thread(  # pylint: disable=no-member
+                    _iterate_response_content,
+                    self.iter_content_func,
+                )
+            if not chunk:
+                raise _ResponseStopIteration()
+            return chunk
+        except _ResponseStopIteration:
+            self.response.internal_response.close()
+            raise StopAsyncIteration()
+        except requests.exceptions.StreamConsumedError:
+            raise
+        except Exception as err:
+            _LOGGER.warning("Unable to stream download: %s", err)
+            self.response.internal_response.close()
+            raise
 
 class TrioRequestsTransportResponse(AsyncHttpResponse, RequestsTransportResponse):  # type: ignore
     """Asynchronous streaming of data from the response.
@@ -128,7 +98,7 @@ class TrioRequestsTransportResponse(AsyncHttpResponse, RequestsTransportResponse
     def stream_download(self, pipeline) -> AsyncIteratorType[bytes]:  # type: ignore
         """Generator for streaming response data.
         """
-        return TrioStreamDownloadGenerator(pipeline, self) # type: ignore
+        return TrioStreamDownloadGenerator(pipeline, self)
 
 
 class TrioRequestsTransport(RequestsAsyncTransportBase):  # type: ignore
@@ -150,10 +120,10 @@ class TrioRequestsTransport(RequestsAsyncTransportBase):  # type: ignore
     async def __aexit__(self, *exc_details):  # pylint: disable=arguments-differ
         return super(TrioRequestsTransport, self).__exit__()
 
-    async def sleep(self, duration):
+    async def sleep(self, duration):  # pylint:disable=invalid-overridden-method
         await trio.sleep(duration)
 
-    async def send(self, request: HttpRequest, **kwargs: Any) -> AsyncHttpResponse:  # type: ignore
+    async def send(self, request: HttpRequest, **kwargs: Any) -> AsyncHttpResponse:  # type: ignore # pylint:disable=invalid-overridden-method
         """Send the request using this HTTP sender.
 
         :param request: The HttpRequest
@@ -174,7 +144,7 @@ class TrioRequestsTransport(RequestsAsyncTransportBase):  # type: ignore
             try:
                 response = await trio.to_thread.run_sync(
                     functools.partial(
-                        self.session.request, # type: ignore
+                        self.session.request,
                         request.method,
                         request.url,
                         headers=request.headers,
@@ -189,7 +159,7 @@ class TrioRequestsTransport(RequestsAsyncTransportBase):  # type: ignore
             except AttributeError:  # trio < 0.12.1
                 response = await trio.run_sync_in_worker_thread(  # pylint: disable=no-member
                     functools.partial(
-                        self.session.request, # type: ignore
+                        self.session.request,
                         request.method,
                         request.url,
                         headers=request.headers,

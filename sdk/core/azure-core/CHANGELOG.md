@@ -1,11 +1,150 @@
-
 # Release History
 
-## 1.2.3 (Unreleased)
+## 1.13.1 (Unreleased)
+
+
+## 1.13.0 (2021-04-02)
+
+Azure core requires Python 2.7 or Python 3.6+ since this release.
+
+### New Features
+
+- Added `azure.core.utils.parse_connection_string` function to parse connection strings across SDKs, with common validation and support for case insensitive keys.
+- Supported adding custom policies  #16519
+- Added `~azure.core.tracing.Link` that should be used while passing `Links` to  `AbstractSpan`.
+- `AbstractSpan` constructor can now take in additional keyword only args.
 
 ### Bug fixes
 
-- Appended RequestIdPolicy to the default pipeline
+- Make NetworkTraceLoggingPolicy show the auth token in plain text. #14191
+- Fixed RetryPolicy overriding default connection timeout with an extreme value #17481
+
+## 1.12.0 (2021-03-08)
+
+This version will be the last version to officially support Python 3.5, future versions will require Python 2.7 or Python 3.6+.
+
+### Features
+
+- Added `azure.core.messaging.CloudEvent` model that follows the cloud event spec.
+- Added `azure.core.serialization.NULL` sentinel value
+- Improve `repr`s for `HttpRequest` and `HttpResponse`s  #16972
+
+### Bug Fixes
+
+- Disable retry in stream downloading. (thanks to @jochen-ott-by @hoffmann for the contribution)  #16723
+
+## 1.11.0 (2021-02-08)
+
+### Features
+
+- Added `CaseInsensitiveEnumMeta` class for case-insensitive enums.  #16316
+- Add `raise_for_status` method onto `HttpResponse`. Calling `response.raise_for_status()` on a response with an error code
+will raise an `HttpResponseError`. Calling it on a good response will do nothing  #16399
+
+### Bug Fixes
+
+- Update conn.conn_kw rather than overriding it when setting block size. (thanks for @jiasli for the contribution)  #16587
+
+## 1.10.0 (2021-01-11)
+
+### Features
+
+- Added `AzureSasCredential` and its respective policy. #15946
+
+## 1.9.0 (2020-11-09)
+
+### Features
+
+- Add a `continuation_token` attribute to the base `AzureError` exception, and set this value for errors raised
+  during paged or long-running operations.
+
+### Bug Fixes
+
+- Set retry_interval to 1 second instead of 1000 seconds (thanks **vbarbaresi** for contributing)  #14357
+
+
+## 1.8.2 (2020-10-05)
+
+### Bug Fixes
+
+- Fixed bug to allow polling in the case of parameterized endpoints with relative polling urls  #14097
+
+
+## 1.8.1 (2020-09-08)
+
+### Bug fixes
+
+- SAS credential replicated "/" fix #13159
+
+## 1.8.0 (2020-08-10)
+
+### Features
+
+- Support params as list for exploding parameters  #12410
+
+
+## 1.7.0 (2020-07-06)
+
+### Bug fixes
+
+- `AzureKeyCredentialPolicy` will now accept (and ignore) passed in kwargs  #11963
+- Better error messages if passed endpoint is incorrect  #12106
+- Do not JSON encore a string if content type is "text"  #12137
+
+### Features
+
+- Added `http_logging_policy` property on the `Configuration` object, allowing users to individually
+set the http logging policy of the config  #12218
+
+## 1.6.0 (2020-06-03)
+
+### Bug fixes
+
+- Fixed deadlocks in AsyncBearerTokenCredentialPolicy #11543
+- Fix AttributeException in StreamDownloadGenerator #11462
+
+### Features
+
+- Added support for changesets as part of multipart message support #10485
+- Add AsyncLROPoller in azure.core.polling #10801
+- Add get_continuation_token/from_continuation_token/polling_method methods in pollers (sync and async) #10801
+- HttpResponse and PipelineContext objects are now pickable #10801
+
+## 1.5.0 (2020-05-04)
+
+### Features
+
+- Support "x-ms-retry-after-ms" in response header   #10743
+- `link` and `link_from_headers` now accepts attributes   #10765
+
+### Bug fixes
+
+- Not retry if the status code is less than 400 #10778
+- "x-ms-request-id" is not considered safe header for logging #10967
+
+## 1.4.0 (2020-04-06)
+
+### Features
+
+- Support a default error type in map_error #9773
+- Added `AzureKeyCredential` and its respective policy. #10509
+- Added `azure.core.polling.base_polling` module with a "Microsoft One API" polling implementation #10090
+  Also contains the async version in `azure.core.polling.async_base_polling`
+- Support kwarg `enforce_https` to disable HTTPS check on authentication #9821
+- Support additional kwargs in `HttpRequest.set_multipart_mixed` that will be passed into pipeline context.
+
+## 1.3.0 (2020-03-09)
+
+### Bug fixes
+
+- Appended RequestIdPolicy to the default pipeline  #9841
+- Rewind the body position in async_retry   #10117
+
+### Features
+
+- Add raw_request_hook support in custom_hook_policy   #9958
+- Add timeout support in retry_policy   #10011
+- Add OdataV4 error format auto-parsing in all exceptions ('error' attribute)  #9738
 
 ## 1.2.2 (2020-02-10)
 

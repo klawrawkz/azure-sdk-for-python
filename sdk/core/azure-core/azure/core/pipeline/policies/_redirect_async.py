@@ -27,10 +27,10 @@ from typing import Any, Callable, Optional
 
 from azure.core.exceptions import TooManyRedirectsError
 from . import AsyncHTTPPolicy
-from ._redirect import RedirectPolicy
+from ._redirect import RedirectPolicyBase
 
 
-class AsyncRedirectPolicy(RedirectPolicy, AsyncHTTPPolicy):  # type: ignore
+class AsyncRedirectPolicy(RedirectPolicyBase, AsyncHTTPPolicy):
     """An async redirect policy.
 
     An async redirect policy in the pipeline can be configured directly or per operation.
@@ -48,7 +48,7 @@ class AsyncRedirectPolicy(RedirectPolicy, AsyncHTTPPolicy):  # type: ignore
             :caption: Configuring an async redirect policy.
     """
 
-    async def send(self, request):
+    async def send(self, request):  # pylint:disable=invalid-overridden-method
         """Sends the PipelineRequest object to the next policy.
         Uses redirect settings to send the request to redirect endpoint if necessary.
 

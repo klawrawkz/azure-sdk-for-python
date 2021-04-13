@@ -63,6 +63,7 @@ try:
     from ._models_py3 import ContainerRegistry
     from ._models_py3 import DataDisk
     from ._models_py3 import DeleteCertificateError
+    from ._models_py3 import DiskEncryptionConfiguration
     from ._models_py3 import EnvironmentSetting
     from ._models_py3 import ErrorMessage
     from ._models_py3 import ExitCodeMapping
@@ -174,6 +175,7 @@ try:
     from ._models_py3 import PoolUpdatePropertiesOptions
     from ._models_py3 import PoolUpdatePropertiesParameter
     from ._models_py3 import PoolUsageMetrics
+    from ._models_py3 import PublicIPAddressConfiguration
     from ._models_py3 import RecentJob
     from ._models_py3 import ResizeError
     from ._models_py3 import ResourceFile
@@ -192,6 +194,7 @@ try:
     from ._models_py3 import TaskContainerExecutionInformation
     from ._models_py3 import TaskContainerSettings
     from ._models_py3 import TaskCounts
+    from ._models_py3 import TaskCountsResult
     from ._models_py3 import TaskDeleteOptions
     from ._models_py3 import TaskDependencies
     from ._models_py3 import TaskExecutionInformation
@@ -203,6 +206,7 @@ try:
     from ._models_py3 import TaskListSubtasksOptions
     from ._models_py3 import TaskReactivateOptions
     from ._models_py3 import TaskSchedulingPolicy
+    from ._models_py3 import TaskSlotCounts
     from ._models_py3 import TaskStatistics
     from ._models_py3 import TaskTerminateOptions
     from ._models_py3 import TaskUpdateOptions
@@ -269,6 +273,7 @@ except (SyntaxError, ImportError):
     from ._models import ContainerRegistry
     from ._models import DataDisk
     from ._models import DeleteCertificateError
+    from ._models import DiskEncryptionConfiguration
     from ._models import EnvironmentSetting
     from ._models import ErrorMessage
     from ._models import ExitCodeMapping
@@ -380,6 +385,7 @@ except (SyntaxError, ImportError):
     from ._models import PoolUpdatePropertiesOptions
     from ._models import PoolUpdatePropertiesParameter
     from ._models import PoolUsageMetrics
+    from ._models import PublicIPAddressConfiguration
     from ._models import RecentJob
     from ._models import ResizeError
     from ._models import ResourceFile
@@ -398,6 +404,7 @@ except (SyntaxError, ImportError):
     from ._models import TaskContainerExecutionInformation
     from ._models import TaskContainerSettings
     from ._models import TaskCounts
+    from ._models import TaskCountsResult
     from ._models import TaskDeleteOptions
     from ._models import TaskDependencies
     from ._models import TaskExecutionInformation
@@ -409,6 +416,7 @@ except (SyntaxError, ImportError):
     from ._models import TaskListSubtasksOptions
     from ._models import TaskReactivateOptions
     from ._models import TaskSchedulingPolicy
+    from ._models import TaskSlotCounts
     from ._models import TaskStatistics
     from ._models import TaskTerminateOptions
     from ._models import TaskUpdateOptions
@@ -451,9 +459,11 @@ from ._batch_service_client_enums import (
     CertificateVisibility,
     CachingType,
     StorageAccountType,
+    DiskEncryptionTarget,
     DynamicVNetAssignmentScope,
     InboundEndpointProtocol,
     NetworkSecurityGroupRuleAccess,
+    IPAddressProvisioningType,
     PoolLifetimeOption,
     OnAllTasksComplete,
     OnTaskFailure,
@@ -532,6 +542,7 @@ __all__ = [
     'ContainerRegistry',
     'DataDisk',
     'DeleteCertificateError',
+    'DiskEncryptionConfiguration',
     'EnvironmentSetting',
     'ErrorMessage',
     'ExitCodeMapping',
@@ -643,6 +654,7 @@ __all__ = [
     'PoolUpdatePropertiesOptions',
     'PoolUpdatePropertiesParameter',
     'PoolUsageMetrics',
+    'PublicIPAddressConfiguration',
     'RecentJob',
     'ResizeError',
     'ResourceFile',
@@ -661,6 +673,7 @@ __all__ = [
     'TaskContainerExecutionInformation',
     'TaskContainerSettings',
     'TaskCounts',
+    'TaskCountsResult',
     'TaskDeleteOptions',
     'TaskDependencies',
     'TaskExecutionInformation',
@@ -672,6 +685,7 @@ __all__ = [
     'TaskListSubtasksOptions',
     'TaskReactivateOptions',
     'TaskSchedulingPolicy',
+    'TaskSlotCounts',
     'TaskStatistics',
     'TaskTerminateOptions',
     'TaskUpdateOptions',
@@ -713,9 +727,11 @@ __all__ = [
     'CertificateVisibility',
     'CachingType',
     'StorageAccountType',
+    'DiskEncryptionTarget',
     'DynamicVNetAssignmentScope',
     'InboundEndpointProtocol',
     'NetworkSecurityGroupRuleAccess',
+    'IPAddressProvisioningType',
     'PoolLifetimeOption',
     'OnAllTasksComplete',
     'OnTaskFailure',

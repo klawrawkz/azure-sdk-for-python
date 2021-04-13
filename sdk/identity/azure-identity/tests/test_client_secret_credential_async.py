@@ -2,18 +2,43 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 # ------------------------------------
-import asyncio
 import time
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
+from urllib.parse import urlparse
 
 from azure.core.credentials import AccessToken
 from azure.core.pipeline.policies import ContentDecodePolicy, SansIOHTTPPolicy
+from azure.identity import TokenCachePersistenceOptions
+from azure.identity._constants import EnvironmentVariables
 from azure.identity._internal.user_agent import USER_AGENT
 from azure.identity.aio import ClientSecretCredential
+from msal import TokenCache
+import pytest
+
 from helpers import build_aad_response, mock_response, Request
 from helpers_async import async_validating_transport, AsyncMockTransport, wrap_in_future
 
-import pytest
+
+def test_tenant_id_validation():
+    """The credential should raise ValueError when given an invalid tenant_id"""
+
+    valid_ids = {"c878a2ab-8ef4-413b-83a0-199afb84d7fb", "contoso.onmicrosoft.com", "organizations", "common"}
+    for tenant in valid_ids:
+        ClientSecretCredential(tenant, "client-id", "secret")
+
+    invalid_ids = {"", "my tenant", "my_tenant", "/", "\\", '"my-tenant"', "'my-tenant'"}
+    for tenant in invalid_ids:
+        with pytest.raises(ValueError):
+            ClientSecretCredential(tenant, "client-id", "secret")
+
+
+@pytest.mark.asyncio
+async def test_no_scopes():
+    """The credential should raise ValueError when get_token is called with no scopes"""
+
+    credential = ClientSecretCredential("tenant-id", "client-id", "client-secret")
+    with pytest.raises(ValueError):
+        await credential.get_token()
 
 
 @pytest.mark.asyncio
@@ -96,6 +121,36 @@ async def test_client_secret_credential():
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("authority", ("localhost", "https://localhost"))
+async def test_request_url(authority):
+    """the credential should accept an authority, with or without scheme, as an argument or environment variable"""
+
+    tenant_id = "expected-tenant"
+    access_token = "***"
+    parsed_authority = urlparse(authority)
+    expected_netloc = parsed_authority.netloc or authority  # "localhost" parses to netloc "", path "localhost"
+
+    async def mock_send(request, **kwargs):
+        actual = urlparse(request.url)
+        assert actual.scheme == "https"
+        assert actual.netloc == expected_netloc
+        assert actual.path.startswith("/" + tenant_id)
+        return mock_response(json_payload={"token_type": "Bearer", "expires_in": 42, "access_token": access_token})
+
+    credential = ClientSecretCredential(
+        tenant_id, "client-id", "secret", transport=Mock(send=mock_send), authority=authority
+    )
+    token = await credential.get_token("scope")
+    assert token.token == access_token
+
+    # authority can be configured via environment variable
+    with patch.dict("os.environ", {EnvironmentVariables.AZURE_AUTHORITY_HOST: authority}, clear=True):
+        credential = ClientSecretCredential(tenant_id, "client-id", "secret", transport=Mock(send=mock_send))
+        await credential.get_token("scope")
+    assert token.token == access_token
+
+
+@pytest.mark.asyncio
 async def test_cache():
     expired = "this token's expired"
     now = int(time.time())
@@ -129,3 +184,66 @@ async def test_cache():
     token = await credential.get_token(scope)
     assert token == valid_token
     assert mock_send.call_count == 2
+
+
+def test_token_cache():
+    """the credential should default to an in memory cache, and optionally use a persistent cache"""
+
+    with patch("azure.identity._persistent_cache.msal_extensions") as mock_msal_extensions:
+        with patch(ClientSecretCredential.__module__ + ".msal") as mock_msal:
+            ClientSecretCredential("tenant", "client-id", "secret")
+        assert mock_msal.TokenCache.call_count == 1
+        assert not mock_msal_extensions.PersistedTokenCache.called
+
+        ClientSecretCredential(
+            "tenant", "client-id", "secret", cache_persistence_options=TokenCachePersistenceOptions(),
+        )
+        assert mock_msal_extensions.PersistedTokenCache.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_cache_multiple_clients():
+    """the credential shouldn't use tokens issued to other service principals"""
+
+    access_token_a = "token a"
+    access_token_b = "not " + access_token_a
+    transport_a = async_validating_transport(
+        requests=[Request()], responses=[mock_response(json_payload=build_aad_response(access_token=access_token_a))]
+    )
+    transport_b = async_validating_transport(
+        requests=[Request()], responses=[mock_response(json_payload=build_aad_response(access_token=access_token_b))]
+    )
+
+    cache = TokenCache()
+    with patch(ClientSecretCredential.__module__ + "._load_persistent_cache") as mock_cache_loader:
+        mock_cache_loader.return_value = Mock(wraps=cache)
+        credential_a = ClientSecretCredential(
+            "tenant",
+            "client-a",
+            "secret",
+            transport=transport_a,
+            cache_persistence_options=TokenCachePersistenceOptions(),
+        )
+        assert mock_cache_loader.call_count == 1, "credential should load the persistent cache"
+
+        credential_b = ClientSecretCredential(
+            "tenant",
+            "client-b",
+            "secret",
+            transport=transport_b,
+            cache_persistence_options=TokenCachePersistenceOptions(),
+        )
+        assert mock_cache_loader.call_count == 2, "credential should load the persistent cache"
+
+    # A caches a token
+    scope = "scope"
+    token_a = await credential_a.get_token(scope)
+    assert token_a.token == access_token_a
+    assert transport_a.send.call_count == 1
+
+    # B should get a different token for the same scope
+    token_b = await credential_b.get_token(scope)
+    assert token_b.token == access_token_b
+    assert transport_b.send.call_count == 1
+
+    assert len(cache.find(TokenCache.CredentialType.ACCESS_TOKEN)) == 2

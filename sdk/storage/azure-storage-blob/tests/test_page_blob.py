@@ -45,8 +45,11 @@ class StoragePageBlobTest(StorageTestCase):
         self.container_name = self.get_resource_name('utcontainer')
         self.source_container_name = self.get_resource_name('utcontainersource')
         if self.is_live:
-            bsc.create_container(self.container_name)
-            bsc.create_container(self.source_container_name)
+            try:
+                bsc.create_container(self.container_name)
+                bsc.create_container(self.source_container_name)
+            except:
+                pass
 
     def _teardown(self, FILE_PATH):
         if os.path.isfile(FILE_PATH):
@@ -60,10 +63,17 @@ class StoragePageBlobTest(StorageTestCase):
             self.container_name,
             self.get_resource_name(TEST_BLOB_PREFIX))
 
-    def _create_blob(self, bsc, length=512, sequence_number=None):
+    def _create_blob(self, bsc, length=512, sequence_number=None, tags=None):
         blob = self._get_blob_reference(bsc)
-        blob.create_page_blob(size=length, sequence_number=sequence_number)
+        blob.create_page_blob(size=length, sequence_number=sequence_number, tags=tags)
         return blob
+
+    def _create_source_blob_with_special_chars(self, bs, data, offset, length):
+        blob_client = bs.get_blob_client(self.source_container_name,
+                                         'भारत¥test/testsubÐirÍ/'+self.get_resource_name('srcÆblob'))
+        blob_client.create_page_blob(size=length)
+        blob_client.upload_page(data, offset=offset, length=length)
+        return blob_client
 
     def _create_source_blob(self, bs, data, offset, length):
         blob_client = bs.get_blob_client(self.source_container_name,
@@ -129,6 +139,22 @@ class StoragePageBlobTest(StorageTestCase):
         self.assertIsNotNone(resp.get('last_modified'))
         self.assertTrue(blob.get_blob_properties())
 
+    @pytest.mark.playback_test_only
+    @GlobalStorageAccountPreparer()
+    def test_create_page_blob_returns_vid(self, resource_group, location, storage_account, storage_account_key):
+        bsc = BlobServiceClient(self.account_url(storage_account, "blob"), credential=storage_account_key, connection_data_block_size=4 * 1024, max_page_size=4 * 1024)
+        self._setup(bsc)
+        blob = self._get_blob_reference(bsc)
+
+        # Act
+        resp = blob.create_page_blob(1024)
+
+        # Assert
+        self.assertIsNotNone(resp['version_id'])
+        self.assertIsNotNone(resp.get('etag'))
+        self.assertIsNotNone(resp.get('last_modified'))
+        self.assertTrue(blob.get_blob_properties())
+
     @GlobalStorageAccountPreparer()
     def test_create_blob_with_metadata(self, resource_group, location, storage_account, storage_account_key):
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), credential=storage_account_key, connection_data_block_size=4 * 1024, max_page_size=4 * 1024)
@@ -157,6 +183,30 @@ class StoragePageBlobTest(StorageTestCase):
         # Assert
         content = blob.download_blob(lease=lease)
         self.assertEqual(content.readall(), data)
+
+    @GlobalResourceGroupPreparer()
+    @StorageAccountPreparer(random_name_enabled=True, location="canadacentral", name_prefix='storagename')
+    def test_put_page_with_lease_id_and_if_tags(self, resource_group, location, storage_account, storage_account_key):
+        bsc = BlobServiceClient(self.account_url(storage_account, "blob"), credential=storage_account_key, connection_data_block_size=4 * 1024, max_page_size=4 * 1024)
+        self._setup(bsc)
+        tags = {"tag1 name": "my tag", "tag2": "secondtag", "tag3": "thirdtag"}
+        blob = self._create_blob(bsc, tags=tags)
+        with self.assertRaises(ResourceModifiedError):
+            blob.acquire_lease(if_tags_match_condition="\"tag1\"='first tag'")
+        lease = blob.acquire_lease(if_tags_match_condition="\"tag1 name\"='my tag' AND \"tag2\"='secondtag'")
+
+        # Act
+        data = self.get_random_bytes(512)
+        with self.assertRaises(ResourceModifiedError):
+            blob.upload_page(data, offset=0, length=512, lease=lease, if_tags_match_condition="\"tag1\"='first tag'")
+        blob.upload_page(data, offset=0, length=512, lease=lease, if_tags_match_condition="\"tag1 name\"='my tag' AND \"tag2\"='secondtag'")
+
+        page_ranges, cleared = blob.get_page_ranges()
+
+        # Assert
+        content = blob.download_blob(lease=lease)
+        self.assertEqual(content.readall(), data)
+        self.assertEqual(1, len(page_ranges))
 
     @GlobalStorageAccountPreparer()
     def test_update_page(self, resource_group, location, storage_account, storage_account_key):
@@ -360,16 +410,32 @@ class StoragePageBlobTest(StorageTestCase):
     @GlobalStorageAccountPreparer()
     def test_upload_pages_from_url(self, resource_group, location, storage_account, storage_account_key):
         # Arrange
-        bsc = BlobServiceClient(self.account_url(storage_account, "blob"), credential=storage_account_key, connection_data_block_size=4 * 1024, max_page_size=4 * 1024)
+        account_url = self.account_url(storage_account, "blob")
+        if not isinstance(account_url, str):
+            account_url = account_url.encode('utf-8')
+            storage_account_key = storage_account_key.encode('utf-8')
+        bsc = BlobServiceClient(account_url, credential=storage_account_key, connection_data_block_size=4 * 1024, max_page_size=4 * 1024)
         self._setup(bsc)
         source_blob_data = self.get_random_bytes(SOURCE_BLOB_SIZE)
         source_blob_client = self._create_source_blob(bsc, source_blob_data, 0, SOURCE_BLOB_SIZE)
+        source_blob_client_with_special_chars = self._create_source_blob_with_special_chars(
+            bsc, source_blob_data, 0, SOURCE_BLOB_SIZE)
+
         sas = generate_blob_sas(
             source_blob_client.account_name,
             source_blob_client.container_name,
             source_blob_client.blob_name,
             snapshot=source_blob_client.snapshot,
             account_key=source_blob_client.credential.account_key,
+            permission=BlobSasPermissions(read=True, delete=True),
+            expiry=datetime.utcnow() + timedelta(hours=1))
+
+        sas_token_for_blob_with_special_chars = generate_blob_sas(
+            source_blob_client_with_special_chars.account_name,
+            source_blob_client_with_special_chars.container_name,
+            source_blob_client_with_special_chars.blob_name,
+            snapshot=source_blob_client_with_special_chars.snapshot,
+            account_key=source_blob_client_with_special_chars.credential.account_key,
             permission=BlobSasPermissions(read=True, delete=True),
             expiry=datetime.utcnow() + timedelta(hours=1))
 
@@ -393,6 +459,19 @@ class StoragePageBlobTest(StorageTestCase):
         self.assertBlobEqual(self.container_name, destination_blob_client.blob_name, source_blob_data, bsc)
         self.assertEqual(blob_properties.get('etag'), resp.get('etag'))
         self.assertEqual(blob_properties.get('last_modified'), resp.get('last_modified'))
+
+    # Act: make update page from url calls
+        source_with_special_chars_resp = destination_blob_client.upload_pages_from_url(
+            source_blob_client_with_special_chars.url + "?" + sas_token_for_blob_with_special_chars, offset=0, length=4 * 1024, source_offset=0)
+        self.assertIsNotNone(source_with_special_chars_resp.get('etag'))
+        self.assertIsNotNone(source_with_special_chars_resp.get('last_modified'))
+
+        # Assert the destination blob is constructed correctly
+        blob_properties = destination_blob_client.get_blob_properties()
+        self.assertEqual(blob_properties.size, SOURCE_BLOB_SIZE)
+        self.assertBlobEqual(self.container_name, destination_blob_client.blob_name, source_blob_data, bsc)
+        self.assertEqual(blob_properties.get('etag'), source_with_special_chars_resp.get('etag'))
+        self.assertEqual(blob_properties.get('last_modified'), source_with_special_chars_resp.get('last_modified'))
 
     @GlobalStorageAccountPreparer()
     def test_upload_pages_from_url_and_validate_content_md5(self, resource_group, location, storage_account, storage_account_key):
@@ -1513,6 +1592,7 @@ class StoragePageBlobTest(StorageTestCase):
 
         # Assert
 
+    @pytest.mark.skip(reason="Failing live test https://github.com/Azure/azure-sdk-for-python/issues/10473")
     @pytest.mark.live_test_only
     @GlobalStorageAccountPreparer()
     def test_incremental_copy_blob(self, resource_group, location, storage_account, storage_account_key):
@@ -1668,6 +1748,63 @@ class StoragePageBlobTest(StorageTestCase):
             self.assertFalse(blobs[0].blob_tier_inferred)
         finally:
             container.delete_container()
+
+    # TODO: check with service to see if premium blob supports tags
+    # @GlobalResourceGroupPreparer()
+    # @StorageAccountPreparer(random_name_enabled=True, sku='premium_LRS', name_prefix='pyacrstorage')
+    # def test_blob_tier_set_tier_api_with_if_tags(self, resource_group, location, storage_account, storage_account_key):
+    #     bsc = BlobServiceClient(self.account_url(storage_account, "blob"), credential=storage_account_key, connection_data_block_size=4 * 1024, max_page_size=4 * 1024)
+    #     self._setup(bsc)
+    #     url = self.account_url(storage_account, "blob")
+    #     credential = storage_account_key
+    #     pbs = BlobServiceClient(url, credential=credential)
+    #     tags = {"tag1": "firsttag", "tag2": "secondtag", "tag3": "thirdtag"}
+    #
+    #     try:
+    #         container_name = self.get_resource_name('utpremiumcontainer')
+    #         container = pbs.get_container_client(container_name)
+    #
+    #         if self.is_live:
+    #             try:
+    #                 container.create_container()
+    #             except:
+    #                 pass
+    #
+    #         blob = self._get_blob_reference(bsc)
+    #         pblob = pbs.get_blob_client(container_name, blob.blob_name)
+    #         # pblob.create_page_blob(1024, tags=tags)
+    #         blob_ref = pblob.get_blob_properties()
+    #         self.assertEqual(PremiumPageBlobTier.P10, blob_ref.blob_tier)
+    #         self.assertIsNotNone(blob_ref.blob_tier)
+    #         self.assertTrue(blob_ref.blob_tier_inferred)
+    #
+    #         pcontainer = pbs.get_container_client(container_name)
+    #         blobs = list(pcontainer.list_blobs())
+    #
+    #         # Assert
+    #         self.assertIsNotNone(blobs)
+    #         self.assertGreaterEqual(len(blobs), 1)
+    #         self.assertIsNotNone(blobs[0])
+    #         self.assertNamedItemInContainer(blobs, blob.blob_name)
+    #         with self.assertRaises(ResourceModifiedError):
+    #             pblob.set_premium_page_blob_tier(PremiumPageBlobTier.P50, if_tags_match_condition="\"tag1\"='firsttag WRONG'")
+    #         pblob.set_premium_page_blob_tier(PremiumPageBlobTier.P50, if_tags_match_condition="\"tag1\"='firsttag'")
+    #
+    #         blob_ref2 = pblob.get_blob_properties()
+    #         self.assertEqual(PremiumPageBlobTier.P50, blob_ref2.blob_tier)
+    #         self.assertFalse(blob_ref2.blob_tier_inferred)
+    #
+    #         blobs = list(pcontainer.list_blobs())
+    #
+    #         # Assert
+    #         self.assertIsNotNone(blobs)
+    #         self.assertGreaterEqual(len(blobs), 1)
+    #         self.assertIsNotNone(blobs[0])
+    #         self.assertNamedItemInContainer(blobs, blob.blob_name)
+    #         self.assertEqual(blobs[0].blob_tier, PremiumPageBlobTier.P50)
+    #         self.assertFalse(blobs[0].blob_tier_inferred)
+    #     finally:
+    #         container.delete_container()
 
     @GlobalResourceGroupPreparer()
     @StorageAccountPreparer(random_name_enabled=True, sku='premium_LRS', name_prefix='pyacrstorage')

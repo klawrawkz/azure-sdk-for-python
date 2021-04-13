@@ -3,53 +3,47 @@
 # Licensed under the MIT License. See License.txt in the project root for
 # license information.
 # -------------------------------------------------------------------------
+from uamqp import constants
 
 from ._version import VERSION
+
 __version__ = VERSION
 
+from ._servicebus_client import ServiceBusClient
+from ._servicebus_sender import ServiceBusSender
+from ._servicebus_receiver import ServiceBusReceiver
+from ._servicebus_session import ServiceBusSession
+from ._common.message import (
+    ServiceBusMessage,
+    ServiceBusMessageBatch,
+    ServiceBusReceivedMessage,
+)
+from ._common.constants import (
+    ServiceBusReceiveMode,
+    ServiceBusSubQueue,
+    NEXT_AVAILABLE_SESSION,
+)
+from ._common.auto_lock_renewer import AutoLockRenewer
+from ._common._connection_string_parser import (
+    parse_connection_string,
+    ServiceBusConnectionStringProperties,
+)
 
-from azure.servicebus.common.message import Message, BatchMessage, PeekMessage, DeferredMessage
-from azure.servicebus.servicebus_client import ServiceBusClient, QueueClient, TopicClient, SubscriptionClient
-from azure.servicebus.common.constants import ReceiveSettleMode, NEXT_AVAILABLE
-from azure.servicebus.common.utils import AutoLockRenew
-from azure.servicebus.common.errors import (
-    ServiceBusError,
-    ServiceBusResourceNotFound,
-    ServiceBusConnectionError,
-    ServiceBusAuthorizationError,
-    InvalidHandlerState,
-    NoActiveSession,
-    MessageAlreadySettled,
-    MessageSettleFailed,
-    MessageSendFailed,
-    MessageLockExpired,
-    SessionLockExpired,
-    AutoLockRenewFailed,
-    AutoLockRenewTimeout)
-
+TransportType = constants.TransportType
 
 __all__ = [
-    'Message',
-    'BatchMessage',
-    'PeekMessage',
-    'AutoLockRenew',
-    'DeferredMessage',
-    'ServiceBusClient',
-    'QueueClient',
-    'TopicClient',
-    'SubscriptionClient',
-    'ReceiveSettleMode',
-    'NEXT_AVAILABLE',
-    'ServiceBusError',
-    'ServiceBusResourceNotFound',
-    'ServiceBusConnectionError',
-    'ServiceBusAuthorizationError',
-    'InvalidHandlerState',
-    'NoActiveSession',
-    'MessageAlreadySettled',
-    'MessageSettleFailed',
-    'MessageSendFailed',
-    'MessageLockExpired',
-    'SessionLockExpired',
-    'AutoLockRenewFailed',
-    'AutoLockRenewTimeout']
+    "ServiceBusMessage",
+    "ServiceBusMessageBatch",
+    "ServiceBusReceivedMessage",
+    "NEXT_AVAILABLE_SESSION",
+    "ServiceBusSubQueue",
+    "ServiceBusReceiveMode",
+    "ServiceBusClient",
+    "ServiceBusReceiver",
+    "ServiceBusSession",
+    "ServiceBusSender",
+    "TransportType",
+    "AutoLockRenewer",
+    "parse_connection_string",
+    "ServiceBusConnectionStringProperties",
+]

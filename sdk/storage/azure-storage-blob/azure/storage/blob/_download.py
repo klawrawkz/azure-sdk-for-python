@@ -258,7 +258,7 @@ class StorageStreamDownloader(object):  # pylint: disable=too-many-instance-attr
         The properties of the blob being downloaded. If only a range of the data is being
         downloaded, this will be reflected in the properties.
     :ivar int size:
-        The size of the total data in the stream. This will be the byte range if speficied,
+        The size of the total data in the stream. This will be the byte range if specified,
         otherwise the total size of the blob.
     """
 
@@ -457,6 +457,7 @@ class StorageStreamDownloader(object):  # pylint: disable=too-many-instance-attr
         """Download the contents of this blob.
 
         This operation is blocking until all data is downloaded.
+
         :rtype: bytes or str
         """
         stream = BytesIO()
@@ -550,11 +551,11 @@ class StorageStreamDownloader(object):  # pylint: disable=too-many-instance-attr
         )
         if parallel:
             import concurrent.futures
-            executor = concurrent.futures.ThreadPoolExecutor(self._max_concurrency)
-            list(executor.map(
-                    with_current_context(downloader.process_chunk),
-                    downloader.get_chunk_offsets()
-                ))
+            with concurrent.futures.ThreadPoolExecutor(self._max_concurrency) as executor:
+                list(executor.map(
+                        with_current_context(downloader.process_chunk),
+                        downloader.get_chunk_offsets()
+                    ))
         else:
             for chunk in downloader.get_chunk_offsets():
                 downloader.process_chunk(chunk)

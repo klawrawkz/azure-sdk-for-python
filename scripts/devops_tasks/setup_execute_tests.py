@@ -42,7 +42,7 @@ def combine_coverage_files(coverage_files):
     if os.path.isfile(tox_ini_file):
         # for every individual coverage file, run coverage combine to combine path
         for coverage_file in coverage_files:
-            cov_cmd_array = [sys.executable, "-m", "coverage", "combine"]
+            cov_cmd_array = [sys.executable, "-m", "coverage", "combine", "--append"]
             # tox.ini file has coverage paths to combine
             # Pas tox.ini as coverage config file
             cov_cmd_array.extend([config_file_flag, coverage_file])
@@ -222,7 +222,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--tparallel",
         default=False,
-        help=("Flag  that enables parallel tox invocation."),
+        help=("Flag that enables parallel tox invocation."),
         action="store_true",
     )
 
@@ -275,6 +275,15 @@ if __name__ == "__main__":
         help="Comma or space-separated list of packages that should be installed prior to dev_requirements. If local path, should be absolute.",
     )
 
+    parser.add_argument(
+        "--filter-type",
+        dest="filter_type",
+        default='Build',
+        help="Filter type to identify eligible packages. for e.g. packages filtered in Build can pass filter type as Build,",
+        choices=['Build', "Docs", "Regression", "Omit_management"]
+    )
+
+
     args = parser.parse_args()
 
     # We need to support both CI builds of everything and individual service
@@ -285,7 +294,7 @@ if __name__ == "__main__":
     else:
         target_dir = root_dir
 
-    targeted_packages = process_glob_string(args.glob_string, target_dir)
+    targeted_packages = process_glob_string(args.glob_string, target_dir, "", args.filter_type)
     extended_pytest_args = []
 
     if len(targeted_packages) == 0:

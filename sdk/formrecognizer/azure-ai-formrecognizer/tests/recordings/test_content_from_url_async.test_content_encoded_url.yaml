@@ -1,0 +1,31 @@
+interactions:
+- request:
+    body: 'b''{"source": "https://fakeuri.com/blank%20space"}'''
+    headers:
+      Accept:
+      - application/json
+      Content-Length:
+      - '47'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - azsdk-python-ai-formrecognizer/3.1.0b4 Python/3.8.5 (Windows-10-10.0.19041-SP0)
+    method: POST
+    uri: https://region.api.cognitive.microsoft.com/formrecognizer/v2.1-preview.3/layout/analyze?readingOrder=basic
+  response:
+    body:
+      string: '{"error": {"code": "FailedToDownloadImage", "message": "Failed to download
+        image from input URL."}}'
+    headers:
+      apim-request-id: 266bd056-8978-4761-bcba-ada9974352b2
+      content-length: '95'
+      content-type: application/json; charset=utf-8
+      date: Wed, 03 Mar 2021 19:31:03 GMT
+      strict-transport-security: max-age=31536000; includeSubDomains; preload
+      x-content-type-options: nosniff
+      x-envoy-upstream-service-time: '416'
+    status:
+      code: 400
+      message: Bad Request
+    url: https://region.api.cognitive.microsoft.com/formrecognizer/v2.1-preview.3/layout/analyze?readingOrder=basic
+version: 1

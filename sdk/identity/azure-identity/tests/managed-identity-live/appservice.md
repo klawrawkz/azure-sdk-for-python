@@ -88,7 +88,7 @@ Allow the system-assigned identity to access the Key Vault:
 ```sh
 az keyvault set-policy -n $KEY_VAULT_NAME -g $RESOURCE_GROUP \
     --object-id $(az webapp show -n $WEB_APP_SYSTEM_ASSIGNED -g $RESOURCE_GROUP --query identity.principalId -o tsv) \
-    --secret-permissions set delete
+    --secret-permissions list
 ```
 
 ### Managed identity
@@ -103,7 +103,7 @@ Allow it to access the Key Vault:
 ```sh
 az keyvault set-policy -n $KEY_VAULT_NAME \
     --object-id $(az identity show -g $RESOURCE_GROUP -n $MANAGED_IDENTITY_NAME --query principalId -o tsv) \
-    --secret-permissions set delete
+    --secret-permissions list
 ```
 
 ### Web app: user-assigned identity
@@ -123,7 +123,7 @@ az webapp config appsettings set -g $RESOURCE_GROUP -n $WEB_APP_USER_ASSIGNED \
 At the time of writing, attaching user-assigned identities is impossible through the Azure CLI
 ([Azure/azure-cli#9887](https://github.com/Azure/azure-cli/issues/9887)).
 Use the Azure Portal to attached the managed identity created above to the Web App (see
-[App Service documentation](https://docs.microsoft.com/en-us/azure/app-service/overview-managed-identity?tabs=dotnet#adding-a-user-assigned-identity)).
+[App Service documentation](https://docs.microsoft.com/azure/app-service/overview-managed-identity?tabs=dotnet#adding-a-user-assigned-identity)).
 
 ## Build the Docker image
 

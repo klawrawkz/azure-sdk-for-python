@@ -2,11 +2,13 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 # ------------------------------------
+import logging
 import os
 
+import six
 from azure.core.configuration import Configuration
 from azure.core.credentials import AccessToken
-from azure.core.exceptions import HttpResponseError
+from azure.core.exceptions import ClientAuthenticationError, HttpResponseError
 from azure.core.pipeline.policies import (
     ContentDecodePolicy,
     DistributedTracingPolicy,
@@ -20,6 +22,8 @@ from azure.core.pipeline.policies import (
 from .. import CredentialUnavailableError
 from .._authn_client import AuthnClient
 from .._constants import Endpoints, EnvironmentVariables
+from .._internal.decorators import log_get_token
+from .._internal.get_token_mixin import GetTokenMixin
 from .._internal.user_agent import USER_AGENT
 
 try:
@@ -30,32 +34,64 @@ except ImportError:
 if TYPE_CHECKING:
     # pylint:disable=unused-import
     from typing import Any, Optional, Type
+    from azure.core.credentials import TokenCredential
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class ManagedIdentityCredential(object):
     """Authenticates with an Azure managed identity in any hosting environment which supports managed identities.
 
-    See the Azure Active Directory documentation for more information about managed identities:
-    https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview
+    This credential defaults to using a system-assigned identity. To configure a user-assigned identity, use one of
+    the keyword arguments.
 
-    :keyword str client_id: ID of a user-assigned identity. Leave unspecified to use a system-assigned identity.
+    :keyword str client_id: a user-assigned identity's client ID. This is supported in all hosting environments.
+    :keyword identity_config: a mapping ``{parameter_name: value}`` specifying a user-assigned identity by its object
+      or resource ID, for example ``{"object_id": "..."}``. Check the documentation for your hosting environment to
+      learn what values it expects.
+    :paramtype identity_config: Mapping[str, str]
     """
 
     def __init__(self, **kwargs):
         # type: (**Any) -> None
-        self._credential = None
+        self._credential = None  # type: Optional[TokenCredential]
         if os.environ.get(EnvironmentVariables.MSI_ENDPOINT):
-            self._credential = MsiCredential(**kwargs)
+            if os.environ.get(EnvironmentVariables.MSI_SECRET):
+                _LOGGER.info("%s will use App Service managed identity", self.__class__.__name__)
+                from .app_service import AppServiceCredential
+
+                self._credential = AppServiceCredential(**kwargs)
+            else:
+                _LOGGER.info("%s will use Cloud Shell managed identity", self.__class__.__name__)
+                from .cloud_shell import CloudShellCredential
+
+                self._credential = CloudShellCredential(**kwargs)
+        elif os.environ.get(EnvironmentVariables.IDENTITY_ENDPOINT):
+            if (
+                os.environ.get(EnvironmentVariables.IDENTITY_HEADER)
+                and os.environ.get(EnvironmentVariables.IDENTITY_SERVER_THUMBPRINT)
+            ):
+                _LOGGER.info("%s will use Service Fabric managed identity", self.__class__.__name__)
+                from .service_fabric import ServiceFabricCredential
+
+                self._credential = ServiceFabricCredential(**kwargs)
+            elif os.environ.get(EnvironmentVariables.IMDS_ENDPOINT):
+                _LOGGER.info("%s will use Azure Arc managed identity", self.__class__.__name__)
+                from .azure_arc import AzureArcCredential
+
+                self._credential = AzureArcCredential(**kwargs)
         else:
+            _LOGGER.info("%s will use IMDS", self.__class__.__name__)
             self._credential = ImdsCredential(**kwargs)
 
+    @log_get_token("ManagedIdentityCredential")
     def get_token(self, *scopes, **kwargs):
         # type: (*str, **Any) -> AccessToken
         """Request an access token for `scopes`.
 
-        .. note:: This method is called by Azure SDK clients. It isn't intended for use in application code.
+        This method is called automatically by Azure SDK clients.
 
-        :param str scopes: desired scopes for the token
+        :param str scopes: desired scope for the access token. This credential allows only one scope per request.
         :rtype: :class:`azure.core.credentials.AccessToken`
         :raises ~azure.identity.CredentialUnavailableError: managed identity isn't available in the hosting environment
         """
@@ -66,11 +102,17 @@ class ManagedIdentityCredential(object):
 
 
 class _ManagedIdentityBase(object):
-    """Sans I/O base for managed identity credentials"""
-
     def __init__(self, endpoint, client_cls, config=None, client_id=None, **kwargs):
-        # type: (str, Type, Optional[Configuration], Optional[str], Any) -> None
-        self._client_id = client_id
+        # type: (str, Type, Optional[Configuration], Optional[str], **Any) -> None
+        self._identity_config = kwargs.pop("identity_config", None) or {}
+        if client_id:
+            if os.environ.get(EnvironmentVariables.MSI_ENDPOINT) and os.environ.get(EnvironmentVariables.MSI_SECRET):
+                # App Service: version 2017-09-1 accepts client ID as parameter "clientid"
+                if "clientid" not in self._identity_config:
+                    self._identity_config["clientid"] = client_id
+            elif "client_id" not in self._identity_config:
+                self._identity_config["client_id"] = client_id
+
         config = config or self._create_config(**kwargs)
         policies = [
             ContentDecodePolicy(),
@@ -115,9 +157,8 @@ class _ManagedIdentityBase(object):
     }
 
 
-class ImdsCredential(_ManagedIdentityBase):
+class ImdsCredential(_ManagedIdentityBase, GetTokenMixin):
     """Authenticates with a managed identity via the IMDS endpoint.
-
 
     :keyword str client_id: ID of a user-assigned identity. Leave unspecified to use a system-assigned identity.
     """
@@ -127,14 +168,12 @@ class ImdsCredential(_ManagedIdentityBase):
         super(ImdsCredential, self).__init__(endpoint=Endpoints.IMDS, client_cls=AuthnClient, **kwargs)
         self._endpoint_available = None  # type: Optional[bool]
 
-    def get_token(self, *scopes, **kwargs):  # pylint:disable=unused-argument
-        # type: (*str, **Any) -> AccessToken
-        """Request an access token for `scopes`.
+    def _acquire_token_silently(self, *scopes):
+        # type: (*str) -> Optional[AccessToken]
+        return self._client.get_cached_token(scopes)
 
-        :param str scopes: desired scopes for the token
-        :rtype: :class:`azure.core.credentials.AccessToken`
-        :raises ~azure.identity.CredentialUnavailableError: the IMDS endpoint is unreachable
-        """
+    def _request_token(self, *scopes, **kwargs):  # pylint:disable=unused-argument
+        # type: (*str, **Any) -> AccessToken
         if self._endpoint_available is None:
             # Lacking another way to determine whether the IMDS endpoint is listening,
             # we send a request it would immediately reject (missing a required header),
@@ -148,74 +187,34 @@ class ImdsCredential(_ManagedIdentityBase):
             except Exception:  # pylint:disable=broad-except
                 # if anything else was raised, assume the endpoint is unavailable
                 self._endpoint_available = False
+                _LOGGER.info("No response from the IMDS endpoint.")
 
         if not self._endpoint_available:
-            raise CredentialUnavailableError(message="IMDS endpoint unavailable")
+            message = "ManagedIdentityCredential authentication unavailable, no managed identity endpoint found."
+            raise CredentialUnavailableError(message=message)
 
         if len(scopes) != 1:
-            raise ValueError("this credential supports one scope per request")
+            raise ValueError("This credential requires exactly one scope per token request.")
 
-        token = self._client.get_cached_token(scopes)
-        if not token:
-            resource = scopes[0]
-            if resource.endswith("/.default"):
-                resource = resource[: -len("/.default")]
-            params = {"api-version": "2018-02-01", "resource": resource}
-            if self._client_id:
-                params["client_id"] = self._client_id
+        resource = scopes[0]
+        if resource.endswith("/.default"):
+            resource = resource[: -len("/.default")]
+        params = dict({"api-version": "2018-02-01", "resource": resource}, **self._identity_config)
+
+        try:
             token = self._client.request_token(scopes, method="GET", params=params)
+        except HttpResponseError as ex:
+            # 400 in response to a token request indicates managed identity is disabled,
+            # or the identity with the specified client_id is not available
+            if ex.status_code == 400:
+                self._endpoint_available = False
+                message = "ManagedIdentityCredential authentication unavailable. "
+                if self._identity_config:
+                    message += "The requested identity has not been assigned to this resource."
+                else:
+                    message += "No identity has been assigned to this resource."
+                six.raise_from(CredentialUnavailableError(message=message), ex)
+
+            # any other error is unexpected
+            six.raise_from(ClientAuthenticationError(message=ex.message, response=ex.response), None)
         return token
-
-
-class MsiCredential(_ManagedIdentityBase):
-    """Authenticates via the MSI endpoint in an App Service or Cloud Shell environment.
-
-    :keyword str client_id: ID of a user-assigned identity. Leave unspecified to use a system-assigned identity.
-    """
-
-    def __init__(self, **kwargs):
-        # type: (**Any) -> None
-        self._endpoint = os.environ.get(EnvironmentVariables.MSI_ENDPOINT)
-        if self._endpoint:
-            super(MsiCredential, self).__init__(endpoint=self._endpoint, client_cls=AuthnClient, **kwargs)
-
-    def get_token(self, *scopes, **kwargs):  # pylint:disable=unused-argument
-        # type: (*str, **Any) -> AccessToken
-        """Request an access token for `scopes`.
-
-        :param str scopes: desired scopes for the token
-        :rtype: :class:`azure.core.credentials.AccessToken`
-        :raises ~azure.identity.CredentialUnavailableError: the MSI endpoint is unavailable
-        """
-
-        if not self._endpoint:
-            raise CredentialUnavailableError(message="MSI endpoint unavailable")
-
-        if len(scopes) != 1:
-            raise ValueError("this credential supports only one scope per request")
-
-        token = self._client.get_cached_token(scopes)
-        if not token:
-            resource = scopes[0]
-            if resource.endswith("/.default"):
-                resource = resource[: -len("/.default")]
-            secret = os.environ.get(EnvironmentVariables.MSI_SECRET)
-            if secret:
-                # MSI_ENDPOINT and MSI_SECRET set -> App Service
-                token = self._request_app_service_token(scopes=scopes, resource=resource, secret=secret)
-            else:
-                # only MSI_ENDPOINT set -> legacy-style MSI (Cloud Shell)
-                token = self._request_legacy_token(scopes=scopes, resource=resource)
-        return token
-
-    def _request_app_service_token(self, scopes, resource, secret):
-        params = {"api-version": "2017-09-01", "resource": resource}
-        if self._client_id:
-            params["clientid"] = self._client_id
-        return self._client.request_token(scopes, method="GET", headers={"secret": secret}, params=params)
-
-    def _request_legacy_token(self, scopes, resource):
-        form_data = {"resource": resource}
-        if self._client_id:
-            form_data["client_id"] = self._client_id
-        return self._client.request_token(scopes, method="POST", form_data=form_data)

@@ -2,23 +2,15 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 # ------------------------------------
-import os
 import uuid
-from azure.identity import DefaultAzureCredential
 from azure.keyvault.certificates import CertificateClient, CertificatePolicy
+from key_vault_base import KeyVaultBase
 
 
-class KeyVaultCertificates:
+class KeyVaultCertificates(KeyVaultBase):
     def __init__(self):
-        # DefaultAzureCredential() expects the following environment variables:
-        # * AZURE_CLIENT_ID
-        # * AZURE_CLIENT_SECRET
-        # * AZURE_TENANT_ID
-        credential = DefaultAzureCredential()
-        self.certificate_client = CertificateClient(
-            vault_url=os.environ["AZURE_PROJECT_URL"], credential=credential
-        )
-
+        args = self.get_client_args()
+        self.certificate_client = CertificateClient(**args)
         self.certificate_name = "cert-name-" + uuid.uuid1().hex
 
     def create_certificate(self):

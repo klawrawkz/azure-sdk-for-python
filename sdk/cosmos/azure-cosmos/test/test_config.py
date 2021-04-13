@@ -39,7 +39,7 @@ class _test_config(object):
 
     #[SuppressMessage("Microsoft.Security", "CS002:SecretInNextLine", Justification="Cosmos DB Emulator Key")]
     masterKey = os.getenv('ACCOUNT_KEY', 'C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==')
-    host = os.getenv('ACCOUNT_HOST', 'https://localhost:443/')
+    host = os.getenv('ACCOUNT_HOST', 'https://localhost:8081/')
     connection_str = os.getenv('ACCOUNT_CONNECTION_STR', 'AccountEndpoint={};AccountKey={};'.format(host, masterKey))
 
     connectionPolicy = documents.ConnectionPolicy()
@@ -58,7 +58,7 @@ class _test_config(object):
     THROUGHPUT_FOR_5_PARTITIONS = 30000
     THROUGHPUT_FOR_1_PARTITION = 400
 
-    TEST_DATABASE_ID = "Python SDK Test Database " + str(uuid.uuid4())
+    TEST_DATABASE_ID = os.getenv('COSMOS_TEST_DATABASE_ID', "Python SDK Test Database " + str(uuid.uuid4()))
     TEST_COLLECTION_SINGLE_PARTITION_ID = "Single Partition Test Collection"
     TEST_COLLECTION_MULTI_PARTITION_ID = "Multi Partition Test Collection"
     TEST_COLLECTION_MULTI_PARTITION_WITH_CUSTOM_PK_ID = "Multi Partition Test Collection With Custom PK"

@@ -1,14 +1,15 @@
+import functools
 import hashlib
 import os
 from collections import namedtuple
 
 from azure.mgmt.servicebus import ServiceBusManagementClient
-from azure.mgmt.servicebus.models import SBQueue, AccessRights
+from azure.mgmt.servicebus.models import SBQueue, SBSubscription, AccessRights
 
 from azure_devtools.scenario_tests.exceptions import AzureTestError
 
 from devtools_testutils import (
-    ResourceGroupPreparer, AzureMgmtPreparer, FakeResource
+    ResourceGroupPreparer, AzureMgmtPreparer, FakeResource, get_region_override
 )
 
 from devtools_testutils.resource_testcase import RESOURCE_GROUP_PARAM
@@ -25,7 +26,8 @@ SERVICEBUS_QUEUE_AUTHORIZATION_RULE_PARAM = 'servicebus_queue_authorization_rule
 class ServiceBusNamespacePreparer(AzureMgmtPreparer):
     def __init__(self,
                  name_prefix='',
-                 sku='Standard', location='westus',
+                 use_cache=False,
+                 sku='Standard', location=get_region_override('westus'),
                  parameter_name=SERVICEBUS_NAMESPACE_PARAM,
                  resource_group_parameter_name=RESOURCE_GROUP_PARAM,
                  disable_recording=True, playback_fake_resource=None,
@@ -40,6 +42,10 @@ class ServiceBusNamespacePreparer(AzureMgmtPreparer):
         self.resource_group_parameter_name = resource_group_parameter_name
         self.parameter_name = parameter_name
         self.connection_string = ''
+        if random_name_enabled:
+            self.resource_moniker = self.name_prefix + "sbname"
+
+        self.set_cache(use_cache, sku, location)
 
     def create_resource(self, name, **kwargs):
         if self.is_live:
@@ -59,9 +65,14 @@ class ServiceBusNamespacePreparer(AzureMgmtPreparer):
             self.connection_string = key.primary_connection_string
             self.key_name = key.key_name
             self.primary_key = key.primary_key
+
+            self.test_class_instance.scrubber.register_name_pair(
+                name,
+                self.resource_moniker
+            )
         else:
             self.resource = FakeResource(name=name, id=name)
-            self.connection_string = 'Endpoint=sb://test-azure-sdk-test.servicebus.windows.net/;SharedAccessKeyName=test;SharedAccessKey=THISISATESTKEYXXXXXXXXXXXXXXXXXXXXXXXXXXXX='
+            self.connection_string = 'Endpoint=sb://{}.servicebus.windows.net/;SharedAccessKeyName=test;SharedAccessKey=THISISATESTKEYXXXXXXXXXXXXXXXXXXXXXXXXXXXX='.format(name)
             self.key_name = SERVICEBUS_DEFAULT_AUTH_RULE_NAME
             self.primary_key = 'ZmFrZV9hY29jdW50X2tleQ=='
         return {
@@ -121,6 +132,7 @@ class _ServiceBusChildResourcePreparer(AzureMgmtPreparer):
 class ServiceBusTopicPreparer(_ServiceBusChildResourcePreparer):
     def __init__(self,
                  name_prefix='',
+                 use_cache=False,
                  parameter_name=SERVICEBUS_TOPIC_PARAM,
                  resource_group_parameter_name=RESOURCE_GROUP_PARAM,
                  servicebus_namespace_parameter_name=SERVICEBUS_NAMESPACE_PARAM,
@@ -134,6 +146,9 @@ class ServiceBusTopicPreparer(_ServiceBusChildResourcePreparer):
                                                      playback_fake_resource=playback_fake_resource,
                                                      client_kwargs=client_kwargs)
         self.parameter_name = parameter_name
+        if random_name_enabled:
+            self.resource_moniker = self.name_prefix + "sbtopic"
+        self.set_cache(use_cache)
 
     def create_resource(self, name, **kwargs):
         if self.is_live:
@@ -145,6 +160,11 @@ class ServiceBusTopicPreparer(_ServiceBusChildResourcePreparer):
                 namespace.name,
                 name,
                 {}
+            )
+
+            self.test_class_instance.scrubber.register_name_pair(
+                name,
+                self.resource_moniker
             )
         else:
             self.resource = FakeResource(name=name, id=name)
@@ -159,14 +179,15 @@ class ServiceBusTopicPreparer(_ServiceBusChildResourcePreparer):
             self.client.topics.delete(group.name, namespace.name, name, polling=False)
 
 
-
 class ServiceBusSubscriptionPreparer(_ServiceBusChildResourcePreparer):
     def __init__(self,
                  name_prefix='',
+                 use_cache=False,
                  parameter_name=SERVICEBUS_SUBSCRIPTION_PARAM,
                  resource_group_parameter_name=RESOURCE_GROUP_PARAM,
                  servicebus_namespace_parameter_name=SERVICEBUS_NAMESPACE_PARAM,
                  servicebus_topic_parameter_name=SERVICEBUS_TOPIC_PARAM,
+                 requires_session=False,
                  disable_recording=True, playback_fake_resource=None,
                  client_kwargs=None, random_name_enabled=True):
         super(ServiceBusSubscriptionPreparer, self).__init__(name_prefix,
@@ -178,6 +199,12 @@ class ServiceBusSubscriptionPreparer(_ServiceBusChildResourcePreparer):
                                                      client_kwargs=client_kwargs)
         self.servicebus_topic_parameter_name = servicebus_topic_parameter_name
         self.parameter_name = parameter_name
+        if random_name_enabled:
+            self.resource_moniker = self.name_prefix + "sbsub"
+        self.set_cache(use_cache, requires_session)
+        self.requires_session=requires_session
+        if random_name_enabled:
+            self.resource_moniker = self.name_prefix + "sbqueue"
 
     def create_resource(self, name, **kwargs):
         if self.is_live:
@@ -190,7 +217,14 @@ class ServiceBusSubscriptionPreparer(_ServiceBusChildResourcePreparer):
                 namespace.name,
                 topic.name,
                 name,
-                {}
+                SBSubscription(
+                    requires_session=self.requires_session
+                )
+            )
+
+            self.test_class_instance.scrubber.register_name_pair(
+                name,
+                self.resource_moniker
             )
         else:
             self.resource = FakeResource(name=name, id=name)
@@ -214,14 +248,14 @@ class ServiceBusSubscriptionPreparer(_ServiceBusChildResourcePreparer):
             raise AzureTestError(template.format(ServiceBusTopicPreparer.__name__))
 
 
-
-
 class ServiceBusQueuePreparer(_ServiceBusChildResourcePreparer):
     def __init__(self,
                  name_prefix='',
+                 use_cache=False,
                  requires_duplicate_detection=False,
                  dead_lettering_on_message_expiration=False,
                  requires_session=False,
+                 lock_duration='PT30S',
                  parameter_name=SERVICEBUS_QUEUE_PARAM,
                  resource_group_parameter_name=RESOURCE_GROUP_PARAM,
                  servicebus_namespace_parameter_name=SERVICEBUS_NAMESPACE_PARAM,
@@ -235,11 +269,15 @@ class ServiceBusQueuePreparer(_ServiceBusChildResourcePreparer):
                                                      playback_fake_resource=playback_fake_resource,
                                                      client_kwargs=client_kwargs)
         self.parameter_name = parameter_name
+        self.set_cache(use_cache, requires_duplicate_detection, dead_lettering_on_message_expiration, requires_session, lock_duration)
 
         # Queue parameters
         self.requires_duplicate_detection=requires_duplicate_detection
         self.dead_lettering_on_message_expiration=dead_lettering_on_message_expiration
         self.requires_session=requires_session
+        self.lock_duration=lock_duration
+        if random_name_enabled:
+            self.resource_moniker = self.name_prefix + "sbqueue"
 
     def create_resource(self, name, **kwargs):
         if self.is_live:
@@ -251,10 +289,15 @@ class ServiceBusQueuePreparer(_ServiceBusChildResourcePreparer):
                 namespace.name,
                 name,
                 SBQueue(
-                    lock_duration='PT30S',
+                    lock_duration=self.lock_duration,
                     requires_duplicate_detection = self.requires_duplicate_detection,
                     dead_lettering_on_message_expiration = self.dead_lettering_on_message_expiration,
                     requires_session = self.requires_session)
+            )
+
+            self.test_class_instance.scrubber.register_name_pair(
+                name,
+                self.resource_moniker
             )
         else:
             self.resource = FakeResource(name=name, id=name)
@@ -272,6 +315,7 @@ class ServiceBusQueuePreparer(_ServiceBusChildResourcePreparer):
 class ServiceBusNamespaceAuthorizationRulePreparer(_ServiceBusChildResourcePreparer):
     def __init__(self,
                  name_prefix='',
+                 use_cache=False,
                  access_rights=[AccessRights.manage, AccessRights.send, AccessRights.listen],
                  parameter_name=SERVICEBUS_AUTHORIZATION_RULE_PARAM,
                  resource_group_parameter_name=RESOURCE_GROUP_PARAM,
@@ -287,6 +331,9 @@ class ServiceBusNamespaceAuthorizationRulePreparer(_ServiceBusChildResourcePrepa
                                                      client_kwargs=client_kwargs)
         self.parameter_name = parameter_name
         self.access_rights = access_rights
+        if random_name_enabled:
+            self.resource_moniker = self.name_prefix + "sbnameauth"
+        self.set_cache(use_cache, access_rights)
 
     def create_resource(self, name, **kwargs):
         if self.is_live:
@@ -302,6 +349,11 @@ class ServiceBusNamespaceAuthorizationRulePreparer(_ServiceBusChildResourcePrepa
 
             key = self.client.namespaces.list_keys(group.name, namespace.name, name)
             connection_string = key.primary_connection_string
+
+            self.test_class_instance.scrubber.register_name_pair(
+                name,
+                self.resource_moniker
+            )
         else:
             self.resource = FakeResource(name=name, id=name)
             connection_string = 'https://microsoft.com'
@@ -320,6 +372,7 @@ class ServiceBusNamespaceAuthorizationRulePreparer(_ServiceBusChildResourcePrepa
 class ServiceBusQueueAuthorizationRulePreparer(_ServiceBusChildResourcePreparer):
     def __init__(self,
                  name_prefix='',
+                 use_cache=False,
                  access_rights=[AccessRights.manage, AccessRights.send, AccessRights.listen],
                  parameter_name=SERVICEBUS_QUEUE_AUTHORIZATION_RULE_PARAM,
                  resource_group_parameter_name=RESOURCE_GROUP_PARAM,
@@ -337,6 +390,9 @@ class ServiceBusQueueAuthorizationRulePreparer(_ServiceBusChildResourcePreparer)
         self.parameter_name = parameter_name
         self.access_rights = access_rights
         self.servicebus_queue_parameter_name = servicebus_queue_parameter_name
+        if random_name_enabled:
+            self.resource_moniker = self.name_prefix + "sbqueueauth"
+        self.set_cache(use_cache, access_rights)
 
     def create_resource(self, name, **kwargs):
         if self.is_live:
@@ -354,6 +410,11 @@ class ServiceBusQueueAuthorizationRulePreparer(_ServiceBusChildResourcePreparer)
 
             key = self.client.queues.list_keys(group.name, namespace.name, queue.name, name)
             connection_string = key.primary_connection_string
+
+            self.test_class_instance.scrubber.register_name_pair(
+                name,
+                self.resource_moniker
+            )
         else:
             self.resource = FakeResource(name=name, id=name)
             connection_string = 'https://microsoft.com'
@@ -376,3 +437,9 @@ class ServiceBusQueueAuthorizationRulePreparer(_ServiceBusChildResourcePreparer)
             template = 'To create this service bus queue authorization rule a service bus queue is required. Please add ' \
                        'decorator @{} in front of this service bus preparer.'
             raise AzureTestError(template.format(ServiceBusQueuePreparer.__name__))
+
+
+CachedServiceBusNamespacePreparer = functools.partial(ServiceBusNamespacePreparer, use_cache=True)
+CachedServiceBusQueuePreparer = functools.partial(ServiceBusQueuePreparer, use_cache=True)
+CachedServiceBusTopicPreparer = functools.partial(ServiceBusTopicPreparer, use_cache=True)
+CachedServiceBusSubscriptionPreparer = functools.partial(ServiceBusSubscriptionPreparer, use_cache=True)

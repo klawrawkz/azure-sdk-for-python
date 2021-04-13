@@ -4,14 +4,18 @@
 # ------------------------------------
 import os
 
+from azure.core.credentials import AccessToken
 from azure.identity import (
+    CredentialUnavailableError,
     DefaultAzureCredential,
     InteractiveBrowserCredential,
-    KnownAuthorities,
     SharedTokenCacheCredential,
+    VisualStudioCodeCredential,
 )
 from azure.identity._constants import EnvironmentVariables
+from azure.identity._credentials.azure_cli import AzureCliCredential
 from azure.identity._credentials.managed_identity import ManagedIdentityCredential
+import pytest
 from six.moves.urllib_parse import urlparse
 
 from helpers import mock_response, Request, validating_transport
@@ -23,60 +27,72 @@ except ImportError:  # python < 3.3
     from mock import Mock, patch  # type: ignore
 
 
-def test_default_credential_authority():
-    expected_access_token = "***"
-    response = mock_response(
-        json_payload={
-            "access_token": expected_access_token,
-            "expires_in": 0,
-            "expires_on": 42,
-            "not_before": 0,
-            "resource": "scope",
-            "token_type": "Bearer",
-        }
-    )
+def test_iterates_only_once():
+    """When a credential succeeds, DefaultAzureCredential should use that credential thereafter, ignoring the others"""
 
-    def exercise_credentials(authority_kwarg, expected_authority=None):
-        expected_authority = expected_authority or authority_kwarg
+    unavailable_credential = Mock(get_token=Mock(side_effect=CredentialUnavailableError(message="...")))
+    successful_credential = Mock(get_token=Mock(return_value=AccessToken("***", 42)))
 
-        def send(request, **_):
-            url = urlparse(request.url)
-            assert url.scheme == "https", "Unexpected scheme '{}'".format(url.scheme)
-            assert url.netloc == expected_authority, "Expected authority '{}', actual was '{}'".format(
-                expected_authority, url.netloc
-            )
-            return response
+    credential = DefaultAzureCredential()
+    credential.credentials = [
+        unavailable_credential,
+        successful_credential,
+        Mock(get_token=Mock(side_effect=Exception("iteration didn't stop after a credential provided a token"))),
+    ]
 
-        # environment credential configured with client secret should respect authority
-        environment = {
-            EnvironmentVariables.AZURE_CLIENT_ID: "client_id",
-            EnvironmentVariables.AZURE_CLIENT_SECRET: "secret",
-            EnvironmentVariables.AZURE_TENANT_ID: "tenant_id",
-        }
-        with patch("os.environ", environment):
-            transport = Mock(send=send)
-            access_token, _ = DefaultAzureCredential(authority=authority_kwarg, transport=transport).get_token("scope")
-            assert access_token == expected_access_token
+    for n in range(3):
+        credential.get_token("scope")
+        assert unavailable_credential.get_token.call_count == 1
+        assert successful_credential.get_token.call_count == n + 1
 
-        # managed identity credential should ignore authority
-        with patch("os.environ", {EnvironmentVariables.MSI_ENDPOINT: "https://some.url"}):
-            transport = Mock(send=lambda *_, **__: response)
-            access_token, _ = DefaultAzureCredential(authority=authority_kwarg, transport=transport).get_token("scope")
-            assert access_token == expected_access_token
 
-        # shared cache credential should respect authority
-        upn = os.environ.get(EnvironmentVariables.AZURE_USERNAME, "spam@eggs")  # preferring environment values to
-        tenant = os.environ.get(EnvironmentVariables.AZURE_TENANT_ID, "tenant")  # prevent failure during live runs
-        account = get_account_event(username=upn, uid="guid", utid=tenant, authority=authority_kwarg)
-        cache = populated_cache(account)
-        with patch.object(SharedTokenCacheCredential, "supported"):
-            credential = DefaultAzureCredential(_cache=cache, authority=authority_kwarg, transport=Mock(send=send))
-        access_token, _ = credential.get_token("scope")
-        assert access_token == expected_access_token
+@pytest.mark.parametrize("authority", ("localhost", "https://localhost"))
+def test_authority(authority):
+    """the credential should accept authority configuration by keyword argument or environment"""
 
-    # all credentials not representing managed identities should use a specified authority or default to public cloud
-    exercise_credentials("authority.com")
-    exercise_credentials(None, KnownAuthorities.AZURE_PUBLIC_CLOUD)
+    parsed_authority = urlparse(authority)
+    expected_netloc = parsed_authority.netloc or authority  # "localhost" parses to netloc "", path "localhost"
+
+    def test_initialization(mock_credential, expect_argument):
+        DefaultAzureCredential(authority=authority)
+        assert mock_credential.call_count == 1
+
+        # N.B. if os.environ has been patched somewhere in the stack, that patch is in place here
+        environment = dict(os.environ, **{EnvironmentVariables.AZURE_AUTHORITY_HOST: authority})
+        with patch.dict(DefaultAzureCredential.__module__ + ".os.environ", environment, clear=True):
+            DefaultAzureCredential()
+        assert mock_credential.call_count == 2
+
+        for _, kwargs in mock_credential.call_args_list:
+            if expect_argument:
+                actual = urlparse(kwargs["authority"])
+                assert actual.scheme == "https"
+                assert actual.netloc == expected_netloc
+            else:
+                assert "authority" not in kwargs
+
+    # authority should be passed to EnvironmentCredential as a keyword argument
+    environment = {var: "foo" for var in EnvironmentVariables.CLIENT_SECRET_VARS}
+    with patch(DefaultAzureCredential.__module__ + ".EnvironmentCredential") as mock_credential:
+        with patch.dict("os.environ", environment, clear=True):
+            test_initialization(mock_credential, expect_argument=True)
+
+    # authority should be passed to SharedTokenCacheCredential as a keyword argument
+    with patch(DefaultAzureCredential.__module__ + ".SharedTokenCacheCredential") as mock_credential:
+        mock_credential.supported = lambda: True
+        test_initialization(mock_credential, expect_argument=True)
+
+    # authority should not be passed to ManagedIdentityCredential
+    with patch(DefaultAzureCredential.__module__ + ".ManagedIdentityCredential") as mock_credential:
+        with patch.dict("os.environ", {EnvironmentVariables.MSI_ENDPOINT: "localhost"}, clear=True):
+            test_initialization(mock_credential, expect_argument=False)
+
+    # authority should not be passed to AzureCliCredential
+    with patch(DefaultAzureCredential.__module__ + ".AzureCliCredential") as mock_credential:
+        with patch(DefaultAzureCredential.__module__ + ".SharedTokenCacheCredential") as shared_cache:
+            shared_cache.supported = lambda: False
+            with patch.dict("os.environ", {}, clear=True):
+                test_initialization(mock_credential, expect_argument=False)
 
 
 def test_exclude_options():
@@ -100,6 +116,12 @@ def test_exclude_options():
     if SharedTokenCacheCredential.supported():
         credential = DefaultAzureCredential(exclude_shared_token_cache_credential=True)
         assert_credentials_not_present(credential, SharedTokenCacheCredential)
+
+    credential = DefaultAzureCredential(exclude_cli_credential=True)
+    assert_credentials_not_present(credential, AzureCliCredential)
+
+    credential = DefaultAzureCredential(exclude_visual_studio_code_credential=True)
+    assert_credentials_not_present(credential, VisualStudioCodeCredential)
 
     # interactive auth is excluded by default
     credential = DefaultAzureCredential(exclude_interactive_browser_credential=False)
@@ -199,6 +221,73 @@ def test_shared_cache_username():
     assert token.token == expected_access_token
 
 
+def test_vscode_tenant_id():
+    """the credential should allow configuring a tenant ID for VisualStudioCodeCredential by kwarg or environment"""
+
+    expected_args = {"tenant_id": "the-tenant"}
+
+    with patch(DefaultAzureCredential.__module__ + ".VisualStudioCodeCredential") as mock_credential:
+        DefaultAzureCredential(visual_studio_code_tenant_id=expected_args["tenant_id"])
+    mock_credential.assert_called_once_with(**expected_args)
+
+    # tenant id can also be specified in $AZURE_TENANT_ID
+    with patch.dict(os.environ, {EnvironmentVariables.AZURE_TENANT_ID: expected_args["tenant_id"]}, clear=True):
+        with patch(DefaultAzureCredential.__module__ + ".VisualStudioCodeCredential") as mock_credential:
+            DefaultAzureCredential()
+    mock_credential.assert_called_once_with(**expected_args)
+
+    # keyword argument should override environment variable
+    with patch.dict(
+        os.environ, {EnvironmentVariables.AZURE_TENANT_ID: "not-" + expected_args["tenant_id"]}, clear=True
+    ):
+        with patch(DefaultAzureCredential.__module__ + ".VisualStudioCodeCredential") as mock_credential:
+            DefaultAzureCredential(visual_studio_code_tenant_id=expected_args["tenant_id"])
+    mock_credential.assert_called_once_with(**expected_args)
+
+
+@patch(DefaultAzureCredential.__module__ + ".SharedTokenCacheCredential")
+def test_default_credential_shared_cache_use(mock_credential):
+    mock_credential.supported = Mock(return_value=False)
+
+    # unsupported platform -> default credential shouldn't use shared cache
+    credential = DefaultAzureCredential()
+    assert mock_credential.call_count == 0
+    assert mock_credential.supported.call_count == 1
+    mock_credential.supported.reset_mock()
+
+    mock_credential.supported = Mock(return_value=True)
+
+    # supported platform -> default credential should use shared cache
+    credential = DefaultAzureCredential()
+    assert mock_credential.call_count == 1
+    assert mock_credential.supported.call_count == 1
+    mock_credential.supported.reset_mock()
+
+
+def test_managed_identity_client_id():
+    """the credential should accept a user-assigned managed identity's client ID by kwarg or environment variable"""
+
+    expected_args = {"client_id": "the-client"}
+
+    with patch(DefaultAzureCredential.__module__ + ".ManagedIdentityCredential") as mock_credential:
+        DefaultAzureCredential(managed_identity_client_id=expected_args["client_id"])
+    mock_credential.assert_called_once_with(**expected_args)
+
+    # client id can also be specified in $AZURE_CLIENT_ID
+    with patch.dict(os.environ, {EnvironmentVariables.AZURE_CLIENT_ID: expected_args["client_id"]}, clear=True):
+        with patch(DefaultAzureCredential.__module__ + ".ManagedIdentityCredential") as mock_credential:
+            DefaultAzureCredential()
+    mock_credential.assert_called_once_with(**expected_args)
+
+    # keyword argument should override environment variable
+    with patch.dict(
+        os.environ, {EnvironmentVariables.AZURE_CLIENT_ID: "not-" + expected_args["client_id"]}, clear=True
+    ):
+        with patch(DefaultAzureCredential.__module__ + ".ManagedIdentityCredential") as mock_credential:
+            DefaultAzureCredential(managed_identity_client_id=expected_args["client_id"])
+    mock_credential.assert_called_once_with(**expected_args)
+
+
 def get_credential_for_shared_cache_test(expected_refresh_token, expected_access_token, cache, **kwargs):
     exclude_other_credentials = {
         option: True for option in ("exclude_environment_credential", "exclude_managed_identity_credential")
@@ -214,3 +303,32 @@ def get_credential_for_shared_cache_test(expected_refresh_token, expected_access
     # this credential uses a mock shared cache, so it works on all platforms
     with patch.object(SharedTokenCacheCredential, "supported"):
         return DefaultAzureCredential(_cache=cache, transport=transport, **options)
+
+
+def test_interactive_browser_tenant_id():
+    """the credential should allow configuring a tenant ID for InteractiveBrowserCredential by kwarg or environment"""
+
+    tenant_id = "tenant-id"
+
+    def validate_tenant_id(credential):
+        assert len(credential.call_args_list) == 1, "InteractiveBrowserCredential should be instantiated once"
+        _, kwargs = credential.call_args
+        assert kwargs == {"tenant_id": tenant_id}
+
+    with patch(DefaultAzureCredential.__module__ + ".InteractiveBrowserCredential") as mock_credential:
+        DefaultAzureCredential(exclude_interactive_browser_credential=False, interactive_browser_tenant_id=tenant_id)
+    validate_tenant_id(mock_credential)
+
+    # tenant id can also be specified in $AZURE_TENANT_ID
+    with patch.dict(os.environ, {EnvironmentVariables.AZURE_TENANT_ID: tenant_id}, clear=True):
+        with patch(DefaultAzureCredential.__module__ + ".InteractiveBrowserCredential") as mock_credential:
+            DefaultAzureCredential(exclude_interactive_browser_credential=False)
+    validate_tenant_id(mock_credential)
+
+    # keyword argument should override environment variable
+    with patch.dict(os.environ, {EnvironmentVariables.AZURE_TENANT_ID: "not-" + tenant_id}, clear=True):
+        with patch(DefaultAzureCredential.__module__ + ".InteractiveBrowserCredential") as mock_credential:
+            DefaultAzureCredential(
+                exclude_interactive_browser_credential=False, interactive_browser_tenant_id=tenant_id
+            )
+    validate_tenant_id(mock_credential)

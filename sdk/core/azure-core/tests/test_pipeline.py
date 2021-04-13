@@ -46,10 +46,15 @@ import pytest
 
 from azure.core.configuration import Configuration
 from azure.core.pipeline import Pipeline
+from azure.core import PipelineClient
 from azure.core.pipeline.policies import (
     SansIOHTTPPolicy,
     UserAgentPolicy,
     RedirectPolicy,
+    RetryPolicy,
+    HttpLoggingPolicy,
+    HTTPPolicy,
+    SansIOHTTPPolicy
 )
 from azure.core.pipeline.transport._base import PipelineClientBase
 from azure.core.pipeline.transport import (
@@ -59,6 +64,26 @@ from azure.core.pipeline.transport import (
 )
 
 from azure.core.exceptions import AzureError
+
+def test_default_http_logging_policy():
+    config = Configuration()
+    pipeline_client = PipelineClient(base_url="test")
+    pipeline = pipeline_client._build_pipeline(config)
+    http_logging_policy = pipeline._impl_policies[-1]._policy
+    assert http_logging_policy.allowed_header_names == HttpLoggingPolicy.DEFAULT_HEADERS_WHITELIST
+
+def test_pass_in_http_logging_policy():
+    config = Configuration()
+    http_logging_policy = HttpLoggingPolicy()
+    http_logging_policy.allowed_header_names.update(
+        {"x-ms-added-header"}
+    )
+    config.http_logging_policy = http_logging_policy
+
+    pipeline_client = PipelineClient(base_url="test")
+    pipeline = pipeline_client._build_pipeline(config)
+    http_logging_policy = pipeline._impl_policies[-1]._policy
+    assert http_logging_policy.allowed_header_names == HttpLoggingPolicy.DEFAULT_HEADERS_WHITELIST.union({"x-ms-added-header"})
 
 
 def test_sans_io_exception():
@@ -105,7 +130,7 @@ class TestRequestsTransport(unittest.TestCase):
             response = pipeline.run(request)
 
         assert pipeline._transport.session is None
-        assert response.http_response.status_code == 200
+        assert isinstance(response.http_response.status_code, int)
 
     def test_basic_options_requests(self):
 
@@ -118,7 +143,7 @@ class TestRequestsTransport(unittest.TestCase):
             response = pipeline.run(request)
 
         assert pipeline._transport.session is None
-        assert response.http_response.status_code == 200
+        assert isinstance(response.http_response.status_code, int)
 
     def test_requests_socket_timeout(self):
         conf = Configuration()
@@ -147,7 +172,7 @@ class TestRequestsTransport(unittest.TestCase):
             response = pipeline.run(request)
 
         assert transport.session
-        assert response.http_response.status_code == 200
+        assert isinstance(response.http_response.status_code, int)
         transport.close()
         assert transport.session
         transport.session.close()
@@ -204,6 +229,12 @@ class TestClientPipelineURLFormatting(unittest.TestCase):
         formatted = client.format_url("https://google.com/subpath/{foo}", foo="bar")
         assert formatted == "https://google.com/subpath/bar"
 
+    def test_format_incorrect_endpoint(self):
+        # https://github.com/Azure/azure-sdk-for-python/pull/12106
+        client = PipelineClientBase('{Endpoint}/text/analytics/v3.0')
+        with pytest.raises(ValueError) as exp:
+            client.format_url("foo/bar")
+        assert str(exp.value) == "The value provided for the url part Endpoint was incorrect, and resulted in an invalid url"
 
 class TestClientRequest(unittest.TestCase):
     def test_request_json(self):
@@ -257,6 +288,115 @@ class TestClientRequest(unittest.TestCase):
         request.format_parameters({"g": "h"})
 
         self.assertIn(request.url, ["a/b/c?g=h&t=y", "a/b/c?t=y&g=h"])
+
+    def test_request_url_with_params_as_list(self):
+
+        request = HttpRequest("GET", "/")
+        request.url = "a/b/c?t=y"
+        request.format_parameters({"g": ["h","i"]})
+
+        self.assertIn(request.url, ["a/b/c?g=h&g=i&t=y", "a/b/c?t=y&g=h&g=i"])
+
+    def test_request_url_with_params_with_none_in_list(self):
+
+        request = HttpRequest("GET", "/")
+        request.url = "a/b/c?t=y"
+        with pytest.raises(ValueError):
+            request.format_parameters({"g": ["h",None]})
+
+    def test_request_url_with_params_with_none(self):
+
+        request = HttpRequest("GET", "/")
+        request.url = "a/b/c?t=y"
+        with pytest.raises(ValueError):
+            request.format_parameters({"g": None})
+
+
+    def test_request_text(self):
+        client = PipelineClientBase('http://example.org')
+        request = client.get(
+            "/",
+            content="foo"
+        )
+
+        # In absence of information, everything is JSON (double quote added)
+        assert request.data == json.dumps("foo")
+
+        request = client.post(
+            "/",
+            headers={'content-type': 'text/whatever'},
+            content="foo"
+        )
+
+        # We want a direct string
+        assert request.data == "foo"
+
+    def test_repr(self):
+        request = HttpRequest("GET", "hello.com")
+        assert repr(request) == "<HttpRequest [GET], url: 'hello.com'>"
+
+    def test_add_custom_policy(self):
+        class BooPolicy(HTTPPolicy):
+            def send(*args):
+                raise AzureError('boo')
+
+        class FooPolicy(HTTPPolicy):
+            def send(*args):
+                raise AzureError('boo')
+
+        config = Configuration()
+        retry_policy = RetryPolicy()
+        config.retry_policy = retry_policy
+        boo_policy = BooPolicy()
+        foo_policy = FooPolicy()
+        client = PipelineClient(base_url="test", config=config, per_call_policies=boo_policy)
+        policies = client._pipeline._impl_policies
+        assert boo_policy in policies
+        pos_boo = policies.index(boo_policy)
+        pos_retry = policies.index(retry_policy)
+        assert pos_boo < pos_retry
+
+        client = PipelineClient(base_url="test", config=config, per_call_policies=[boo_policy])
+        policies = client._pipeline._impl_policies
+        assert boo_policy in policies
+        pos_boo = policies.index(boo_policy)
+        pos_retry = policies.index(retry_policy)
+        assert pos_boo < pos_retry
+
+        client = PipelineClient(base_url="test", config=config, per_retry_policies=boo_policy)
+        policies = client._pipeline._impl_policies
+        assert boo_policy in policies
+        pos_boo = policies.index(boo_policy)
+        pos_retry = policies.index(retry_policy)
+        assert pos_boo > pos_retry
+
+        client = PipelineClient(base_url="test", config=config, per_retry_policies=[boo_policy])
+        policies = client._pipeline._impl_policies
+        assert boo_policy in policies
+        pos_boo = policies.index(boo_policy)
+        pos_retry = policies.index(retry_policy)
+        assert pos_boo > pos_retry
+
+        client = PipelineClient(base_url="test", config=config, per_call_policies=boo_policy, per_retry_policies=foo_policy)
+        policies = client._pipeline._impl_policies
+        assert boo_policy in policies
+        assert foo_policy in policies
+        pos_boo = policies.index(boo_policy)
+        pos_foo = policies.index(foo_policy)
+        pos_retry = policies.index(retry_policy)
+        assert pos_boo < pos_retry
+        assert pos_foo > pos_retry
+
+        client = PipelineClient(base_url="test", config=config, per_call_policies=[boo_policy],
+                                per_retry_policies=[foo_policy])
+        policies = client._pipeline._impl_policies
+        assert boo_policy in policies
+        assert foo_policy in policies
+        pos_boo = policies.index(boo_policy)
+        pos_foo = policies.index(foo_policy)
+        pos_retry = policies.index(retry_policy)
+        assert pos_boo < pos_retry
+        assert pos_foo > pos_retry
 
 
 if __name__ == "__main__":

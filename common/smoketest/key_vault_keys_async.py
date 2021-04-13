@@ -2,23 +2,15 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 # ------------------------------------
-import os
 import uuid
-from azure.identity.aio import DefaultAzureCredential
 from azure.keyvault.keys.aio import KeyClient
+from key_vault_base_async import KeyVaultBaseAsync
 
 
-class KeyVaultKeys:
+class KeyVaultKeys(KeyVaultBaseAsync):
     def __init__(self):
-        # DefaultAzureCredential() expects the following environment variables:
-        # * AZURE_CLIENT_ID
-        # * AZURE_CLIENT_SECRET
-        # * AZURE_TENANT_ID
-        credential = DefaultAzureCredential()
-        self.key_client = KeyClient(
-            vault_url=os.environ["AZURE_PROJECT_URL"], credential=credential
-        )
-
+        args = self.get_client_args()
+        self.key_client = KeyClient(**args)
         self.key_name = "key-name-" + uuid.uuid1().hex
 
     async def create_rsa_key(self):

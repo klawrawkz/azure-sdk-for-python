@@ -1,0 +1,46 @@
+interactions:
+- request:
+    body: '{"documents": [{"id": "1", "text": "I should take my cat to the veterinarian.",
+      "language": "de"}, {"id": "4", "text": "Este es un document escrito en Espa\u00f1ol.",
+      "language": "de"}, {"id": "3", "text": "\u732b\u306f\u5e78\u305b", "language":
+      "de"}]}'
+    headers:
+      Accept:
+      - application/json, text/json
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '253'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - azsdk-python-ai-textanalytics/5.1.0b6 Python/3.9.1 (macOS-10.13.6-x86_64-i386-64bit)
+    method: POST
+    uri: https://westus2.api.cognitive.microsoft.com/text/analytics/v3.1-preview.4/entities/recognition/pii?showStats=false&stringIndexType=UnicodeCodePoint
+  response:
+    body:
+      string: "{\"documents\":[{\"redactedText\":\"I should take my cat to the veterinarian.\",\"id\":\"1\",\"entities\":[],\"warnings\":[]},{\"redactedText\":\"Este
+        es un document escrito en Espa\xF1ol.\",\"id\":\"4\",\"entities\":[],\"warnings\":[]},{\"redactedText\":\"\u732B\u306F\u5E78\u305B\",\"id\":\"3\",\"entities\":[],\"warnings\":[]}],\"errors\":[],\"modelVersion\":\"2021-01-15\"}"
+    headers:
+      apim-request-id:
+      - 657562c5-4354-4b72-887e-de9faa40f811
+      content-type:
+      - application/json; charset=utf-8
+      csp-billing-usage:
+      - CognitiveServices.TextAnalytics.BatchScoring=3
+      date:
+      - Tue, 23 Feb 2021 17:48:26 GMT
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      transfer-encoding:
+      - chunked
+      x-content-type-options:
+      - nosniff
+      x-envoy-upstream-service-time:
+      - '38'
+    status:
+      code: 200
+      message: OK
+version: 1

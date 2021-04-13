@@ -8,7 +8,7 @@ import pytest
 import asyncio
 import time
 
-from azure.eventhub import EventData
+from azure.eventhub import EventData, LoadBalancingStrategy
 from azure.eventhub.aio import EventHubConsumerClient
 from azure.eventhub.aio._eventprocessor.event_processor import EventProcessor, CloseReason
 from azure.eventhub.aio._eventprocessor.in_memory_checkpoint_store import InMemoryCheckpointStore
@@ -51,7 +51,7 @@ async def test_loadbalancer_balance():
             self.stop = False
             self._on_event_received = kwargs.get("on_event_received")
 
-        async def receive(self):
+        async def receive(self, *args, **kwargs):
             await asyncio.sleep(0.1)
             await self._on_event_received(EventData("mock events"))
 
@@ -198,7 +198,7 @@ async def test_partition_processor():
             self.stop = False
             self._on_event_received = kwargs.get("on_event_received")
 
-        async def receive(self):
+        async def receive(self, *args, **kwargs):
             await asyncio.sleep(0.1)
             await self._on_event_received(EventData("mock events"))
 
@@ -283,7 +283,7 @@ async def test_partition_processor_process_events_error():
             self.stop = False
             self._on_event_received = kwargs.get("on_event_received")
 
-        async def receive(self):
+        async def receive(self, *args, **kwargs):
             await asyncio.sleep(0.1)
             await self._on_event_received(EventData("mock events"))
 
@@ -350,7 +350,7 @@ async def test_partition_processor_process_eventhub_consumer_error():
             self.stop = False
             self._on_event_received = kwargs.get("on_event_received")
 
-        async def receive(self):
+        async def receive(self, *args, **kwargs):
             raise EventHubError("Mock EventHubConsumer EventHubError")
 
         async def close(self):
@@ -412,7 +412,7 @@ async def test_partition_processor_process_error_close_error():
             self.stop = False
             self._on_event_received = kwargs.get("on_event_received")
 
-        async def receive(self):
+        async def receive(self, *args, **kwargs):
             await asyncio.sleep(0.1)
             await self._on_event_received(EventData("mock events"))
 
@@ -428,7 +428,7 @@ async def test_partition_processor_process_error_close_error():
 
     eventhub_client = MockEventHubClient()
     checkpoint_store = InMemoryCheckpointStore()
-    ownership_manager = MockOwnershipManager(eventhub_client, "$Default", "owner", checkpoint_store, 10.0, "0")
+    ownership_manager = MockOwnershipManager(eventhub_client, "$Default", "owner", checkpoint_store, 10.0, LoadBalancingStrategy.GREEDY, "0")
     event_processor = EventProcessor(eventhub_client=eventhub_client,
                                      consumer_group='$default',
                                      checkpoint_store=checkpoint_store,
@@ -436,6 +436,7 @@ async def test_partition_processor_process_error_close_error():
                                      error_handler=error_handler,
                                      partition_initialize_handler=partition_initialize_handler,
                                      partition_close_handler=partition_close_handler,
+                                     load_balancing_strategy=LoadBalancingStrategy.GREEDY,
                                      load_balancing_interval=1.3)
     event_processor._ownership_manager = ownership_manager
     task = asyncio.ensure_future(event_processor.start())
@@ -468,7 +469,7 @@ async def test_ownership_manager_release_partition():
             self.released = ownsership
 
     checkpoint_store = MockCheckpointStore()
-    ownership_manager = OwnershipManager(MockEventHubClient(), "$Default", "owner", checkpoint_store, 10.0, "0")
+    ownership_manager = OwnershipManager(MockEventHubClient(), "$Default", "owner", checkpoint_store, 10.0, LoadBalancingStrategy.GREEDY, "0")
     ownership_manager.cached_parition_ids = ["0", "1"]
     ownership_manager.owned_partitions = []
     await ownership_manager.release_ownership("1")
@@ -501,14 +502,14 @@ async def test_ownership_manager_release_partition():
         ([], ["0", "1", "2"], 3),
         (['ownership_active0', 'ownership_active1'], ["0", "1", "2"], 1),
         (['ownership_active0', 'ownership_expired'], ["0", "1", "2"], 2),
-        (['ownership_active0', 'ownership_expired', 'ownership_released'], ["0", "1", "2", "3"], 3),
-        (['ownership_active0'], ["0", "1", "2", "3"], 3),
+        (['ownership_active0', 'ownership_expired', 'ownership_released'], ["0", "1", "2", "3"], 2),
+        (['ownership_active0'], ["0", "1", "2", "3"], 2),
         (['ownership_expired', 'ownership_released'], ["0", "1", "2", "3"], 4),
         (['ownership_active0', 'ownership_active1'], ["0", "1"], 0),
         (['ownership_active0', 'ownership_self_owned'], ["0", "1"], 1),
     ]
 )
-def test_balance_ownership_on_init(ownerships, partitions, expected_result):
+def test_balance_ownership_greedy(ownerships, partitions, expected_result):
     ownership_ref = {
         'ownership_active0': {
             "fully_qualified_namespace": TEST_NAMESPACE,
@@ -562,8 +563,7 @@ def test_balance_ownership_on_init(ownerships, partitions, expected_result):
 
     mock_client = MockEventHubClient()
     current_ownerships = [ownership_ref[o] for o in ownerships]
-    om = OwnershipManager(mock_client, TEST_CONSUMER_GROUP, TEST_OWNER, None, 10, None)
-    om._initializing = True
+    om = OwnershipManager(mock_client, TEST_CONSUMER_GROUP, TEST_OWNER, None, 10, LoadBalancingStrategy.GREEDY, None)
     to_claim_ownership = om._balance_ownership(current_ownerships, partitions)
     assert len(to_claim_ownership) == expected_result
 
@@ -581,7 +581,7 @@ def test_balance_ownership_on_init(ownerships, partitions, expected_result):
         (['ownership_active0', 'ownership_self_owned'], ["0", "1"], 1),
     ]
 )
-def test_balance_ownership(ownerships, partitions, expected_result):
+def test_balance_ownership_balanced(ownerships, partitions, expected_result):
     ownership_ref = {
         'ownership_active0': {
             "fully_qualified_namespace": TEST_NAMESPACE,
@@ -635,8 +635,7 @@ def test_balance_ownership(ownerships, partitions, expected_result):
 
     mock_client = MockEventHubClient()
     current_ownerships = [ownership_ref[o] for o in ownerships]
-    om = OwnershipManager(mock_client, TEST_CONSUMER_GROUP, TEST_OWNER, None, 10, None)
-    om._initializing = False
+    om = OwnershipManager(mock_client, TEST_CONSUMER_GROUP, TEST_OWNER, None, 10, LoadBalancingStrategy.BALANCED, None)
     to_claim_ownership = om._balance_ownership(current_ownerships, partitions)
     assert len(to_claim_ownership) == expected_result
 

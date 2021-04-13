@@ -7,9 +7,8 @@ from functools import partial
 
 from azure.core.tracing.decorator import distributed_trace
 from azure.core.tracing.decorator_async import distributed_trace_async
-from azure.core.polling import async_poller
 
-from .._shared._polling_async import DeleteAsyncPollingMethod, RecoverDeletedAsyncPollingMethod
+from .._shared._polling_async import AsyncDeleteRecoverPollingMethod
 from .._shared import AsyncKeyVaultClientBase
 from .._shared.exceptions import error_map as _error_map
 from .. import DeletedKey, JsonWebKey, KeyVaultKey, KeyProperties
@@ -17,7 +16,8 @@ from .. import DeletedKey, JsonWebKey, KeyVaultKey, KeyProperties
 if TYPE_CHECKING:
     # pylint:disable=ungrouped-imports
     from datetime import datetime
-    from typing import AsyncIterable, Optional, List, Union
+    from azure.core.async_paging import AsyncItemPaged
+    from typing import Any, Optional, List, Union
     from .. import KeyType
 
 
@@ -27,7 +27,8 @@ class KeyClient(AsyncKeyVaultClientBase):
     :param str vault_url: URL of the vault the client will access
     :param credential: An object which can provide an access token for the vault, such as a credential from
         :mod:`azure.identity.aio`
-    :keyword str api_version: version of the Key Vault API to use. Defaults to the most recent.
+    :keyword api_version: version of the Key Vault API to use. Defaults to the most recent.
+    :paramtype api_version: ~azure.keyvault.keys.ApiVersion
     :keyword transport: transport to use. Defaults to
      :class:`~azure.core.pipeline.transport.AioHttpTransport`.
     :paramtype transport: ~azure.core.pipeline.transport.AsyncHttpTransport
@@ -81,17 +82,23 @@ class KeyClient(AsyncKeyVaultClientBase):
         expires_on = kwargs.pop("expires_on", None)
 
         if enabled is not None or not_before is not None or expires_on is not None:
-            attributes = self._client.models.KeyAttributes(enabled=enabled, not_before=not_before, expires=expires_on)
+            attributes = self._models.KeyAttributes(enabled=enabled, not_before=not_before, expires=expires_on)
         else:
             attributes = None
 
-        bundle = await self._client.create_key(
-            vault_base_url=self.vault_url,
-            key_name=name,
+        parameters = self._models.KeyCreateParameters(
             kty=key_type,
             key_size=kwargs.pop("size", None),
             key_attributes=attributes,
             key_ops=kwargs.pop("key_operations", None),
+            tags=kwargs.pop("tags", None),
+            curve=kwargs.pop("curve", None)
+        )
+
+        bundle = await self._client.create_key(
+            vault_base_url=self.vault_url,
+            key_name=name,
+            parameters=parameters,
             error_map=_error_map,
             **kwargs,
         )
@@ -189,13 +196,17 @@ class KeyClient(AsyncKeyVaultClientBase):
         deleted_key = DeletedKey._from_deleted_key_bundle(
             await self._client.delete_key(self.vault_url, name, error_map=_error_map, **kwargs)
         )
-        sd_disabled = deleted_key.recovery_id is None
-        command = partial(self.get_deleted_key, name=name, **kwargs)
 
-        delete_key_poller = DeleteAsyncPollingMethod(
-            initial_status="deleting", finished_status="deleted", sd_disabled=sd_disabled, interval=polling_interval
+        polling_method = AsyncDeleteRecoverPollingMethod(
+            # no recovery ID means soft-delete is disabled, in which case we initialize the poller as finished
+            finished=deleted_key.recovery_id is None,
+            command=partial(self.get_deleted_key, name=name, **kwargs),
+            final_resource=deleted_key,
+            interval=polling_interval,
         )
-        return await async_poller(command, deleted_key, None, delete_key_poller)
+        await polling_method.run()
+
+        return polling_method.resource()
 
     @distributed_trace_async
     async def get_key(self, name: str, version: "Optional[str]" = None, **kwargs: "Any") -> KeyVaultKey:
@@ -246,7 +257,7 @@ class KeyClient(AsyncKeyVaultClientBase):
         return DeletedKey._from_deleted_key_bundle(bundle)
 
     @distributed_trace
-    def list_deleted_keys(self, **kwargs: "Any") -> "AsyncIterable[DeletedKey]":
+    def list_deleted_keys(self, **kwargs: "Any") -> "AsyncItemPaged[DeletedKey]":
         """List all deleted keys, including the public part of each. Possible only in a vault with soft-delete enabled.
 
         Requires keys/list permission.
@@ -271,7 +282,7 @@ class KeyClient(AsyncKeyVaultClientBase):
         )
 
     @distributed_trace
-    def list_properties_of_keys(self, **kwargs: "Any") -> "AsyncIterable[KeyProperties]":
+    def list_properties_of_keys(self, **kwargs: "Any") -> "AsyncItemPaged[KeyProperties]":
         """List identifiers and properties of all keys in the vault. Requires keys/list permission.
 
         :returns: An iterator of keys without their cryptographic material or version information
@@ -294,7 +305,7 @@ class KeyClient(AsyncKeyVaultClientBase):
         )
 
     @distributed_trace
-    def list_properties_of_key_versions(self, name: str, **kwargs: "Any") -> "AsyncIterable[KeyProperties]":
+    def list_properties_of_key_versions(self, name: str, **kwargs: "Any") -> "AsyncItemPaged[KeyProperties]":
         """List the identifiers and properties of a key's versions. Requires keys/list permission.
 
         :param str name: The name of the key
@@ -371,12 +382,14 @@ class KeyClient(AsyncKeyVaultClientBase):
         recovered_key = KeyVaultKey._from_key_bundle(
             await self._client.recover_deleted_key(self.vault_url, name, error_map=_error_map, **kwargs)
         )
-        command = partial(self.get_key, name=name, **kwargs)
 
-        recover_key_poller = RecoverDeletedAsyncPollingMethod(
-            initial_status="recovering", finished_status="recovered", interval=polling_interval
+        command = partial(self.get_key, name=name, **kwargs)
+        polling_method = AsyncDeleteRecoverPollingMethod(
+            command=command, final_resource=recovered_key, finished=False, interval=polling_interval
         )
-        return await async_poller(command, recovered_key, None, recover_key_poller)
+        await polling_method.run()
+
+        return polling_method.resource()
 
     @distributed_trace_async
     async def update_key_properties(self, name: str, version: "Optional[str]" = None, **kwargs: "Any") -> KeyVaultKey:
@@ -409,15 +422,21 @@ class KeyClient(AsyncKeyVaultClientBase):
         not_before = kwargs.pop("not_before", None)
         expires_on = kwargs.pop("expires_on", None)
         if enabled is not None or not_before is not None or expires_on is not None:
-            attributes = self._client.models.KeyAttributes(enabled=enabled, not_before=not_before, expires=expires_on)
+            attributes = self._models.KeyAttributes(enabled=enabled, not_before=not_before, expires=expires_on)
         else:
             attributes = None
+
+        parameters = self._models.KeyUpdateParameters(
+            key_ops=kwargs.pop("key_operations", None),
+            key_attributes=attributes,
+            tags=kwargs.pop("tags", None)
+        )
+
         bundle = await self._client.update_key(
             self.vault_url,
             name,
             key_version=version or "",
-            key_ops=kwargs.pop("key_operations", None),
-            key_attributes=attributes,
+            parameters=parameters,
             error_map=_error_map,
             **kwargs,
         )
@@ -471,7 +490,12 @@ class KeyClient(AsyncKeyVaultClientBase):
                 :caption: Restore a key backup
                 :dedent: 8
         """
-        bundle = await self._client.restore_key(self.vault_url, backup, error_map=_error_map, **kwargs)
+        bundle = await self._client.restore_key(
+            self.vault_url,
+            parameters=self._models.KeyRestoreParameters(key_bundle_backup=backup),
+            error_map=_error_map,
+            **kwargs
+        )
         return KeyVaultKey._from_key_bundle(bundle)
 
     @distributed_trace_async
@@ -497,15 +521,21 @@ class KeyClient(AsyncKeyVaultClientBase):
         not_before = kwargs.pop("not_before", None)
         expires_on = kwargs.pop("expires_on", None)
         if enabled is not None or not_before is not None or expires_on is not None:
-            attributes = self._client.models.KeyAttributes(enabled=enabled, not_before=not_before, expires=expires_on)
+            attributes = self._models.KeyAttributes(enabled=enabled, not_before=not_before, expires=expires_on)
         else:
             attributes = None
-        bundle = await self._client.import_key(
-            self.vault_url,
-            name,
+
+        parameters = self._models.KeyImportParameters(
             key=key._to_generated_model(),
             key_attributes=attributes,
             hsm=kwargs.pop("hardware_protected", None),
+            tags=kwargs.pop("tags", None)
+        )
+
+        bundle = await self._client.import_key(
+            self.vault_url,
+            name,
+            parameters=parameters,
             error_map=_error_map,
             **kwargs
         )

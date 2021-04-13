@@ -14,7 +14,7 @@ This preview package for Python includes ADLS Gen2 specific API support made ava
 ### Prerequisites
 * Python 2.7, or 3.5 or later is required to use this package.
 * You must have an [Azure subscription](https://azure.microsoft.com/free/) and an
-[Azure storage account](https://docs.microsoft.com/en-us/azure/storage/blobs/data-lake-storage-quickstart-create-account) to use this package.
+[Azure storage account](https://docs.microsoft.com/azure/storage/blobs/data-lake-storage-quickstart-create-account) to use this package.
 
 ### Install the package
 Install the Azure DataLake Storage client library for Python with [pip](https://pypi.org/project/pip/):
@@ -25,17 +25,20 @@ pip install azure-storage-file-datalake --pre
 
 ### Create a storage account
 If you wish to create a new storage account, you can use the
-[Azure Portal](https://docs.microsoft.com/en-us/azure/storage/blobs/data-lake-storage-quickstart-create-account#create-an-account-using-the-azure-portal),
-[Azure PowerShell](https://docs.microsoft.com/en-us/azure/storage/blobs/data-lake-storage-quickstart-create-account#create-an-account-using-powershell),
-or [Azure CLI](https://docs.microsoft.com/en-us/azure/storage/blobs/data-lake-storage-quickstart-create-account#create-an-account-using-azure-cli):
+[Azure Portal](https://docs.microsoft.com/azure/storage/blobs/data-lake-storage-quickstart-create-account#create-an-account-using-the-azure-portal),
+[Azure PowerShell](https://docs.microsoft.com/azure/storage/blobs/data-lake-storage-quickstart-create-account#create-an-account-using-powershell),
+or [Azure CLI](https://docs.microsoft.com/azure/storage/blobs/data-lake-storage-quickstart-create-account#create-an-account-using-azure-cli):
 
 ```bash
 # Create a new resource group to hold the storage account -
 # if using an existing resource group, skip this step
 az group create --name my-resource-group --location westus2
 
+# Install the extension 'Storage-Preview'
+az extension add --name storage-preview
+
 # Create the storage account
-az storage account create -n my-storage-account-name -g my-resource-group --hierarchical-namespace true
+az storage account create --name my-storage-account-name --resource-group my-resource-group --sku Standard_LRS --kind StorageV2 --hierarchical-namespace true
 ```
 
 ### Authenticate the client
@@ -124,7 +127,7 @@ from azure.storage.filedatalake import DataLakeFileClient
 data = b"abc"
 file = DataLakeFileClient.from_connection_string("my_connection_string", 
                                                  file_system_name="myfilesystem", file_path="myfile")
-
+file.create_file ()
 file.append_data(data, offset=0, length=len(data))
 file.flush_data(len(data))
 ```
@@ -139,7 +142,8 @@ file = DataLakeFileClient.from_connection_string("my_connection_string",
                                                  file_system_name="myfilesystem", file_path="myfile")
 
 with open("./BlockDestination.txt", "wb") as my_file:
-    file_data = file.read_file(stream=my_file)
+    download = file.download_file()
+    download.readinto(my_file)
 ```
 
 ### Enumerating paths
@@ -159,7 +163,7 @@ for path in paths:
 ### General
 DataLake Storage clients raise exceptions defined in [Azure Core](https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/core/azure-core/README.md).
 
-All DataLake service operations will throw a StorageErrorException on failure with helpful [error codes](https://docs.microsoft.com/rest/api/storageservices/blob-service-error-codes).
+This list can be used for reference to catch thrown exceptions. To get the specific error code of the exception, use the `error_code` attribute, i.e, `exception.error_code`.
 
 ### Logging
 This library uses the standard
@@ -220,7 +224,7 @@ Several DataLake Storage Python SDK samples are available to you in the SDK's Gi
 ### Additional documentation
 
 Table for [ADLS Gen1 to ADLS Gen2 API Mapping](https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/storage/azure-storage-file-datalake/GEN1_GEN2_MAPPING.md)  
-For more extensive REST documentation on Data Lake Storage Gen2, see the [Data Lake Storage Gen2 documentation](https://docs.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/filesystem) on docs.microsoft.com.
+For more extensive REST documentation on Data Lake Storage Gen2, see the [Data Lake Storage Gen2 documentation](https://docs.microsoft.com/rest/api/storageservices/datalakestoragegen2/filesystem) on docs.microsoft.com.
 
 
 ## Contributing

@@ -154,9 +154,9 @@ class RequestIdPolicy(SansIOHTTPPolicy):
         elif self._request_id is None:
             return
         elif self._request_id is not _Unset:
-            request_id = self._request_id   # type: ignore
+            request_id = self._request_id
         elif self._auto_request_id:
-            request_id = str(uuid.uuid1())  # type: ignore
+            request_id = str(uuid.uuid1())
         if request_id is not unset:
             header = {"x-ms-client-request-id": request_id}
             request.http_request.headers.update(header)
@@ -280,16 +280,23 @@ class NetworkTraceLoggingPolicy(SansIOHTTPPolicy):
                 _LOGGER.debug("Request method: %r", http_request.method)
                 _LOGGER.debug("Request headers:")
                 for header, value in http_request.headers.items():
-                    if header.lower() == 'authorization':
-                        value = '*****'
                     _LOGGER.debug("    %r: %r", header, value)
                 _LOGGER.debug("Request body:")
 
                 # We don't want to log the binary data of a file upload.
-                if isinstance(http_request.body, types.GeneratorType): # type: ignore
+                if isinstance(http_request.body, types.GeneratorType):
                     _LOGGER.debug("File upload")
-                else:
-                    _LOGGER.debug(str(http_request.body)) # type: ignore
+                    return
+                try:
+                    if isinstance(http_request.body, types.AsyncGeneratorType):
+                        _LOGGER.debug("File upload")
+                        return
+                except AttributeError:
+                    pass
+                if http_request.body:
+                    _LOGGER.debug(str(http_request.body))
+                    return
+                _LOGGER.debug("This request has no body")
             except Exception as err:  # pylint: disable=broad-except
                 _LOGGER.debug("Failed to log request: %r", err)
 
@@ -330,7 +337,7 @@ class NetworkTraceLoggingPolicy(SansIOHTTPPolicy):
                     if response.context.options.get('stream', False):
                         _LOGGER.debug("Body is streamable")
                     else:
-                        _LOGGER.debug(response.http_response.text())
+                        _LOGGER.debug(http_response.text())
         except Exception as err:  # pylint: disable=broad-except
             _LOGGER.debug("Failed to log response: %s", repr(err))
 
@@ -340,6 +347,7 @@ class HttpLoggingPolicy(SansIOHTTPPolicy):
     """
 
     DEFAULT_HEADERS_WHITELIST = set([
+        "x-ms-request-id",
         "x-ms-client-request-id",
         "x-ms-return-client-request-id",
         "traceparent",
@@ -361,7 +369,7 @@ class HttpLoggingPolicy(SansIOHTTPPolicy):
         "Retry-After",
         "Server",
         "Transfer-Encoding",
-        "User-Agent"
+        "User-Agent",
     ])
     REDACTED_PLACEHOLDER = "REDACTED"
 
@@ -370,7 +378,7 @@ class HttpLoggingPolicy(SansIOHTTPPolicy):
             "azure.core.pipeline.policies.http_logging_policy"
         )
         self.allowed_query_params = set()
-        self.allowed_header_names = set(HttpLoggingPolicy.DEFAULT_HEADERS_WHITELIST)
+        self.allowed_header_names = set(self.__class__.DEFAULT_HEADERS_WHITELIST)
 
     def _redact_query_param(self, key, value):
         lower_case_allowed_query_params = [
@@ -414,6 +422,20 @@ class HttpLoggingPolicy(SansIOHTTPPolicy):
             for header, value in http_request.headers.items():
                 value = self._redact_header(header, value)
                 logger.info("    %r: %r", header, value)
+            if isinstance(http_request.body, types.GeneratorType):
+                logger.info("File upload")
+                return
+            try:
+                if isinstance(http_request.body, types.AsyncGeneratorType):
+                    logger.info("File upload")
+                    return
+            except AttributeError:
+                pass
+            if http_request.body:
+                logger.info("A body is sent with the request")
+                return
+            logger.info("No body was attached to the request")
+            return
         except Exception as err:  # pylint: disable=broad-except
             logger.warning("Failed to log request: %s", repr(err))
 
@@ -497,10 +519,10 @@ class ContentDecodePolicy(SansIOHTTPPolicy):
                 try:
                     if isinstance(data, unicode):  # type: ignore
                         # If I'm Python 2.7 and unicode XML will scream if I try a "fromstring" on unicode string
-                        data_as_str = data_as_str.encode(encoding="utf-8")  # type: ignore
+                        data_as_str = cast(str, data_as_str.encode(encoding="utf-8"))
                 except NameError:
                     pass
-                return ET.fromstring(data_as_str)
+                return ET.fromstring(data_as_str)   # nosec
             except ET.ParseError:
                 # It might be because the server has an issue, and returned JSON with
                 # content-type XML....

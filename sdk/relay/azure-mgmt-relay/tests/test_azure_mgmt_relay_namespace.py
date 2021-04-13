@@ -7,7 +7,7 @@
 # --------------------------------------------------------------------------
 import unittest
 import azure.mgmt.relay
-from azure.mgmt.relay.models import RelayNamespace, Sku, SkuTier, AccessRights
+from azure.mgmt.relay.models import RelayNamespace, Sku, AccessRights
 
 from devtools_testutils import AzureMgmtTestCase, ResourceGroupPreparer
 
@@ -18,7 +18,7 @@ class MgmtRelayNamespaceTest(AzureMgmtTestCase):
         super(MgmtRelayNamespaceTest, self).setUp()
 
         self.relay_client = self.create_mgmt_client(
-            azure.mgmt.relay.RelayManagementClient
+            azure.mgmt.relay.RelayAPI
         )
 
     @ResourceGroupPreparer()
@@ -28,8 +28,8 @@ class MgmtRelayNamespaceTest(AzureMgmtTestCase):
 
         # Create a Namespace
         namespace_name = "testingpythontestcasenamespace"
-        namespaceparameter=RelayNamespace(location=location, tags={'tag1':'value1', 'tag2':'value2'}, sku=Sku(tier=SkuTier.standard))
-        creatednamespace = self.relay_client.namespaces.create_or_update(resource_group_name, namespace_name, namespaceparameter).result()
+        namespaceparameter=RelayNamespace(location=location, tags={'tag1':'value1', 'tag2':'value2'}, sku=Sku(tier="standard"))
+        creatednamespace = self.relay_client.namespaces.begin_create_or_update(resource_group_name, namespace_name, namespaceparameter).result()
         self.assertEqual(creatednamespace.name, namespace_name)
         #
         # # Get created Namespace
@@ -37,9 +37,12 @@ class MgmtRelayNamespaceTest(AzureMgmtTestCase):
         getnamespaceresponse = self.relay_client.namespaces.get(resource_group_name, namespace_name)
         self.assertEqual(getnamespaceresponse.name, namespace_name)
 
-        # Get the List of Namespaces under the resourceGroup - list_by_resource_group
+        # Update a Namespace
+        namespaceparameter={'tags': {'tag1':'value1', 'tag2':'value2'}}
+        updatenamespace = self.relay_client.namespaces.update(resource_group_name, namespace_name, namespaceparameter)
 
-        listbyresourcegroupresponse = list(self.relay_client.namespaces.list_by_resource_group(resource_group_name, False, False))
+        # Get the List of Namespaces under the resourceGroup - list_by_resource_group
+        listbyresourcegroupresponse = list(self.relay_client.namespaces.list_by_resource_group(resource_group_name))
         self.assertGreater(len(listbyresourcegroupresponse), 0, "No Namespace returned, List is empty")
         self.assertEqual(listbyresourcegroupresponse[0].name, namespace_name, "Created namespace not found - ListByResourgroup")
 
@@ -55,7 +58,9 @@ class MgmtRelayNamespaceTest(AzureMgmtTestCase):
 
         # Create a new authorizationrule
         authoRule_name = "testingauthrulepy"
-        createnamespaceauthorule = self.relay_client.namespaces.create_or_update_authorization_rule(resource_group_name,namespace_name,authoRule_name,[AccessRights('Send'),AccessRights('Listen')])
+        createnamespaceauthorule = self.relay_client.namespaces.create_or_update_authorization_rule(resource_group_name,namespace_name,authoRule_name, {
+            "rights": [AccessRights('Send'),AccessRights('Listen')]
+        })
         self.assertEqual(createnamespaceauthorule.name,authoRule_name, "Authorization rule name not as created - create_or_update_authorization_rule ")
         self.assertEqual(len(createnamespaceauthorule.rights),2)
 
@@ -66,7 +71,7 @@ class MgmtRelayNamespaceTest(AzureMgmtTestCase):
 
         # update the rights of the authorizatiorule
         getnamespaceauthorule.rights.append('Manage')
-        updatenamespaceauthorule = self.relay_client.namespaces.create_or_update_authorization_rule(resource_group_name, namespace_name, authoRule_name, getnamespaceauthorule.rights)
+        updatenamespaceauthorule = self.relay_client.namespaces.create_or_update_authorization_rule(resource_group_name, namespace_name, authoRule_name, getnamespaceauthorule)
         self.assertEqual(updatenamespaceauthorule.name, authoRule_name, "Authorization rule name not as passed as parameter for update call - create_or_update_authorization_rule ")
         self.assertEqual(len(updatenamespaceauthorule.rights), 3, "Access rights mis match as updated  - create_or_update_authorization_rule ")
 
@@ -79,11 +84,15 @@ class MgmtRelayNamespaceTest(AzureMgmtTestCase):
         self.assertIsNotNone(listkeysauthorizationrule)
 
         # regenerate Keys for authorizationrule - Primary
-        regenratePrimarykeyauthorizationrule = self.relay_client.namespaces.regenerate_keys(resource_group_name, namespace_name,authoRule_name,'PrimaryKey')
+        regenratePrimarykeyauthorizationrule = self.relay_client.namespaces.regenerate_keys(resource_group_name, namespace_name,authoRule_name,{
+            "key_type": 'PrimaryKey'
+        })
         self.assertNotEqual(listkeysauthorizationrule.primary_key,regenratePrimarykeyauthorizationrule.primary_key)
 
         # regenerate Keys for authorizationrule - Primary
-        regenrateSecondarykeyauthorizationrule = self.relay_client.namespaces.regenerate_keys(resource_group_name,namespace_name,authoRule_name, 'SecondaryKey')
+        regenrateSecondarykeyauthorizationrule = self.relay_client.namespaces.regenerate_keys(resource_group_name,namespace_name,authoRule_name, {
+            "key_type": 'SecondaryKey'
+        })
         self.assertNotEqual(listkeysauthorizationrule.secondary_key, regenrateSecondarykeyauthorizationrule.secondary_key)
 
         # delete the authorizationrule
@@ -95,7 +104,7 @@ class MgmtRelayNamespaceTest(AzureMgmtTestCase):
         self.assertEqual(createnamespaceauthorule[0].name, defaultauthorule_name)
 
         # Delete the create namespace
-        deletenamespace = self.relay_client.namespaces.delete(resource_group_name, namespace_name).result()
+        deletenamespace = self.relay_client.namespaces.begin_delete(resource_group_name, namespace_name).result()
 
 
 # ------------------------------------------------------------------------------

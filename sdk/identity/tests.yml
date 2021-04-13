@@ -1,15 +1,9 @@
 trigger: none
 
-resources:
-  repositories:
-    - repository: azure-sdk-tools
-      type: github
-      name: Azure/azure-sdk-tools
-      endpoint: azure
-
-jobs:
-  - template: ../../eng/pipelines/templates/jobs/archetype-sdk-tests.yml
+stages:
+  - template: ../../eng/pipelines/templates/stages/archetype-sdk-tests.yml
     parameters:
+      AllocateResourceGroup: 'false'
       ServiceDirectory: identity
       EnvVars:
         AZURE_CLIENT_ID: $(python-identity-client-id)

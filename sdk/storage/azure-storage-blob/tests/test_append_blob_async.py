@@ -30,7 +30,7 @@ from azure.storage.blob.aio import (
     ContainerClient,
     BlobClient,
 )
-from _shared.testcase import GlobalStorageAccountPreparer
+from _shared.testcase import GlobalStorageAccountPreparer, GlobalResourceGroupPreparer, StorageAccountPreparer
 from _shared.asynctestcase import AsyncStorageTestCase
 
 # ------------------------------------------------------------------------------
@@ -54,7 +54,7 @@ class AiohttpTestTransport(AioHttpTransport):
         return response
 
 
-class StorageAppendBlobTestAsync(AsyncStorageTestCase):
+class StorageAppendBlobAsyncTest(AsyncStorageTestCase):
     # --Helpers-----------------------------------------------------------------
 
     async def _setup(self, bsc):
@@ -78,12 +78,12 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
     def _get_blob_reference(self):
         return self.get_resource_name(TEST_BLOB_PREFIX)
 
-    async def _create_blob(self, bsc):
+    async def _create_blob(self, bsc, tags=None):
         blob_name = self._get_blob_reference()
         blob = bsc.get_blob_client(
             self.container_name,
             blob_name)
-        await blob.create_append_blob()
+        await blob.create_append_blob(tags=tags)
         return blob
 
     async def _create_source_blob(self, data, bsc):
@@ -110,7 +110,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
     # --Test cases for append blobs --------------------------------------------
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_create_blob_async(self, resource_group, location, storage_account, storage_account_key):
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
                                 transport=AiohttpTestTransport())
@@ -123,6 +122,27 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
 
         # Assert
         blob_properties = await blob.get_blob_properties()
+        self.assertIsNotNone(blob_properties)
+        self.assertEqual(blob_properties.etag, create_resp.get('etag'))
+        self.assertEqual(blob_properties.last_modified, create_resp.get('last_modified'))
+
+    @pytest.mark.playback_test_only
+    @GlobalStorageAccountPreparer()
+    @AsyncStorageTestCase.await_prepared_test
+    async def test_get_blob_properties_using_vid(self, resource_group, location, storage_account, storage_account_key):
+        bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
+                                transport=AiohttpTestTransport())
+        await self._setup(bsc)
+        blob_name = self._get_blob_reference()
+
+        # Act
+        blob = bsc.get_blob_client(self.container_name, blob_name)
+        create_resp = await blob.create_append_blob()
+        # create operation will return a version id
+        self.assertIsNotNone(create_resp['version_id'])
+
+        # Assert
+        blob_properties = await blob.get_blob_properties(version_id=create_resp['version_id'])
         self.assertIsNotNone(blob_properties)
         self.assertEqual(blob_properties.etag, create_resp.get('etag'))
         self.assertEqual(blob_properties.last_modified, create_resp.get('last_modified'))
@@ -147,7 +167,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
         self.assertEqual(blob_properties.last_modified, create_resp.get('last_modified'))
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_create_blob_with_metadata_async(self, resource_group, location, storage_account,
                                                    storage_account_key):
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
@@ -165,7 +184,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
         self.assertDictEqual(md.metadata, metadata)
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_block_async(self, resource_group, location, storage_account, storage_account_key):
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
                                 transport=AiohttpTestTransport())
@@ -184,7 +202,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
         await self.assertBlobEqual(blob, b'block 0block 1block 2block 3block 4')
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_block_unicode_async(self, resource_group, location, storage_account, storage_account_key):
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
                                 transport=AiohttpTestTransport())
@@ -200,8 +217,25 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
 
         # Assert
 
-    @GlobalStorageAccountPreparer()
+    @GlobalResourceGroupPreparer()
+    @StorageAccountPreparer(random_name_enabled=True, location="canadacentral", name_prefix='storagename')
     @AsyncStorageTestCase.await_prepared_test
+    async def test_append_block_with_if_tags(self, resource_group, location, storage_account, storage_account_key):
+        bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key,
+                                max_block_size=4 * 1024)
+        await self._setup(bsc)
+        tags = {"tag1 name": "my tag", "tag2": "secondtag", "tag3": "thirdtag"}
+        blob = await self._create_blob(bsc, tags=tags)
+        with self.assertRaises(ResourceModifiedError):
+            await blob.append_block(u'啊齄丂狛狜', encoding='utf-16', if_tags_match_condition="\"tag1\"='first tag'")
+        resp = await blob.append_block(u'啊齄丂狛狜', encoding='utf-16', if_tags_match_condition="\"tag1 name\"='my tag' AND \"tag2\"='secondtag'")
+
+        self.assertEqual(int(resp['blob_append_offset']), 0)
+        self.assertEqual(resp['blob_committed_block_count'], 1)
+        self.assertIsNotNone(resp['etag'])
+        self.assertIsNotNone(resp['last_modified'])
+
+    @GlobalStorageAccountPreparer()
     async def test_append_block_with_md5_async(self, resource_group, location, storage_account, storage_account_key):
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
                                 transport=AiohttpTestTransport())
@@ -217,8 +251,8 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
 
         # Assert
 
-    @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
+    @GlobalResourceGroupPreparer()
+    @StorageAccountPreparer(random_name_enabled=True, location="canadacentral", name_prefix='storagename')
     async def test_append_block_from_url_async(self, resource_group, location, storage_account, storage_account_key):
         # Arrange
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
@@ -247,9 +281,18 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
         self.assertIsNotNone(resp.get('etag'))
         self.assertIsNotNone(resp.get('last_modified'))
 
+        tags = {"tag1 name": "my tag", "tag2": "secondtag", "tag3": "thirdtag"}
+        await destination_blob_client.set_blob_tags(tags=tags)
+        with self.assertRaises(ResourceModifiedError):
+            await destination_blob_client.append_block_from_url(source_blob_client.url + '?' + sas,
+                                                                source_offset=split,
+                                                                source_length=LARGE_BLOB_SIZE - split,
+                                                                if_tags_match_condition="\"tag1\"='first tag'")
         resp = await destination_blob_client.append_block_from_url(source_blob_client.url + '?' + sas,
                                                                    source_offset=split,
-                                                                   source_length=LARGE_BLOB_SIZE - split)
+                                                                   source_length=LARGE_BLOB_SIZE - split,
+                                                                   if_tags_match_condition="\"tag1 name\"='my tag' AND \"tag2\"='secondtag'")
+
         self.assertEqual(resp.get('blob_append_offset'), str(4 * 1024))
         self.assertEqual(resp.get('blob_committed_block_count'), 2)
         self.assertIsNotNone(resp.get('etag'))
@@ -268,7 +311,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
                                                                 source_length=LARGE_BLOB_SIZE)
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_block_from_url_and_validate_content_md5_async(self, resource_group, location, storage_account, storage_account_key):
         # Arrange
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
@@ -310,7 +352,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
                                                                     b"POTATO"))
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_block_from_url_with_source_if_modified_async(self, resource_group, location, storage_account, storage_account_key):
         # Arrange
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
@@ -357,7 +398,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
                                                                     'last_modified'))
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_block_from_url_with_source_if_unmodified_async(self, resource_group, location, storage_account, storage_account_key):
         # Arrange
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
@@ -405,7 +445,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
                                            hours=15))
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_block_from_url_with_source_if_match_async(self, resource_group, location, storage_account, storage_account_key):
         # Arrange
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
@@ -452,7 +491,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
                                                                 source_match_condition=MatchConditions.IfNotModified)
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_block_from_url_with_source_if_none_match_async(self, resource_group, location, storage_account, storage_account_key):
         # Arrange
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
@@ -499,7 +537,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
                                                                 source_match_condition=MatchConditions.IfModified)
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_block_from_url_with_if_match_async(self, resource_group, location, storage_account, storage_account_key):
         # Arrange
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
@@ -549,7 +586,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
                                                                 match_condition=MatchConditions.IfNotModified)
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_block_from_url_with_if_none_match_async(self, resource_group, location, storage_account, storage_account_key):
         # Arrange
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
@@ -595,7 +631,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
                                                                 match_condition=MatchConditions.IfModified)
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_block_from_url_with_maxsize_condition_async(self, resource_group, location, storage_account, storage_account_key):
         # Arrange
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
@@ -640,7 +675,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
                                                                 maxsize_condition=LARGE_BLOB_SIZE + 1)
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_block_from_url_with_appendpos_condition_async(self, resource_group, location, storage_account, storage_account_key):
         # Arrange
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
@@ -685,7 +719,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
                                                                 appendpos_condition=0)
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_block_from_url_with_if_modified_async(self, resource_group, location, storage_account, storage_account_key):
         # Arrange
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
@@ -732,7 +765,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
                                                                     'last_modified'))
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_block_from_url_with_if_unmodified_async(self, resource_group, location, storage_account, storage_account_key):
         # Arrange
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
@@ -779,7 +811,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
                                                                     'last_modified') - timedelta(minutes=15))
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_create_append_blob_with_no_overwrite_async(self, resource_group, location, storage_account,
                                                               storage_account_key):
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
@@ -817,7 +848,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
         self.assertEqual(props.size, LARGE_BLOB_SIZE + LARGE_BLOB_SIZE + 512)
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_create_append_blob_with_overwrite_async(self, resource_group, location, storage_account,
                                                            storage_account_key):
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
@@ -853,7 +883,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
         self.assertEqual(props.size, LARGE_BLOB_SIZE + 512)
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_blob_from_bytes_async(self, resource_group, location, storage_account, storage_account_key):
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
                                 transport=AiohttpTestTransport())
@@ -871,7 +900,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
         self.assertEqual(blob_properties.last_modified, append_resp['last_modified'])
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_blob_from_0_bytes_async(self, resource_group, location, storage_account, storage_account_key):
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
                                 transport=AiohttpTestTransport())
@@ -889,7 +917,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
         self.assertIsNone(append_resp.get('last_modified'))
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_blob_from_bytes_with_progress_async(self, resource_group, location, storage_account,
                                                               storage_account_key):
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
@@ -913,7 +940,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
         self.assert_upload_progress(len(data), self.config.max_block_size, progress)
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_blob_from_bytes_with_index_async(self, resource_group, location, storage_account,
                                                            storage_account_key):
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
@@ -929,7 +955,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
         await self.assertBlobEqual(blob, data[3:])
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_blob_from_bytes_with_index_and_count_async(self, resource_group, location, storage_account,
                                                                      storage_account_key):
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
@@ -945,7 +970,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
         await self.assertBlobEqual(blob, data[3:8])
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_blob_from_bytes_chunked_upload_async(self, resource_group, location, storage_account,
                                                                storage_account_key):
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
@@ -964,7 +988,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
         self.assertEqual(blob_properties.last_modified, append_resp.get('last_modified'))
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_app_blob_from_bytes_progress_chnked_upload_async(self, resource_group, location,
                                                                              storage_account, storage_account_key):
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
@@ -994,7 +1017,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
         self.assert_upload_progress(len(data), self.config.max_block_size, progress)
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_appblob_frm_bytes_chnked_upload_w_idx_n_count_async(self, resource_group, location,
                                                                                     storage_account,
                                                                                     storage_account_key):
@@ -1013,7 +1035,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
         await self.assertBlobEqual(blob, data[index:index + blob_size])
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_blob_from_path_chunked_upload_async(self, resource_group, location, storage_account,
                                                               storage_account_key):
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
@@ -1038,7 +1059,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
         self._teardown(FILE_PATH)
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_blob_from_path_with_progress_chunked_upload_async(self, resource_group, location,
                                                                             storage_account, storage_account_key):
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
@@ -1075,7 +1095,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
         self._teardown(FILE_PATH)
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_blob_from_stream_chunked_upload_async(self, resource_group, location, storage_account,
                                                                 storage_account_key):
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
@@ -1099,7 +1118,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
         self._teardown(FILE_PATH)
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_blob_from_stream_non_seekable_chunked_upload_known_size_async(self, resource_group, location,
                                                                                         storage_account,
                                                                                         storage_account_key):
@@ -1115,7 +1133,7 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
 
         # Act
         with open(FILE_PATH, 'rb') as stream:
-            non_seekable_file = StorageAppendBlobTestAsync.NonSeekableFile(stream)
+            non_seekable_file = StorageAppendBlobAsyncTest.NonSeekableFile(stream)
             await blob.upload_blob(non_seekable_file, length=blob_size, blob_type=BlobType.AppendBlob)
 
         # Assert
@@ -1123,7 +1141,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
         self._teardown(FILE_PATH)
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_blob_from_stream_non_seekable_chunked_upload_unknown_size_async(self, resource_group,
                                                                                           location, storage_account,
                                                                                           storage_account_key):
@@ -1138,7 +1155,7 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
 
         # Act
         with open(FILE_PATH, 'rb') as stream:
-            non_seekable_file = StorageAppendBlobTestAsync.NonSeekableFile(stream)
+            non_seekable_file = StorageAppendBlobAsyncTest.NonSeekableFile(stream)
             await blob.upload_blob(non_seekable_file, blob_type=BlobType.AppendBlob)
 
         # Assert
@@ -1146,7 +1163,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
         self._teardown(FILE_PATH)
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_blob_from_stream_with_multiple_appends_async(self, resource_group, location, storage_account,
                                                                        storage_account_key):
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
@@ -1172,7 +1188,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
         self._teardown(FILE_PATH)
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_blob_from_stream_chunked_upload_with_count_async(self, resource_group, location,
                                                                            storage_account, storage_account_key):
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
@@ -1195,7 +1210,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
 
     @pytest.mark.live_test_only
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_blob_from_stream_chunked_upload_with_count_parallel_async(self, resource_group, location,
                                                                                     storage_account,
                                                                                     storage_account_key):
@@ -1222,7 +1236,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
         self._teardown(FILE_PATH)
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_blob_from_text_async(self, resource_group, location, storage_account, storage_account_key):
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
                                 transport=AiohttpTestTransport())
@@ -1241,7 +1254,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
         self.assertEqual(blob_properties.last_modified, append_resp.get('last_modified'))
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_blob_from_text_with_encoding_async(self, resource_group, location, storage_account,
                                                              storage_account_key):
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
@@ -1258,7 +1270,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
         await self.assertBlobEqual(blob, data)
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_blob_from_text_with_encoding_and_progress_async(self, resource_group, location,
                                                                           storage_account, storage_account_key):
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
@@ -1282,7 +1293,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
         self.assert_upload_progress(len(data), self.config.max_block_size, progress)
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_blob_from_text_chunked_upload_async(self, resource_group, location, storage_account,
                                                               storage_account_key):
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
@@ -1299,7 +1309,6 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
         await self.assertBlobEqual(blob, encoded_data)
 
     @GlobalStorageAccountPreparer()
-    @AsyncStorageTestCase.await_prepared_test
     async def test_append_blob_with_md5_async(self, resource_group, location, storage_account, storage_account_key):
         bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024,
                                 transport=AiohttpTestTransport())
@@ -1310,5 +1319,88 @@ class StorageAppendBlobTestAsync(AsyncStorageTestCase):
         # Act
         await blob.append_block(data, validate_content=True)
 
+    @GlobalStorageAccountPreparer()
+    @AsyncStorageTestCase.await_prepared_test
+    async def test_seal_append_blob(self, resource_group, location, storage_account, storage_account_key):
+        bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024)
+        await self._setup(bsc)
+        blob = await self._create_blob(bsc)
+        resp = await blob.seal_append_blob()
+        self.assertTrue(resp['blob_sealed'])
 
+        with self.assertRaises(HttpResponseError):
+            await blob.append_block("abc")
+
+        await blob.set_blob_metadata({'isseal': 'yes'})
+        prop = await blob.get_blob_properties()
+
+        self.assertEqual(prop.metadata['isseal'], 'yes')
+
+    @GlobalStorageAccountPreparer()
+    @AsyncStorageTestCase.await_prepared_test
+    async def test_seal_append_blob_with_append_condition(self, resource_group, location, storage_account, storage_account_key):
+        bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024)
+        await self._setup(bsc)
+        blob = await self._create_blob(bsc)
+        with self.assertRaises(HttpResponseError):
+            await blob.seal_append_blob(appendpos_condition=1)
+
+        resp = await blob.seal_append_blob(appendpos_condition=0)
+        self.assertTrue(resp['blob_sealed'])
+
+    @GlobalStorageAccountPreparer()
+    @AsyncStorageTestCase.await_prepared_test
+    async def test_copy_sealed_blob_will_get_a_sealed_blob(self, resource_group, location, storage_account,
+                                                     storage_account_key):
+        bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024)
+        await self._setup(bsc)
+        blob = await self._create_blob(bsc)
+
+        # copy sealed blob will get a sealed blob
+        await blob.seal_append_blob()
+        copied_blob = bsc.get_blob_client(self.container_name, "copiedblob")
+        await copied_blob.start_copy_from_url(blob.url)
+        prop = await copied_blob.get_blob_properties()
+
+        self.assertTrue(prop.is_append_blob_sealed)
+        with self.assertRaises(HttpResponseError):
+            await copied_blob.append_block("abc")
+
+    @GlobalStorageAccountPreparer()
+    @AsyncStorageTestCase.await_prepared_test
+    async def test_copy_unsealed_blob_will_get_a_sealed_blob(self, resource_group, location, storage_account, storage_account_key):
+        bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024)
+        await self._setup(bsc)
+        blob = await self._create_blob(bsc)
+
+        # copy unsealed blob with seal_destination_blob=True will get a sealed blob
+        copied_blob2 = bsc.get_blob_client(self.container_name, "copiedblob2")
+        await copied_blob2.start_copy_from_url(blob.url, seal_destination_blob=True)
+        prop = await copied_blob2.get_blob_properties()
+
+        self.assertTrue(prop.is_append_blob_sealed)
+        with self.assertRaises(HttpResponseError):
+            await copied_blob2.append_block("abc")
+
+        blobs_gen = bsc.get_container_client(self.container_name).list_blobs()
+        async for blob in blobs_gen:
+            if blob.name == "copiedblob2":
+                self.assertTrue(blob.is_append_blob_sealed)
+
+    @GlobalStorageAccountPreparer()
+    @AsyncStorageTestCase.await_prepared_test
+    async def test_copy_sealed_blob_with_seal_blob_will_get_a_sealed_blob(self, resource_group, location, storage_account, storage_account_key):
+        bsc = BlobServiceClient(self.account_url(storage_account, "blob"), storage_account_key, max_block_size=4 * 1024)
+        await self._setup(bsc)
+        blob = await self._create_blob(bsc)
+
+        # copy sealed blob with seal_destination_blob=True will get a sealed blob
+        await blob.seal_append_blob()
+        copied_blob3 = bsc.get_blob_client(self.container_name, "copiedblob3")
+        await copied_blob3.start_copy_from_url(blob.url, seal_destination_blob=False)
+
+        prop = await copied_blob3.get_blob_properties()
+
+        self.assertIsNone(prop.is_append_blob_sealed)
+        await copied_blob3.append_block("abc")
 # ------------------------------------------------------------------------------

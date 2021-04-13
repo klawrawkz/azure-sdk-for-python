@@ -2,12 +2,12 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 # ------------------------------------
-import codecs
 import uuid
 
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric.rsa import (
+    RSAPrivateKey,
     RSAPrivateNumbers,
     RSAPublicNumbers,
     generate_private_key,
@@ -16,26 +16,25 @@ from cryptography.hazmat.primitives.asymmetric.rsa import (
     rsa_crt_iqmp,
 )
 
-from azure.keyvault.keys._models import JsonWebKey
 from ._internal import _bytes_to_int, _int_to_bytes
 from .key import Key
 from .algorithms import Ps256, Ps384, Ps512, Rsa1_5, RsaOaep, RsaOaep256, Rs256, Rs384, Rs512
+from ... import JsonWebKey, KeyOperation
 
 
 class RsaKey(Key):  # pylint:disable=too-many-public-methods
-    PUBLIC_KEY_DEFAULT_OPS = ["encrypt", "wrapKey", "verify"]
-    PRIVATE_KEY_DEFAULT_OPS = ["encrypt", "decrypt", "wrapKey", "unwrapKey", "verify", "sign"]
-
-    _supported_encryption_algorithms = [Rsa1_5.name(), RsaOaep.name(), RsaOaep256.name()]
-    _supported_key_wrap_algorithms = [Rsa1_5.name(), RsaOaep.name(), RsaOaep256.name()]
-    _supported_signature_algorithms = [
-        Ps256.name(),
-        Ps384.name(),
-        Ps512.name(),
-        Rs256.name(),
-        Rs384.name(),
-        Rs512.name(),
+    PUBLIC_KEY_DEFAULT_OPS = [KeyOperation.encrypt, KeyOperation.wrap_key, KeyOperation.verify]
+    PRIVATE_KEY_DEFAULT_OPS = PUBLIC_KEY_DEFAULT_OPS + [
+        KeyOperation.decrypt,
+        KeyOperation.unwrap_key,
+        KeyOperation.sign,
     ]
+
+    _supported_encryption_algorithms = frozenset((Rsa1_5.name(), RsaOaep.name(), RsaOaep256.name()))
+    _supported_key_wrap_algorithms = frozenset((Rsa1_5.name(), RsaOaep.name(), RsaOaep256.name()))
+    _supported_signature_algorithms = frozenset(
+        (Ps256.name(), Ps384.name(), Ps512.name(), Rs256.name(), Rs384.name(), Rs512.name(),)
+    )
 
     def __init__(self, kid=None):
         super(RsaKey, self).__init__()
@@ -170,7 +169,7 @@ class RsaKey(Key):  # pylint:disable=too-many-public-methods
 
     def encrypt(self, plain_text, **kwargs):
         algorithm = self._get_algorithm("encrypt", **kwargs)
-        encryptor = algorithm.create_encryptor(self._rsa_impl)
+        encryptor = algorithm.create_encryptor(self.public_key)
         return encryptor.transform(plain_text)
 
     def decrypt(self, cipher_text, **kwargs):
@@ -178,7 +177,7 @@ class RsaKey(Key):  # pylint:disable=too-many-public-methods
             raise NotImplementedError("The current RsaKey does not support decrypt")
 
         algorithm = self._get_algorithm("decrypt", **kwargs)
-        decryptor = algorithm.create_decryptor(self._rsa_impl)
+        decryptor = algorithm.create_decryptor(self.private_key)
         return decryptor.transform(cipher_text)
 
     def sign(self, digest, **kwargs):
@@ -186,12 +185,12 @@ class RsaKey(Key):  # pylint:disable=too-many-public-methods
             raise NotImplementedError("The current RsaKey does not support sign")
 
         algorithm = self._get_algorithm("sign", **kwargs)
-        signer = algorithm.create_signature_transform(self._rsa_impl)
+        signer = algorithm.create_signature_transform(self.private_key)
         return signer.sign(digest)
 
     def verify(self, digest, signature, **kwargs):
         algorithm = self._get_algorithm("verify", **kwargs)
-        signer = algorithm.create_signature_transform(self._rsa_impl)
+        signer = algorithm.create_signature_transform(self.public_key)
         try:
             # cryptography's verify methods return None, and raise when verification fails
             signer.verify(digest, signature)
@@ -201,7 +200,7 @@ class RsaKey(Key):  # pylint:disable=too-many-public-methods
 
     def wrap_key(self, key, **kwargs):
         algorithm = self._get_algorithm("wrapKey", **kwargs)
-        encryptor = algorithm.create_encryptor(self._rsa_impl)
+        encryptor = algorithm.create_encryptor(self.public_key)
         return encryptor.transform(key)
 
     def unwrap_key(self, encrypted_key, **kwargs):
@@ -209,34 +208,14 @@ class RsaKey(Key):  # pylint:disable=too-many-public-methods
             raise NotImplementedError("The current RsaKey does not support unwrap")
 
         algorithm = self._get_algorithm("unwrapKey", **kwargs)
-        decryptor = algorithm.create_decryptor(self._rsa_impl)
+        decryptor = algorithm.create_decryptor(self.private_key)
         return decryptor.transform(encrypted_key)
 
     def is_private_key(self):
-        # return isinstance(self._rsa_impl, RSAPrivateKey)
-        # TODO returning False here even if someone sneaked in private key material because
-        # currently we don't want to perform decrypt/unwrap/sign locally
-        return False
+        return isinstance(self._rsa_impl, RSAPrivateKey)
 
     def _public_key_material(self):
         return self.public_key.public_numbers()
 
     def _private_key_material(self):
         return self.private_key.private_numbers() if self.private_key else None
-
-
-def _bytes_to_int(b):
-    return int(codecs.encode(b, "hex"), 16)
-
-
-def _int_to_bytes(i):
-    h = hex(i)
-    if len(h) > 1 and h[0:2] == "0x":
-        h = h[2:]
-
-    # need to strip L in python 2.x
-    h = h.strip("L")
-
-    if len(h) % 2:
-        h = "0" + h
-    return codecs.decode(h, "hex")

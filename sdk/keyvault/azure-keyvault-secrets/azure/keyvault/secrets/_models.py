@@ -2,7 +2,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 # ------------------------------------
-from ._shared import parse_vault_id
+from ._shared import parse_key_vault_id
 
 try:
     from typing import TYPE_CHECKING
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     # pylint:disable=unused-import
     from typing import Any, Dict, Optional
     from datetime import datetime
-    from ._shared._generated.v7_0 import models as _models
+    from ._generated.v7_1 import models as _models
 
 
 class SecretProperties(object):
@@ -23,7 +23,7 @@ class SecretProperties(object):
         # type: (_models.SecretAttributes, str, **Any) -> None
         self._attributes = attributes
         self._id = vault_id
-        self._vault_id = parse_vault_id(vault_id)
+        self._vault_id = parse_key_vault_id(vault_id)
         self._content_type = kwargs.get("content_type", None)
         self._key_id = kwargs.get("key_id", None)
         self._managed = kwargs.get("managed", None)
@@ -129,6 +129,18 @@ class SecretProperties(object):
         :rtype: ~datetime.datetime
         """
         return self._attributes.updated
+
+    @property
+    def recoverable_days(self):
+        # type: () -> Optional[int]
+        """The number of days the key is retained before being deleted from a soft-delete enabled Key Vault.
+
+        :rtype: int
+        """
+        # recoverable_days was added in 7.1-preview
+        if self._attributes and hasattr(self._attributes, "recoverable_days"):
+            return self._attributes.recoverable_days
+        return None
 
     @property
     def recovery_level(self):

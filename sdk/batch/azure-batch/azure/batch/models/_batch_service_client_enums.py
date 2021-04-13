@@ -89,7 +89,7 @@ class OutputFileUploadCondition(str, Enum):
 class ComputeNodeFillType(str, Enum):
 
     spread = "spread"  #: Tasks should be assigned evenly across all Compute Nodes in the Pool.
-    pack = "pack"  #: As many Tasks as possible (maxTasksPerNode) should be assigned to each Compute Node in the Pool before any Tasks are assigned to the next Compute Node in the Pool.
+    pack = "pack"  #: As many Tasks as possible (taskSlotsPerNode) should be assigned to each Compute Node in the Pool before any Tasks are assigned to the next Compute Node in the Pool.
 
 
 class CertificateStoreLocation(str, Enum):
@@ -118,6 +118,12 @@ class StorageAccountType(str, Enum):
     premium_lrs = "premium_lrs"  #: The data disk should use premium locally redundant storage.
 
 
+class DiskEncryptionTarget(str, Enum):
+
+    os_disk = "osdisk"  #: The temporary disk on the compute node is encrypted. On Linux this encryption applies to other partitions (such as those on mounted data disks) when encryption occurs at boot time.
+    temporary_disk = "temporarydisk"  #: The temporary disk on the compute node is encrypted. On Linux this encryption applies to other partitions (such as those on mounted data disks) when encryption occurs at boot time.
+
+
 class DynamicVNetAssignmentScope(str, Enum):
 
     none = "none"  #: No dynamic VNet assignment is enabled.
@@ -134,6 +140,13 @@ class NetworkSecurityGroupRuleAccess(str, Enum):
 
     allow = "allow"  #: Allow access.
     deny = "deny"  #: Deny access.
+
+
+class IPAddressProvisioningType(str, Enum):
+
+    batch_managed = "batchmanaged"  #: A public IP will be created and managed by Batch. There may be multiple public IPs depending on the size of the Pool.
+    user_managed = "usermanaged"  #: Public IPs are provided by the user and will be used to provision the Compute Nodes.
+    no_public_ip_addresses = "nopublicipaddresses"  #: No public IP Address will be created.
 
 
 class PoolLifetimeOption(str, Enum):

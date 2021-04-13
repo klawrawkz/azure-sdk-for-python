@@ -13,7 +13,10 @@ from ._generated.models import SourceModifiedAccessConditions, LeaseAccessCondit
 
 _SUPPORTED_API_VERSIONS = [
     '2019-02-02',
-    '2019-07-07'
+    '2019-07-07',
+    '2019-12-12',
+    '2020-02-10',
+    '2020-04-08'
 ]
 
 
@@ -52,6 +55,7 @@ def get_source_conditions(kwargs):
         source_if_match=if_match or kwargs.pop('source_if_match', None),
         source_if_none_match=if_none_match or kwargs.pop('source_if_none_match', None)
     )
+
 
 def get_access_conditions(lease):
     # type: (Optional[Union[ShareLeaseClient, str]]) -> Union[LeaseAccessConditions, None]

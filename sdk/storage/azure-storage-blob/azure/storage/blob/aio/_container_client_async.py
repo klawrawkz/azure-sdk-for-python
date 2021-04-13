@@ -4,18 +4,19 @@
 # Licensed under the MIT License. See License.txt in the project root for
 # license information.
 # --------------------------------------------------------------------------
-
+# pylint: disable=invalid-overridden-method
 import functools
 from typing import (  # pylint: disable=unused-import
-    Union, Optional, Any, Iterable, AnyStr, Dict, List, Tuple, IO, AsyncIterator,
+    Union, Optional, Any, Iterable, AnyStr, Dict, List, IO, AsyncIterator,
     TYPE_CHECKING
 )
 
+from azure.core.exceptions import HttpResponseError, ResourceNotFoundError
 from azure.core.tracing.decorator import distributed_trace
 from azure.core.tracing.decorator_async import distributed_trace_async
 from azure.core.async_paging import AsyncItemPaged
 from azure.core.pipeline import AsyncPipeline
-from azure.core.pipeline.transport import HttpRequest, AsyncHttpResponse
+from azure.core.pipeline.transport import AsyncHttpResponse
 
 from .._shared.base_client_async import AsyncStorageAccountHostsMixin, AsyncTransportWrapper
 from .._shared.policies_async import ExponentialRetry
@@ -24,29 +25,22 @@ from .._shared.response_handlers import (
     process_storage_error,
     return_response_headers,
     return_headers_and_deserialized)
-from .._generated import VERSION
 from .._generated.aio import AzureBlobStorage
-from .._generated.models import (
-    StorageErrorException,
-    SignedIdentifier)
+from .._generated.models import SignedIdentifier
 from .._deserialize import deserialize_container_properties
-from .._serialize import get_modify_conditions, get_container_cpk_scope_info, get_api_version
+from .._serialize import get_modify_conditions, get_container_cpk_scope_info, get_api_version, get_access_conditions
 from .._container_client import ContainerClient as ContainerClientBase, _get_blob_name
-from .._lease import get_access_conditions
-from .._models import ContainerProperties, BlobProperties, BlobType  # pylint: disable=unused-import
-from ._models import BlobPropertiesPaged, BlobPrefix
+from .._models import ContainerProperties, BlobType, BlobProperties  # pylint: disable=unused-import
+from ._list_blobs_helper import BlobPropertiesPaged, BlobPrefix
 from ._lease_async import BlobLeaseClient
 from ._blob_client_async import BlobClient
 
 if TYPE_CHECKING:
-    from azure.core.pipeline.transport import HttpTransport
-    from azure.core.pipeline.policies import HTTPPolicy
-    from .._models import ContainerSasPermissions, PublicAccess
+    from .._models import PublicAccess
     from ._download_async import StorageStreamDownloader
     from datetime import datetime
     from .._models import ( # pylint: disable=unused-import
         AccessPolicy,
-        ContentSettings,
         StandardBlobTier,
         PremiumPageBlobTier)
 
@@ -66,9 +60,11 @@ class ContainerClient(AsyncStorageAccountHostsMixin, ContainerClientBase):
     :type container_name: str
     :param credential:
         The credentials with which to authenticate. This is optional if the
-        account URL already has a SAS token. The value can be a SAS token string, an account
+        account URL already has a SAS token. The value can be a SAS token string,
+        an instance of a AzureSasCredential from azure.core.credentials, an account
         shared access key, or an instance of a TokenCredentials class from azure.identity.
-        If the URL already has a SAS token, specifying an explicit credential will take priority.
+        If the resource URI already contains a SAS token, this will be ignored in favor of an explicit credential
+        - except in the case of AzureSasCredential, where the conflicting SAS tokens will raise a ValueError.
     :keyword str api_version:
         The Storage API version to use for requests. Default value is '2019-07-07'.
         Setting to an older version may result in reduced feature compatibility.
@@ -79,7 +75,7 @@ class ContainerClient(AsyncStorageAccountHostsMixin, ContainerClientBase):
         The hostname of the secondary endpoint.
     :keyword int max_block_size: The maximum chunk size for uploading a block blob in chunks.
         Defaults to 4*1024*1024, or 4MB.
-    :keyword int max_single_put_size: If the blob size is less than max_single_put_size, then the blob will be
+    :keyword int max_single_put_size: If the blob size is less than or equal max_single_put_size, then the blob will be
         uploaded with only one http PUT request. If the blob size is larger than max_single_put_size,
         the blob will be uploaded in chunks. Defaults to 64*1024*1024, or 64MB.
     :keyword int min_large_block_upload_threshold: The minimum chunk size required to use the memory efficient
@@ -121,7 +117,8 @@ class ContainerClient(AsyncStorageAccountHostsMixin, ContainerClientBase):
             credential=credential,
             **kwargs)
         self._client = AzureBlobStorage(url=self.url, pipeline=self._pipeline)
-        self._client._config.version = get_api_version(kwargs, VERSION)  # pylint: disable=protected-access
+        default_api_version = self._client._config.version  # pylint: disable=protected-access
+        self._client._config.version = get_api_version(kwargs, default_api_version)  # pylint: disable=protected-access
         self._loop = kwargs.get('loop', None)
 
     @distributed_trace_async
@@ -169,7 +166,41 @@ class ContainerClient(AsyncStorageAccountHostsMixin, ContainerClientBase):
                 cls=return_response_headers,
                 headers=headers,
                 **kwargs)
-        except StorageErrorException as error:
+        except HttpResponseError as error:
+            process_storage_error(error)
+
+    @distributed_trace_async
+    async def _rename_container(self, new_name, **kwargs):
+        # type: (str, **Any) -> ContainerClient
+        """Renames a container.
+
+        Operation is successful only if the source container exists.
+
+        :param str new_name:
+            The new container name the user wants to rename to.
+        :keyword lease:
+            Specify this to perform only if the lease ID given
+            matches the active lease ID of the source container.
+        :paramtype lease: ~azure.storage.blob.BlobLeaseClient or str
+        :keyword int timeout:
+            The timeout parameter is expressed in seconds.
+        :rtype: ~azure.storage.blob.ContainerClient
+        """
+        lease = kwargs.pop('lease', None)
+        try:
+            kwargs['source_lease_id'] = lease.id  # type: str
+        except AttributeError:
+            kwargs['source_lease_id'] = lease
+        try:
+            renamed_container = ContainerClient(
+                "{}://{}".format(self.scheme, self.primary_hostname), container_name=new_name,
+                credential=self.credential, api_version=self.api_version, _configuration=self._config,
+                _pipeline=self._pipeline, _location_mode=self._location_mode, _hosts=self._hosts,
+                require_encryption=self.require_encryption, key_encryption_key=self.key_encryption_key,
+                key_resolver_function=self.key_resolver_function)
+            await renamed_container._client.container.rename(self.container_name, **kwargs)   # pylint: disable = protected-access
+            return renamed_container
+        except HttpResponseError as error:
             process_storage_error(error)
 
     @distributed_trace_async
@@ -225,7 +256,7 @@ class ContainerClient(AsyncStorageAccountHostsMixin, ContainerClientBase):
                 lease_access_conditions=access_conditions,
                 modified_access_conditions=mod_conditions,
                 **kwargs)
-        except StorageErrorException as error:
+        except HttpResponseError as error:
             process_storage_error(error)
 
     @distributed_trace_async
@@ -297,7 +328,7 @@ class ContainerClient(AsyncStorageAccountHostsMixin, ContainerClientBase):
         """
         try:
             return await self._client.container.get_account_info(cls=return_response_headers, **kwargs) # type: ignore
-        except StorageErrorException as error:
+        except HttpResponseError as error:
             process_storage_error(error)
 
     @distributed_trace_async
@@ -333,10 +364,29 @@ class ContainerClient(AsyncStorageAccountHostsMixin, ContainerClientBase):
                 lease_access_conditions=access_conditions,
                 cls=deserialize_container_properties,
                 **kwargs)
-        except StorageErrorException as error:
+        except HttpResponseError as error:
             process_storage_error(error)
         response.name = self.container_name
         return response # type: ignore
+
+    @distributed_trace_async
+    async def exists(self, **kwargs):
+        # type: (**Any) -> bool
+        """
+        Returns True if a container exists and returns False otherwise.
+
+        :kwarg int timeout:
+            The timeout parameter is expressed in seconds.
+        :returns: boolean
+        """
+        try:
+            await self._client.container.get_properties(**kwargs)
+            return True
+        except HttpResponseError as error:
+            try:
+                process_storage_error(error)
+            except ResourceNotFoundError:
+                return False
 
     @distributed_trace_async
     async def set_container_metadata( # type: ignore
@@ -390,8 +440,43 @@ class ContainerClient(AsyncStorageAccountHostsMixin, ContainerClientBase):
                 cls=return_response_headers,
                 headers=headers,
                 **kwargs)
-        except StorageErrorException as error:
+        except HttpResponseError as error:
             process_storage_error(error)
+
+    @distributed_trace
+    def get_blob_service_client(self):  # pylint: disable=client-method-missing-kwargs
+        # type: (...) -> BlobServiceClient
+        """Get a client to interact with the container's parent service account.
+
+        Defaults to current container's credentials.
+
+        :returns: A BlobServiceClient.
+        :rtype: ~azure.storage.blob.BlobServiceClient
+
+        .. admonition:: Example:
+
+            .. literalinclude:: ../samples/blob_samples_service_async.py
+                :start-after: [START get_blob_service_client_from_container_client]
+                :end-before: [END get_blob_service_client_from_container_client]
+                :language: python
+                :dedent: 8
+                :caption: Get blob service client from container object.
+        """
+        from ._blob_service_client_async import BlobServiceClient
+        if not isinstance(self._pipeline._transport, AsyncTransportWrapper): # pylint: disable = protected-access
+            _pipeline = AsyncPipeline(
+                transport=AsyncTransportWrapper(self._pipeline._transport), # pylint: disable = protected-access
+                policies=self._pipeline._impl_policies # pylint: disable = protected-access
+            )
+        else:
+            _pipeline = self._pipeline  # pylint: disable = protected-access
+        return BlobServiceClient(
+            "{}://{}".format(self.scheme, self.primary_hostname),
+            credential=self._raw_credential, api_version=self.api_version, _configuration=self._config,
+            _location_mode=self._location_mode, _hosts=self._hosts, require_encryption=self.require_encryption,
+            key_encryption_key=self.key_encryption_key, key_resolver_function=self.key_resolver_function,
+            _pipeline=_pipeline)
+
 
     @distributed_trace_async
     async def get_container_access_policy(self, **kwargs):
@@ -426,7 +511,7 @@ class ContainerClient(AsyncStorageAccountHostsMixin, ContainerClientBase):
                 lease_access_conditions=access_conditions,
                 cls=return_headers_and_deserialized,
                 **kwargs)
-        except StorageErrorException as error:
+        except HttpResponseError as error:
             process_storage_error(error)
         return {
             'public_access': response.get('blob_public_access'),
@@ -505,12 +590,12 @@ class ContainerClient(AsyncStorageAccountHostsMixin, ContainerClientBase):
                 modified_access_conditions=mod_conditions,
                 cls=return_response_headers,
                 **kwargs)
-        except StorageErrorException as error:
+        except HttpResponseError as error:
             process_storage_error(error)
 
     @distributed_trace
     def list_blobs(self, name_starts_with=None, include=None, **kwargs):
-        # type: (Optional[str], Optional[Any], **Any) -> AsyncItemPaged[BlobProperties]
+        # type: (Optional[str], Optional[Union[str, List[str]]], **Any) -> AsyncItemPaged[BlobProperties]
         """Returns a generator to list the blobs under the specified container.
         The generator will lazily follow the continuation tokens returned by
         the service.
@@ -518,9 +603,9 @@ class ContainerClient(AsyncStorageAccountHostsMixin, ContainerClientBase):
         :param str name_starts_with:
             Filters the results to return only blobs whose names
             begin with the specified prefix.
-        :param list[str] include:
+        :param list[str] or str include:
             Specifies one or more additional datasets to include in the response.
-            Options include: 'snapshots', 'metadata', 'uncommittedblobs', 'copy', 'deleted'.
+            Options include: 'snapshots', 'metadata', 'uncommittedblobs', 'copy', 'deleted', 'tags'.
         :keyword int timeout:
             The timeout parameter is expressed in seconds.
         :returns: An iterable (auto-paging) response of BlobProperties.
@@ -661,6 +746,12 @@ class ContainerClient(AsyncStorageAccountHostsMixin, ContainerClientBase):
             and act according to the condition specified by the `match_condition` parameter.
         :keyword ~azure.core.MatchConditions match_condition:
             The match condition to use upon the etag.
+        :keyword str if_tags_match_condition:
+            Specify a SQL where clause on blob tags to operate only on blob with a matching value.
+            eg. ``\"\\\"tagname\\\"='my tag'\"``
+
+            .. versionadded:: 12.4.0
+
         :keyword int timeout:
             The timeout parameter is expressed in seconds. This method may make
             multiple calls to the Azure service and the timeout will apply to
@@ -750,6 +841,13 @@ class ContainerClient(AsyncStorageAccountHostsMixin, ContainerClientBase):
             Required if the blob has associated snapshots. Values include:
              - "only": Deletes only the blobs snapshots.
              - "include": Deletes the blob along with all snapshots.
+        :keyword str version_id:
+            The version id parameter is an opaque DateTime
+            value that, when present, specifies the version of the blob to delete.
+
+            .. versionadded:: 12.4.0
+            This keyword argument was introduced in API version '2019-12-12'.
+
         :keyword lease:
             Required if the blob has an active lease. Value can be a Lease object
             or the lease ID as a string.
@@ -771,6 +869,12 @@ class ContainerClient(AsyncStorageAccountHostsMixin, ContainerClientBase):
             and act according to the condition specified by the `match_condition` parameter.
         :keyword ~azure.core.MatchConditions match_condition:
             The match condition to use upon the etag.
+        :keyword str if_tags_match_condition:
+            Specify a SQL where clause on blob tags to operate only on blob with a matching value.
+            eg. ``\"\\\"tagname\\\"='my tag'\"``
+
+            .. versionadded:: 12.4.0
+
         :keyword int timeout:
             The timeout parameter is expressed in seconds.
         :rtype: None
@@ -830,6 +934,12 @@ class ContainerClient(AsyncStorageAccountHostsMixin, ContainerClientBase):
             and act according to the condition specified by the `match_condition` parameter.
         :keyword ~azure.core.MatchConditions match_condition:
             The match condition to use upon the etag.
+        :keyword str if_tags_match_condition:
+            Specify a SQL where clause on blob tags to operate only on blob with a matching value.
+            eg. ``\"\\\"tagname\\\"='my tag'\"``
+
+            .. versionadded:: 12.4.0
+
         :keyword ~azure.storage.blob.CustomerProvidedEncryptionKey cpk:
             Encrypts the data on the service-side with the given key.
             Use of customer-provided keys must be done over HTTPS.
@@ -855,11 +965,9 @@ class ContainerClient(AsyncStorageAccountHostsMixin, ContainerClientBase):
 
     @distributed_trace_async
     async def delete_blobs(  # pylint: disable=arguments-differ
-            self, *blobs: Union[str, BlobProperties],
-            delete_snapshots: Optional[str] = None,
-            lease: Optional[Union[str, BlobLeaseClient]] = None,
+            self, *blobs: List[Union[str, BlobProperties, dict]],
             **kwargs
-        ) -> AsyncIterator[AsyncHttpResponse]:
+    ) -> AsyncIterator[AsyncHttpResponse]:
         """Marks the specified blobs or snapshots for deletion.
 
         The blobs are later deleted during garbage collection.
@@ -872,17 +980,37 @@ class ContainerClient(AsyncStorageAccountHostsMixin, ContainerClientBase):
         Soft deleted blobs or snapshots are accessible through :func:`list_blobs()` specifying `include=["deleted"]`
         Soft-deleted blobs or snapshots can be restored using :func:`~BlobClient.undelete()`
 
-        :param blobs: The blob names with which to interact. This can be a single blob, or multiple values can
+        :param blobs:
+            The blobs to delete. This can be a single blob, or multiple values can
             be supplied, where each value is either the name of the blob (str) or BlobProperties.
-        :type blobs: str or ~azure.storage.blob.BlobProperties
-        :param str delete_snapshots:
+
+            .. note::
+                When the blob type is dict, here's a list of keys, value rules.
+
+                blob name:
+                    key: 'name', value type: str
+                snapshot you want to delete:
+                    key: 'snapshot', value type: str
+                whether to delete snapthots when deleting blob:
+                    key: 'delete_snapshots', value: 'include' or 'only'
+                if the blob modified or not:
+                    key: 'if_modified_since', 'if_unmodified_since', value type: datetime
+                etag:
+                    key: 'etag', value type: str
+                match the etag or not:
+                    key: 'match_condition', value type: MatchConditions
+                tags match condition:
+                    key: 'if_tags_match_condition', value type: str
+                lease:
+                    key: 'lease_id', value type: Union[str, LeaseClient]
+                timeout for subrequest:
+                    key: 'timeout', value type: int
+
+        :type blobs: list[str], list[dict], or list[~azure.storage.blob.BlobProperties]
+        :keyword str delete_snapshots:
             Required if a blob has associated snapshots. Values include:
              - "only": Deletes only the blobs snapshots.
              - "include": Deletes the blob along with all snapshots.
-        :param lease:
-            Required if a blob has an active lease. Value can be a BlobLeaseClient object
-            or the lease ID as a string.
-        :type lease: ~azure.storage.blob.aio.BlobLeaseClient or str
         :keyword ~datetime.datetime if_modified_since:
             A DateTime value. Azure expects the date value passed in to be UTC.
             If timezone is included, any non-UTC datetimes will be converted to UTC.
@@ -895,15 +1023,16 @@ class ContainerClient(AsyncStorageAccountHostsMixin, ContainerClientBase):
             If a date is passed in without timezone info, it is assumed to be UTC.
             Specify this header to perform the operation only if
             the resource has not been modified since the specified date/time.
+        :keyword str if_tags_match_condition:
+            Specify a SQL where clause on blob tags to operate only on blob with a matching value.
+            eg. ``\"\\\"tagname\\\"='my tag'\"``
+
+            .. versionadded:: 12.4.0
+
         :keyword bool raise_on_any_failure:
             This is a boolean param which defaults to True. When this is set, an exception
             is raised even if there is a single operation failure. For optimal performance,
             this should be set to False
-        :keyword str etag:
-            An ETag value, or the wildcard character (*). Used to check if the resource has changed,
-            and act according to the condition specified by the `match_condition` parameter.
-        :keyword ~azure.core.MatchConditions match_condition:
-            The match condition to use upon the etag.
         :keyword int timeout:
             The timeout parameter is expressed in seconds.
         :return: An async iterator of responses, one for each blob in order
@@ -918,31 +1047,10 @@ class ContainerClient(AsyncStorageAccountHostsMixin, ContainerClientBase):
                 :dedent: 12
                 :caption: Deleting multiple blobs.
         """
-        raise_on_any_failure = kwargs.pop('raise_on_any_failure', True)
-        timeout = kwargs.pop('timeout', None)
-        options = BlobClient._generic_delete_blob_options(  # pylint: disable=protected-access
-            delete_snapshots=delete_snapshots,
-            lease=lease,
-            timeout=timeout,
-            **kwargs
-        )
-        options.update({'raise_on_any_failure': raise_on_any_failure})
-        query_parameters, header_parameters = self._generate_delete_blobs_options(**options)
-        # To pass kwargs to "_batch_send", we need to remove anything that was
-        # in the Autorest signature for Autorest, otherwise transport will be upset
-        for possible_param in ['timeout', 'delete_snapshots', 'lease_access_conditions', 'modified_access_conditions']:
-            options.pop(possible_param, None)
+        if len(blobs) == 0:
+            return iter(list())
 
-        reqs = []
-        for blob in blobs:
-            blob_name = _get_blob_name(blob)
-            req = HttpRequest(
-                "DELETE",
-                "/{}/{}".format(self.container_name, blob_name),
-                headers=header_parameters
-            )
-            req.format_parameters(query_parameters)
-            reqs.append(req)
+        reqs, options = self._generate_delete_blobs_options(*blobs, **kwargs)
 
         return await self._batch_send(*reqs, **options)
 
@@ -950,7 +1058,7 @@ class ContainerClient(AsyncStorageAccountHostsMixin, ContainerClientBase):
     async def set_standard_blob_tier_blobs(
         self,
         standard_blob_tier: Union[str, 'StandardBlobTier'],
-        *blobs: Union[str, BlobProperties],
+        *blobs: List[Union[str, BlobProperties, dict]],
         **kwargs
     ) -> AsyncIterator[AsyncHttpResponse]:
         """This operation sets the tier on block blobs.
@@ -959,22 +1067,48 @@ class ContainerClient(AsyncStorageAccountHostsMixin, ContainerClientBase):
         This operation does not update the blob's ETag.
 
         :param standard_blob_tier:
-            Indicates the tier to be set on the blob. Options include 'Hot', 'Cool',
+            Indicates the tier to be set on all blobs. Options include 'Hot', 'Cool',
             'Archive'. The hot tier is optimized for storing data that is accessed
             frequently. The cool storage tier is optimized for storing data that
             is infrequently accessed and stored for at least a month. The archive
             tier is optimized for storing data that is rarely accessed and stored
             for at least six months with flexible latency requirements.
+
+            .. note::
+                If you want to set different tier on different blobs please set this positional parameter to None.
+                Then the blob tier on every BlobProperties will be taken.
+
         :type standard_blob_tier: str or ~azure.storage.blob.StandardBlobTier
-        :param blobs: The blobs with which to interact. This can be a single blob, or multiple values can
+        :param blobs:
+            The blobs with which to interact. This can be a single blob, or multiple values can
             be supplied, where each value is either the name of the blob (str) or BlobProperties.
-        :type blobs: str or ~azure.storage.blob.BlobProperties
+
+            .. note::
+                When the blob type is dict, here's a list of keys, value rules.
+                blob name:
+                    key: 'name', value type: str
+                standard blob tier:
+                    key: 'blob_tier', value type: StandardBlobTier
+                rehydrate priority:
+                    key: 'rehydrate_priority', value type: RehydratePriority
+                lease:
+                    key: 'lease_id', value type: Union[str, LeaseClient]
+                tags match condition:
+                    key: 'if_tags_match_condition', value type: str
+                timeout for subrequest:
+                    key: 'timeout', value type: int
+
+        :type blobs: list[str], list[dict], or list[~azure.storage.blob.BlobProperties]
+        :keyword ~azure.storage.blob.RehydratePriority rehydrate_priority:
+            Indicates the priority with which to rehydrate an archived blob
+        :keyword str if_tags_match_condition:
+            Specify a SQL where clause on blob tags to operate only on blob with a matching value.
+            eg. ``\"\\\"tagname\\\"='my tag'\"``
+
+            .. versionadded:: 12.4.0
+
         :keyword int timeout:
             The timeout parameter is expressed in seconds.
-        :keyword lease:
-            Required if the blob has an active lease. Value can be a BlobLeaseClient object
-            or the lease ID as a string.
-        :paramtype lease: ~azure.storage.blob.aio.BlobLeaseClient or str
         :keyword bool raise_on_any_failure:
             This is a boolean param which defaults to True. When this is set, an exception
             is raised even if there is a single operation failure. For optimal performance,
@@ -982,58 +1116,49 @@ class ContainerClient(AsyncStorageAccountHostsMixin, ContainerClientBase):
         :return: An async iterator of responses, one for each blob in order
         :rtype: asynciterator[~azure.core.pipeline.transport.AsyncHttpResponse]
         """
-        access_conditions = get_access_conditions(kwargs.pop('lease', None))
-        if standard_blob_tier is None:
-            raise ValueError("A StandardBlobTier must be specified")
+        reqs, options = self._generate_set_tiers_options(standard_blob_tier, *blobs, **kwargs)
 
-        query_parameters, header_parameters = self._generate_set_tier_options(
-            tier=standard_blob_tier,
-            lease_access_conditions=access_conditions,
-            **kwargs
-        )
-        # To pass kwargs to "_batch_send", we need to remove anything that was
-        # in the Autorest signature for Autorest, otherwise transport will be upset
-        for possible_param in ['timeout', 'lease']:
-            kwargs.pop(possible_param, None)
-
-        reqs = []
-        for blob in blobs:
-            blob_name = _get_blob_name(blob)
-            req = HttpRequest(
-                "PUT",
-                "/{}/{}".format(self.container_name, blob_name),
-                headers=header_parameters
-            )
-            req.format_parameters(query_parameters)
-            reqs.append(req)
-
-        return await self._batch_send(*reqs, **kwargs)
+        return await self._batch_send(*reqs, **options)
 
     @distributed_trace
     async def set_premium_page_blob_tier_blobs(
         self,
         premium_page_blob_tier: Union[str, 'PremiumPageBlobTier'],
-        *blobs: Union[str, BlobProperties],
+        *blobs: List[Union[str, BlobProperties, dict]],
         **kwargs
     ) -> AsyncIterator[AsyncHttpResponse]:
         """Sets the page blob tiers on the blobs. This API is only supported for page blobs on premium accounts.
 
         :param premium_page_blob_tier:
-            A page blob tier value to set the blob to. The tier correlates to the size of the
+            A page blob tier value to set on all blobs to. The tier correlates to the size of the
             blob and number of allowed IOPS. This is only applicable to page blobs on
             premium storage accounts.
+
+            .. note::
+                If you want to set different tier on different blobs please set this positional parameter to None.
+                Then the blob tier on every BlobProperties will be taken.
+
         :type premium_page_blob_tier: ~azure.storage.blob.PremiumPageBlobTier
         :param blobs: The blobs with which to interact. This can be a single blob, or multiple values can
             be supplied, where each value is either the name of the blob (str) or BlobProperties.
-        :type blobs: str or ~azure.storage.blob.BlobProperties
+
+            .. note::
+                When the blob type is dict, here's a list of keys, value rules.
+
+                blob name:
+                    key: 'name', value type: str
+                premium blob tier:
+                    key: 'blob_tier', value type: PremiumPageBlobTier
+                lease:
+                    key: 'lease_id', value type: Union[str, LeaseClient]
+                timeout for subrequest:
+                    key: 'timeout', value type: int
+
+        :type blobs: list[str], list[dict], or list[~azure.storage.blob.BlobProperties]
         :keyword int timeout:
             The timeout parameter is expressed in seconds. This method may make
             multiple calls to the Azure service and the timeout will apply to
             each call individually.
-        :keyword lease:
-            Required if the blob has an active lease. Value can be a BlobLeaseClient object
-            or the lease ID as a string.
-        :paramtype lease: ~azure.storage.blob.aio.BlobLeaseClient or str
         :keyword bool raise_on_any_failure:
             This is a boolean param which defaults to True. When this is set, an exception
             is raised even if there is a single operation failure. For optimal performance,
@@ -1041,32 +1166,9 @@ class ContainerClient(AsyncStorageAccountHostsMixin, ContainerClientBase):
         :return: An async iterator of responses, one for each blob in order
         :rtype: asynciterator[~azure.core.pipeline.transport.AsyncHttpResponse]
         """
-        access_conditions = get_access_conditions(kwargs.pop('lease', None))
-        if premium_page_blob_tier is None:
-            raise ValueError("A PremiumPageBlobTier must be specified")
+        reqs, options = self._generate_set_tiers_options(premium_page_blob_tier, *blobs, **kwargs)
 
-        query_parameters, header_parameters = self._generate_set_tier_options(
-            tier=premium_page_blob_tier,
-            lease_access_conditions=access_conditions,
-            **kwargs
-        )
-        # To pass kwargs to "_batch_send", we need to remove anything that was
-        # in the Autorest signature for Autorest, otherwise transport will be upset
-        for possible_param in ['timeout', 'lease']:
-            kwargs.pop(possible_param, None)
-
-        reqs = []
-        for blob in blobs:
-            blob_name = _get_blob_name(blob)
-            req = HttpRequest(
-                "PUT",
-                "/{}/{}".format(self.container_name, blob_name),
-                headers=header_parameters
-            )
-            req.format_parameters(query_parameters)
-            reqs.append(req)
-
-        return await self._batch_send(*reqs, **kwargs)
+        return await self._batch_send(*reqs, **options)
 
     def get_blob_client(
             self, blob,  # type: Union[BlobProperties, str]

@@ -22,7 +22,7 @@
 """Create, read, and delete databases in the Azure Cosmos DB SQL API service.
 """
 
-from typing import Any, Dict, Mapping, Optional, Union, cast, Iterable, List  # pylint: disable=unused-import
+from typing import Any, Dict, Optional, Union, cast, Iterable, List  # pylint: disable=unused-import
 
 import six
 from azure.core.tracing.decorator import distributed_trace  # type: ignore
@@ -128,7 +128,7 @@ class CosmosClient(object):
     :type credential: str or dict[str, str]
     :param str consistency_level: Consistency level to use for the session. The default value is "Session".
     :keyword int timeout: An absolute timeout in seconds, for the combined HTTP request and response processing.
-    :keyword int request_timeout: The HTTP request timeout in seconds.
+    :keyword int request_timeout: The HTTP request timeout in milliseconds.
     :keyword str connection_mode: The connection mode for the client - currently only supports 'Gateway'.
     :keyword proxy_config: Connection proxy configuration.
     :paramtype proxy_config: ~azure.cosmos.ProxyConfiguration
@@ -320,10 +320,11 @@ class CosmosClient(object):
         """
         if isinstance(database, DatabaseProxy):
             id_value = database.id
-        elif isinstance(database, Mapping):
-            id_value = database["id"]
         else:
-            id_value = database
+            try:
+                id_value = database["id"]
+            except TypeError:
+                id_value = database
 
         return DatabaseProxy(self.client_connection, id_value)
 

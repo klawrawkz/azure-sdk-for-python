@@ -59,8 +59,8 @@ class PartitionContext(object):
             return get_last_enqueued_event_properties(self._last_received_event)
         return None
 
-    def update_checkpoint(self, event):
-        # type: (EventData) -> None
+    def update_checkpoint(self, event=None, **kwargs):
+        # type: (Optional[EventData], Any) -> None
         """Updates the receive checkpoint to the given events offset.
 
         :param ~azure.eventhub.EventData event: The EventData instance which contains the offset and
@@ -68,15 +68,29 @@ class PartitionContext(object):
         :rtype: None
         """
         if self._checkpoint_store:
-            checkpoint = {
-                "fully_qualified_namespace": self.fully_qualified_namespace,
-                "eventhub_name": self.eventhub_name,
-                "consumer_group": self.consumer_group,
-                "partition_id": self.partition_id,
-                "offset": event.offset,
-                "sequence_number": event.sequence_number,
-            }
-            self._checkpoint_store.update_checkpoint(checkpoint)
+            checkpoint_event = event or self._last_received_event
+            if checkpoint_event:
+                checkpoint = {
+                    "fully_qualified_namespace": self.fully_qualified_namespace,
+                    "eventhub_name": self.eventhub_name,
+                    "consumer_group": self.consumer_group,
+                    "partition_id": self.partition_id,
+                    "offset": checkpoint_event.offset,
+                    "sequence_number": checkpoint_event.sequence_number,
+                }
+                try:
+                    self._checkpoint_store.update_checkpoint(checkpoint, **kwargs)
+                except TypeError as e:
+                    if "update_checkpoint() got an unexpected keyword argument" in str(
+                        e
+                    ):
+                        _LOGGER.info(
+                            "The provided checkpointstore method 'update_checkpoint' does not accept keyword arguments,"
+                            " so keyword arguments will be ignored. Please update method signature to support kwargs."
+                        )
+                        self._checkpoint_store.update_checkpoint(checkpoint)
+                    else:
+                        raise e
         else:
             _LOGGER.warning(
                 "namespace %r, eventhub %r, consumer_group %r, partition_id %r "

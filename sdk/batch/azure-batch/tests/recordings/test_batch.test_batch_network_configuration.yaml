@@ -19,14 +19,14 @@ interactions:
       Content-Type:
       - application/json; odata=minimalmetadata; charset=utf-8
       User-Agent:
-      - python/3.6.6 (Windows-10-10.0.14393-SP0) msrest/0.6.9 msrest_azure/0.4.34
-        azure-batch/8.0.0 Azure-SDK-For-Python
+      - python/3.8.5 (macOS-10.15.7-x86_64-i386-64bit) msrest/0.6.19 msrest_azure/0.6.4
+        azure-batch/9.0.1 Azure-SDK-For-Python
       accept-language:
       - en-US
       ocp-date:
-      - Wed, 07 Aug 2019 00:37:54 GMT
+      - Tue, 24 Nov 2020 01:57:55 GMT
     method: POST
-    uri: https://batch814e11b1.westcentralus.batch.azure.com/pools?api-version=2019-08-01.10.0
+    uri: https://batch.westcentralus.batch.azure.com/pools?api-version=2020-09-01.12.0
   response:
     body:
       string: ''
@@ -36,15 +36,15 @@ interactions:
       dataserviceversion:
       - '3.0'
       date:
-      - Wed, 07 Aug 2019 00:37:54 GMT
+      - Tue, 24 Nov 2020 01:57:56 GMT
       etag:
-      - '0x8D71ACF7CEDB785'
+      - '0x8D8901C5CDA97C3'
       last-modified:
-      - Wed, 07 Aug 2019 00:37:55 GMT
+      - Tue, 24 Nov 2020 01:57:56 GMT
       location:
-      - https://batch814e11b1.westcentralus.batch.azure.com/pools/batch_network_814e11b1
+      - https://batch.westcentralus.batch.azure.com/pools/batch_network_814e11b1
       request-id:
-      - 78932e4f-1477-4ce5-9fe1-178744470b8b
+      - 4e5200df-4e8d-467d-8d56-17b75703d54e
       server:
       - Microsoft-HTTPAPI/2.0
       strict-transport-security:
@@ -66,38 +66,50 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python/3.6.6 (Windows-10-10.0.14393-SP0) msrest/0.6.9 msrest_azure/0.4.34
-        azure-batch/8.0.0 Azure-SDK-For-Python
+      - python/3.8.5 (macOS-10.15.7-x86_64-i386-64bit) msrest/0.6.19 msrest_azure/0.6.4
+        azure-batch/9.0.1 Azure-SDK-For-Python
       accept-language:
       - en-US
       ocp-date:
-      - Wed, 07 Aug 2019 00:37:55 GMT
+      - Tue, 24 Nov 2020 01:57:56 GMT
     method: GET
-    uri: https://batch814e11b1.westcentralus.batch.azure.com/pools/batch_network_814e11b1?api-version=2019-08-01.10.0
+    uri: https://batch.westcentralus.batch.azure.com/pools/batch_network_814e11b1?api-version=2020-09-01.12.0
   response:
     body:
-      string: "{\r\n  \"odata.metadata\":\"https://batch814e11b1.westcentralus.batch.azure.com/$metadata#pools/@Element\",\"id\":\"batch_network_814e11b1\",\"url\":\"https://batch814e11b1.westcentralus.batch.azure.com/pools/batch_network_814e11b1\",\"eTag\":\"0x8D71ACF7CEDB785\",\"lastModified\":\"2019-08-07T00:37:55.2720773Z\",\"creationTime\":\"2019-08-07T00:37:55.2720773Z\",\"state\":\"active\",\"stateTransitionTime\":\"2019-08-07T00:37:55.2720773Z\",\"allocationState\":\"resizing\",\"allocationStateTransitionTime\":\"2019-08-07T00:37:55.2720773Z\",\"vmSize\":\"standard_a1\",\"resizeTimeout\":\"PT15M\",\"currentDedicatedNodes\":0,\"targetDedicatedNodes\":1,\"currentLowPriorityNodes\":0,\"targetLowPriorityNodes\":0,\"enableAutoScale\":false,\"enableInterNodeCommunication\":false,\"maxTasksPerNode\":1,\"taskSchedulingPolicy\":{\r\n
-        \   \"nodeFillType\":\"Spread\"\r\n  },\"virtualMachineConfiguration\":{\r\n
-        \   \"imageReference\":{\r\n      \"publisher\":\"Canonical\",\"offer\":\"UbuntuServer\",\"sku\":\"16.04-LTS\",\"version\":\"latest\"\r\n
-        \   },\"nodeAgentSKUId\":\"batch.node.ubuntu 16.04\"\r\n  },\"networkConfiguration\":{\r\n
-        \   \"dynamicVNetAssignmentScope\":\"none\",\"endpointConfiguration\":{\r\n
-        \     \"inboundNATPools\":[\r\n        {\r\n          \"name\":\"TestEndpointConfig\",\"protocol\":\"udp\",\"backendPort\":64444,\"frontendPortRangeStart\":60000,\"frontendPortRangeEnd\":61000,\"networkSecurityGroupRules\":[\r\n
-        \           {\r\n              \"priority\":150,\"access\":\"allow\",\"sourceAddressPrefix\":\"*\",\"sourcePortRanges\":[\r\n
-        \               \"*\"\r\n              ]\r\n            }\r\n          ]\r\n
-        \       }\r\n      ]\r\n    }\r\n  }\r\n}"
+      string: "{\r\n  \"odata.metadata\":\"https://batch.westcentralus.batch.azure.com/$metadata#pools/@Element\"\
+        ,\"id\":\"batch_network_814e11b1\",\"url\":\"https://batch.westcentralus.batch.azure.com/pools/batch_network_814e11b1\"\
+        ,\"eTag\":\"0x8D8901C5CDA97C3\",\"lastModified\":\"2020-11-24T01:57:56.4238787Z\"\
+        ,\"creationTime\":\"2020-11-24T01:57:56.4238787Z\",\"state\":\"active\",\"\
+        stateTransitionTime\":\"2020-11-24T01:57:56.4238787Z\",\"allocationState\"\
+        :\"resizing\",\"allocationStateTransitionTime\":\"2020-11-24T01:57:56.4238787Z\"\
+        ,\"vmSize\":\"standard_a1\",\"resizeTimeout\":\"PT15M\",\"currentDedicatedNodes\"\
+        :0,\"targetDedicatedNodes\":1,\"currentLowPriorityNodes\":0,\"targetLowPriorityNodes\"\
+        :0,\"enableAutoScale\":false,\"enableInterNodeCommunication\":false,\"taskSlotsPerNode\"\
+        :1,\"taskSchedulingPolicy\":{\r\n    \"nodeFillType\":\"Spread\"\r\n  },\"\
+        virtualMachineConfiguration\":{\r\n    \"imageReference\":{\r\n      \"publisher\"\
+        :\"Canonical\",\"offer\":\"UbuntuServer\",\"sku\":\"16.04-LTS\",\"version\"\
+        :\"latest\"\r\n    },\"nodeAgentSKUId\":\"batch.node.ubuntu 16.04\"\r\n  },\"\
+        networkConfiguration\":{\r\n    \"dynamicVNetAssignmentScope\":\"none\",\"\
+        endpointConfiguration\":{\r\n      \"inboundNATPools\":[\r\n        {\r\n\
+        \          \"name\":\"TestEndpointConfig\",\"protocol\":\"udp\",\"backendPort\"\
+        :64444,\"frontendPortRangeStart\":60000,\"frontendPortRangeEnd\":61000,\"\
+        networkSecurityGroupRules\":[\r\n            {\r\n              \"priority\"\
+        :150,\"access\":\"allow\",\"sourceAddressPrefix\":\"*\",\"sourcePortRanges\"\
+        :[\r\n                \"*\"\r\n              ]\r\n            }\r\n      \
+        \    ]\r\n        }\r\n      ]\r\n    }\r\n  }\r\n}"
     headers:
       content-type:
       - application/json;odata=minimalmetadata
       dataserviceversion:
       - '3.0'
       date:
-      - Wed, 07 Aug 2019 00:37:55 GMT
+      - Tue, 24 Nov 2020 01:57:56 GMT
       etag:
-      - '0x8D71ACF7CEDB785'
+      - '0x8D8901C5CDA97C3'
       last-modified:
-      - Wed, 07 Aug 2019 00:37:55 GMT
+      - Tue, 24 Nov 2020 01:57:56 GMT
       request-id:
-      - 547ddee9-4a00-41b1-a58e-73ec95e19db7
+      - abd8528b-af4b-4a7d-a802-f52907d43778
       server:
       - Microsoft-HTTPAPI/2.0
       strict-transport-security:
@@ -119,38 +131,50 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python/3.6.6 (Windows-10-10.0.14393-SP0) msrest/0.6.9 msrest_azure/0.4.34
-        azure-batch/8.0.0 Azure-SDK-For-Python
+      - python/3.8.5 (macOS-10.15.7-x86_64-i386-64bit) msrest/0.6.19 msrest_azure/0.6.4
+        azure-batch/9.0.1 Azure-SDK-For-Python
       accept-language:
       - en-US
       ocp-date:
-      - Wed, 07 Aug 2019 00:38:05 GMT
+      - Tue, 24 Nov 2020 01:58:06 GMT
     method: GET
-    uri: https://batch814e11b1.westcentralus.batch.azure.com/pools/batch_network_814e11b1?api-version=2019-08-01.10.0
+    uri: https://batch.westcentralus.batch.azure.com/pools/batch_network_814e11b1?api-version=2020-09-01.12.0
   response:
     body:
-      string: "{\r\n  \"odata.metadata\":\"https://batch814e11b1.westcentralus.batch.azure.com/$metadata#pools/@Element\",\"id\":\"batch_network_814e11b1\",\"url\":\"https://batch814e11b1.westcentralus.batch.azure.com/pools/batch_network_814e11b1\",\"eTag\":\"0x8D71ACF7CEDB785\",\"lastModified\":\"2019-08-07T00:37:55.2720773Z\",\"creationTime\":\"2019-08-07T00:37:55.2720773Z\",\"state\":\"active\",\"stateTransitionTime\":\"2019-08-07T00:37:55.2720773Z\",\"allocationState\":\"resizing\",\"allocationStateTransitionTime\":\"2019-08-07T00:37:55.2720773Z\",\"vmSize\":\"standard_a1\",\"resizeTimeout\":\"PT15M\",\"currentDedicatedNodes\":0,\"targetDedicatedNodes\":1,\"currentLowPriorityNodes\":0,\"targetLowPriorityNodes\":0,\"enableAutoScale\":false,\"enableInterNodeCommunication\":false,\"maxTasksPerNode\":1,\"taskSchedulingPolicy\":{\r\n
-        \   \"nodeFillType\":\"Spread\"\r\n  },\"virtualMachineConfiguration\":{\r\n
-        \   \"imageReference\":{\r\n      \"publisher\":\"Canonical\",\"offer\":\"UbuntuServer\",\"sku\":\"16.04-LTS\",\"version\":\"latest\"\r\n
-        \   },\"nodeAgentSKUId\":\"batch.node.ubuntu 16.04\"\r\n  },\"networkConfiguration\":{\r\n
-        \   \"dynamicVNetAssignmentScope\":\"none\",\"endpointConfiguration\":{\r\n
-        \     \"inboundNATPools\":[\r\n        {\r\n          \"name\":\"TestEndpointConfig\",\"protocol\":\"udp\",\"backendPort\":64444,\"frontendPortRangeStart\":60000,\"frontendPortRangeEnd\":61000,\"networkSecurityGroupRules\":[\r\n
-        \           {\r\n              \"priority\":150,\"access\":\"allow\",\"sourceAddressPrefix\":\"*\",\"sourcePortRanges\":[\r\n
-        \               \"*\"\r\n              ]\r\n            }\r\n          ]\r\n
-        \       }\r\n      ]\r\n    }\r\n  }\r\n}"
+      string: "{\r\n  \"odata.metadata\":\"https://batch.westcentralus.batch.azure.com/$metadata#pools/@Element\"\
+        ,\"id\":\"batch_network_814e11b1\",\"url\":\"https://batch.westcentralus.batch.azure.com/pools/batch_network_814e11b1\"\
+        ,\"eTag\":\"0x8D8901C5CDA97C3\",\"lastModified\":\"2020-11-24T01:57:56.4238787Z\"\
+        ,\"creationTime\":\"2020-11-24T01:57:56.4238787Z\",\"state\":\"active\",\"\
+        stateTransitionTime\":\"2020-11-24T01:57:56.4238787Z\",\"allocationState\"\
+        :\"resizing\",\"allocationStateTransitionTime\":\"2020-11-24T01:57:56.4238787Z\"\
+        ,\"vmSize\":\"standard_a1\",\"resizeTimeout\":\"PT15M\",\"currentDedicatedNodes\"\
+        :0,\"targetDedicatedNodes\":1,\"currentLowPriorityNodes\":0,\"targetLowPriorityNodes\"\
+        :0,\"enableAutoScale\":false,\"enableInterNodeCommunication\":false,\"taskSlotsPerNode\"\
+        :1,\"taskSchedulingPolicy\":{\r\n    \"nodeFillType\":\"Spread\"\r\n  },\"\
+        virtualMachineConfiguration\":{\r\n    \"imageReference\":{\r\n      \"publisher\"\
+        :\"Canonical\",\"offer\":\"UbuntuServer\",\"sku\":\"16.04-LTS\",\"version\"\
+        :\"latest\"\r\n    },\"nodeAgentSKUId\":\"batch.node.ubuntu 16.04\"\r\n  },\"\
+        networkConfiguration\":{\r\n    \"dynamicVNetAssignmentScope\":\"none\",\"\
+        endpointConfiguration\":{\r\n      \"inboundNATPools\":[\r\n        {\r\n\
+        \          \"name\":\"TestEndpointConfig\",\"protocol\":\"udp\",\"backendPort\"\
+        :64444,\"frontendPortRangeStart\":60000,\"frontendPortRangeEnd\":61000,\"\
+        networkSecurityGroupRules\":[\r\n            {\r\n              \"priority\"\
+        :150,\"access\":\"allow\",\"sourceAddressPrefix\":\"*\",\"sourcePortRanges\"\
+        :[\r\n                \"*\"\r\n              ]\r\n            }\r\n      \
+        \    ]\r\n        }\r\n      ]\r\n    }\r\n  }\r\n}"
     headers:
       content-type:
       - application/json;odata=minimalmetadata
       dataserviceversion:
       - '3.0'
       date:
-      - Wed, 07 Aug 2019 00:38:05 GMT
+      - Tue, 24 Nov 2020 01:58:06 GMT
       etag:
-      - '0x8D71ACF7CEDB785'
+      - '0x8D8901C5CDA97C3'
       last-modified:
-      - Wed, 07 Aug 2019 00:37:55 GMT
+      - Tue, 24 Nov 2020 01:57:56 GMT
       request-id:
-      - 61527437-1173-4530-b889-a933b2631780
+      - a7a759a4-ef0a-4c86-b6f4-75784a61cb2e
       server:
       - Microsoft-HTTPAPI/2.0
       strict-transport-security:
@@ -172,38 +196,50 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python/3.6.6 (Windows-10-10.0.14393-SP0) msrest/0.6.9 msrest_azure/0.4.34
-        azure-batch/8.0.0 Azure-SDK-For-Python
+      - python/3.8.5 (macOS-10.15.7-x86_64-i386-64bit) msrest/0.6.19 msrest_azure/0.6.4
+        azure-batch/9.0.1 Azure-SDK-For-Python
       accept-language:
       - en-US
       ocp-date:
-      - Wed, 07 Aug 2019 00:38:15 GMT
+      - Tue, 24 Nov 2020 01:58:16 GMT
     method: GET
-    uri: https://batch814e11b1.westcentralus.batch.azure.com/pools/batch_network_814e11b1?api-version=2019-08-01.10.0
+    uri: https://batch.westcentralus.batch.azure.com/pools/batch_network_814e11b1?api-version=2020-09-01.12.0
   response:
     body:
-      string: "{\r\n  \"odata.metadata\":\"https://batch814e11b1.westcentralus.batch.azure.com/$metadata#pools/@Element\",\"id\":\"batch_network_814e11b1\",\"url\":\"https://batch814e11b1.westcentralus.batch.azure.com/pools/batch_network_814e11b1\",\"eTag\":\"0x8D71ACF7CEDB785\",\"lastModified\":\"2019-08-07T00:37:55.2720773Z\",\"creationTime\":\"2019-08-07T00:37:55.2720773Z\",\"state\":\"active\",\"stateTransitionTime\":\"2019-08-07T00:37:55.2720773Z\",\"allocationState\":\"resizing\",\"allocationStateTransitionTime\":\"2019-08-07T00:37:55.2720773Z\",\"vmSize\":\"standard_a1\",\"resizeTimeout\":\"PT15M\",\"currentDedicatedNodes\":0,\"targetDedicatedNodes\":1,\"currentLowPriorityNodes\":0,\"targetLowPriorityNodes\":0,\"enableAutoScale\":false,\"enableInterNodeCommunication\":false,\"maxTasksPerNode\":1,\"taskSchedulingPolicy\":{\r\n
-        \   \"nodeFillType\":\"Spread\"\r\n  },\"virtualMachineConfiguration\":{\r\n
-        \   \"imageReference\":{\r\n      \"publisher\":\"Canonical\",\"offer\":\"UbuntuServer\",\"sku\":\"16.04-LTS\",\"version\":\"latest\"\r\n
-        \   },\"nodeAgentSKUId\":\"batch.node.ubuntu 16.04\"\r\n  },\"networkConfiguration\":{\r\n
-        \   \"dynamicVNetAssignmentScope\":\"none\",\"endpointConfiguration\":{\r\n
-        \     \"inboundNATPools\":[\r\n        {\r\n          \"name\":\"TestEndpointConfig\",\"protocol\":\"udp\",\"backendPort\":64444,\"frontendPortRangeStart\":60000,\"frontendPortRangeEnd\":61000,\"networkSecurityGroupRules\":[\r\n
-        \           {\r\n              \"priority\":150,\"access\":\"allow\",\"sourceAddressPrefix\":\"*\",\"sourcePortRanges\":[\r\n
-        \               \"*\"\r\n              ]\r\n            }\r\n          ]\r\n
-        \       }\r\n      ]\r\n    }\r\n  }\r\n}"
+      string: "{\r\n  \"odata.metadata\":\"https://batch.westcentralus.batch.azure.com/$metadata#pools/@Element\"\
+        ,\"id\":\"batch_network_814e11b1\",\"url\":\"https://batch.westcentralus.batch.azure.com/pools/batch_network_814e11b1\"\
+        ,\"eTag\":\"0x8D8901C5CDA97C3\",\"lastModified\":\"2020-11-24T01:57:56.4238787Z\"\
+        ,\"creationTime\":\"2020-11-24T01:57:56.4238787Z\",\"state\":\"active\",\"\
+        stateTransitionTime\":\"2020-11-24T01:57:56.4238787Z\",\"allocationState\"\
+        :\"resizing\",\"allocationStateTransitionTime\":\"2020-11-24T01:57:56.4238787Z\"\
+        ,\"vmSize\":\"standard_a1\",\"resizeTimeout\":\"PT15M\",\"currentDedicatedNodes\"\
+        :0,\"targetDedicatedNodes\":1,\"currentLowPriorityNodes\":0,\"targetLowPriorityNodes\"\
+        :0,\"enableAutoScale\":false,\"enableInterNodeCommunication\":false,\"taskSlotsPerNode\"\
+        :1,\"taskSchedulingPolicy\":{\r\n    \"nodeFillType\":\"Spread\"\r\n  },\"\
+        virtualMachineConfiguration\":{\r\n    \"imageReference\":{\r\n      \"publisher\"\
+        :\"Canonical\",\"offer\":\"UbuntuServer\",\"sku\":\"16.04-LTS\",\"version\"\
+        :\"latest\"\r\n    },\"nodeAgentSKUId\":\"batch.node.ubuntu 16.04\"\r\n  },\"\
+        networkConfiguration\":{\r\n    \"dynamicVNetAssignmentScope\":\"none\",\"\
+        endpointConfiguration\":{\r\n      \"inboundNATPools\":[\r\n        {\r\n\
+        \          \"name\":\"TestEndpointConfig\",\"protocol\":\"udp\",\"backendPort\"\
+        :64444,\"frontendPortRangeStart\":60000,\"frontendPortRangeEnd\":61000,\"\
+        networkSecurityGroupRules\":[\r\n            {\r\n              \"priority\"\
+        :150,\"access\":\"allow\",\"sourceAddressPrefix\":\"*\",\"sourcePortRanges\"\
+        :[\r\n                \"*\"\r\n              ]\r\n            }\r\n      \
+        \    ]\r\n        }\r\n      ]\r\n    }\r\n  }\r\n}"
     headers:
       content-type:
       - application/json;odata=minimalmetadata
       dataserviceversion:
       - '3.0'
       date:
-      - Wed, 07 Aug 2019 00:38:15 GMT
+      - Tue, 24 Nov 2020 01:58:16 GMT
       etag:
-      - '0x8D71ACF7CEDB785'
+      - '0x8D8901C5CDA97C3'
       last-modified:
-      - Wed, 07 Aug 2019 00:37:55 GMT
+      - Tue, 24 Nov 2020 01:57:56 GMT
       request-id:
-      - 3fd38ea3-db41-46e7-ad1c-80695e811ae2
+      - 95b7fcd3-a110-40ac-be8a-e7275d9c54f1
       server:
       - Microsoft-HTTPAPI/2.0
       strict-transport-security:
@@ -225,38 +261,50 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python/3.6.6 (Windows-10-10.0.14393-SP0) msrest/0.6.9 msrest_azure/0.4.34
-        azure-batch/8.0.0 Azure-SDK-For-Python
+      - python/3.8.5 (macOS-10.15.7-x86_64-i386-64bit) msrest/0.6.19 msrest_azure/0.6.4
+        azure-batch/9.0.1 Azure-SDK-For-Python
       accept-language:
       - en-US
       ocp-date:
-      - Wed, 07 Aug 2019 00:38:25 GMT
+      - Tue, 24 Nov 2020 01:58:26 GMT
     method: GET
-    uri: https://batch814e11b1.westcentralus.batch.azure.com/pools/batch_network_814e11b1?api-version=2019-08-01.10.0
+    uri: https://batch.westcentralus.batch.azure.com/pools/batch_network_814e11b1?api-version=2020-09-01.12.0
   response:
     body:
-      string: "{\r\n  \"odata.metadata\":\"https://batch814e11b1.westcentralus.batch.azure.com/$metadata#pools/@Element\",\"id\":\"batch_network_814e11b1\",\"url\":\"https://batch814e11b1.westcentralus.batch.azure.com/pools/batch_network_814e11b1\",\"eTag\":\"0x8D71ACF7CEDB785\",\"lastModified\":\"2019-08-07T00:37:55.2720773Z\",\"creationTime\":\"2019-08-07T00:37:55.2720773Z\",\"state\":\"active\",\"stateTransitionTime\":\"2019-08-07T00:37:55.2720773Z\",\"allocationState\":\"resizing\",\"allocationStateTransitionTime\":\"2019-08-07T00:37:55.2720773Z\",\"vmSize\":\"standard_a1\",\"resizeTimeout\":\"PT15M\",\"currentDedicatedNodes\":0,\"targetDedicatedNodes\":1,\"currentLowPriorityNodes\":0,\"targetLowPriorityNodes\":0,\"enableAutoScale\":false,\"enableInterNodeCommunication\":false,\"maxTasksPerNode\":1,\"taskSchedulingPolicy\":{\r\n
-        \   \"nodeFillType\":\"Spread\"\r\n  },\"virtualMachineConfiguration\":{\r\n
-        \   \"imageReference\":{\r\n      \"publisher\":\"Canonical\",\"offer\":\"UbuntuServer\",\"sku\":\"16.04-LTS\",\"version\":\"latest\"\r\n
-        \   },\"nodeAgentSKUId\":\"batch.node.ubuntu 16.04\"\r\n  },\"networkConfiguration\":{\r\n
-        \   \"dynamicVNetAssignmentScope\":\"none\",\"endpointConfiguration\":{\r\n
-        \     \"inboundNATPools\":[\r\n        {\r\n          \"name\":\"TestEndpointConfig\",\"protocol\":\"udp\",\"backendPort\":64444,\"frontendPortRangeStart\":60000,\"frontendPortRangeEnd\":61000,\"networkSecurityGroupRules\":[\r\n
-        \           {\r\n              \"priority\":150,\"access\":\"allow\",\"sourceAddressPrefix\":\"*\",\"sourcePortRanges\":[\r\n
-        \               \"*\"\r\n              ]\r\n            }\r\n          ]\r\n
-        \       }\r\n      ]\r\n    }\r\n  }\r\n}"
+      string: "{\r\n  \"odata.metadata\":\"https://batch.westcentralus.batch.azure.com/$metadata#pools/@Element\"\
+        ,\"id\":\"batch_network_814e11b1\",\"url\":\"https://batch.westcentralus.batch.azure.com/pools/batch_network_814e11b1\"\
+        ,\"eTag\":\"0x8D8901C5CDA97C3\",\"lastModified\":\"2020-11-24T01:57:56.4238787Z\"\
+        ,\"creationTime\":\"2020-11-24T01:57:56.4238787Z\",\"state\":\"active\",\"\
+        stateTransitionTime\":\"2020-11-24T01:57:56.4238787Z\",\"allocationState\"\
+        :\"resizing\",\"allocationStateTransitionTime\":\"2020-11-24T01:57:56.4238787Z\"\
+        ,\"vmSize\":\"standard_a1\",\"resizeTimeout\":\"PT15M\",\"currentDedicatedNodes\"\
+        :0,\"targetDedicatedNodes\":1,\"currentLowPriorityNodes\":0,\"targetLowPriorityNodes\"\
+        :0,\"enableAutoScale\":false,\"enableInterNodeCommunication\":false,\"taskSlotsPerNode\"\
+        :1,\"taskSchedulingPolicy\":{\r\n    \"nodeFillType\":\"Spread\"\r\n  },\"\
+        virtualMachineConfiguration\":{\r\n    \"imageReference\":{\r\n      \"publisher\"\
+        :\"Canonical\",\"offer\":\"UbuntuServer\",\"sku\":\"16.04-LTS\",\"version\"\
+        :\"latest\"\r\n    },\"nodeAgentSKUId\":\"batch.node.ubuntu 16.04\"\r\n  },\"\
+        networkConfiguration\":{\r\n    \"dynamicVNetAssignmentScope\":\"none\",\"\
+        endpointConfiguration\":{\r\n      \"inboundNATPools\":[\r\n        {\r\n\
+        \          \"name\":\"TestEndpointConfig\",\"protocol\":\"udp\",\"backendPort\"\
+        :64444,\"frontendPortRangeStart\":60000,\"frontendPortRangeEnd\":61000,\"\
+        networkSecurityGroupRules\":[\r\n            {\r\n              \"priority\"\
+        :150,\"access\":\"allow\",\"sourceAddressPrefix\":\"*\",\"sourcePortRanges\"\
+        :[\r\n                \"*\"\r\n              ]\r\n            }\r\n      \
+        \    ]\r\n        }\r\n      ]\r\n    }\r\n  }\r\n}"
     headers:
       content-type:
       - application/json;odata=minimalmetadata
       dataserviceversion:
       - '3.0'
       date:
-      - Wed, 07 Aug 2019 00:38:25 GMT
+      - Tue, 24 Nov 2020 01:58:26 GMT
       etag:
-      - '0x8D71ACF7CEDB785'
+      - '0x8D8901C5CDA97C3'
       last-modified:
-      - Wed, 07 Aug 2019 00:37:55 GMT
+      - Tue, 24 Nov 2020 01:57:56 GMT
       request-id:
-      - 2c472d63-4e11-4187-aaa9-8d0a2770ee14
+      - 341ba30c-96ef-49b2-8ac3-668dbef2393d
       server:
       - Microsoft-HTTPAPI/2.0
       strict-transport-security:
@@ -278,38 +326,50 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python/3.6.6 (Windows-10-10.0.14393-SP0) msrest/0.6.9 msrest_azure/0.4.34
-        azure-batch/8.0.0 Azure-SDK-For-Python
+      - python/3.8.5 (macOS-10.15.7-x86_64-i386-64bit) msrest/0.6.19 msrest_azure/0.6.4
+        azure-batch/9.0.1 Azure-SDK-For-Python
       accept-language:
       - en-US
       ocp-date:
-      - Wed, 07 Aug 2019 00:38:35 GMT
+      - Tue, 24 Nov 2020 01:58:36 GMT
     method: GET
-    uri: https://batch814e11b1.westcentralus.batch.azure.com/pools/batch_network_814e11b1?api-version=2019-08-01.10.0
+    uri: https://batch.westcentralus.batch.azure.com/pools/batch_network_814e11b1?api-version=2020-09-01.12.0
   response:
     body:
-      string: "{\r\n  \"odata.metadata\":\"https://batch814e11b1.westcentralus.batch.azure.com/$metadata#pools/@Element\",\"id\":\"batch_network_814e11b1\",\"url\":\"https://batch814e11b1.westcentralus.batch.azure.com/pools/batch_network_814e11b1\",\"eTag\":\"0x8D71ACF7CEDB785\",\"lastModified\":\"2019-08-07T00:37:55.2720773Z\",\"creationTime\":\"2019-08-07T00:37:55.2720773Z\",\"state\":\"active\",\"stateTransitionTime\":\"2019-08-07T00:37:55.2720773Z\",\"allocationState\":\"resizing\",\"allocationStateTransitionTime\":\"2019-08-07T00:37:55.2720773Z\",\"vmSize\":\"standard_a1\",\"resizeTimeout\":\"PT15M\",\"currentDedicatedNodes\":0,\"targetDedicatedNodes\":1,\"currentLowPriorityNodes\":0,\"targetLowPriorityNodes\":0,\"enableAutoScale\":false,\"enableInterNodeCommunication\":false,\"maxTasksPerNode\":1,\"taskSchedulingPolicy\":{\r\n
-        \   \"nodeFillType\":\"Spread\"\r\n  },\"virtualMachineConfiguration\":{\r\n
-        \   \"imageReference\":{\r\n      \"publisher\":\"Canonical\",\"offer\":\"UbuntuServer\",\"sku\":\"16.04-LTS\",\"version\":\"latest\"\r\n
-        \   },\"nodeAgentSKUId\":\"batch.node.ubuntu 16.04\"\r\n  },\"networkConfiguration\":{\r\n
-        \   \"dynamicVNetAssignmentScope\":\"none\",\"endpointConfiguration\":{\r\n
-        \     \"inboundNATPools\":[\r\n        {\r\n          \"name\":\"TestEndpointConfig\",\"protocol\":\"udp\",\"backendPort\":64444,\"frontendPortRangeStart\":60000,\"frontendPortRangeEnd\":61000,\"networkSecurityGroupRules\":[\r\n
-        \           {\r\n              \"priority\":150,\"access\":\"allow\",\"sourceAddressPrefix\":\"*\",\"sourcePortRanges\":[\r\n
-        \               \"*\"\r\n              ]\r\n            }\r\n          ]\r\n
-        \       }\r\n      ]\r\n    }\r\n  }\r\n}"
+      string: "{\r\n  \"odata.metadata\":\"https://batch.westcentralus.batch.azure.com/$metadata#pools/@Element\"\
+        ,\"id\":\"batch_network_814e11b1\",\"url\":\"https://batch.westcentralus.batch.azure.com/pools/batch_network_814e11b1\"\
+        ,\"eTag\":\"0x8D8901C5CDA97C3\",\"lastModified\":\"2020-11-24T01:57:56.4238787Z\"\
+        ,\"creationTime\":\"2020-11-24T01:57:56.4238787Z\",\"state\":\"active\",\"\
+        stateTransitionTime\":\"2020-11-24T01:57:56.4238787Z\",\"allocationState\"\
+        :\"resizing\",\"allocationStateTransitionTime\":\"2020-11-24T01:57:56.4238787Z\"\
+        ,\"vmSize\":\"standard_a1\",\"resizeTimeout\":\"PT15M\",\"currentDedicatedNodes\"\
+        :0,\"targetDedicatedNodes\":1,\"currentLowPriorityNodes\":0,\"targetLowPriorityNodes\"\
+        :0,\"enableAutoScale\":false,\"enableInterNodeCommunication\":false,\"taskSlotsPerNode\"\
+        :1,\"taskSchedulingPolicy\":{\r\n    \"nodeFillType\":\"Spread\"\r\n  },\"\
+        virtualMachineConfiguration\":{\r\n    \"imageReference\":{\r\n      \"publisher\"\
+        :\"Canonical\",\"offer\":\"UbuntuServer\",\"sku\":\"16.04-LTS\",\"version\"\
+        :\"latest\"\r\n    },\"nodeAgentSKUId\":\"batch.node.ubuntu 16.04\"\r\n  },\"\
+        networkConfiguration\":{\r\n    \"dynamicVNetAssignmentScope\":\"none\",\"\
+        endpointConfiguration\":{\r\n      \"inboundNATPools\":[\r\n        {\r\n\
+        \          \"name\":\"TestEndpointConfig\",\"protocol\":\"udp\",\"backendPort\"\
+        :64444,\"frontendPortRangeStart\":60000,\"frontendPortRangeEnd\":61000,\"\
+        networkSecurityGroupRules\":[\r\n            {\r\n              \"priority\"\
+        :150,\"access\":\"allow\",\"sourceAddressPrefix\":\"*\",\"sourcePortRanges\"\
+        :[\r\n                \"*\"\r\n              ]\r\n            }\r\n      \
+        \    ]\r\n        }\r\n      ]\r\n    }\r\n  }\r\n}"
     headers:
       content-type:
       - application/json;odata=minimalmetadata
       dataserviceversion:
       - '3.0'
       date:
-      - Wed, 07 Aug 2019 00:38:34 GMT
+      - Tue, 24 Nov 2020 01:58:36 GMT
       etag:
-      - '0x8D71ACF7CEDB785'
+      - '0x8D8901C5CDA97C3'
       last-modified:
-      - Wed, 07 Aug 2019 00:37:55 GMT
+      - Tue, 24 Nov 2020 01:57:56 GMT
       request-id:
-      - 495ef3e7-5c80-492a-8fa6-c7af95180706
+      - 2f92e103-6924-4545-a7de-dc3d0619b2ce
       server:
       - Microsoft-HTTPAPI/2.0
       strict-transport-security:
@@ -331,38 +391,50 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python/3.6.6 (Windows-10-10.0.14393-SP0) msrest/0.6.9 msrest_azure/0.4.34
-        azure-batch/8.0.0 Azure-SDK-For-Python
+      - python/3.8.5 (macOS-10.15.7-x86_64-i386-64bit) msrest/0.6.19 msrest_azure/0.6.4
+        azure-batch/9.0.1 Azure-SDK-For-Python
       accept-language:
       - en-US
       ocp-date:
-      - Wed, 07 Aug 2019 00:38:45 GMT
+      - Tue, 24 Nov 2020 01:58:47 GMT
     method: GET
-    uri: https://batch814e11b1.westcentralus.batch.azure.com/pools/batch_network_814e11b1?api-version=2019-08-01.10.0
+    uri: https://batch.westcentralus.batch.azure.com/pools/batch_network_814e11b1?api-version=2020-09-01.12.0
   response:
     body:
-      string: "{\r\n  \"odata.metadata\":\"https://batch814e11b1.westcentralus.batch.azure.com/$metadata#pools/@Element\",\"id\":\"batch_network_814e11b1\",\"url\":\"https://batch814e11b1.westcentralus.batch.azure.com/pools/batch_network_814e11b1\",\"eTag\":\"0x8D71ACF7CEDB785\",\"lastModified\":\"2019-08-07T00:37:55.2720773Z\",\"creationTime\":\"2019-08-07T00:37:55.2720773Z\",\"state\":\"active\",\"stateTransitionTime\":\"2019-08-07T00:37:55.2720773Z\",\"allocationState\":\"resizing\",\"allocationStateTransitionTime\":\"2019-08-07T00:37:55.2720773Z\",\"vmSize\":\"standard_a1\",\"resizeTimeout\":\"PT15M\",\"currentDedicatedNodes\":0,\"targetDedicatedNodes\":1,\"currentLowPriorityNodes\":0,\"targetLowPriorityNodes\":0,\"enableAutoScale\":false,\"enableInterNodeCommunication\":false,\"maxTasksPerNode\":1,\"taskSchedulingPolicy\":{\r\n
-        \   \"nodeFillType\":\"Spread\"\r\n  },\"virtualMachineConfiguration\":{\r\n
-        \   \"imageReference\":{\r\n      \"publisher\":\"Canonical\",\"offer\":\"UbuntuServer\",\"sku\":\"16.04-LTS\",\"version\":\"latest\"\r\n
-        \   },\"nodeAgentSKUId\":\"batch.node.ubuntu 16.04\"\r\n  },\"networkConfiguration\":{\r\n
-        \   \"dynamicVNetAssignmentScope\":\"none\",\"endpointConfiguration\":{\r\n
-        \     \"inboundNATPools\":[\r\n        {\r\n          \"name\":\"TestEndpointConfig\",\"protocol\":\"udp\",\"backendPort\":64444,\"frontendPortRangeStart\":60000,\"frontendPortRangeEnd\":61000,\"networkSecurityGroupRules\":[\r\n
-        \           {\r\n              \"priority\":150,\"access\":\"allow\",\"sourceAddressPrefix\":\"*\",\"sourcePortRanges\":[\r\n
-        \               \"*\"\r\n              ]\r\n            }\r\n          ]\r\n
-        \       }\r\n      ]\r\n    }\r\n  }\r\n}"
+      string: "{\r\n  \"odata.metadata\":\"https://batch.westcentralus.batch.azure.com/$metadata#pools/@Element\"\
+        ,\"id\":\"batch_network_814e11b1\",\"url\":\"https://batch.westcentralus.batch.azure.com/pools/batch_network_814e11b1\"\
+        ,\"eTag\":\"0x8D8901C5CDA97C3\",\"lastModified\":\"2020-11-24T01:57:56.4238787Z\"\
+        ,\"creationTime\":\"2020-11-24T01:57:56.4238787Z\",\"state\":\"active\",\"\
+        stateTransitionTime\":\"2020-11-24T01:57:56.4238787Z\",\"allocationState\"\
+        :\"resizing\",\"allocationStateTransitionTime\":\"2020-11-24T01:57:56.4238787Z\"\
+        ,\"vmSize\":\"standard_a1\",\"resizeTimeout\":\"PT15M\",\"currentDedicatedNodes\"\
+        :0,\"targetDedicatedNodes\":1,\"currentLowPriorityNodes\":0,\"targetLowPriorityNodes\"\
+        :0,\"enableAutoScale\":false,\"enableInterNodeCommunication\":false,\"taskSlotsPerNode\"\
+        :1,\"taskSchedulingPolicy\":{\r\n    \"nodeFillType\":\"Spread\"\r\n  },\"\
+        virtualMachineConfiguration\":{\r\n    \"imageReference\":{\r\n      \"publisher\"\
+        :\"Canonical\",\"offer\":\"UbuntuServer\",\"sku\":\"16.04-LTS\",\"version\"\
+        :\"latest\"\r\n    },\"nodeAgentSKUId\":\"batch.node.ubuntu 16.04\"\r\n  },\"\
+        networkConfiguration\":{\r\n    \"dynamicVNetAssignmentScope\":\"none\",\"\
+        endpointConfiguration\":{\r\n      \"inboundNATPools\":[\r\n        {\r\n\
+        \          \"name\":\"TestEndpointConfig\",\"protocol\":\"udp\",\"backendPort\"\
+        :64444,\"frontendPortRangeStart\":60000,\"frontendPortRangeEnd\":61000,\"\
+        networkSecurityGroupRules\":[\r\n            {\r\n              \"priority\"\
+        :150,\"access\":\"allow\",\"sourceAddressPrefix\":\"*\",\"sourcePortRanges\"\
+        :[\r\n                \"*\"\r\n              ]\r\n            }\r\n      \
+        \    ]\r\n        }\r\n      ]\r\n    }\r\n  }\r\n}"
     headers:
       content-type:
       - application/json;odata=minimalmetadata
       dataserviceversion:
       - '3.0'
       date:
-      - Wed, 07 Aug 2019 00:38:46 GMT
+      - Tue, 24 Nov 2020 01:58:47 GMT
       etag:
-      - '0x8D71ACF7CEDB785'
+      - '0x8D8901C5CDA97C3'
       last-modified:
-      - Wed, 07 Aug 2019 00:37:55 GMT
+      - Tue, 24 Nov 2020 01:57:56 GMT
       request-id:
-      - 1e72475d-94e4-4d53-8d8b-0b82217dc8a5
+      - 95046dad-da0e-4943-8bef-61fdf7c0105e
       server:
       - Microsoft-HTTPAPI/2.0
       strict-transport-security:
@@ -384,38 +456,50 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python/3.6.6 (Windows-10-10.0.14393-SP0) msrest/0.6.9 msrest_azure/0.4.34
-        azure-batch/8.0.0 Azure-SDK-For-Python
+      - python/3.8.5 (macOS-10.15.7-x86_64-i386-64bit) msrest/0.6.19 msrest_azure/0.6.4
+        azure-batch/9.0.1 Azure-SDK-For-Python
       accept-language:
       - en-US
       ocp-date:
-      - Wed, 07 Aug 2019 00:38:56 GMT
+      - Tue, 24 Nov 2020 01:58:57 GMT
     method: GET
-    uri: https://batch814e11b1.westcentralus.batch.azure.com/pools/batch_network_814e11b1?api-version=2019-08-01.10.0
+    uri: https://batch.westcentralus.batch.azure.com/pools/batch_network_814e11b1?api-version=2020-09-01.12.0
   response:
     body:
-      string: "{\r\n  \"odata.metadata\":\"https://batch814e11b1.westcentralus.batch.azure.com/$metadata#pools/@Element\",\"id\":\"batch_network_814e11b1\",\"url\":\"https://batch814e11b1.westcentralus.batch.azure.com/pools/batch_network_814e11b1\",\"eTag\":\"0x8D71ACF7CEDB785\",\"lastModified\":\"2019-08-07T00:37:55.2720773Z\",\"creationTime\":\"2019-08-07T00:37:55.2720773Z\",\"state\":\"active\",\"stateTransitionTime\":\"2019-08-07T00:37:55.2720773Z\",\"allocationState\":\"resizing\",\"allocationStateTransitionTime\":\"2019-08-07T00:37:55.2720773Z\",\"vmSize\":\"standard_a1\",\"resizeTimeout\":\"PT15M\",\"currentDedicatedNodes\":0,\"targetDedicatedNodes\":1,\"currentLowPriorityNodes\":0,\"targetLowPriorityNodes\":0,\"enableAutoScale\":false,\"enableInterNodeCommunication\":false,\"maxTasksPerNode\":1,\"taskSchedulingPolicy\":{\r\n
-        \   \"nodeFillType\":\"Spread\"\r\n  },\"virtualMachineConfiguration\":{\r\n
-        \   \"imageReference\":{\r\n      \"publisher\":\"Canonical\",\"offer\":\"UbuntuServer\",\"sku\":\"16.04-LTS\",\"version\":\"latest\"\r\n
-        \   },\"nodeAgentSKUId\":\"batch.node.ubuntu 16.04\"\r\n  },\"networkConfiguration\":{\r\n
-        \   \"dynamicVNetAssignmentScope\":\"none\",\"endpointConfiguration\":{\r\n
-        \     \"inboundNATPools\":[\r\n        {\r\n          \"name\":\"TestEndpointConfig\",\"protocol\":\"udp\",\"backendPort\":64444,\"frontendPortRangeStart\":60000,\"frontendPortRangeEnd\":61000,\"networkSecurityGroupRules\":[\r\n
-        \           {\r\n              \"priority\":150,\"access\":\"allow\",\"sourceAddressPrefix\":\"*\",\"sourcePortRanges\":[\r\n
-        \               \"*\"\r\n              ]\r\n            }\r\n          ]\r\n
-        \       }\r\n      ]\r\n    }\r\n  }\r\n}"
+      string: "{\r\n  \"odata.metadata\":\"https://batch.westcentralus.batch.azure.com/$metadata#pools/@Element\"\
+        ,\"id\":\"batch_network_814e11b1\",\"url\":\"https://batch.westcentralus.batch.azure.com/pools/batch_network_814e11b1\"\
+        ,\"eTag\":\"0x8D8901C5CDA97C3\",\"lastModified\":\"2020-11-24T01:57:56.4238787Z\"\
+        ,\"creationTime\":\"2020-11-24T01:57:56.4238787Z\",\"state\":\"active\",\"\
+        stateTransitionTime\":\"2020-11-24T01:57:56.4238787Z\",\"allocationState\"\
+        :\"steady\",\"allocationStateTransitionTime\":\"2020-11-24T01:58:54.3232193Z\"\
+        ,\"vmSize\":\"standard_a1\",\"resizeTimeout\":\"PT15M\",\"currentDedicatedNodes\"\
+        :1,\"targetDedicatedNodes\":1,\"currentLowPriorityNodes\":0,\"targetLowPriorityNodes\"\
+        :0,\"enableAutoScale\":false,\"enableInterNodeCommunication\":false,\"taskSlotsPerNode\"\
+        :1,\"taskSchedulingPolicy\":{\r\n    \"nodeFillType\":\"Spread\"\r\n  },\"\
+        virtualMachineConfiguration\":{\r\n    \"imageReference\":{\r\n      \"publisher\"\
+        :\"Canonical\",\"offer\":\"UbuntuServer\",\"sku\":\"16.04-LTS\",\"version\"\
+        :\"latest\"\r\n    },\"nodeAgentSKUId\":\"batch.node.ubuntu 16.04\"\r\n  },\"\
+        networkConfiguration\":{\r\n    \"dynamicVNetAssignmentScope\":\"none\",\"\
+        endpointConfiguration\":{\r\n      \"inboundNATPools\":[\r\n        {\r\n\
+        \          \"name\":\"TestEndpointConfig\",\"protocol\":\"udp\",\"backendPort\"\
+        :64444,\"frontendPortRangeStart\":60000,\"frontendPortRangeEnd\":61000,\"\
+        networkSecurityGroupRules\":[\r\n            {\r\n              \"priority\"\
+        :150,\"access\":\"allow\",\"sourceAddressPrefix\":\"*\",\"sourcePortRanges\"\
+        :[\r\n                \"*\"\r\n              ]\r\n            }\r\n      \
+        \    ]\r\n        }\r\n      ]\r\n    }\r\n  }\r\n}"
     headers:
       content-type:
       - application/json;odata=minimalmetadata
       dataserviceversion:
       - '3.0'
       date:
-      - Wed, 07 Aug 2019 00:38:56 GMT
+      - Tue, 24 Nov 2020 01:58:56 GMT
       etag:
-      - '0x8D71ACF7CEDB785'
+      - '0x8D8901C5CDA97C3'
       last-modified:
-      - Wed, 07 Aug 2019 00:37:55 GMT
+      - Tue, 24 Nov 2020 01:57:56 GMT
       request-id:
-      - 95445620-5a68-4b07-8d5d-e400acbefe37
+      - f268d54b-d63f-4e97-a82c-b57a129782f6
       server:
       - Microsoft-HTTPAPI/2.0
       strict-transport-security:
@@ -437,242 +521,41 @@ interactions:
       Connection:
       - keep-alive
       User-Agent:
-      - python/3.6.6 (Windows-10-10.0.14393-SP0) msrest/0.6.9 msrest_azure/0.4.34
-        azure-batch/8.0.0 Azure-SDK-For-Python
+      - python/3.8.5 (macOS-10.15.7-x86_64-i386-64bit) msrest/0.6.19 msrest_azure/0.6.4
+        azure-batch/9.0.1 Azure-SDK-For-Python
       accept-language:
       - en-US
       ocp-date:
-      - Wed, 07 Aug 2019 00:39:06 GMT
+      - Tue, 24 Nov 2020 01:58:57 GMT
     method: GET
-    uri: https://batch814e11b1.westcentralus.batch.azure.com/pools/batch_network_814e11b1?api-version=2019-08-01.10.0
+    uri: https://batch.westcentralus.batch.azure.com/pools/batch_network_814e11b1/nodes?api-version=2020-09-01.12.0
   response:
     body:
-      string: "{\r\n  \"odata.metadata\":\"https://batch814e11b1.westcentralus.batch.azure.com/$metadata#pools/@Element\",\"id\":\"batch_network_814e11b1\",\"url\":\"https://batch814e11b1.westcentralus.batch.azure.com/pools/batch_network_814e11b1\",\"eTag\":\"0x8D71ACF7CEDB785\",\"lastModified\":\"2019-08-07T00:37:55.2720773Z\",\"creationTime\":\"2019-08-07T00:37:55.2720773Z\",\"state\":\"active\",\"stateTransitionTime\":\"2019-08-07T00:37:55.2720773Z\",\"allocationState\":\"resizing\",\"allocationStateTransitionTime\":\"2019-08-07T00:37:55.2720773Z\",\"vmSize\":\"standard_a1\",\"resizeTimeout\":\"PT15M\",\"currentDedicatedNodes\":0,\"targetDedicatedNodes\":1,\"currentLowPriorityNodes\":0,\"targetLowPriorityNodes\":0,\"enableAutoScale\":false,\"enableInterNodeCommunication\":false,\"maxTasksPerNode\":1,\"taskSchedulingPolicy\":{\r\n
-        \   \"nodeFillType\":\"Spread\"\r\n  },\"virtualMachineConfiguration\":{\r\n
-        \   \"imageReference\":{\r\n      \"publisher\":\"Canonical\",\"offer\":\"UbuntuServer\",\"sku\":\"16.04-LTS\",\"version\":\"latest\"\r\n
-        \   },\"nodeAgentSKUId\":\"batch.node.ubuntu 16.04\"\r\n  },\"networkConfiguration\":{\r\n
-        \   \"dynamicVNetAssignmentScope\":\"none\",\"endpointConfiguration\":{\r\n
-        \     \"inboundNATPools\":[\r\n        {\r\n          \"name\":\"TestEndpointConfig\",\"protocol\":\"udp\",\"backendPort\":64444,\"frontendPortRangeStart\":60000,\"frontendPortRangeEnd\":61000,\"networkSecurityGroupRules\":[\r\n
-        \           {\r\n              \"priority\":150,\"access\":\"allow\",\"sourceAddressPrefix\":\"*\",\"sourcePortRanges\":[\r\n
-        \               \"*\"\r\n              ]\r\n            }\r\n          ]\r\n
-        \       }\r\n      ]\r\n    }\r\n  }\r\n}"
+      string: "{\r\n  \"odata.metadata\":\"https://batch.westcentralus.batch.azure.com/$metadata#nodes\"\
+        ,\"value\":[\r\n    {\r\n      \"id\":\"tvmps_7441317dcaf328390c65b5d047dcc8bb4c4f15f005f10e53ce8e05875dbb481c_d\"\
+        ,\"url\":\"https://batch.westcentralus.batch.azure.com/pools/batch_network_814e11b1/nodes/tvmps_7441317dcaf328390c65b5d047dcc8bb4c4f15f005f10e53ce8e05875dbb481c_d\"\
+        ,\"state\":\"creating\",\"schedulingState\":\"enabled\",\"stateTransitionTime\"\
+        :\"2020-11-24T01:58:53.2293376Z\",\"allocationTime\":\"2020-11-24T01:58:53.2293376Z\"\
+        ,\"ipAddress\":\"10.0.0.4\",\"affinityId\":\"TVM:tvmps_7441317dcaf328390c65b5d047dcc8bb4c4f15f005f10e53ce8e05875dbb481c_d\"\
+        ,\"vmSize\":\"standard_a1\",\"totalTasksRun\":0,\"totalTasksSucceeded\":0,\"\
+        runningTasksCount\":0,\"runningTaskSlotsCount\":0,\"isDedicated\":true,\"\
+        endpointConfiguration\":{\r\n        \"inboundEndpoints\":[\r\n          {\r\
+        \n            \"name\":\"TestEndpointConfig.0\",\"protocol\":\"udp\",\"publicIPAddress\"\
+        :\"52.153.152.83\",\"publicFQDN\":\"dnsc9babd9f-f319-416d-bdfa-d2d57e0a0872-azurebatch-cloudservice.westcentralus.cloudapp.azure.com\"\
+        ,\"frontendPort\":60000,\"backendPort\":64444\r\n          },{\r\n       \
+        \     \"name\":\"SSHRule.0\",\"protocol\":\"tcp\",\"publicIPAddress\":\"52.153.152.83\"\
+        ,\"publicFQDN\":\"dnsc9babd9f-f319-416d-bdfa-d2d57e0a0872-azurebatch-cloudservice.westcentralus.cloudapp.azure.com\"\
+        ,\"frontendPort\":50000,\"backendPort\":22\r\n          }\r\n        ]\r\n\
+        \      }\r\n    }\r\n  ]\r\n}"
     headers:
       content-type:
       - application/json;odata=minimalmetadata
       dataserviceversion:
       - '3.0'
       date:
-      - Wed, 07 Aug 2019 00:39:06 GMT
-      etag:
-      - '0x8D71ACF7CEDB785'
-      last-modified:
-      - Wed, 07 Aug 2019 00:37:55 GMT
+      - Tue, 24 Nov 2020 01:58:56 GMT
       request-id:
-      - f06364cf-f0cb-4772-a540-32be7ecf7b4a
-      server:
-      - Microsoft-HTTPAPI/2.0
-      strict-transport-security:
-      - max-age=31536000; includeSubDomains
-      transfer-encoding:
-      - chunked
-      x-content-type-options:
-      - nosniff
-    status:
-      code: 200
-      message: OK
-- request:
-    body: null
-    headers:
-      Accept:
-      - application/json
-      Accept-Encoding:
-      - gzip, deflate
-      Connection:
-      - keep-alive
-      User-Agent:
-      - python/3.6.6 (Windows-10-10.0.14393-SP0) msrest/0.6.9 msrest_azure/0.4.34
-        azure-batch/8.0.0 Azure-SDK-For-Python
-      accept-language:
-      - en-US
-      ocp-date:
-      - Wed, 07 Aug 2019 00:39:16 GMT
-    method: GET
-    uri: https://batch814e11b1.westcentralus.batch.azure.com/pools/batch_network_814e11b1?api-version=2019-08-01.10.0
-  response:
-    body:
-      string: "{\r\n  \"odata.metadata\":\"https://batch814e11b1.westcentralus.batch.azure.com/$metadata#pools/@Element\",\"id\":\"batch_network_814e11b1\",\"url\":\"https://batch814e11b1.westcentralus.batch.azure.com/pools/batch_network_814e11b1\",\"eTag\":\"0x8D71ACF7CEDB785\",\"lastModified\":\"2019-08-07T00:37:55.2720773Z\",\"creationTime\":\"2019-08-07T00:37:55.2720773Z\",\"state\":\"active\",\"stateTransitionTime\":\"2019-08-07T00:37:55.2720773Z\",\"allocationState\":\"resizing\",\"allocationStateTransitionTime\":\"2019-08-07T00:37:55.2720773Z\",\"vmSize\":\"standard_a1\",\"resizeTimeout\":\"PT15M\",\"currentDedicatedNodes\":0,\"targetDedicatedNodes\":1,\"currentLowPriorityNodes\":0,\"targetLowPriorityNodes\":0,\"enableAutoScale\":false,\"enableInterNodeCommunication\":false,\"maxTasksPerNode\":1,\"taskSchedulingPolicy\":{\r\n
-        \   \"nodeFillType\":\"Spread\"\r\n  },\"virtualMachineConfiguration\":{\r\n
-        \   \"imageReference\":{\r\n      \"publisher\":\"Canonical\",\"offer\":\"UbuntuServer\",\"sku\":\"16.04-LTS\",\"version\":\"latest\"\r\n
-        \   },\"nodeAgentSKUId\":\"batch.node.ubuntu 16.04\"\r\n  },\"networkConfiguration\":{\r\n
-        \   \"dynamicVNetAssignmentScope\":\"none\",\"endpointConfiguration\":{\r\n
-        \     \"inboundNATPools\":[\r\n        {\r\n          \"name\":\"TestEndpointConfig\",\"protocol\":\"udp\",\"backendPort\":64444,\"frontendPortRangeStart\":60000,\"frontendPortRangeEnd\":61000,\"networkSecurityGroupRules\":[\r\n
-        \           {\r\n              \"priority\":150,\"access\":\"allow\",\"sourceAddressPrefix\":\"*\",\"sourcePortRanges\":[\r\n
-        \               \"*\"\r\n              ]\r\n            }\r\n          ]\r\n
-        \       }\r\n      ]\r\n    }\r\n  }\r\n}"
-    headers:
-      content-type:
-      - application/json;odata=minimalmetadata
-      dataserviceversion:
-      - '3.0'
-      date:
-      - Wed, 07 Aug 2019 00:39:16 GMT
-      etag:
-      - '0x8D71ACF7CEDB785'
-      last-modified:
-      - Wed, 07 Aug 2019 00:37:55 GMT
-      request-id:
-      - dbde6974-0cca-4d85-8fbc-d739e4e51328
-      server:
-      - Microsoft-HTTPAPI/2.0
-      strict-transport-security:
-      - max-age=31536000; includeSubDomains
-      transfer-encoding:
-      - chunked
-      x-content-type-options:
-      - nosniff
-    status:
-      code: 200
-      message: OK
-- request:
-    body: null
-    headers:
-      Accept:
-      - application/json
-      Accept-Encoding:
-      - gzip, deflate
-      Connection:
-      - keep-alive
-      User-Agent:
-      - python/3.6.6 (Windows-10-10.0.14393-SP0) msrest/0.6.9 msrest_azure/0.4.34
-        azure-batch/8.0.0 Azure-SDK-For-Python
-      accept-language:
-      - en-US
-      ocp-date:
-      - Wed, 07 Aug 2019 00:39:26 GMT
-    method: GET
-    uri: https://batch814e11b1.westcentralus.batch.azure.com/pools/batch_network_814e11b1?api-version=2019-08-01.10.0
-  response:
-    body:
-      string: "{\r\n  \"odata.metadata\":\"https://batch814e11b1.westcentralus.batch.azure.com/$metadata#pools/@Element\",\"id\":\"batch_network_814e11b1\",\"url\":\"https://batch814e11b1.westcentralus.batch.azure.com/pools/batch_network_814e11b1\",\"eTag\":\"0x8D71ACF7CEDB785\",\"lastModified\":\"2019-08-07T00:37:55.2720773Z\",\"creationTime\":\"2019-08-07T00:37:55.2720773Z\",\"state\":\"active\",\"stateTransitionTime\":\"2019-08-07T00:37:55.2720773Z\",\"allocationState\":\"resizing\",\"allocationStateTransitionTime\":\"2019-08-07T00:37:55.2720773Z\",\"vmSize\":\"standard_a1\",\"resizeTimeout\":\"PT15M\",\"currentDedicatedNodes\":0,\"targetDedicatedNodes\":1,\"currentLowPriorityNodes\":0,\"targetLowPriorityNodes\":0,\"enableAutoScale\":false,\"enableInterNodeCommunication\":false,\"maxTasksPerNode\":1,\"taskSchedulingPolicy\":{\r\n
-        \   \"nodeFillType\":\"Spread\"\r\n  },\"virtualMachineConfiguration\":{\r\n
-        \   \"imageReference\":{\r\n      \"publisher\":\"Canonical\",\"offer\":\"UbuntuServer\",\"sku\":\"16.04-LTS\",\"version\":\"latest\"\r\n
-        \   },\"nodeAgentSKUId\":\"batch.node.ubuntu 16.04\"\r\n  },\"networkConfiguration\":{\r\n
-        \   \"dynamicVNetAssignmentScope\":\"none\",\"endpointConfiguration\":{\r\n
-        \     \"inboundNATPools\":[\r\n        {\r\n          \"name\":\"TestEndpointConfig\",\"protocol\":\"udp\",\"backendPort\":64444,\"frontendPortRangeStart\":60000,\"frontendPortRangeEnd\":61000,\"networkSecurityGroupRules\":[\r\n
-        \           {\r\n              \"priority\":150,\"access\":\"allow\",\"sourceAddressPrefix\":\"*\",\"sourcePortRanges\":[\r\n
-        \               \"*\"\r\n              ]\r\n            }\r\n          ]\r\n
-        \       }\r\n      ]\r\n    }\r\n  }\r\n}"
-    headers:
-      content-type:
-      - application/json;odata=minimalmetadata
-      dataserviceversion:
-      - '3.0'
-      date:
-      - Wed, 07 Aug 2019 00:39:26 GMT
-      etag:
-      - '0x8D71ACF7CEDB785'
-      last-modified:
-      - Wed, 07 Aug 2019 00:37:55 GMT
-      request-id:
-      - bf033388-394b-4f72-a28b-a7389823f719
-      server:
-      - Microsoft-HTTPAPI/2.0
-      strict-transport-security:
-      - max-age=31536000; includeSubDomains
-      transfer-encoding:
-      - chunked
-      x-content-type-options:
-      - nosniff
-    status:
-      code: 200
-      message: OK
-- request:
-    body: null
-    headers:
-      Accept:
-      - application/json
-      Accept-Encoding:
-      - gzip, deflate
-      Connection:
-      - keep-alive
-      User-Agent:
-      - python/3.6.6 (Windows-10-10.0.14393-SP0) msrest/0.6.9 msrest_azure/0.4.34
-        azure-batch/8.0.0 Azure-SDK-For-Python
-      accept-language:
-      - en-US
-      ocp-date:
-      - Wed, 07 Aug 2019 00:39:36 GMT
-    method: GET
-    uri: https://batch814e11b1.westcentralus.batch.azure.com/pools/batch_network_814e11b1?api-version=2019-08-01.10.0
-  response:
-    body:
-      string: "{\r\n  \"odata.metadata\":\"https://batch814e11b1.westcentralus.batch.azure.com/$metadata#pools/@Element\",\"id\":\"batch_network_814e11b1\",\"url\":\"https://batch814e11b1.westcentralus.batch.azure.com/pools/batch_network_814e11b1\",\"eTag\":\"0x8D71ACF7CEDB785\",\"lastModified\":\"2019-08-07T00:37:55.2720773Z\",\"creationTime\":\"2019-08-07T00:37:55.2720773Z\",\"state\":\"active\",\"stateTransitionTime\":\"2019-08-07T00:37:55.2720773Z\",\"allocationState\":\"steady\",\"allocationStateTransitionTime\":\"2019-08-07T00:39:31.2843496Z\",\"vmSize\":\"standard_a1\",\"resizeTimeout\":\"PT15M\",\"currentDedicatedNodes\":1,\"targetDedicatedNodes\":1,\"currentLowPriorityNodes\":0,\"targetLowPriorityNodes\":0,\"enableAutoScale\":false,\"enableInterNodeCommunication\":false,\"maxTasksPerNode\":1,\"taskSchedulingPolicy\":{\r\n
-        \   \"nodeFillType\":\"Spread\"\r\n  },\"virtualMachineConfiguration\":{\r\n
-        \   \"imageReference\":{\r\n      \"publisher\":\"Canonical\",\"offer\":\"UbuntuServer\",\"sku\":\"16.04-LTS\",\"version\":\"latest\"\r\n
-        \   },\"nodeAgentSKUId\":\"batch.node.ubuntu 16.04\"\r\n  },\"networkConfiguration\":{\r\n
-        \   \"dynamicVNetAssignmentScope\":\"none\",\"endpointConfiguration\":{\r\n
-        \     \"inboundNATPools\":[\r\n        {\r\n          \"name\":\"TestEndpointConfig\",\"protocol\":\"udp\",\"backendPort\":64444,\"frontendPortRangeStart\":60000,\"frontendPortRangeEnd\":61000,\"networkSecurityGroupRules\":[\r\n
-        \           {\r\n              \"priority\":150,\"access\":\"allow\",\"sourceAddressPrefix\":\"*\",\"sourcePortRanges\":[\r\n
-        \               \"*\"\r\n              ]\r\n            }\r\n          ]\r\n
-        \       }\r\n      ]\r\n    }\r\n  }\r\n}"
-    headers:
-      content-type:
-      - application/json;odata=minimalmetadata
-      dataserviceversion:
-      - '3.0'
-      date:
-      - Wed, 07 Aug 2019 00:39:36 GMT
-      etag:
-      - '0x8D71ACF7CEDB785'
-      last-modified:
-      - Wed, 07 Aug 2019 00:37:55 GMT
-      request-id:
-      - 63db874f-6e0e-4226-95e7-bafb0969b9eb
-      server:
-      - Microsoft-HTTPAPI/2.0
-      strict-transport-security:
-      - max-age=31536000; includeSubDomains
-      transfer-encoding:
-      - chunked
-      x-content-type-options:
-      - nosniff
-    status:
-      code: 200
-      message: OK
-- request:
-    body: null
-    headers:
-      Accept:
-      - application/json
-      Accept-Encoding:
-      - gzip, deflate
-      Connection:
-      - keep-alive
-      User-Agent:
-      - python/3.6.6 (Windows-10-10.0.14393-SP0) msrest/0.6.9 msrest_azure/0.4.34
-        azure-batch/8.0.0 Azure-SDK-For-Python
-      accept-language:
-      - en-US
-      ocp-date:
-      - Wed, 07 Aug 2019 00:39:36 GMT
-    method: GET
-    uri: https://batch814e11b1.westcentralus.batch.azure.com/pools/batch_network_814e11b1/nodes?api-version=2019-08-01.10.0
-  response:
-    body:
-      string: "{\r\n  \"odata.metadata\":\"https://batch814e11b1.westcentralus.batch.azure.com/$metadata#nodes\",\"value\":[\r\n
-        \   {\r\n      \"id\":\"tvmps_2c1d53ae47b48a34e918d26f9bbfd3f97b76db3dd8c81dd2384ea007e909e73a_d\",\"url\":\"https://batch814e11b1.westcentralus.batch.azure.com/pools/batch_network_814e11b1/nodes/tvmps_2c1d53ae47b48a34e918d26f9bbfd3f97b76db3dd8c81dd2384ea007e909e73a_d\",\"state\":\"starting\",\"schedulingState\":\"enabled\",\"stateTransitionTime\":\"2019-08-07T00:39:31.2889532Z\",\"allocationTime\":\"2019-08-07T00:39:30.919476Z\",\"ipAddress\":\"10.0.0.4\",\"affinityId\":\"TVM:tvmps_2c1d53ae47b48a34e918d26f9bbfd3f97b76db3dd8c81dd2384ea007e909e73a_d\",\"vmSize\":\"standard_a1\",\"totalTasksRun\":0,\"totalTasksSucceeded\":0,\"runningTasksCount\":0,\"isDedicated\":true,\"endpointConfiguration\":{\r\n
-        \       \"inboundEndpoints\":[\r\n          {\r\n            \"name\":\"TestEndpointConfig.0\",\"protocol\":\"udp\",\"publicIPAddress\":\"52.159.17.209\",\"publicFQDN\":\"dnse8e3cd44-e5d9-4f68-a2fc-9d5b2c229ec4-azurebatch-cloudservice.westcentralus.cloudapp.azure.com\",\"frontendPort\":60000,\"backendPort\":64444\r\n
-        \         },{\r\n            \"name\":\"SSHRule.0\",\"protocol\":\"tcp\",\"publicIPAddress\":\"52.159.17.209\",\"publicFQDN\":\"dnse8e3cd44-e5d9-4f68-a2fc-9d5b2c229ec4-azurebatch-cloudservice.westcentralus.cloudapp.azure.com\",\"frontendPort\":50000,\"backendPort\":22\r\n
-        \         }\r\n        ]\r\n      }\r\n    }\r\n  ]\r\n}"
-    headers:
-      content-type:
-      - application/json;odata=minimalmetadata
-      dataserviceversion:
-      - '3.0'
-      date:
-      - Wed, 07 Aug 2019 00:39:36 GMT
-      request-id:
-      - c21e93bc-2974-4d73-9220-4fb1efe84f4f
+      - a248dd4a-caf8-4c90-9dc3-5c1b981c18e1
       server:
       - Microsoft-HTTPAPI/2.0
       strict-transport-security:

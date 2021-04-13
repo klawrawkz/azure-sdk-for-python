@@ -4,7 +4,7 @@
 # ------------------------------------
 
 """
-Pylint custom checkers for SDK guidelines: C4717 - C4738
+Pylint custom checkers for SDK guidelines: C4717 - C4744
 """
 
 import logging
@@ -53,7 +53,7 @@ class ClientConstructorTakesCorrectParameters(BaseChecker):
             },
         ),
     )
-    ignore_clients = ["PipelineClient", "AsyncPipelineClient"]
+    ignore_clients = ["PipelineClient", "AsyncPipelineClient", "ARMPipelineClient", "AsyncARMPipelineClient"]
 
     def __init__(self, linter=None):
         super(ClientConstructorTakesCorrectParameters, self).__init__(linter)
@@ -72,11 +72,11 @@ class ClientConstructorTakesCorrectParameters(BaseChecker):
                 arg_names = [argument.name for argument in node.args.args]
                 if "credential" not in arg_names:
                     self.add_message(
-                        msg_id="missing-client-constructor-parameter-credential", node=node, confidence=None
+                        msgid="missing-client-constructor-parameter-credential", node=node, confidence=None
                     )
                 if not node.args.kwarg:
                     self.add_message(
-                        msg_id="missing-client-constructor-parameter-kwargs", node=node, confidence=None
+                        msgid="missing-client-constructor-parameter-kwargs", node=node, confidence=None
                     )
         except AttributeError:
             logger.debug("Pylint custom checker failed to check if constructor has correct parameters.")
@@ -128,7 +128,7 @@ class ClientHasKwargsInPoliciesForCreateConfigurationMethod(BaseChecker):
                     if line.find("Policy") != -1:
                         if line.find("**kwargs") == -1:
                             self.add_message(
-                                msg_id="config-missing-kwargs-in-policy",
+                                msgid="config-missing-kwargs-in-policy",
                                 node=list(node.get_children())[idx],
                                 confidence=None
                             )
@@ -162,7 +162,7 @@ class ClientHasApprovedMethodNamePrefix(BaseChecker):
         ),
     )
 
-    ignore_clients = ["PipelineClient", "AsyncPipelineClient"]
+    ignore_clients = ["PipelineClient", "AsyncPipelineClient", "ARMPipelineClient", "AsyncARMPipelineClient"]
 
     def __init__(self, linter=None):
         super(ClientHasApprovedMethodNamePrefix, self).__init__(linter)
@@ -188,7 +188,7 @@ class ClientHasApprovedMethodNamePrefix(BaseChecker):
                     prefix = method.name.split("_")[0]
                     if prefix.lower() not in approved_prefixes:
                         self.add_message(
-                            msg_id="unapproved-client-method-name-prefix",
+                            msgid="unapproved-client-method-name-prefix",
                             node=client_methods[idx],
                             confidence=None
                         )
@@ -222,7 +222,7 @@ class ClientMethodsUseKwargsWithMultipleParameters(BaseChecker):
         ),
     )
 
-    ignore_clients = ["PipelineClient", "AsyncPipelineClient"]
+    ignore_clients = ["PipelineClient", "AsyncPipelineClient", "ARMPipelineClient", "AsyncARMPipelineClient"]
 
     def __init__(self, linter=None):
         super(ClientMethodsUseKwargsWithMultipleParameters, self).__init__(linter)
@@ -242,7 +242,7 @@ class ClientMethodsUseKwargsWithMultipleParameters(BaseChecker):
                     positional_args = len(node.args.args) - len(node.args.defaults)
                     if positional_args > 6:
                         self.add_message(
-                            msg_id="client-method-has-more-than-5-positional-arguments", node=node, confidence=None
+                            msgid="client-method-has-more-than-5-positional-arguments", node=node, confidence=None
                         )
         except AttributeError:
             logger.debug("Pylint custom checker failed to check if kwargs is used for multiple parameters.")
@@ -276,7 +276,7 @@ class ClientMethodsHaveTypeAnnotations(BaseChecker):
             },
         ),
     )
-    ignore_clients = ["PipelineClient", "AsyncPipelineClient"]
+    ignore_clients = ["PipelineClient", "AsyncPipelineClient", "ARMPipelineClient", "AsyncARMPipelineClient"]
 
     def __init__(self, linter=None):
         super(ClientMethodsHaveTypeAnnotations, self).__init__(linter)
@@ -308,7 +308,7 @@ class ClientMethodsHaveTypeAnnotations(BaseChecker):
                         # Note that if the method returns nothing it will be of type ast.Const.NoneType
                         if (type_annotations == [] and len(node.args.args) > 1) or node.returns is None:
                             self.add_message(
-                                msg_id="client-method-missing-type-annotations", node=node, confidence=None
+                                msgid="client-method-missing-type-annotations", node=node, confidence=None
                             )
         except AttributeError:
             logger.debug("Pylint custom checker failed to check if client methods missing type annotations.")
@@ -356,7 +356,7 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
             },
         ),
     )
-    ignore_clients = ["PipelineClient", "AsyncPipelineClient"]
+    ignore_clients = ["PipelineClient", "AsyncPipelineClient", "ARMPipelineClient", "AsyncARMPipelineClient"]
 
     def __init__(self, linter=None):
         super(ClientMethodsHaveTracingDecorators, self).__init__(linter)
@@ -377,7 +377,7 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
                 if node.args.kwarg and "azure.core.tracing.decorator.distributed_trace" not in node.decoratornames() \
                         and "builtins.classmethod" not in node.decoratornames():
                     self.add_message(
-                        msg_id="client-method-missing-tracing-decorator", node=node, confidence=None
+                        msgid="client-method-missing-tracing-decorator", node=node, confidence=None
                     )
         except AttributeError:
             pass
@@ -398,7 +398,7 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
                 if node.args.kwarg and "azure.core.tracing.decorator_async.distributed_trace_async" not in \
                         node.decoratornames() and "builtins.classmethod" not in node.decoratornames():
                     self.add_message(
-                        msg_id="client-method-missing-tracing-decorator-async", node=node, confidence=None
+                        msgid="client-method-missing-tracing-decorator-async", node=node, confidence=None
                     )
         except AttributeError:
             pass
@@ -428,7 +428,7 @@ class ClientsDoNotUseStaticMethods(BaseChecker):
             },
         ),
     )
-    ignore_clients = ["PipelineClient", "AsyncPipelineClient"]
+    ignore_clients = ["PipelineClient", "AsyncPipelineClient", "ARMPipelineClient", "AsyncARMPipelineClient"]
 
     def __init__(self, linter=None):
         super(ClientsDoNotUseStaticMethods, self).__init__(linter)
@@ -446,7 +446,7 @@ class ClientsDoNotUseStaticMethods(BaseChecker):
                 if not node.name.startswith("_") and node.decorators is not None:
                     if "builtins.staticmethod" in node.decoratornames():
                         self.add_message(
-                            msg_id="client-method-should-not-use-static-method", node=node, confidence=None
+                            msgid="client-method-should-not-use-static-method", node=node, confidence=None
                         )
         except AttributeError:
             logger.debug("Pylint custom checker failed to check if client methods do not use staticmethods.")
@@ -495,7 +495,7 @@ class FileHasCopyrightHeader(BaseChecker):
                 header = node.stream().read(200).lower()
                 if header.find(b'copyright') == -1:
                     self.add_message(
-                                msg_id="file-needs-copyright-header", node=node, confidence=None
+                                msgid="file-needs-copyright-header", node=node, confidence=None
                             )
         except AttributeError:
             logger.debug("Pylint custom checker failed to check if file is missing a copyright header.")
@@ -526,7 +526,7 @@ class ClientUsesCorrectNamingConventions(BaseChecker):
             },
         ),
     )
-    ignore_clients = ["PipelineClient", "AsyncPipelineClient"]
+    ignore_clients = ["PipelineClient", "AsyncPipelineClient", "ARMPipelineClient", "AsyncARMPipelineClient"]
 
     def __init__(self, linter=None):
         super(ClientUsesCorrectNamingConventions, self).__init__(linter)
@@ -544,7 +544,7 @@ class ClientUsesCorrectNamingConventions(BaseChecker):
         if "_" in node.name or node.name.endswith("client") or node.name[0] != node.name[0].upper():
             if not node.name.startswith("_") and node.name not in self.ignore_clients:
                 self.add_message(
-                    msg_id="client-incorrect-naming-convention", node=node, confidence=None
+                    msgid="client-incorrect-naming-convention", node=node, confidence=None
                 )
 
         # check for correct naming convention in any class constants
@@ -554,7 +554,7 @@ class ClientUsesCorrectNamingConventions(BaseChecker):
                     const_name = node.body[idx].targets[0].name
                     if const_name != const_name.upper():
                         self.add_message(
-                            msg_id="client-incorrect-naming-convention", node=node.body[idx], confidence=None
+                            msgid="client-incorrect-naming-convention", node=node.body[idx], confidence=None
                         )
                 except AttributeError:
                     logger.debug("Pylint custom checker failed to check if client uses correct naming conventions.")
@@ -565,7 +565,7 @@ class ClientUsesCorrectNamingConventions(BaseChecker):
                 for func in node.body:
                     if func.name != func.name.lower() and not func.name.startswith("_"):
                         self.add_message(
-                            msg_id="client-incorrect-naming-convention", node=func, confidence=None
+                            msgid="client-incorrect-naming-convention", node=func, confidence=None
                         )
             except AttributeError:
                 logger.debug("Pylint custom checker failed to check if client uses correct naming conventions.")
@@ -596,7 +596,7 @@ class ClientMethodsHaveKwargsParameter(BaseChecker):
             },
         ),
     )
-    ignore_clients = ["PipelineClient", "AsyncPipelineClient"]
+    ignore_clients = ["PipelineClient", "AsyncPipelineClient", "ARMPipelineClient", "AsyncARMPipelineClient"]
 
     def __init__(self, linter=None):
         super(ClientMethodsHaveKwargsParameter, self).__init__(linter)
@@ -619,7 +619,7 @@ class ClientMethodsHaveKwargsParameter(BaseChecker):
                              "azure.core.tracing.decorator_async.distributed_trace_async" in node.decoratornames()):
                         if not node.args.kwarg:
                             self.add_message(
-                                msg_id="client-method-missing-kwargs", node=node, confidence=None
+                                msgid="client-method-missing-kwargs", node=node, confidence=None
                             )
         except AttributeError:
             logger.debug("Pylint custom checker failed to check if client uses kwargs parameter in method.")
@@ -652,7 +652,7 @@ class ClientMethodNamesDoNotUseDoubleUnderscorePrefix(BaseChecker):
             },
         ),
     )
-    ignore_clients = ["PipelineClient", "AsyncPipelineClient"]
+    ignore_clients = ["PipelineClient", "AsyncPipelineClient", "ARMPipelineClient", "AsyncARMPipelineClient"]
     acceptable_names = ["__init__", "__enter__", "__exit__", "__aenter__", "__aexit__", "__repr__"]
 
     def __init__(self, linter=None):
@@ -669,7 +669,7 @@ class ClientMethodNamesDoNotUseDoubleUnderscorePrefix(BaseChecker):
             if node.parent.name.endswith("Client") and node.is_method() and node.parent.name not in self.ignore_clients:
                 if node.name.startswith("__") and node.name not in self.acceptable_names:
                     self.add_message(
-                        msg_id="client-method-name-no-double-underscore", node=node, confidence=None
+                        msgid="client-method-name-no-double-underscore", node=node, confidence=None
                     )
         except AttributeError:
             logger.debug("Pylint custom checker failed to check if client method name does not use double underscore prefix.")
@@ -703,7 +703,7 @@ class ClientDocstringUsesLiteralIncludeForCodeExample(BaseChecker):
         ),
     )
 
-    ignore_clients = ["PipelineClient", "AsyncPipelineClient"]
+    ignore_clients = ["PipelineClient", "AsyncPipelineClient", "ARMPipelineClient", "AsyncARMPipelineClient"]
 
     def __init__(self, linter=None):
         super(ClientDocstringUsesLiteralIncludeForCodeExample, self).__init__(linter)
@@ -720,7 +720,7 @@ class ClientDocstringUsesLiteralIncludeForCodeExample(BaseChecker):
             if node.name.endswith("Client") and node.name not in self.ignore_clients:
                 if node.doc.find("code-block") != -1:
                     self.add_message(
-                        msg_id="client-docstring-use-literal-include", node=node, confidence=None
+                        msgid="client-docstring-use-literal-include", node=node, confidence=None
                     )
         except AttributeError:
             logger.debug("Pylint custom checker failed to check if client uses literalinclude over code-block.")
@@ -738,7 +738,7 @@ class ClientDocstringUsesLiteralIncludeForCodeExample(BaseChecker):
             if node.parent.name.endswith("Client") and node.parent.name not in self.ignore_clients and node.is_method():
                 if node.doc.find("code-block") != -1:
                     self.add_message(
-                        msg_id="client-docstring-use-literal-include", node=node, confidence=None
+                        msgid="client-docstring-use-literal-include", node=node, confidence=None
                     )
         except AttributeError:
             logger.debug("Pylint custom checker failed to check if client uses literalinclude over code-block.")
@@ -771,7 +771,7 @@ class AsyncClientCorrectNaming(BaseChecker):
             },
         ),
     )
-    ignore_clients = ["PipelineClient", "AsyncPipelineClient"]
+    ignore_clients = ["PipelineClient", "AsyncPipelineClient", "ARMPipelineClient", "AsyncARMPipelineClient"]
 
     def __init__(self, linter=None):
         super(AsyncClientCorrectNaming, self).__init__(linter)
@@ -789,7 +789,7 @@ class AsyncClientCorrectNaming(BaseChecker):
             if node.name.endswith("Client") and "async" in node.name.lower() and "base" not in node.name.lower():
                 if not node.name.startswith("_") and node.name not in self.ignore_clients:
                     self.add_message(
-                        msg_id="async-client-bad-name", node=node, confidence=None
+                        msgid="async-client-bad-name", node=node, confidence=None
                     )
         except AttributeError:
             logger.debug("Pylint custom checker failed to check if async client uses correct naming.")
@@ -820,7 +820,7 @@ class SpecifyParameterNamesInCall(BaseChecker):
             },
         ),
     )
-    ignore_clients = ["PipelineClient", "AsyncPipelineClient"]
+    ignore_clients = ["PipelineClient", "AsyncPipelineClient", "ARMPipelineClient", "AsyncARMPipelineClient"]
 
     def __init__(self, linter=None):
         super(SpecifyParameterNamesInCall, self).__init__(linter)
@@ -840,7 +840,7 @@ class SpecifyParameterNamesInCall(BaseChecker):
                 # node.args represent positional arguments
                 if len(node.args) > 2 and node.func.attrname != "format":
                     self.add_message(
-                        msg_id="specify-parameter-names-in-call", node=node, confidence=None
+                        msgid="specify-parameter-names-in-call", node=node, confidence=None
                     )
         except AttributeError:
             logger.debug("Pylint custom checker failed to check if client methods specify parameters name in call.")
@@ -871,7 +871,7 @@ class ClientListMethodsUseCorePaging(BaseChecker):
             },
         ),
     )
-    ignore_clients = ["PipelineClient", "AsyncPipelineClient"]
+    ignore_clients = ["PipelineClient", "AsyncPipelineClient", "ARMPipelineClient", "AsyncARMPipelineClient"]
 
     def __init__(self, linter=None):
         super(ClientListMethodsUseCorePaging, self).__init__(linter)
@@ -892,7 +892,7 @@ class ClientListMethodsUseCorePaging(BaseChecker):
                         returns = next(node.infer_call_result()).as_string()
                         if returns.find("ItemPaged") == -1 and returns.find("AsyncItemPaged") == -1:
                             self.add_message(
-                                msg_id="client-list-methods-use-paging", node=node, confidence=None
+                                msgid="client-list-methods-use-paging", node=node, confidence=None
                             )
                     except (astroid.exceptions.InferenceError, AttributeError): # astroid can't always infer the return
                         logger.debug("Pylint custom checker failed to check if client list method uses core paging.")
@@ -926,7 +926,7 @@ class ClientLROMethodsUseCorePolling(BaseChecker):
             },
         ),
     )
-    ignore_clients = ["PipelineClient", "AsyncPipelineClient"]
+    ignore_clients = ["PipelineClient", "AsyncPipelineClient", "ARMPipelineClient", "AsyncARMPipelineClient"]
 
     def __init__(self, linter=None):
         super(ClientLROMethodsUseCorePolling, self).__init__(linter)
@@ -947,7 +947,7 @@ class ClientLROMethodsUseCorePolling(BaseChecker):
                         returns = next(node.infer_call_result()).as_string()
                         if returns.find("LROPoller") == -1:
                             self.add_message(
-                                msg_id="client-lro-methods-use-polling", node=node, confidence=None
+                                msgid="client-lro-methods-use-polling", node=node, confidence=None
                             )
                     except (astroid.exceptions.InferenceError, AttributeError): # astroid can't always infer the return
                         logger.debug("Pylint custom checker failed to check if client begin method uses core polling.")
@@ -981,7 +981,7 @@ class ClientLROMethodsUseCorrectNaming(BaseChecker):
             },
         ),
     )
-    ignore_clients = ["PipelineClient", "AsyncPipelineClient"]
+    ignore_clients = ["PipelineClient", "AsyncPipelineClient", "ARMPipelineClient", "AsyncARMPipelineClient"]
 
     def __init__(self, linter=None):
         super(ClientLROMethodsUseCorrectNaming, self).__init__(linter)
@@ -1008,7 +1008,7 @@ class ClientLROMethodsUseCorrectNaming(BaseChecker):
                     method = node.value.func.scope()
                     if not method.name.startswith("begin") and not method.name.startswith("_"):
                         self.add_message(
-                            msg_id="lro-methods-use-correct-naming", node=method, confidence=None
+                            msgid="lro-methods-use-correct-naming", node=method, confidence=None
                         )
             except AttributeError:
                 logger.debug("Pylint custom checker failed to check if client method with polling uses correct naming.")
@@ -1039,7 +1039,7 @@ class ClientConstructorDoesNotHaveConnectionStringParam(BaseChecker):
             },
         ),
     )
-    ignore_clients = ["PipelineClient", "AsyncPipelineClient"]
+    ignore_clients = ["PipelineClient", "AsyncPipelineClient", "ARMPipelineClient", "AsyncARMPipelineClient"]
 
     def __init__(self, linter=None):
         super(ClientConstructorDoesNotHaveConnectionStringParam, self).__init__(linter)
@@ -1059,7 +1059,7 @@ class ClientConstructorDoesNotHaveConnectionStringParam(BaseChecker):
                         for argument in func.args.args:
                             if argument.name == "connection_string" or argument.name == "conn_str":
                                 self.add_message(
-                                    msg_id="connection-string-should-not-be-constructor-param", node=node, confidence=None
+                                    msgid="connection-string-should-not-be-constructor-param", node=node, confidence=None
                                 )
         except AttributeError:
             logger.debug("Pylint custom checker failed to check if client uses connection string param in constructor.")
@@ -1109,7 +1109,7 @@ class PackageNameDoesNotUseUnderscoreOrPeriod(BaseChecker):
                             package = nod.value
                             if package.value.find(".") != -1 or package.value.find("_") != -1:
                                 self.add_message(
-                                    msg_id="package-name-incorrect", node=node, confidence=None
+                                    msgid="package-name-incorrect", node=node, confidence=None
                                 )
         except Exception:
             logger.debug("Pylint custom checker failed to check if package name is correct.")
@@ -1164,7 +1164,7 @@ class ServiceClientUsesNameWithClientSuffix(BaseChecker):
                             has_client_suffix = True
                 if has_client_suffix is False:
                     self.add_message(
-                        msg_id="client-suffix-needed", node=node, confidence=None
+                        msgid="client-suffix-needed", node=node, confidence=None
                     )
         except Exception:
             logger.debug("Pylint custom checker failed to check if service client has a client suffix.")
@@ -1315,7 +1315,7 @@ class CheckDocstringParameters(BaseChecker):
 
         if missing_params:
             self.add_message(
-                msg_id="docstring-missing-param", args=(", ".join(missing_params)), node=node, confidence=None
+                msgid="docstring-missing-param", args=(", ".join(missing_params)), node=node, confidence=None
             )
 
         # check if we have a type for each param and check if documented params that should be keywords
@@ -1329,12 +1329,12 @@ class CheckDocstringParameters(BaseChecker):
 
         if missing_types:
             self.add_message(
-                msg_id="docstring-missing-type", args=(", ".join(missing_types)), node=node, confidence=None
+                msgid="docstring-missing-type", args=(", ".join(missing_types)), node=node, confidence=None
             )
 
         if should_be_keywords:
             self.add_message(
-                msg_id="docstring-should-be-keyword",
+                msgid="docstring-should-be-keyword",
                 args=(", ".join(should_be_keywords)),
                 node=node,
                 confidence=None
@@ -1370,11 +1370,11 @@ class CheckDocstringParameters(BaseChecker):
 
         if has_return is False:
             self.add_message(
-                msg_id="docstring-missing-return", node=node, confidence=None
+                msgid="docstring-missing-return", node=node, confidence=None
             )
         if has_rtype is False:
             self.add_message(
-                msg_id="docstring-missing-rtype", node=node, confidence=None
+                msgid="docstring-missing-rtype", node=node, confidence=None
             )
 
     def visit_classdef(self, node):
@@ -1602,23 +1602,108 @@ class CheckForPolicyUse(BaseChecker):
             if self.disable_logging_error is False:
                 if "NetworkTraceLoggingPolicy" not in self.has_policies:
                     self.add_message(
-                        msg_id="missing-logging-policy", node=self.node_to_use, confidence=None
+                        msgid="missing-logging-policy", node=self.node_to_use, confidence=None
                     )
             if self.disable_retry_error is False:
                 if "RetryPolicy" not in self.has_policies:
                     self.add_message(
-                        msg_id="missing-retry-policy", node=self.node_to_use, confidence=None
+                        msgid="missing-retry-policy", node=self.node_to_use, confidence=None
                     )
             if self.disable_user_agent_error is False:
                 if "UserAgentPolicy" not in self.has_policies:
                     self.add_message(
-                        msg_id="missing-user-agent-policy", node=self.node_to_use, confidence=None
+                        msgid="missing-user-agent-policy", node=self.node_to_use, confidence=None
                     )
             if self.disable_tracing_error is False:
                 if "DistributedTracingPolicy" not in self.has_policies:
                     self.add_message(
-                        msg_id="missing-distributed-tracing-policy", node=self.node_to_use, confidence=None
+                        msgid="missing-distributed-tracing-policy", node=self.node_to_use, confidence=None
                     )
+
+
+class CheckDocstringAdmonitionNewline(BaseChecker):
+    __implements__ = IAstroidChecker
+
+    name = "check-admonition"
+    priority = -1
+    msgs = {
+        "C4744": (
+            "The .. literalinclude statement needs a blank line above it. ",
+            "docstring-admonition-needs-newline",
+            "Put a newline after the example and before the literalinclude.",
+        ),
+    }
+    options = (
+        (
+            "ignore-docstring-admonition-needs-newline",
+            {
+                "default": False,
+                "type": "yn",
+                "metavar": "<y_or_n>",
+                "help": "Allow a docstring to not have newline after admonition example.",
+            },
+        ),
+    )
+
+    def __init__(self, linter=None):
+        super(CheckDocstringAdmonitionNewline, self).__init__(linter)
+
+    def check_for_admonition(self, node):
+        """Parse the docstring for an admonition statement.
+        If found, checks that the literalinclude statement has
+        two newlines above it.
+
+        :param node: ast.ClassDef or ast.FunctionDef
+        :return: None
+        """
+
+        try:
+            # not every class/method will have a docstring so don't crash here, just return
+            if node.doc.find("admonition") != -1 and node.doc.find(".. literalinclude") != -1:
+                literal_include = node.doc.split(".. literalinclude")[0]
+                chars_list = list(reversed(literal_include))
+                for idx, char in enumerate(chars_list):
+                    if char == '\n':
+                        if chars_list[idx+1] == '\n':
+                            break
+                        else:
+                            self.add_message(
+                                "docstring-admonition-needs-newline", node=node, confidence=None
+                            )
+                            break
+        except Exception:
+            return
+
+    def visit_classdef(self, node):
+        """Visits every class docstring.
+
+        :param node: ast.ClassDef
+        :return: None
+        """
+        try:
+            for func in node.body:
+                if isinstance(func, astroid.FunctionDef) and func.name == "__init__":
+                    self.check_for_admonition(node)
+        except Exception:
+            logger.debug("Pylint custom checker failed to check docstrings.")
+            pass
+
+    def visit_functiondef(self, node):
+        """Visits every method docstring.
+
+        :param node: ast.FunctionDef
+        :return: None
+        """
+        try:
+            if node.name == "__init__":
+                return
+            self.check_for_admonition(node)
+        except Exception:
+            logger.debug("Pylint custom checker failed to check docstrings.")
+            pass
+
+    # this line makes it work for async functions
+    visit_asyncfunctiondef = visit_functiondef
 
 
 # if a linter is registered in this function then it will be checked with pylint
@@ -1637,6 +1722,7 @@ def register(linter):
     linter.register_checker(ClientConstructorDoesNotHaveConnectionStringParam(linter))
     linter.register_checker(PackageNameDoesNotUseUnderscoreOrPeriod(linter))
     linter.register_checker(ServiceClientUsesNameWithClientSuffix(linter))
+    linter.register_checker(CheckDocstringAdmonitionNewline(linter))
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))
@@ -1649,5 +1735,3 @@ def register(linter):
     # linter.register_checker(ClientListMethodsUseCorePaging(linter))
     # linter.register_checker(ClientLROMethodsUseCorePolling(linter))
     # linter.register_checker(ClientLROMethodsUseCorrectNaming(linter))
-
-

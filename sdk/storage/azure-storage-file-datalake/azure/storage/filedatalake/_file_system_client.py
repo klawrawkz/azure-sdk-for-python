@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for
 # license information.
 # --------------------------------------------------------------------------
-import functools
+from typing import Optional, Any
 
 try:
     from urllib.parse import urlparse, quote
@@ -12,15 +12,17 @@ except ImportError:
     from urllib2 import quote  # type: ignore
 
 import six
+from azure.core.pipeline import Pipeline
 from azure.core.paging import ItemPaged
 from azure.storage.blob import ContainerClient
-from ._shared.base_client import StorageAccountHostsMixin, parse_query, parse_connection_str
+from ._shared.base_client import TransportWrapper, StorageAccountHostsMixin, parse_query, parse_connection_str
 from ._serialize import convert_dfs_url_to_blob_url
-from ._models import LocationMode, FileSystemProperties, PathPropertiesPaged
+from ._models import LocationMode, FileSystemProperties, PublicAccess, FileProperties, DirectoryProperties
 from ._data_lake_file_client import DataLakeFileClient
 from ._data_lake_directory_client import DataLakeDirectoryClient
 from ._data_lake_lease import DataLakeLeaseClient
-from ._generated import DataLakeStorageClient
+from ._generated import AzureDataLakeStorageRESTAPI
+from ._deserialize import deserialize_path_properties
 
 
 class FileSystemClient(StorageAccountHostsMixin):
@@ -43,25 +45,20 @@ class FileSystemClient(StorageAccountHostsMixin):
     :type file_system_name: str
     :param credential:
         The credentials with which to authenticate. This is optional if the
-        account URL already has a SAS token. The value can be a SAS token string, and account
+        account URL already has a SAS token. The value can be a SAS token string,
+        an instance of a AzureSasCredential from azure.core.credentials, an account
         shared access key, or an instance of a TokenCredentials class from azure.identity.
-        If the URL already has a SAS token, specifying an explicit credential will take priority.
+        If the resource URI already contains a SAS token, this will be ignored in favor of an explicit credential
+        - except in the case of AzureSasCredential, where the conflicting SAS tokens will raise a ValueError.
 
     .. admonition:: Example:
 
-        .. literalinclude:: ../samples/test_file_system_samples.py
+        .. literalinclude:: ../samples/datalake_samples_file_system.py
             :start-after: [START create_file_system_client_from_service]
             :end-before: [END create_file_system_client_from_service]
             :language: python
             :dedent: 8
             :caption: Get a FileSystemClient from an existing DataLakeServiceClient.
-
-        .. literalinclude:: ../samples/test_file_system_samples.py
-            :start-after: [START create_file_system_client_sasurl]
-            :end-before: [END create_file_system_client_sasurl]
-            :language: python
-            :dedent: 8
-            :caption: Creating the FileSystemClient client directly.
     """
     def __init__(
         self, account_url,  # type: str
@@ -89,9 +86,7 @@ class FileSystemClient(StorageAccountHostsMixin):
         blob_hosts = None
         if datalake_hosts:
             blob_primary_account_url = convert_dfs_url_to_blob_url(datalake_hosts[LocationMode.PRIMARY])
-            blob_secondary_account_url = convert_dfs_url_to_blob_url(datalake_hosts[LocationMode.SECONDARY])
-            blob_hosts = {LocationMode.PRIMARY: blob_primary_account_url,
-                          LocationMode.SECONDARY: blob_secondary_account_url}
+            blob_hosts = {LocationMode.PRIMARY: blob_primary_account_url, LocationMode.SECONDARY: ""}
         self._container_client = ContainerClient(blob_account_url, file_system_name,
                                                  credential=credential, _hosts=blob_hosts, **kwargs)
 
@@ -101,7 +96,9 @@ class FileSystemClient(StorageAccountHostsMixin):
 
         super(FileSystemClient, self).__init__(parsed_url, service='dfs', credential=self._raw_credential,
                                                _hosts=datalake_hosts, **kwargs)
-        self._client = DataLakeStorageClient(self.url, file_system_name, None, pipeline=self._pipeline)
+        # ADLS doesn't support secondary endpoint, make sure it's empty
+        self._hosts[LocationMode.SECONDARY] = ""
+        self._client = AzureDataLakeStorageRESTAPI(self.url, file_system=file_system_name, pipeline=self._pipeline)
 
     def _format_url(self, hostname):
         file_system_name = self.file_system_name
@@ -112,6 +109,18 @@ class FileSystemClient(StorageAccountHostsMixin):
             hostname,
             quote(file_system_name),
             self._query_str)
+
+    def __exit__(self, *args):
+        self._container_client.close()
+        super(FileSystemClient, self).__exit__(*args)
+
+    def close(self):
+        # type: () -> None
+        """ This method is to close the sockets opened by the client.
+        It need not be used when using with a context manager.
+        """
+        self._container_client.close()
+        self.__exit__()
 
     @classmethod
     def from_connection_string(
@@ -130,15 +139,23 @@ class FileSystemClient(StorageAccountHostsMixin):
         :param credential:
             The credentials with which to authenticate. This is optional if the
             account URL already has a SAS token, or the connection string already has shared
-            access key values. The value can be a SAS token string, and account shared access
+            access key values. The value can be a SAS token string,
+            an instance of a AzureSasCredential from azure.core.credentials, an account shared access
             key, or an instance of a TokenCredentials class from azure.identity.
             Credentials provided here will take precedence over those in the connection string.
         :return a FileSystemClient
         :rtype ~azure.storage.filedatalake.FileSystemClient
+
+        .. admonition:: Example:
+
+            .. literalinclude:: ../samples/datalake_samples_file_system.py
+                :start-after: [START create_file_system_client_from_connection_string]
+                :end-before: [END create_file_system_client_from_connection_string]
+                :language: python
+                :dedent: 8
+                :caption: Create FileSystemClient from connection string
         """
-        account_url, secondary, credential = parse_connection_str(conn_str, credential, 'dfs')
-        if 'secondary_hostname' not in kwargs:
-            kwargs['secondary_hostname'] = secondary
+        account_url, _, credential = parse_connection_str(conn_str, credential, 'dfs')
         return cls(
             account_url, file_system_name=file_system_name, credential=credential, **kwargs)
 
@@ -185,12 +202,12 @@ class FileSystemClient(StorageAccountHostsMixin):
 
         .. admonition:: Example:
 
-            .. literalinclude:: ../samples/test_file_system_samples.py
+            .. literalinclude:: ../samples/datalake_samples_file_system.py
                 :start-after: [START acquire_lease_on_file_system]
                 :end-before: [END acquire_lease_on_file_system]
                 :language: python
                 :dedent: 8
-                :caption: Acquiring a lease on the file_system.
+                :caption: Acquiring a lease on the file system.
         """
         lease = DataLakeLeaseClient(self, lease_id=lease_id)
         lease.acquire(lease_duration=lease_duration, **kwargs)
@@ -211,7 +228,7 @@ class FileSystemClient(StorageAccountHostsMixin):
             file system as metadata. Example: `{'Category':'test'}`
         :type metadata: dict(str, str)
         :param public_access:
-            Possible values include: file system, file.
+            To specify whether data in the file system may be accessed publicly and the level of access.
         :type public_access: ~azure.storage.filedatalake.PublicAccess
         :keyword int timeout:
             The timeout parameter is expressed in seconds.
@@ -219,7 +236,7 @@ class FileSystemClient(StorageAccountHostsMixin):
 
         .. admonition:: Example:
 
-            .. literalinclude:: ../samples/test_file_system_samples.py
+            .. literalinclude:: ../samples/datalake_samples_file_system.py
                 :start-after: [START create_file_system]
                 :end-before: [END create_file_system]
                 :language: python
@@ -229,6 +246,43 @@ class FileSystemClient(StorageAccountHostsMixin):
         return self._container_client.create_container(metadata=metadata,
                                                        public_access=public_access,
                                                        **kwargs)
+
+    def exists(self, **kwargs):
+        # type: (**Any) -> bool
+        """
+        Returns True if a file system exists and returns False otherwise.
+
+        :kwarg int timeout:
+            The timeout parameter is expressed in seconds.
+        :returns: boolean
+        """
+        return self._container_client.exists(**kwargs)
+
+    def _rename_file_system(self, new_name, **kwargs):
+        # type: (str, **Any) -> FileSystemClient
+        """Renames a filesystem.
+
+        Operation is successful only if the source filesystem exists.
+
+        :param str new_name:
+            The new filesystem name the user wants to rename to.
+        :keyword lease:
+            Specify this to perform only if the lease ID given
+            matches the active lease ID of the source filesystem.
+        :paramtype lease: ~azure.storage.filedatalake.DataLakeLeaseClient or str
+        :keyword int timeout:
+            The timeout parameter is expressed in seconds.
+        :rtype: ~azure.storage.filedatalake.FileSystemClient
+        """
+        self._container_client._rename_container(new_name, **kwargs)   # pylint: disable=protected-access
+        #TODO: self._raw_credential would not work with SAS tokens
+        renamed_file_system = FileSystemClient(
+                "{}://{}".format(self.scheme, self.primary_hostname), file_system_name=new_name,
+                credential=self._raw_credential, api_version=self.api_version, _configuration=self._config,
+                _pipeline=self._pipeline, _location_mode=self._location_mode, _hosts=self._hosts,
+                require_encryption=self.require_encryption, key_encryption_key=self.key_encryption_key,
+                key_resolver_function=self.key_resolver_function)
+        return renamed_file_system
 
     def delete_file_system(self, **kwargs):
         # type: (Any) -> None
@@ -264,7 +318,7 @@ class FileSystemClient(StorageAccountHostsMixin):
 
         .. admonition:: Example:
 
-            .. literalinclude:: ../samples/test_file_system_samples.py
+            .. literalinclude:: ../samples/datalake_samples_file_system.py
                 :start-after: [START delete_file_system]
                 :end-before: [END delete_file_system]
                 :language: python
@@ -288,7 +342,7 @@ class FileSystemClient(StorageAccountHostsMixin):
 
         .. admonition:: Example:
 
-            .. literalinclude:: ../samples/test_file_system_samples.py
+            .. literalinclude:: ../samples/datalake_samples_file_system.py
                 :start-after: [START get_file_system_properties]
                 :end-before: [END get_file_system_properties]
                 :language: python
@@ -299,7 +353,7 @@ class FileSystemClient(StorageAccountHostsMixin):
         return FileSystemProperties._convert_from_container_props(container_properties)  # pylint: disable=protected-access
 
     def set_file_system_metadata(  # type: ignore
-        self, metadata=None,  # type: Optional[Dict[str, str]]
+        self, metadata,  # type: Dict[str, str]
         **kwargs
     ):
         # type: (...) -> Dict[str, Union[str, datetime]]
@@ -334,18 +388,78 @@ class FileSystemClient(StorageAccountHostsMixin):
             The match condition to use upon the etag.
         :keyword int timeout:
             The timeout parameter is expressed in seconds.
-        :returns: file system-updated property dict (Etag and last modified).
+        :returns: filesystem-updated property dict (Etag and last modified).
 
         .. admonition:: Example:
 
-            .. literalinclude:: ../samples/test_file_system_samples.py
+            .. literalinclude:: ../samples/datalake_samples_file_system.py
                 :start-after: [START set_file_system_metadata]
                 :end-before: [END set_file_system_metadata]
                 :language: python
                 :dedent: 12
-                :caption: Setting metadata on the container.
+                :caption: Setting metadata on the file system.
         """
         return self._container_client.set_container_metadata(metadata=metadata, **kwargs)
+
+    def set_file_system_access_policy(
+            self, signed_identifiers,  # type: Dict[str, AccessPolicy]
+            public_access=None,  # type: Optional[Union[str, PublicAccess]]
+            **kwargs
+    ):  # type: (...) -> Dict[str, Union[str, datetime]]
+        """Sets the permissions for the specified file system or stored access
+        policies that may be used with Shared Access Signatures. The permissions
+        indicate whether files in a file system may be accessed publicly.
+
+        :param signed_identifiers:
+            A dictionary of access policies to associate with the file system. The
+            dictionary may contain up to 5 elements. An empty dictionary
+            will clear the access policies set on the service.
+        :type signed_identifiers: dict[str, ~azure.storage.filedatalake.AccessPolicy]
+        :param ~azure.storage.filedatalake.PublicAccess public_access:
+            To specify whether data in the file system may be accessed publicly and the level of access.
+        :keyword lease:
+            Required if the file system has an active lease. Value can be a DataLakeLeaseClient object
+            or the lease ID as a string.
+        :paramtype lease: ~azure.storage.filedatalake.DataLakeLeaseClient or str
+        :keyword ~datetime.datetime if_modified_since:
+            A datetime value. Azure expects the date value passed in to be UTC.
+            If timezone is included, any non-UTC datetimes will be converted to UTC.
+            If a date is passed in without timezone info, it is assumed to be UTC.
+            Specify this header to perform the operation only
+            if the resource has been modified since the specified date/time.
+        :keyword ~datetime.datetime if_unmodified_since:
+            A datetime value. Azure expects the date value passed in to be UTC.
+            If timezone is included, any non-UTC datetimes will be converted to UTC.
+            If a date is passed in without timezone info, it is assumed to be UTC.
+            Specify this header to perform the operation only if
+            the resource has not been modified since the specified date/time.
+        :keyword int timeout:
+            The timeout parameter is expressed in seconds.
+        :returns: File System-updated property dict (Etag and last modified).
+        :rtype: dict[str, str or ~datetime.datetime]
+        """
+        return self._container_client.set_container_access_policy(signed_identifiers,
+                                                                  public_access=public_access, **kwargs)
+
+    def get_file_system_access_policy(self, **kwargs):
+        # type: (Any) -> Dict[str, Any]
+        """Gets the permissions for the specified file system.
+        The permissions indicate whether file system data may be accessed publicly.
+
+        :keyword lease:
+            If specified, the operation only succeeds if the
+            file system's lease is active and matches this ID.
+        :paramtype lease: ~azure.storage.filedatalake.DataLakeLeaseClient or str
+        :keyword int timeout:
+            The timeout parameter is expressed in seconds.
+        :returns: Access policy information in a dict.
+        :rtype: dict[str, Any]
+        """
+        access_policy = self._container_client.get_container_access_policy(**kwargs)
+        return {
+            'public_access': PublicAccess._from_generated(access_policy['public_access']),  # pylint: disable=protected-access
+            'signed_identifiers': access_policy['signed_identifiers']
+        }
 
     def get_paths(self, path=None, # type: Optional[str]
                   recursive=True,  # type: Optional[bool]
@@ -361,14 +475,15 @@ class FileSystemClient(StorageAccountHostsMixin):
         :param int max_results: An optional value that specifies the maximum
             number of items to return per page. If omitted or greater than 5,000, the
             response will include up to 5,000 items per page.
-        :keyword upn: Optional. Valid only when Hierarchical Namespace is
-         enabled for the account. If "true", the user identity values returned
-         in the x-ms-owner, x-ms-group, and x-ms-acl response headers will be
-         transformed from Azure Active Directory Object IDs to User Principal
-         Names.  If "false", the values will be returned as Azure Active
-         Directory Object IDs. The default value is false. Note that group and
-         application Object IDs are not translated because they do not have
-         unique friendly names.
+        :keyword upn:
+            Optional. Valid only when Hierarchical Namespace is
+            enabled for the account. If "true", the user identity values returned
+            in the x-ms-owner, x-ms-group, and x-ms-acl response headers will be
+            transformed from Azure Active Directory Object IDs to User Principal
+            Names.  If "false", the values will be returned as Azure Active
+            Directory Object IDs. The default value is false. Note that group and
+            application Object IDs are not translated because they do not have
+            unique friendly names.
         :type upn: bool
         :keyword int timeout:
             The timeout parameter is expressed in seconds.
@@ -377,25 +492,23 @@ class FileSystemClient(StorageAccountHostsMixin):
 
         .. admonition:: Example:
 
-            .. literalinclude:: ../tests/test_blob_samples_containers.py
-                :start-after: [START list_blobs_in_container]
-                :end-before: [END list_blobs_in_container]
+            .. literalinclude:: ../samples/datalake_samples_file_system.py
+                :start-after: [START get_paths_in_file_system]
+                :end-before: [END get_paths_in_file_system]
                 :language: python
                 :dedent: 8
-                :caption: List the blobs in the container.
+                :caption: List the paths in the file system.
         """
         timeout = kwargs.pop('timeout', None)
-        command = functools.partial(
-            self._client.file_system.list_paths,
+        return self._client.file_system.list_paths(
+            recursive=recursive,
+            max_results=max_results,
             path=path,
             timeout=timeout,
+            cls=deserialize_path_properties,
             **kwargs)
-        return ItemPaged(
-            command, recursive, path=path, max_results=max_results,
-            page_iterator_class=PathPropertiesPaged, **kwargs)
 
     def create_directory(self, directory,  # type: Union[DirectoryProperties, str]
-                         content_settings=None,  # type: Optional[ContentSettings]
                          metadata=None,  # type: Optional[Dict[str, str]]
                          **kwargs):
         # type: (...) -> DataLakeDirectoryClient
@@ -406,27 +519,30 @@ class FileSystemClient(StorageAccountHostsMixin):
             The directory with which to interact. This can either be the name of the directory,
             or an instance of DirectoryProperties.
         :type directory: str or ~azure.storage.filedatalake.DirectoryProperties
-        :param ~azure.storage.filedatalake.ContentSettings content_settings:
-            ContentSettings object used to set path properties.
         :param metadata:
-            Name-value pairs associated with the blob as metadata.
+            Name-value pairs associated with the file as metadata.
         :type metadata: dict(str, str)
-        :keyword ~azure.storage.filedatalake.DataLakeLeaseClient or str lease:
-            Required if the blob has an active lease. Value can be a DataLakeLeaseClient object
+        :keyword ~azure.storage.filedatalake.ContentSettings content_settings:
+            ContentSettings object used to set path properties.
+        :keyword lease:
+            Required if the file has an active lease. Value can be a DataLakeLeaseClient object
             or the lease ID as a string.
-        :keyword str umask: Optional and only valid if Hierarchical Namespace is enabled for the account.
+        :paramtype lease: ~azure.storage.filedatalake.DataLakeLeaseClient or str
+        :keyword str umask:
+            Optional and only valid if Hierarchical Namespace is enabled for the account.
             When creating a file or directory and the parent folder does not have a default ACL,
             the umask restricts the permissions of the file or directory to be created.
             The resulting permission is given by p & ^u, where p is the permission and u is the umask.
             For example, if p is 0777 and u is 0057, then the resulting permission is 0720.
             The default permission is 0777 for a directory and 0666 for a file. The default umask is 0027.
             The umask must be specified in 4-digit octal notation (e.g. 0766).
-        :keyword str permissions: Optional and only valid if Hierarchical Namespace
-         is enabled for the account. Sets POSIX access permissions for the file
-         owner, the file owning group, and others. Each class may be granted
-         read, write, or execute permission.  The sticky bit is also supported.
-         Both symbolic (rwxrw-rw-) and 4-digit octal notation (e.g. 0766) are
-         supported.
+        :keyword str permissions:
+            Optional and only valid if Hierarchical Namespace
+            is enabled for the account. Sets POSIX access permissions for the file
+            owner, the file owning group, and others. Each class may be granted
+            read, write, or execute permission.  The sticky bit is also supported.
+            Both symbolic (rwxrw-rw-) and 4-digit octal notation (e.g. 0766) are
+            supported.
         :keyword ~datetime.datetime if_modified_since:
             A DateTime value. Azure expects the date value passed in to be UTC.
             If timezone is included, any non-UTC datetimes will be converted to UTC.
@@ -447,9 +563,18 @@ class FileSystemClient(StorageAccountHostsMixin):
         :keyword int timeout:
             The timeout parameter is expressed in seconds.
         :return: DataLakeDirectoryClient
+
+        .. admonition:: Example:
+
+            .. literalinclude:: ../samples/datalake_samples_file_system.py
+                :start-after: [START create_directory_from_file_system]
+                :end-before: [END create_directory_from_file_system]
+                :language: python
+                :dedent: 8
+                :caption: Create directory in the file system.
         """
         directory_client = self.get_directory_client(directory)
-        directory_client.create_directory(content_settings=content_settings, metadata=metadata, **kwargs)
+        directory_client.create_directory(metadata=metadata, **kwargs)
         return directory_client
 
     def delete_directory(self, directory,  # type: Union[DirectoryProperties, str]
@@ -463,9 +588,9 @@ class FileSystemClient(StorageAccountHostsMixin):
             or an instance of DirectoryProperties.
         :type directory: str or ~azure.storage.filedatalake.DirectoryProperties
         :keyword lease:
-            Required if the blob has an active lease. Value can be a LeaseClient object
+            Required if the file has an active lease. Value can be a LeaseClient object
             or the lease ID as a string.
-        :type lease: ~azure.storage.blob.LeaseClient or str
+        :paramtype lease: ~azure.storage.filedatalake.DataLakeLeaseClient or str
         :keyword ~datetime.datetime if_modified_since:
             A DateTime value. Azure expects the date value passed in to be UTC.
             If timezone is included, any non-UTC datetimes will be converted to UTC.
@@ -486,6 +611,15 @@ class FileSystemClient(StorageAccountHostsMixin):
         :keyword int timeout:
             The timeout parameter is expressed in seconds.
         :return: DataLakeDirectoryClient
+
+        .. admonition:: Example:
+
+            .. literalinclude:: ../samples/datalake_samples_file_system.py
+                :start-after: [START delete_directory_from_file_system]
+                :end-before: [END delete_directory_from_file_system]
+                :language: python
+                :dedent: 8
+                :caption: Delete directory in the file system.
         """
         directory_client = self.get_directory_client(directory)
         directory_client.delete_directory(**kwargs)
@@ -504,24 +638,27 @@ class FileSystemClient(StorageAccountHostsMixin):
         :param ~azure.storage.filedatalake.ContentSettings content_settings:
             ContentSettings object used to set path properties.
         :param metadata:
-            Name-value pairs associated with the blob as metadata.
+            Name-value pairs associated with the file as metadata.
         :type metadata: dict(str, str)
-        :keyword ~azure.storage.filedatalake.DataLakeLeaseClient or str lease:
-            Required if the blob has an active lease. Value can be a DataLakeLeaseClient object
+        :keyword lease:
+            Required if the file has an active lease. Value can be a DataLakeLeaseClient object
             or the lease ID as a string.
-        :keyword str umask: Optional and only valid if Hierarchical Namespace is enabled for the account.
+        :paramtype lease: ~azure.storage.filedatalake.DataLakeLeaseClient or str
+        :keyword str umask:
+            Optional and only valid if Hierarchical Namespace is enabled for the account.
             When creating a file or directory and the parent folder does not have a default ACL,
             the umask restricts the permissions of the file or directory to be created.
             The resulting permission is given by p & ^u, where p is the permission and u is the umask.
             For example, if p is 0777 and u is 0057, then the resulting permission is 0720.
             The default permission is 0777 for a directory and 0666 for a file. The default umask is 0027.
             The umask must be specified in 4-digit octal notation (e.g. 0766).
-        :keyword str permissions: Optional and only valid if Hierarchical Namespace
-         is enabled for the account. Sets POSIX access permissions for the file
-         owner, the file owning group, and others. Each class may be granted
-         read, write, or execute permission.  The sticky bit is also supported.
-         Both symbolic (rwxrw-rw-) and 4-digit octal notation (e.g. 0766) are
-         supported.
+        :keyword str permissions:
+            Optional and only valid if Hierarchical Namespace
+            is enabled for the account. Sets POSIX access permissions for the file
+            owner, the file owning group, and others. Each class may be granted
+            read, write, or execute permission.  The sticky bit is also supported.
+            Both symbolic (rwxrw-rw-) and 4-digit octal notation (e.g. 0766) are
+            supported.
         :keyword ~datetime.datetime if_modified_since:
             A DateTime value. Azure expects the date value passed in to be UTC.
             If timezone is included, any non-UTC datetimes will be converted to UTC.
@@ -542,13 +679,21 @@ class FileSystemClient(StorageAccountHostsMixin):
         :keyword int timeout:
             The timeout parameter is expressed in seconds.
         :return: DataLakeFileClient
+
+        .. admonition:: Example:
+
+            .. literalinclude:: ../samples/datalake_samples_file_system.py
+                :start-after: [START create_file_from_file_system]
+                :end-before: [END create_file_from_file_system]
+                :language: python
+                :dedent: 8
+                :caption: Create file in the file system.
         """
         file_client = self.get_file_client(file)
         file_client.create_file(**kwargs)
         return file_client
 
     def delete_file(self, file,  # type: Union[FileProperties, str]
-                    lease=None,  # type: Optional[Union[DataLakeLeaseClient, str]]
                     **kwargs):
         # type: (...) -> DataLakeFileClient
         """
@@ -559,9 +704,9 @@ class FileSystemClient(StorageAccountHostsMixin):
             or an instance of FileProperties.
         :type file: str or ~azure.storage.filedatalake.FileProperties
         :keyword lease:
-            Required if the blob has an active lease. Value can be a LeaseClient object
+            Required if the file has an active lease. Value can be a LeaseClient object
             or the lease ID as a string.
-        :type lease: ~azure.storage.blob.LeaseClient or str
+        :paramtype lease: ~azure.storage.filedatalake.DataLakeLeaseClient or str
         :keyword ~datetime.datetime if_modified_since:
             A DateTime value. Azure expects the date value passed in to be UTC.
             If timezone is included, any non-UTC datetimes will be converted to UTC.
@@ -582,10 +727,28 @@ class FileSystemClient(StorageAccountHostsMixin):
         :keyword int timeout:
             The timeout parameter is expressed in seconds.
         :return: DataLakeFileClient
+
+        .. admonition:: Example:
+
+            .. literalinclude:: ../samples/datalake_samples_file_system.py
+                :start-after: [START delete_file_from_file_system]
+                :end-before: [END delete_file_from_file_system]
+                :language: python
+                :dedent: 8
+                :caption: Delete file in the file system.
         """
         file_client = self.get_file_client(file)
-        file_client.delete_file(lease=lease, **kwargs)
+        file_client.delete_file(**kwargs)
         return file_client
+
+    def _get_root_directory_client(self):
+        # type: () -> DataLakeDirectoryClient
+        """Get a client to interact with the root directory.
+
+        :returns: A DataLakeDirectoryClient.
+        :rtype: ~azure.storage.filedatalake.DataLakeDirectoryClient
+        """
+        return self.get_directory_client('/')
 
     def get_directory_client(self, directory  # type: Union[DirectoryProperties, str]
                              ):
@@ -603,17 +766,25 @@ class FileSystemClient(StorageAccountHostsMixin):
 
         .. admonition:: Example:
 
-            .. literalinclude:: ../samples/test_file_system_samples.py
+            .. literalinclude:: ../samples/datalake_samples_file_system.py
                 :start-after: [START get_directory_client_from_file_system]
                 :end-before: [END get_directory_client_from_file_system]
                 :language: python
-                :dedent: 12
+                :dedent: 8
                 :caption: Getting the directory client to interact with a specific directory.
         """
-        return DataLakeDirectoryClient(self.url, self.file_system_name, directory_name=directory,
+        try:
+            directory_name = directory.get('name')
+        except AttributeError:
+            directory_name = str(directory)
+        _pipeline = Pipeline(
+            transport=TransportWrapper(self._pipeline._transport), # pylint: disable = protected-access
+            policies=self._pipeline._impl_policies # pylint: disable = protected-access
+        )
+        return DataLakeDirectoryClient(self.url, self.file_system_name, directory_name=directory_name,
                                        credential=self._raw_credential,
-                                       _configuration=self._config, _pipeline=self._pipeline,
-                                       _location_mode=self._location_mode, _hosts=self._hosts,
+                                       _configuration=self._config, _pipeline=_pipeline,
+                                       _hosts=self._hosts,
                                        require_encryption=self.require_encryption,
                                        key_encryption_key=self.key_encryption_key,
                                        key_resolver_function=self.key_resolver_function
@@ -635,21 +806,24 @@ class FileSystemClient(StorageAccountHostsMixin):
 
         .. admonition:: Example:
 
-            .. literalinclude:: ../samples/test_file_system_samples.py
+            .. literalinclude:: ../samples/datalake_samples_file_system.py
                 :start-after: [START get_file_client_from_file_system]
                 :end-before: [END get_file_client_from_file_system]
                 :language: python
-                :dedent: 12
+                :dedent: 8
                 :caption: Getting the file client to interact with a specific file.
         """
         try:
-            file_path = file_path.name
+            file_path = file_path.get('name')
         except AttributeError:
-            pass
-
+            file_path = str(file_path)
+        _pipeline = Pipeline(
+            transport=TransportWrapper(self._pipeline._transport), # pylint: disable = protected-access
+            policies=self._pipeline._impl_policies # pylint: disable = protected-access
+        )
         return DataLakeFileClient(
             self.url, self.file_system_name, file_path=file_path, credential=self._raw_credential,
-            _hosts=self._hosts, _configuration=self._config, _pipeline=self._pipeline,
-            _location_mode=self._location_mode, require_encryption=self.require_encryption,
+            _hosts=self._hosts, _configuration=self._config, _pipeline=_pipeline,
+            require_encryption=self.require_encryption,
             key_encryption_key=self.key_encryption_key,
             key_resolver_function=self.key_resolver_function)

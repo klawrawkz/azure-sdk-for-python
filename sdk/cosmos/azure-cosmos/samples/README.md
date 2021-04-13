@@ -48,14 +48,14 @@ The following are code samples that show common scenario operations with the Azu
 ## Prerequisites
 * Python 2.7 or 3.5.3+
 * You must have an [Azure subscription](https://azure.microsoft.com/free/) and an
-[Azure Cosmos DB account](https://docs.microsoft.com/en-us/azure/cosmos-db/create-sql-api-python#create-a-database-account) to run these samples.
+[Azure Cosmos DB account](https://docs.microsoft.com/azure/cosmos-db/create-sql-api-python#create-a-database-account) to run these samples.
 
 ## Setup
 
 1. Install the latest beta version of Azure Cosmos that the samples use:
 
 ```bash
-pip install --pre azure-cosmos
+pip install azure-cosmos
 ```
 
 2. Clone or download this sample repository.
@@ -69,5 +69,5 @@ pip install --pre azure-cosmos
 
 ## Next steps
 
-Check out the [API reference documentation](https://azure.github.io/azure-sdk-for-python/ref/Cosmos.html) to learn more about
+Check out the [API reference documentation](https://aka.ms/azsdk-python-cosmos-ref) to learn more about
 what you can do with the Azure Cosmos DB SQL API client library.

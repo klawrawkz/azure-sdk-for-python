@@ -1,0 +1,68 @@
+interactions:
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - application/json
+      Content-Length:
+      - '2'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 13 Apr 2021 17:54:40 GMT
+      User-Agent:
+      - azsdk-python-communication-identity/1.0.0 Python/3.9.0 (Windows-10-10.0.19041-SP0)
+      x-ms-return-client-request-id:
+      - 'true'
+    method: POST
+    uri: https://sanitized.communication.azure.com/identities?api-version=2021-03-07
+  response:
+    body:
+      string: '{"identity": {"id": "sanitized"}}'
+    headers:
+      api-supported-versions: 2020-07-20-preview2, 2021-02-22-preview1, 2021-03-07
+      content-type: application/json; charset=utf-8
+      date: Tue, 13 Apr 2021 17:54:41 GMT
+      ms-cv: Pj8FRADg+kiDEt1nR45Xpw.0
+      request-context: appId=
+      strict-transport-security: max-age=2592000
+      transfer-encoding: chunked
+      x-processing-time: 14ms
+    status:
+      code: 201
+      message: Created
+    url: https://lakshmanscommunication-communication.communication.azure.com/identities?api-version=2021-03-07
+- request:
+    body: '{"scopes": ["chat"]}'
+    headers:
+      Accept:
+      - application/json
+      Content-Length:
+      - '20'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 13 Apr 2021 17:54:41 GMT
+      User-Agent:
+      - azsdk-python-communication-identity/1.0.0 Python/3.9.0 (Windows-10-10.0.19041-SP0)
+      x-ms-return-client-request-id:
+      - 'true'
+    method: POST
+    uri: https://sanitized.communication.azure.com/identities/sanitized/:issueAccessToken?api-version=2021-03-07
+  response:
+    body:
+      string: '{"token": "sanitized", "expiresOn": "2021-04-14T17:54:40.9399447+00:00"}'
+    headers:
+      api-supported-versions: 2020-07-20-preview2, 2021-02-22-preview1, 2021-03-07
+      content-type: application/json; charset=utf-8
+      date: Tue, 13 Apr 2021 17:54:41 GMT
+      ms-cv: 20UrFS+nmUuM9hckNxqX9Q.0
+      request-context: appId=
+      strict-transport-security: max-age=2592000
+      transfer-encoding: chunked
+      x-processing-time: 128ms
+    status:
+      code: 200
+      message: OK
+    url: https://lakshmanscommunication-communication.communication.azure.com/identities/sanitized/:issueAccessToken?api-version=2021-03-07
+version: 1

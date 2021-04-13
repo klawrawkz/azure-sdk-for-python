@@ -1,7 +1,40 @@
 # Release History
 
-## 4.0.2 (Unreleased)
+## 4.3.0b1 (Unreleased)
+### Fixed
+- Correct typing for async paging methods
 
+### Added
+- Added method `parse_key_vault_secret_id` that parses out a full ID returned by Key Vault, so users can easily
+access the secret's `name`, `vault_url`, and `version`.
+
+## 4.2.0 (2020-08-11)
+### Fixed
+- Values of `x-ms-keyvault-region` and `x-ms-keyvault-service-version` headers
+  are no longer redacted in logging output
+
+### Changed
+- Key Vault API version 7.1 is now the default
+- Updated minimum `azure-core` version to 1.7.0
+
+### Added
+- At construction, clients accept a `CustomHookPolicy` through the optional
+  keyword argument `custom_hook_policy`
+- All client requests include a unique ID in the header `x-ms-client-request-id`
+- Dependency on `azure-common` for multiapi support
+
+## 4.2.0b1 (2020-03-10)
+- Support for Key Vault API version 7.1-preview
+([#10124](https://github.com/Azure/azure-sdk-for-python/pull/10124))
+  - Added `recoverable_days` to `CertificateProperties`
+  - Added `ApiVersion` enum identifying Key Vault versions supported by this package
+
+## 4.1.0 (2020-03-10)
+- `SecretClient` instances have a `close` method which closes opened sockets.
+Used as a context manager, a `SecretClient` closes opened sockets on exit.
+([#9906](https://github.com/Azure/azure-sdk-for-python/pull/9906))
+- Pollers no longer sleep after operation completion
+([#9991](https://github.com/Azure/azure-sdk-for-python/pull/9991))
 
 ## 4.0.1 (2020-02-11)
 - `azure.keyvault.secrets` defines `__version__`
@@ -16,7 +49,7 @@
 ## 4.0.0 (2019-10-31)
 ### Breaking changes:
 - Moved optional parameters of two methods into kwargs (
-[docs](https://azure.github.io/azure-sdk-for-python/ref/azure.keyvault.secrets.html)
+[docs](https://azuresdkdocs.blob.core.windows.net/$web/python/azure-keyvault-secrets/4.0.0/azure.keyvault.secrets.html)
 detail the new keyword arguments):
   - `set_secret` now has positional parameters `name` and `value`
   - `update_secret_properties` now has positional parameters `name` and
@@ -37,8 +70,8 @@ detail the new keyword arguments):
 - `Secret` now has attribute `properties`, which holds certain properties of the
 secret, such as `version`. This changes the shape of the returned `Secret` type,
 as certain properties of `Secret` (such as `version`) have to be accessed
-through the `properties` property. See the updated [docs](https://azure.github.io/azure-sdk-for-python/ref/azure.keyvault.secrets.html)
-for details.
+through the `properties` property.
+
 - `update_secret` has been renamed to `update_secret_properties`
 - The `vault_url` parameter of `SecretClient` has been renamed to `vault_endpoint`
 - The property `vault_url` has been renamed to `vault_endpoint` in all models

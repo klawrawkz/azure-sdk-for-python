@@ -13,167 +13,302 @@ from datetime import datetime, timedelta
 
 from azure.common import AzureHttpError, AzureConflictHttpError
 from azure.mgmt.servicebus.models import AccessRights
-from azure.servicebus import ServiceBusClient, QueueClient
-from azure.servicebus.common.message import Message, PeekMessage, BatchMessage
-from azure.servicebus.common.constants import ReceiveSettleMode
-from azure.servicebus.common.errors import (
+from azure.servicebus import ServiceBusClient, ServiceBusSender, ServiceBusReceiver
+from azure.servicebus._base_handler import ServiceBusSharedKeyCredential
+from azure.servicebus._common.message import ServiceBusMessage, ServiceBusReceivedMessage
+from azure.servicebus.exceptions import (
     ServiceBusError,
-    ServiceBusConnectionError,
-    ServiceBusAuthorizationError,
-    ServiceBusResourceNotFound
+    ServiceBusAuthenticationError,
+    ServiceBusAuthorizationError
 )
-from devtools_testutils import AzureMgmtTestCase, RandomNameResourceGroupPreparer
+from devtools_testutils import AzureMgmtTestCase, CachedResourceGroupPreparer
 from servicebus_preparer import (
-    ServiceBusNamespacePreparer, 
+    CachedServiceBusNamespacePreparer, 
     ServiceBusTopicPreparer, 
     ServiceBusQueuePreparer,
     ServiceBusNamespaceAuthorizationRulePreparer,
-    ServiceBusQueueAuthorizationRulePreparer
+    ServiceBusQueueAuthorizationRulePreparer,
+    CachedServiceBusQueuePreparer
 )
 
 class ServiceBusClientTests(AzureMgmtTestCase):
 
     @pytest.mark.liveTest
     @pytest.mark.live_test_only
-    @RandomNameResourceGroupPreparer(name_prefix='servicebustest')
-    @ServiceBusNamespacePreparer(name_prefix='servicebustest')
+    @CachedResourceGroupPreparer(name_prefix='servicebustest')
+    @CachedServiceBusNamespacePreparer(name_prefix='servicebustest')
     @ServiceBusQueuePreparer(name_prefix='servicebustest', dead_lettering_on_message_expiration=True)
     def test_sb_client_bad_credentials(self, servicebus_namespace, servicebus_queue, **kwargs):
-
         client = ServiceBusClient(
-            service_namespace=servicebus_namespace.name,
-            shared_access_key_name="invalid",
-            shared_access_key_value="invalid",
-            debug=False)
-        with pytest.raises(AzureHttpError):
-            client.get_queue(servicebus_queue.name)
+            fully_qualified_namespace=servicebus_namespace.name + '.servicebus.windows.net',
+            credential=ServiceBusSharedKeyCredential('invalid', 'invalid'),
+            logging_enable=False)
+        with client:
+            with pytest.raises(ServiceBusAuthenticationError):
+                with client.get_queue_sender(servicebus_queue.name) as sender:
+                    sender.send_messages(ServiceBusMessage("test"))
 
     @pytest.mark.liveTest
     @pytest.mark.live_test_only
-    @RandomNameResourceGroupPreparer(name_prefix='servicebustest')
-    @ServiceBusNamespacePreparer(name_prefix='servicebustest')
     def test_sb_client_bad_namespace(self, **kwargs):
 
         client = ServiceBusClient(
-            service_namespace="invalid",
-            shared_access_key_name="invalid",
-            shared_access_key_value="invalid",
-            debug=False)
-
-        with pytest.raises(ServiceBusConnectionError):
-            client.get_queue("testq")
-
-    @pytest.mark.liveTest
-    @pytest.mark.live_test_only
-    @RandomNameResourceGroupPreparer(name_prefix='servicebustest')
-    @ServiceBusNamespacePreparer(name_prefix='servicebustest')
-    def test_sb_client_bad_entity(self, servicebus_namespace, servicebus_namespace_key_name, servicebus_namespace_primary_key, **kwargs):
-
-        client = ServiceBusClient(
-            service_namespace=servicebus_namespace.name,
-            shared_access_key_name=servicebus_namespace_key_name,
-            shared_access_key_value=servicebus_namespace_primary_key,
-            debug=False)
-
-        with pytest.raises(ServiceBusResourceNotFound):
-            client.get_queue("invalid")
-
-        with pytest.raises(ServiceBusResourceNotFound):
-            client.get_topic("invalid")
+            fully_qualified_namespace='invalid.servicebus.windows.net',
+            credential=ServiceBusSharedKeyCredential('invalid', 'invalid'),
+            logging_enable=False)
+        with client:
+            with pytest.raises(ServiceBusError):
+                with client.get_queue_sender('invalidqueue') as sender:
+                    sender.send_messages(ServiceBusMessage("test"))
 
     @pytest.mark.liveTest
     @pytest.mark.live_test_only
-    @RandomNameResourceGroupPreparer(name_prefix='servicebustest')
-    @ServiceBusNamespacePreparer(name_prefix='servicebustest')
-    @ServiceBusQueuePreparer(name_prefix='servicebustest', dead_lettering_on_message_expiration=True)
-    def test_sb_client_entity_conflict(self, servicebus_namespace, servicebus_namespace_key_name, servicebus_namespace_primary_key, servicebus_queue, **kwargs):
+    @CachedResourceGroupPreparer(name_prefix='servicebustest')
+    @CachedServiceBusNamespacePreparer(name_prefix='servicebustest')
+    def test_sb_client_bad_entity(self, servicebus_namespace_connection_string, **kwargs):
 
-        client = ServiceBusClient(
-            service_namespace=servicebus_namespace.name,
-            shared_access_key_name=servicebus_namespace_key_name,
-            shared_access_key_value=servicebus_namespace_primary_key,
-            debug=False)
+        client = ServiceBusClient.from_connection_string(servicebus_namespace_connection_string)
 
-        with pytest.raises(AzureConflictHttpError):
-            client.create_queue(servicebus_queue.name)
+        with client:
+            with pytest.raises(ServiceBusAuthenticationError):
+                with client.get_queue_sender("invalid") as sender:
+                    sender.send_messages(ServiceBusMessage("test"))
 
-        with pytest.raises(AzureConflictHttpError):
-            client.create_queue(servicebus_queue.name, lock_duration=300)
+        fake_str = "Endpoint=sb://mock.servicebus.windows.net/;" \
+                   "SharedAccessKeyName=mock;SharedAccessKey=mock;EntityPath=mockentity"
+        fake_client = ServiceBusClient.from_connection_string(fake_str)
+
+        with pytest.raises(ValueError):
+            fake_client.get_queue_sender('queue')
+
+        with pytest.raises(ValueError):
+            fake_client.get_queue_receiver('queue')
+
+        with pytest.raises(ValueError):
+            fake_client.get_topic_sender('topic')
+
+        with pytest.raises(ValueError):
+            fake_client.get_subscription_receiver('topic', 'subscription')
+
+        fake_client.get_queue_sender('mockentity')
+        fake_client.get_queue_receiver('mockentity')
+        fake_client.get_topic_sender('mockentity')
+        fake_client.get_subscription_receiver('mockentity', 'subscription')
+
+        fake_str = "Endpoint=sb://mock.servicebus.windows.net/;" \
+                   "SharedAccessKeyName=mock;SharedAccessKey=mock"
+        fake_client = ServiceBusClient.from_connection_string(fake_str)
+        fake_client.get_queue_sender('queue')
+        fake_client.get_queue_receiver('queue')
+        fake_client.get_topic_sender('topic')
+        fake_client.get_subscription_receiver('topic', 'subscription')
 
     @pytest.mark.liveTest
     @pytest.mark.live_test_only
-    @RandomNameResourceGroupPreparer(name_prefix='servicebustest')
-    @ServiceBusNamespacePreparer(name_prefix='servicebustest')
-    @ServiceBusQueuePreparer(name_prefix='servicebustest', dead_lettering_on_message_expiration=True)
-    def test_sb_client_entity_delete(self, servicebus_namespace, servicebus_namespace_key_name, servicebus_namespace_primary_key, servicebus_queue, **kwargs):
-
-        client = ServiceBusClient(
-            service_namespace=servicebus_namespace.name,
-            shared_access_key_name=servicebus_namespace_key_name,
-            shared_access_key_value=servicebus_namespace_primary_key,
-            debug=False)
-
-        with pytest.raises(ServiceBusResourceNotFound):
-            client.delete_queue("invalid", fail_not_exist=True)
-
-        client.delete_queue("invalid", fail_not_exist=False)
-        client.delete_queue(servicebus_queue.name)
-
-    @pytest.mark.liveTest
-    @pytest.mark.live_test_only
-    @RandomNameResourceGroupPreparer(name_prefix='servicebustest')
-    @ServiceBusNamespacePreparer(name_prefix='servicebustest')
+    @CachedResourceGroupPreparer(name_prefix='servicebustest')
+    @CachedServiceBusNamespacePreparer(name_prefix='servicebustest')
     @ServiceBusQueuePreparer(name_prefix='servicebustest', dead_lettering_on_message_expiration=True)
     @ServiceBusNamespaceAuthorizationRulePreparer(name_prefix='servicebustest', access_rights=[AccessRights.listen])
     def test_sb_client_readonly_credentials(self, servicebus_authorization_rule_connection_string, servicebus_queue, **kwargs):
-        client = ServiceBusClient.from_connection_string(servicebus_authorization_rule_connection_string, debug=False)
-        with pytest.raises(AzureHttpError):
-            client.get_queue(servicebus_queue.name)
+        client = ServiceBusClient.from_connection_string(servicebus_authorization_rule_connection_string)
 
-        client = QueueClient.from_connection_string(servicebus_authorization_rule_connection_string, name=servicebus_queue.name)
-        with client.get_receiver(idle_timeout=5) as receiver:
-            messages = receiver.fetch_next()
+        with client:
+            with client.get_queue_receiver(servicebus_queue.name) as receiver:
+                messages = receiver.receive_messages(max_message_count=1, max_wait_time=1)
 
-        with pytest.raises(ServiceBusAuthorizationError):
-            client.send(Message("test"))
+            with pytest.raises(ServiceBusAuthorizationError):
+                with client.get_queue_sender(servicebus_queue.name) as sender:
+                    sender.send_messages(ServiceBusMessage("test"))
 
     @pytest.mark.liveTest
     @pytest.mark.live_test_only
-    @RandomNameResourceGroupPreparer(name_prefix='servicebustest')
-    @ServiceBusNamespacePreparer(name_prefix='servicebustest')
+    @CachedResourceGroupPreparer(name_prefix='servicebustest')
+    @CachedServiceBusNamespacePreparer(name_prefix='servicebustest')
     @ServiceBusQueuePreparer(name_prefix='servicebustest', dead_lettering_on_message_expiration=True)
     @ServiceBusNamespaceAuthorizationRulePreparer(name_prefix='servicebustest', access_rights=[AccessRights.send])
     def test_sb_client_writeonly_credentials(self, servicebus_authorization_rule_connection_string, servicebus_queue, **kwargs):
         client = ServiceBusClient.from_connection_string(servicebus_authorization_rule_connection_string)
-        with pytest.raises(AzureHttpError):
-            client.get_queue(servicebus_queue.name)
 
-        client = QueueClient.from_connection_string(servicebus_authorization_rule_connection_string, name=servicebus_queue.name, debug=False)
-        with pytest.raises(ServiceBusAuthorizationError):
-            with client.get_receiver(idle_timeout=5) as receiver:
-                messages = receiver.fetch_next()
+        with client:
+            with pytest.raises(ServiceBusError):
+                with client.get_queue_receiver(servicebus_queue.name) as receiver:
+                    messages = receiver.receive_messages(max_message_count=1, max_wait_time=1)
 
-        client.send([Message("test1"), Message("test2")])
-        with pytest.raises(TypeError):
-            client.send("cat")
-        with pytest.raises(TypeError):
-            client.send(1234)
-        with pytest.raises(TypeError):
-            client.send([1,2,3])
-        with pytest.raises(TypeError):
-            client.send([Message("test1"), "test2"])
+            with client.get_queue_sender(servicebus_queue.name) as sender:
+                sender.send_messages(ServiceBusMessage("test"))
 
+                with pytest.raises(TypeError):
+                    sender.send_messages("cat")
 
     @pytest.mark.liveTest
     @pytest.mark.live_test_only
-    @RandomNameResourceGroupPreparer(name_prefix='servicebustest')
-    @ServiceBusNamespacePreparer(name_prefix='servicebustest')
+    @CachedResourceGroupPreparer(name_prefix='servicebustest')
+    @CachedServiceBusNamespacePreparer(name_prefix='servicebustest')
     @ServiceBusNamespaceAuthorizationRulePreparer(name_prefix='servicebustest')
-    @ServiceBusQueuePreparer(name_prefix='servicebustest_queue_one', parameter_name='wrong_queue', dead_lettering_on_message_expiration=True)
-    @ServiceBusQueuePreparer(name_prefix='servicebustest_queue_two', dead_lettering_on_message_expiration=True)
-    @ServiceBusQueueAuthorizationRulePreparer(name_prefix='servicebustest_queue_two')
-    def test_sb_client_incorrect_queue_conn_str(self, servicebus_queue_authorization_rule_connection_string, wrong_queue, **kwargs):
+    @ServiceBusQueuePreparer(name_prefix='servicebustest_qone', parameter_name='wrong_queue', dead_lettering_on_message_expiration=True)
+    @ServiceBusQueuePreparer(name_prefix='servicebustest_qtwo', dead_lettering_on_message_expiration=True)
+    @ServiceBusQueueAuthorizationRulePreparer(name_prefix='servicebustest_qtwo')
+    def test_sb_client_incorrect_queue_conn_str(self, servicebus_queue_authorization_rule_connection_string, servicebus_queue, wrong_queue, **kwargs):
         
         client = ServiceBusClient.from_connection_string(servicebus_queue_authorization_rule_connection_string)
-        with pytest.raises(AzureHttpError):
-            client.get_queue(wrong_queue.name)
+        with client:
+            # Validate that the wrong sender/receiver queues with the right credentials fail.
+            with pytest.raises(ValueError):
+                with client.get_queue_sender(wrong_queue.name) as sender:
+                    sender.send_messages(ServiceBusMessage("test"))
+
+            with pytest.raises(ValueError):
+                with client.get_queue_receiver(wrong_queue.name) as receiver:
+                    messages =  receiver.receive_messages(max_message_count=1, max_wait_time=1)
+
+            # But that the correct ones work.
+            with client.get_queue_sender(servicebus_queue.name) as sender:
+                sender.send_messages(ServiceBusMessage("test")) 
+
+            with client.get_queue_receiver(servicebus_queue.name) as receiver:
+               messages =  receiver.receive_messages(max_message_count=1, max_wait_time=1)
+
+            # Now do the same but with direct connstr initialization.
+            with pytest.raises(ValueError):
+                with ServiceBusSender._from_connection_string(
+                    servicebus_queue_authorization_rule_connection_string,
+                    queue_name=wrong_queue.name,
+                ) as sender:
+                        sender.send_messages(ServiceBusMessage("test"))
+
+            with pytest.raises(ValueError):
+                with ServiceBusReceiver._from_connection_string(
+                    servicebus_queue_authorization_rule_connection_string,
+                    queue_name=wrong_queue.name,
+                ) as receiver:
+                    messages =  receiver.receive_messages(max_message_count=1, max_wait_time=1)
+
+            with ServiceBusSender._from_connection_string(
+                servicebus_queue_authorization_rule_connection_string,
+                queue_name=servicebus_queue.name,
+            ) as sender:
+                sender.send_messages(ServiceBusMessage("test"))
+
+            with ServiceBusReceiver._from_connection_string(
+                servicebus_queue_authorization_rule_connection_string,
+                queue_name=servicebus_queue.name,
+            ) as receiver:
+                messages =  receiver.receive_messages(max_message_count=1, max_wait_time=1)
+
+    @pytest.mark.liveTest
+    @pytest.mark.live_test_only
+    @CachedResourceGroupPreparer()
+    @CachedServiceBusNamespacePreparer(name_prefix='servicebustest')
+    @CachedServiceBusQueuePreparer(name_prefix='servicebustest', dead_lettering_on_message_expiration=True)
+    def test_sb_client_close_spawned_handlers(self, servicebus_namespace_connection_string, servicebus_queue, **kwargs):
+        client = ServiceBusClient.from_connection_string(servicebus_namespace_connection_string)
+
+        client.close()
+
+        # context manager
+        with client:
+            assert len(client._handlers) == 0
+            sender = client.get_queue_sender(servicebus_queue.name)
+            receiver = client.get_queue_receiver(servicebus_queue.name)
+            sender._open()
+            receiver._open()
+
+            assert sender._handler and sender._running
+            assert receiver._handler and receiver._running
+            assert len(client._handlers) == 2
+
+        assert not sender._handler and not sender._running
+        assert not receiver._handler and not receiver._running
+        assert len(client._handlers) == 0
+
+        # close operation
+        sender = client.get_queue_sender(servicebus_queue.name)
+        receiver = client.get_queue_receiver(servicebus_queue.name)
+        sender._open()
+        receiver._open()
+
+        assert sender._handler and sender._running
+        assert receiver._handler and receiver._running
+        assert len(client._handlers) == 2
+
+        client.close()
+
+        assert not sender._handler and not sender._running
+        assert not receiver._handler and not receiver._running
+        assert len(client._handlers) == 0
+
+    @pytest.mark.liveTest
+    @pytest.mark.live_test_only
+    @CachedResourceGroupPreparer()
+    @CachedServiceBusNamespacePreparer(name_prefix='servicebustest')
+    @CachedServiceBusQueuePreparer(name_prefix='servicebustest')
+    def test_client_sas_credential(self,
+                                   servicebus_queue,
+                                   servicebus_namespace,
+                                   servicebus_namespace_key_name,
+                                   servicebus_namespace_primary_key,
+                                   servicebus_namespace_connection_string,
+                                   **kwargs):
+        # This should "just work" to validate known-good.
+        credential = ServiceBusSharedKeyCredential(servicebus_namespace_key_name, servicebus_namespace_primary_key)
+        hostname = "{}.servicebus.windows.net".format(servicebus_namespace.name)
+        auth_uri = "sb://{}/{}".format(hostname, servicebus_queue.name)
+        token = credential.get_token(auth_uri).token
+
+        # Finally let's do it with SAS token + conn str
+        token_conn_str = "Endpoint=sb://{}/;SharedAccessSignature={};".format(hostname, token.decode())
+
+        client = ServiceBusClient.from_connection_string(token_conn_str)
+        with client:
+            assert len(client._handlers) == 0
+            with client.get_queue_sender(servicebus_queue.name) as sender:
+                sender.send_messages(ServiceBusMessage("foo"))
+
+        # This is disabled pending UAMQP fix https://github.com/Azure/azure-uamqp-python/issues/170
+        #
+        #token_conn_str_without_se = token_conn_str.split('se=')[0] + token_conn_str.split('se=')[1].split('&')[1]
+        #
+        #client = ServiceBusClient.from_connection_string(token_conn_str_without_se)
+        #with client:
+        #    assert len(client._handlers) == 0
+        #    with client.get_queue_sender(servicebus_queue.name) as sender:
+        #        sender.send_messages(ServiceBusMessage("foo"))
+
+    @pytest.mark.liveTest
+    @pytest.mark.live_test_only
+    @CachedResourceGroupPreparer()
+    @CachedServiceBusNamespacePreparer(name_prefix='servicebustest')
+    @CachedServiceBusQueuePreparer(name_prefix='servicebustest')
+    def test_client_credential(self,
+                                   servicebus_queue,
+                                   servicebus_namespace,
+                                   servicebus_namespace_key_name,
+                                   servicebus_namespace_primary_key,
+                                   servicebus_namespace_connection_string,
+                                   **kwargs):
+        # This should "just work" to validate known-good.
+        credential = ServiceBusSharedKeyCredential(servicebus_namespace_key_name, servicebus_namespace_primary_key)
+        hostname = "{}.servicebus.windows.net".format(servicebus_namespace.name)
+
+        client = ServiceBusClient(hostname, credential)
+        with client:
+            assert len(client._handlers) == 0
+            with client.get_queue_sender(servicebus_queue.name) as sender:
+                sender.send_messages(ServiceBusMessage("foo"))
+
+        hostname = "sb://{}.servicebus.windows.net".format(servicebus_namespace.name)
+
+        client = ServiceBusClient(hostname, credential)
+        with client:
+            assert len(client._handlers) == 0
+            with client.get_queue_sender(servicebus_queue.name) as sender:
+                sender.send_messages(ServiceBusMessage("foo"))
+
+        hostname = "https://{}.servicebus.windows.net \
+        ".format(servicebus_namespace.name)
+
+        client = ServiceBusClient(hostname, credential)
+        with client:
+            assert len(client._handlers) == 0
+            with client.get_queue_sender(servicebus_queue.name) as sender:
+                sender.send_messages(ServiceBusMessage("foo"))

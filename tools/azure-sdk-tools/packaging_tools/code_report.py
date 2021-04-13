@@ -9,13 +9,14 @@ from pathlib import Path
 import subprocess
 import sys
 import types
+import tempfile
 from typing import Dict, Any, Optional
 
 # Because I'm subprocessing myself, I need to do weird thing as import.
 try:
     # If I'm started as a module __main__
     from .venvtools import create_venv_with_package
-except ModuleNotFoundError:
+except (ModuleNotFoundError, ImportError) as e:
     # If I'm started by my main directly
     from venvtools import create_venv_with_package
 
@@ -140,7 +141,7 @@ def merge_report(report_paths):
 
     merged_report = create_empty_report()
     for report in sorted(report_paths):
-        with report.open() as report_fd:
+        with open(report, 'r') as report_fd:
             report_json = json.load(report_fd)
 
         merged_report["models"]["enums"].update(report_json["models"]["enums"])
@@ -149,10 +150,23 @@ def merge_report(report_paths):
         merged_report["operations"].update(report_json["operations"])
     return merged_report
 
-def main(input_parameter: str, version: Optional[str] = None, no_venv: bool = False, pypi: bool = False, last_pypi: bool = False):
+def main(
+        input_parameter: str,
+        version: Optional[str] = None,
+        no_venv: bool = False,
+        pypi: bool = False,
+        last_pypi: bool = False,
+        output: Optional[str] = None,
+        metadata_path: Optional[str] = None
+    ):
+
+    output_msg = output if output else "default folder"
+    _LOGGER.info(f"Building code report of {input_parameter} for version {version} in {output_msg} ({no_venv}/{pypi}/{last_pypi})")
     package_name, module_name = parse_input(input_parameter)
     path_to_package = resolve_package_directory(package_name)
 
+    output_filename = ''
+    result = []
     if (version or pypi or last_pypi) and not no_venv:
         if version:
             versions = [version]
@@ -168,25 +182,32 @@ def main(input_parameter: str, version: Optional[str] = None, no_venv: bool = Fa
 
         for version in versions:
             _LOGGER.info(f"Installing version {version} of {package_name} in a venv")
-            with create_venv_with_package([f"{package_name}=={version}"]) as venv:
+            with create_venv_with_package([f"{package_name}=={version}"]) as venv, tempfile.TemporaryDirectory() as temp_dir:
+                metadata_path = str(Path(temp_dir, f"metadata_{version}.json"))
                 args = [
                     venv.env_exe,
                     __file__,
                     "--no-venv",
                     "--version",
                     version,
+                    "--metadata",
+                    metadata_path,
                     input_parameter
                 ]
+                if output is not None:
+                    args.append("--output=" + output)
                 try:
                     subprocess.check_call(args)
                 except subprocess.CalledProcessError:
                     # If it fail, just assume this version is too old to get an Autorest report
                     _LOGGER.warning(f"Version {version} seems to be too old to build a report (probably not Autorest based)")
+                # Files have been written by the subprocess
+                with open(metadata_path, "r") as metadata_fd:
+                    result.extend(json.load(metadata_fd)["reports_path"])
         # Files have been written by the subprocess
-        return
+        return result
 
     modules = find_autorest_generated_folder(module_name)
-    result = []
     version = version or "latest"
     output_folder = Path(path_to_package) / Path("code_reports") / Path(version)
     output_folder.mkdir(parents=True, exist_ok=True)
@@ -200,19 +221,32 @@ def main(input_parameter: str, version: Optional[str] = None, no_venv: bool = Fa
         if module_for_path:
             output_filename = output_folder / Path(module_for_path+".json")
         else:
-            output_filename = output_folder / Path("report.json")
+            if output is not None:
+                output_filename = output
+            else:
+                output_filename = output_folder / Path("report.json")
 
         with open(output_filename, "w") as fd:
             json.dump(report, fd, indent=2)
             _LOGGER.info(f"Report written to {output_filename}")
-        result.append(output_filename)
+        result.append(str(output_filename))
 
     if len(result) > 1:
         merged_report = merge_report(result)
-        output_filename = output_folder / Path("merged_report.json")
+        if output is not None:
+            output_filename = output
+        else:
+            output_filename = output_folder / Path("merged_report.json")
         with open(output_filename, "w") as fd:
             json.dump(merged_report, fd, indent=2)
             _LOGGER.info(f"Merged report written to {output_filename}")
+        result = [str(output_filename)]
+
+    if metadata_path:
+        metadata = {"reports_path": result}  # Prepare metadata
+        with open(metadata_path, "w") as metadata_fd:
+            _LOGGER.info(f"Writing metadata: {metadata}")
+            json.dump(metadata, metadata_fd)
 
     return result
 
@@ -280,9 +314,14 @@ if __name__ == "__main__":
     parser.add_argument("--debug",
                         dest="debug", action="store_true",
                         help="Verbosity in DEBUG mode")
-
+    parser.add_argument("--output",
+                        dest="output",
+                        help="Override output path.")
+    parser.add_argument("--metadata-path",
+                        dest="metadata",
+                        help="Write a metadata file about what happen. Mostly used for automation.")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO)
 
-    main(args.package_name, args.version, args.no_venv, args.pypi, args.last_pypi)
+    main(args.package_name, args.version, args.no_venv, args.pypi, args.last_pypi, args.output, args.metadata)

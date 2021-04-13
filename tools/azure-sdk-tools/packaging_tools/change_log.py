@@ -18,13 +18,13 @@ class ChangeLog:
             buffer.append("**Features**")
             buffer.append("")
             for feature in self.features:
-                buffer.append("- "+feature)
+                buffer.append("  - "+feature)
             buffer.append("")
         if self.breaking_changes:
             buffer.append("**Breaking changes**")
             buffer.append("")
             for breaking_change in self.breaking_changes:
-                buffer.append("- "+breaking_change)
+                buffer.append("  - "+breaking_change)
         return "\n".join(buffer).strip()
 
     @staticmethod
@@ -171,6 +171,18 @@ def get_report_from_parameter(input_parameter):
         return json.load(fd)
 
 
+def main(base, latest):
+    old_report = get_report_from_parameter(base)
+    new_report = get_report_from_parameter(latest)
+
+    # result = diff(old_report, new_report)
+    # with open("result.json", "w") as fd:
+    #     json.dump(result, fd)
+
+    change_log = build_change_log(old_report, new_report)
+    return change_log.build_md()
+
+
 if __name__ == "__main__":
     import argparse
 
@@ -190,12 +202,4 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO)
 
-    old_report = get_report_from_parameter(args.base)
-    new_report = get_report_from_parameter(args.latest)
-
-    # result = diff(old_report, new_report)
-    # with open("result.json", "w") as fd:
-    #     json.dump(result, fd)
-
-    change_log = build_change_log(old_report, new_report)
-    print(change_log.build_md())
+    print(main(args.base, args.latest))

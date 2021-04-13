@@ -1,5 +1,23 @@
 # Release History
 
+## 10.0.0 (2020-09-01)
+
+### Features
+- **[Breaking]** Replaced property `maxTasksPerNode` with `taskSlotsPerNode` on the pool. Using this property tasks in a job can consume a dynamic amount of slots allowing for more fine-grained control over resource consumption.
+- **[Breaking]** Changed the response type of `GetTaskCounts` to return `TaskCountsResult`, which is a complex object containing the previous `TaskCounts` object and a new `TaskSlotCounts` object providing similar information in the context of slots being used.
+- Added property `requiredSlots` to the task allowing user to specify how many slots on a node it should take up.
+
+## 9.0.0 (2020-03-24)
+
+### Features
+- Added ability to encrypt `ComputeNode` disk drives using the new `disk_encryption_configuration` property of `VirtualMachineConfiguration`.
+- **[Breaking]** The `virtual_machine_id` property of `ImageReference` can now only refer to a Shared Image Gallery image.
+- **[Breaking]** Pools can now be provisioned without a public IP using the new `public_ip_address_configuration` property of `NetworkConfiguration`.
+  - The `public_ips` property of `NetworkConfiguration` has moved in to `public_ip_address_configuration` as well. This property can only be specified if `ip_provisioning_type` is `UserManaged`.
+
+### REST API version
+This version of the Batch .NET client library targets version 2020-03-01.11.0 of the Azure Batch REST API.
+
 ## 8.0.0 (2019-8-5)
 
 - Using REST API version 2019-08-01.10.0.

@@ -24,7 +24,9 @@ from batch_preparers import (
 from devtools_testutils import (
     AzureMgmtTestCase,
     ResourceGroupPreparer,
-    StorageAccountPreparer
+    StorageAccountPreparer,
+    CachedResourceGroupPreparer,
+    CachedStorageAccountPreparer
 )
 
 
@@ -40,15 +42,6 @@ class BatchTest(AzureMgmtTestCase):
         else:
             return 'https://' + batch.account_endpoint
 
-    def create_basic_client(self, client_class, **kwargs):
-        client = client_class(
-            credentials=kwargs.pop('credentials', None),
-            **kwargs
-        )
-        if self.is_playback():
-            client.config.long_running_operation_timeout = 0
-        return client
-
     def create_aad_client(self, batch_account, **kwargs):
         credentials = self.settings.get_credentials(resource=BATCH_RESOURCE)
         client = self.create_basic_client(
@@ -59,8 +52,7 @@ class BatchTest(AzureMgmtTestCase):
         return client
 
     def create_sharedkey_client(self, batch_account, credentials, **kwargs):
-        client = self.create_basic_client(
-            azure.batch.BatchServiceClient,
+        client = azure.batch.BatchServiceClient(
             credentials=credentials,
             batch_url=self._batch_url(batch_account)
         )
@@ -167,8 +159,6 @@ class BatchTest(AzureMgmtTestCase):
         response = client.account.list_supported_images()
         response = list(response)
         self.assertTrue(len(response) > 1)
-        self.assertEqual(response[-1].node_agent_sku_id, "batch.node.centos 7")
-        self.assertEqual(response[-1].os_type.value, "linux")
         self.assertIsNotNone(response[-1].image_reference)
 
         # Test Create Iaas Pool
@@ -204,6 +194,7 @@ class BatchTest(AzureMgmtTestCase):
         self.assertEqual(counts[0].low_priority.total, 0)
 
         # Test Create Pool with Network Configuration
+        #TODO Public IP tests
         network_config = models.NetworkConfiguration(subnet_id='/subscriptions/00000000-0000-0000-0000-000000000000'
                                                      '/resourceGroups/test'
                                                      '/providers/Microsoft.Network'
@@ -223,7 +214,6 @@ class BatchTest(AzureMgmtTestCase):
         )
         self.assertBatchError('InvalidPropertyValue', client.pool.add, test_network_pool, models.PoolAddOptions(timeout=45))
 
-        # Test Create Pool with Custom Image
         test_image_pool = models.PoolAddParameter(
             id=self.get_resource_name('batch_image_'),
             vm_size='Standard_A1',
@@ -232,7 +222,9 @@ class BatchTest(AzureMgmtTestCase):
                     virtual_machine_image_id="/subscriptions/00000000-0000-0000-0000-000000000000"
                                              "/resourceGroups/test"
                                              "/providers/Microsoft.Compute"
+                                             "/gallery/FakeGallery"
                                              "/images/FakeImage"
+                                             "/versions/version"
                 ),
                 node_agent_sku_id='batch.node.ubuntu 16.04'
             )
@@ -277,6 +269,27 @@ class BatchTest(AzureMgmtTestCase):
         self.assertIsNone(response)
         app_pool = client.pool.get(test_app_pool.id)
         self.assertEqual(app_pool.application_licenses[0], "maya")
+
+        # Test Create Pool with Azure Disk Encryption
+        test_ade_pool = models.PoolAddParameter(
+            id=self.get_resource_name('batch_ade_'),
+            vm_size='Standard_A1',
+            virtual_machine_configuration=models.VirtualMachineConfiguration(
+                image_reference=models.ImageReference(
+                    publisher='Canonical',
+                    offer='UbuntuServer',
+                    sku='16.04-LTS'
+                ),
+                disk_encryption_configuration=models.DiskEncryptionConfiguration(
+                    targets=[models.DiskEncryptionTarget.temporary_disk]
+                ),
+                node_agent_sku_id='batch.node.ubuntu 16.04')
+        )
+        response = client.pool.add(test_ade_pool)
+        self.assertIsNone(response)
+        ade_pool = client.pool.get(test_ade_pool.id)
+        self.assertEqual(ade_pool.virtual_machine_configuration.disk_encryption_configuration.targets,
+                         [models.DiskEncryptionTarget.temporary_disk])
 
         # Test List Pools without Filters
         pools = list(client.pool.list())
@@ -428,8 +441,6 @@ class BatchTest(AzureMgmtTestCase):
         while self.is_live and pool.allocation_state != models.AllocationState.steady:
             time.sleep(5)
             pool = client.pool.get(batch_pool.name)
-        self.assertEqual(pool.target_dedicated_nodes, 2)
-        self.assertEqual(pool.target_low_priority_nodes, 0)
         params = models.PoolResizeParameter(target_dedicated_nodes=0, target_low_priority_nodes=2)
         response = client.pool.resize(batch_pool.name, params)
         self.assertIsNone(response)
@@ -441,10 +452,6 @@ class BatchTest(AzureMgmtTestCase):
         while self.is_live and pool.allocation_state != models.AllocationState.steady:
             time.sleep(5)
             pool = client.pool.get(batch_pool.name)
-        # It looks like there has test framework issue, it couldn't find the correct recording frame
-        # So in live mode, target-decicate is 0, and target low pri is 2
-        self.assertEqual(pool.target_dedicated_nodes, 2)
-        self.assertEqual(pool.target_low_priority_nodes, 0)
 
         # Test Get All Pools Lifetime Statistics
         stats = client.pool.get_all_lifetime_statistics()
@@ -642,7 +649,7 @@ class BatchTest(AzureMgmtTestCase):
         response = client.pool.remove_nodes(batch_pool.name, options)
         self.assertIsNone(response)
 
-    @ResourceGroupPreparer(location=AZURE_LOCATION)
+    @CachedResourceGroupPreparer(location=AZURE_LOCATION)
     @AccountPreparer(location=AZURE_LOCATION)
     @PoolPreparer(location=AZURE_LOCATION, size=1, config='paas')
     def test_batch_compute_node_user(self, batch_pool, **kwargs):
@@ -869,10 +876,10 @@ class BatchTest(AzureMgmtTestCase):
         self.assertEqual(len(tasks), 9)
 
         # Test Count Tasks
-        task_counts = client.job.get_task_counts(batch_job.id)
-        self.assertIsInstance(task_counts, models.TaskCounts)
-        self.assertEqual(task_counts.completed, 0)
-        self.assertEqual(task_counts.succeeded, 0)
+        task_results = client.job.get_task_counts(batch_job.id)
+        self.assertIsInstance(task_results, models.TaskCountsResult)
+        self.assertEqual(task_results.task_counts.completed, 0)
+        self.assertEqual(task_results.task_counts.succeeded, 0)
 
         # Test Terminate Task
         response = client.task.terminate(batch_job.id, task_param.id)

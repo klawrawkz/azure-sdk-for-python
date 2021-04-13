@@ -10,11 +10,13 @@ from cryptography.hazmat.primitives import padding, hashes, hmac
 
 from ..algorithm import AuthenticatedSymmetricEncryptionAlgorithm
 from ..transform import AuthenticatedCryptoTransform
-from .._internal import _int_to_bigendian_8_bytes
+from .._internal import _int_to_fixed_length_bigendian_bytes
 
 
 class _AesCbcHmacCryptoTransform(AuthenticatedCryptoTransform):
     def __init__(self, key, iv, auth_data, auth_tag):
+        super(_AesCbcHmacCryptoTransform, self).__init__()
+
         self._aes_key = key[: len(key) // 2]
         self._hmac_key = key[len(key) // 2 :]
         hash_algo = {256: hashes.SHA256(), 384: hashes.SHA384(), 512: hashes.SHA512()}[len(key) * 8]
@@ -22,7 +24,7 @@ class _AesCbcHmacCryptoTransform(AuthenticatedCryptoTransform):
         self._cipher = Cipher(algorithms.AES(self._aes_key), modes.CBC(iv), backend=default_backend())
         self._tag = auth_tag or bytearray()
         self._hmac = hmac.HMAC(self._hmac_key, hash_algo, backend=default_backend())
-        self._auth_data_length = _int_to_bigendian_8_bytes(len(auth_data) * 8)
+        self._auth_data_length = _int_to_fixed_length_bigendian_bytes(len(auth_data) * 8, 8)
 
         # prime the hash
         self._hmac.update(auth_data)

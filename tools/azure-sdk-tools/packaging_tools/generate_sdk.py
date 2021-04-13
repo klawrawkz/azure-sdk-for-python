@@ -18,7 +18,7 @@ from .swaggertosdk.SwaggerToSdkCore import (
 _LOGGER = logging.getLogger(__name__)
 
 
-def generate(config_path, sdk_folder, project_pattern, readme, restapi_git_folder, autorest_bin=None):
+def generate(config_path, sdk_folder, project_pattern, readme, restapi_git_folder, autorest_bin=None, force_generation=False):
 
     sdk_folder = Path(sdk_folder).expanduser()
     config = read_config(sdk_folder, config_path)
@@ -39,7 +39,7 @@ def generate(config_path, sdk_folder, project_pattern, readme, restapi_git_folde
             raise ValueError("RestAPI folder must be set if you don't provide a readme.")
         swagger_files_in_pr =  list(restapi_git_folder.glob('specification/**/readme.md'))
     _LOGGER.info(f"Readme files: {swagger_files_in_pr}")
-    extract_conf_from_readmes(swagger_files_in_pr, restapi_git_folder, repotag, config)
+    extract_conf_from_readmes(swagger_files_in_pr, restapi_git_folder, repotag, config, force_generation=force_generation)
 
     with tempfile.TemporaryDirectory() as temp_dir:
         for project, local_conf in config.get("projects", {}).items():
@@ -82,6 +82,7 @@ def generate(config_path, sdk_folder, project_pattern, readme, restapi_git_folde
                 local_conf,
                 autorest_bin
             )
+    return config
 
 
 def generate_main():
@@ -105,6 +106,9 @@ def generate_main():
     parser.add_argument('--autorest',
                         dest='autorest_bin',
                         help='Force the Autorest to be executed. Must be a executable command.')
+    parser.add_argument("-f", "--force",
+                        dest="force", action="store_true",
+                        help="Should I force generation if SwaggerToSdk tag is not found")
     parser.add_argument("-v", "--verbose",
                         dest="verbose", action="store_true",
                         help="Verbosity in INFO mode")
@@ -127,7 +131,8 @@ def generate_main():
              args.project,
              args.readme,
              args.restapi_git_folder,
-             args.autorest_bin)
+             args.autorest_bin,
+             args.force)
 
 if __name__ == "__main__":
     generate_main()

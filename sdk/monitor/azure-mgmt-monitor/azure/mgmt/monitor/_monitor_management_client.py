@@ -9,48 +9,49 @@
 # regenerated.
 # --------------------------------------------------------------------------
 
-from msrest.service_client import SDKClient
+from azure.mgmt.core import ARMPipelineClient
 from msrest import Serializer, Deserializer
 
 from azure.profiles import KnownProfiles, ProfileDefinition
 from azure.profiles.multiapiclient import MultiApiClientMixin
 from ._configuration import MonitorManagementClientConfiguration
 
+class _SDKClient(object):
+    def __init__(self, *args, **kwargs):
+        """This is a fake class to support current implemetation of MultiApiClientMixin."
+        Will be removed in final version of multiapi azure-core based client
+        """
+        pass
 
+class MonitorManagementClient(MultiApiClientMixin, _SDKClient):
+    """Monitor Management Client.
 
-class MonitorManagementClient(MultiApiClientMixin, SDKClient):
-    """Monitor Management Client
-
-    This ready contains multiple API versions, to help you deal with all Azure clouds
+    This ready contains multiple API versions, to help you deal with all of the Azure clouds
     (Azure Stack, Azure Government, Azure China, etc.).
-    By default, uses latest API version available on public Azure.
-    For production, you should stick a particular api-version and/or profile.
-    The profile sets a mapping between the operation group and an API version.
+    By default, it uses the latest API version available on public Azure.
+    For production, you should stick to a particular api-version and/or profile.
+    The profile sets a mapping between an operation group and its API version.
     The api-version parameter sets the default API version if the operation
     group is not described in the profile.
 
-    :ivar config: Configuration for client.
-    :vartype config: MonitorManagementClientConfiguration
-
-    :param credentials: Credentials needed for the client to connect to Azure.
-    :type credentials: :mod:`A msrestazure Credentials
-     object<msrestazure.azure_active_directory>`
-    :param subscription_id: Subscription credentials which uniquely identify
-     Microsoft Azure subscription. The subscription ID forms part of the URI
-     for every service call.
+    :param credential: Credential needed for the client to connect to Azure.
+    :type credential: ~azure.core.credentials.TokenCredential
+    :param subscription_id: The Azure subscription Id.
     :type subscription_id: str
     :param str api_version: API version to use if no profile is provided, or if
      missing in profile.
     :param str base_url: Service URL
     :param profile: A profile definition, from KnownProfiles to dict.
     :type profile: azure.profiles.KnownProfiles
+    :keyword int polling_interval: Default waiting time between two polls for LRO operations if no Retry-After header is present.
     """
 
-    DEFAULT_API_VERSION = '2019-06-01'
+    DEFAULT_API_VERSION = '2019-10-17-preview'
     _PROFILE_TAG = "azure.mgmt.monitor.MonitorManagementClient"
     LATEST_PROFILE = ProfileDefinition({
         _PROFILE_TAG: {
             None: DEFAULT_API_VERSION,
+            'action_groups': '2019-06-01',
             'activity_log_alerts': '2017-04-01',
             'activity_logs': '2015-04-01',
             'alert_rule_incidents': '2016-03-01',
@@ -73,17 +74,27 @@ class MonitorManagementClient(MultiApiClientMixin, SDKClient):
             'operations': '2015-04-01',
             'scheduled_query_rules': '2018-04-16',
             'service_diagnostic_settings': '2016-09-01',
+            'subscription_diagnostic_settings': '2017-05-01-preview',
             'tenant_activity_logs': '2015-04-01',
             'vm_insights': '2018-11-27-preview',
         }},
         _PROFILE_TAG + " latest"
     )
 
-    def __init__(self, credentials, subscription_id, api_version=None, base_url=None, profile=KnownProfiles.default):
-        self.config = MonitorManagementClientConfiguration(credentials, subscription_id, base_url)
+    def __init__(
+        self,
+        credential,  # type: "TokenCredential"
+        subscription_id,  # type: str
+        api_version=None,
+        base_url=None,
+        profile=KnownProfiles.default,
+        **kwargs  # type: Any
+    ):
+        if not base_url:
+            base_url = 'https://management.azure.com'
+        self._config = MonitorManagementClientConfiguration(credential, subscription_id, **kwargs)
+        self._client = ARMPipelineClient(base_url=base_url, config=self._config, **kwargs)
         super(MonitorManagementClient, self).__init__(
-            credentials,
-            self.config,
             api_version=api_version,
             profile=profile
         )
@@ -113,6 +124,10 @@ class MonitorManagementClient(MultiApiClientMixin, SDKClient):
            * 2018-11-27-preview: :mod:`v2018_11_27_preview.models<azure.mgmt.monitor.v2018_11_27_preview.models>`
            * 2019-03-01: :mod:`v2019_03_01.models<azure.mgmt.monitor.v2019_03_01.models>`
            * 2019-06-01: :mod:`v2019_06_01.models<azure.mgmt.monitor.v2019_06_01.models>`
+           * 2019-10-17-preview: :mod:`v2019_10_17.models<azure.mgmt.monitor.v2019_10_17.models>`
+           * 2019-11-01-preview: :mod:`v2019_11_01_preview.models<azure.mgmt.monitor.v2019_11_01_preview.models>`
+           * 2020-01-01-preview: :mod:`v2020_01_01_preview.models<azure.mgmt.monitor.v2020_01_01_preview.models>`
+           * 2020-05-01-preview: :mod:`v2020_05_01_preview.models<azure.mgmt.monitor.v2020_05_01_preview.models>`
         """
         if api_version == '2015-04-01':
             from .v2015_04_01 import models
@@ -165,7 +180,19 @@ class MonitorManagementClient(MultiApiClientMixin, SDKClient):
         elif api_version == '2019-06-01':
             from .v2019_06_01 import models
             return models
-        raise NotImplementedError("APIVersion {} is not available".format(api_version))
+        elif api_version == '2019-10-17-preview':
+            from .v2019_10_17 import models
+            return models
+        elif api_version == '2019-11-01-preview':
+            from .v2019_11_01_preview import models
+            return models
+        elif api_version == '2020-01-01-preview':
+            from .v2020_01_01_preview import models
+            return models
+        elif api_version == '2020-05-01-preview':
+            from .v2020_05_01_preview import models
+            return models
+        raise ValueError("API version {} is not available".format(api_version))
 
     @property
     def action_groups(self):
@@ -189,8 +216,8 @@ class MonitorManagementClient(MultiApiClientMixin, SDKClient):
         elif api_version == '2019-06-01':
             from .v2019_06_01.operations import ActionGroupsOperations as OperationClass
         else:
-            raise NotImplementedError("APIVersion {} is not available".format(api_version))
-        return OperationClass(self._client, self.config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+            raise ValueError("API version {} does not have operation group 'action_groups'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
 
     @property
     def activity_log_alerts(self):
@@ -205,8 +232,8 @@ class MonitorManagementClient(MultiApiClientMixin, SDKClient):
         elif api_version == '2017-04-01':
             from .v2017_04_01.operations import ActivityLogAlertsOperations as OperationClass
         else:
-            raise NotImplementedError("APIVersion {} is not available".format(api_version))
-        return OperationClass(self._client, self.config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+            raise ValueError("API version {} does not have operation group 'activity_log_alerts'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
 
     @property
     def activity_logs(self):
@@ -218,8 +245,8 @@ class MonitorManagementClient(MultiApiClientMixin, SDKClient):
         if api_version == '2015-04-01':
             from .v2015_04_01.operations import ActivityLogsOperations as OperationClass
         else:
-            raise NotImplementedError("APIVersion {} is not available".format(api_version))
-        return OperationClass(self._client, self.config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+            raise ValueError("API version {} does not have operation group 'activity_logs'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
 
     @property
     def alert_rule_incidents(self):
@@ -231,8 +258,8 @@ class MonitorManagementClient(MultiApiClientMixin, SDKClient):
         if api_version == '2016-03-01':
             from .v2016_03_01.operations import AlertRuleIncidentsOperations as OperationClass
         else:
-            raise NotImplementedError("APIVersion {} is not available".format(api_version))
-        return OperationClass(self._client, self.config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+            raise ValueError("API version {} does not have operation group 'alert_rule_incidents'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
 
     @property
     def alert_rules(self):
@@ -244,8 +271,8 @@ class MonitorManagementClient(MultiApiClientMixin, SDKClient):
         if api_version == '2016-03-01':
             from .v2016_03_01.operations import AlertRulesOperations as OperationClass
         else:
-            raise NotImplementedError("APIVersion {} is not available".format(api_version))
-        return OperationClass(self._client, self.config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+            raise ValueError("API version {} does not have operation group 'alert_rules'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
 
     @property
     def autoscale_settings(self):
@@ -257,8 +284,8 @@ class MonitorManagementClient(MultiApiClientMixin, SDKClient):
         if api_version == '2015-04-01':
             from .v2015_04_01.operations import AutoscaleSettingsOperations as OperationClass
         else:
-            raise NotImplementedError("APIVersion {} is not available".format(api_version))
-        return OperationClass(self._client, self.config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+            raise ValueError("API version {} does not have operation group 'autoscale_settings'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
 
     @property
     def baseline(self):
@@ -270,8 +297,8 @@ class MonitorManagementClient(MultiApiClientMixin, SDKClient):
         if api_version == '2018-09-01':
             from .v2018_09_01.operations import BaselineOperations as OperationClass
         else:
-            raise NotImplementedError("APIVersion {} is not available".format(api_version))
-        return OperationClass(self._client, self.config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+            raise ValueError("API version {} does not have operation group 'baseline'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
 
     @property
     def baselines(self):
@@ -283,8 +310,34 @@ class MonitorManagementClient(MultiApiClientMixin, SDKClient):
         if api_version == '2019-03-01':
             from .v2019_03_01.operations import BaselinesOperations as OperationClass
         else:
-            raise NotImplementedError("APIVersion {} is not available".format(api_version))
-        return OperationClass(self._client, self.config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+            raise ValueError("API version {} does not have operation group 'baselines'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+
+    @property
+    def data_collection_rule_associations(self):
+        """Instance depends on the API version:
+
+           * 2019-11-01-preview: :class:`DataCollectionRuleAssociationsOperations<azure.mgmt.monitor.v2019_11_01_preview.operations.DataCollectionRuleAssociationsOperations>`
+        """
+        api_version = self._get_api_version('data_collection_rule_associations')
+        if api_version == '2019-11-01-preview':
+            from .v2019_11_01_preview.operations import DataCollectionRuleAssociationsOperations as OperationClass
+        else:
+            raise ValueError("API version {} does not have operation group 'data_collection_rule_associations'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+
+    @property
+    def data_collection_rules(self):
+        """Instance depends on the API version:
+
+           * 2019-11-01-preview: :class:`DataCollectionRulesOperations<azure.mgmt.monitor.v2019_11_01_preview.operations.DataCollectionRulesOperations>`
+        """
+        api_version = self._get_api_version('data_collection_rules')
+        if api_version == '2019-11-01-preview':
+            from .v2019_11_01_preview.operations import DataCollectionRulesOperations as OperationClass
+        else:
+            raise ValueError("API version {} does not have operation group 'data_collection_rules'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
 
     @property
     def diagnostic_settings(self):
@@ -296,8 +349,8 @@ class MonitorManagementClient(MultiApiClientMixin, SDKClient):
         if api_version == '2017-05-01-preview':
             from .v2017_05_01_preview.operations import DiagnosticSettingsOperations as OperationClass
         else:
-            raise NotImplementedError("APIVersion {} is not available".format(api_version))
-        return OperationClass(self._client, self.config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+            raise ValueError("API version {} does not have operation group 'diagnostic_settings'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
 
     @property
     def diagnostic_settings_category(self):
@@ -309,8 +362,8 @@ class MonitorManagementClient(MultiApiClientMixin, SDKClient):
         if api_version == '2017-05-01-preview':
             from .v2017_05_01_preview.operations import DiagnosticSettingsCategoryOperations as OperationClass
         else:
-            raise NotImplementedError("APIVersion {} is not available".format(api_version))
-        return OperationClass(self._client, self.config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+            raise ValueError("API version {} does not have operation group 'diagnostic_settings_category'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
 
     @property
     def event_categories(self):
@@ -322,8 +375,8 @@ class MonitorManagementClient(MultiApiClientMixin, SDKClient):
         if api_version == '2015-04-01':
             from .v2015_04_01.operations import EventCategoriesOperations as OperationClass
         else:
-            raise NotImplementedError("APIVersion {} is not available".format(api_version))
-        return OperationClass(self._client, self.config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+            raise ValueError("API version {} does not have operation group 'event_categories'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
 
     @property
     def guest_diagnostics_settings(self):
@@ -335,8 +388,8 @@ class MonitorManagementClient(MultiApiClientMixin, SDKClient):
         if api_version == '2018-06-01-preview':
             from .v2018_06_01_preview.operations import GuestDiagnosticsSettingsOperations as OperationClass
         else:
-            raise NotImplementedError("APIVersion {} is not available".format(api_version))
-        return OperationClass(self._client, self.config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+            raise ValueError("API version {} does not have operation group 'guest_diagnostics_settings'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
 
     @property
     def guest_diagnostics_settings_association(self):
@@ -348,8 +401,8 @@ class MonitorManagementClient(MultiApiClientMixin, SDKClient):
         if api_version == '2018-06-01-preview':
             from .v2018_06_01_preview.operations import GuestDiagnosticsSettingsAssociationOperations as OperationClass
         else:
-            raise NotImplementedError("APIVersion {} is not available".format(api_version))
-        return OperationClass(self._client, self.config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+            raise ValueError("API version {} does not have operation group 'guest_diagnostics_settings_association'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
 
     @property
     def log_profiles(self):
@@ -361,8 +414,21 @@ class MonitorManagementClient(MultiApiClientMixin, SDKClient):
         if api_version == '2016-03-01':
             from .v2016_03_01.operations import LogProfilesOperations as OperationClass
         else:
-            raise NotImplementedError("APIVersion {} is not available".format(api_version))
-        return OperationClass(self._client, self.config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+            raise ValueError("API version {} does not have operation group 'log_profiles'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+
+    @property
+    def management_group_diagnostic_settings(self):
+        """Instance depends on the API version:
+
+           * 2020-01-01-preview: :class:`ManagementGroupDiagnosticSettingsOperations<azure.mgmt.monitor.v2020_01_01_preview.operations.ManagementGroupDiagnosticSettingsOperations>`
+        """
+        api_version = self._get_api_version('management_group_diagnostic_settings')
+        if api_version == '2020-01-01-preview':
+            from .v2020_01_01_preview.operations import ManagementGroupDiagnosticSettingsOperations as OperationClass
+        else:
+            raise ValueError("API version {} does not have operation group 'management_group_diagnostic_settings'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
 
     @property
     def metric_alerts(self):
@@ -374,8 +440,8 @@ class MonitorManagementClient(MultiApiClientMixin, SDKClient):
         if api_version == '2018-03-01':
             from .v2018_03_01.operations import MetricAlertsOperations as OperationClass
         else:
-            raise NotImplementedError("APIVersion {} is not available".format(api_version))
-        return OperationClass(self._client, self.config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+            raise ValueError("API version {} does not have operation group 'metric_alerts'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
 
     @property
     def metric_alerts_status(self):
@@ -387,8 +453,8 @@ class MonitorManagementClient(MultiApiClientMixin, SDKClient):
         if api_version == '2018-03-01':
             from .v2018_03_01.operations import MetricAlertsStatusOperations as OperationClass
         else:
-            raise NotImplementedError("APIVersion {} is not available".format(api_version))
-        return OperationClass(self._client, self.config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+            raise ValueError("API version {} does not have operation group 'metric_alerts_status'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
 
     @property
     def metric_baseline(self):
@@ -403,8 +469,8 @@ class MonitorManagementClient(MultiApiClientMixin, SDKClient):
         elif api_version == '2018-09-01':
             from .v2018_09_01.operations import MetricBaselineOperations as OperationClass
         else:
-            raise NotImplementedError("APIVersion {} is not available".format(api_version))
-        return OperationClass(self._client, self.config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+            raise ValueError("API version {} does not have operation group 'metric_baseline'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
 
     @property
     def metric_definitions(self):
@@ -422,8 +488,8 @@ class MonitorManagementClient(MultiApiClientMixin, SDKClient):
         elif api_version == '2018-01-01':
             from .v2018_01_01.operations import MetricDefinitionsOperations as OperationClass
         else:
-            raise NotImplementedError("APIVersion {} is not available".format(api_version))
-        return OperationClass(self._client, self.config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+            raise ValueError("API version {} does not have operation group 'metric_definitions'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
 
     @property
     def metric_namespaces(self):
@@ -435,8 +501,8 @@ class MonitorManagementClient(MultiApiClientMixin, SDKClient):
         if api_version == '2017-12-01-preview':
             from .v2017_12_01_preview.operations import MetricNamespacesOperations as OperationClass
         else:
-            raise NotImplementedError("APIVersion {} is not available".format(api_version))
-        return OperationClass(self._client, self.config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+            raise ValueError("API version {} does not have operation group 'metric_namespaces'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
 
     @property
     def metrics(self):
@@ -454,8 +520,8 @@ class MonitorManagementClient(MultiApiClientMixin, SDKClient):
         elif api_version == '2018-01-01':
             from .v2018_01_01.operations import MetricsOperations as OperationClass
         else:
-            raise NotImplementedError("APIVersion {} is not available".format(api_version))
-        return OperationClass(self._client, self.config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+            raise ValueError("API version {} does not have operation group 'metrics'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
 
     @property
     def operations(self):
@@ -467,21 +533,89 @@ class MonitorManagementClient(MultiApiClientMixin, SDKClient):
         if api_version == '2015-04-01':
             from .v2015_04_01.operations import Operations as OperationClass
         else:
-            raise NotImplementedError("APIVersion {} is not available".format(api_version))
-        return OperationClass(self._client, self.config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+            raise ValueError("API version {} does not have operation group 'operations'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+
+    @property
+    def private_endpoint_connections(self):
+        """Instance depends on the API version:
+
+           * 2019-10-17-preview: :class:`PrivateEndpointConnectionsOperations<azure.mgmt.monitor.v2019_10_17.operations.PrivateEndpointConnectionsOperations>`
+        """
+        api_version = self._get_api_version('private_endpoint_connections')
+        if api_version == '2019-10-17-preview':
+            from .v2019_10_17.operations import PrivateEndpointConnectionsOperations as OperationClass
+        else:
+            raise ValueError("API version {} does not have operation group 'private_endpoint_connections'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+
+    @property
+    def private_link_resources(self):
+        """Instance depends on the API version:
+
+           * 2019-10-17-preview: :class:`PrivateLinkResourcesOperations<azure.mgmt.monitor.v2019_10_17.operations.PrivateLinkResourcesOperations>`
+        """
+        api_version = self._get_api_version('private_link_resources')
+        if api_version == '2019-10-17-preview':
+            from .v2019_10_17.operations import PrivateLinkResourcesOperations as OperationClass
+        else:
+            raise ValueError("API version {} does not have operation group 'private_link_resources'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+
+    @property
+    def private_link_scope_operation_status(self):
+        """Instance depends on the API version:
+
+           * 2019-10-17-preview: :class:`PrivateLinkScopeOperationStatusOperations<azure.mgmt.monitor.v2019_10_17.operations.PrivateLinkScopeOperationStatusOperations>`
+        """
+        api_version = self._get_api_version('private_link_scope_operation_status')
+        if api_version == '2019-10-17-preview':
+            from .v2019_10_17.operations import PrivateLinkScopeOperationStatusOperations as OperationClass
+        else:
+            raise ValueError("API version {} does not have operation group 'private_link_scope_operation_status'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+
+    @property
+    def private_link_scoped_resources(self):
+        """Instance depends on the API version:
+
+           * 2019-10-17-preview: :class:`PrivateLinkScopedResourcesOperations<azure.mgmt.monitor.v2019_10_17.operations.PrivateLinkScopedResourcesOperations>`
+        """
+        api_version = self._get_api_version('private_link_scoped_resources')
+        if api_version == '2019-10-17-preview':
+            from .v2019_10_17.operations import PrivateLinkScopedResourcesOperations as OperationClass
+        else:
+            raise ValueError("API version {} does not have operation group 'private_link_scoped_resources'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+
+    @property
+    def private_link_scopes(self):
+        """Instance depends on the API version:
+
+           * 2019-10-17-preview: :class:`PrivateLinkScopesOperations<azure.mgmt.monitor.v2019_10_17.operations.PrivateLinkScopesOperations>`
+        """
+        api_version = self._get_api_version('private_link_scopes')
+        if api_version == '2019-10-17-preview':
+            from .v2019_10_17.operations import PrivateLinkScopesOperations as OperationClass
+        else:
+            raise ValueError("API version {} does not have operation group 'private_link_scopes'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
 
     @property
     def scheduled_query_rules(self):
         """Instance depends on the API version:
 
            * 2018-04-16: :class:`ScheduledQueryRulesOperations<azure.mgmt.monitor.v2018_04_16.operations.ScheduledQueryRulesOperations>`
+           * 2020-05-01-preview: :class:`ScheduledQueryRulesOperations<azure.mgmt.monitor.v2020_05_01_preview.operations.ScheduledQueryRulesOperations>`
         """
         api_version = self._get_api_version('scheduled_query_rules')
         if api_version == '2018-04-16':
             from .v2018_04_16.operations import ScheduledQueryRulesOperations as OperationClass
+        elif api_version == '2020-05-01-preview':
+            from .v2020_05_01_preview.operations import ScheduledQueryRulesOperations as OperationClass
         else:
-            raise NotImplementedError("APIVersion {} is not available".format(api_version))
-        return OperationClass(self._client, self.config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+            raise ValueError("API version {} does not have operation group 'scheduled_query_rules'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
 
     @property
     def service_diagnostic_settings(self):
@@ -496,8 +630,21 @@ class MonitorManagementClient(MultiApiClientMixin, SDKClient):
         elif api_version == '2016-09-01':
             from .v2016_09_01.operations import ServiceDiagnosticSettingsOperations as OperationClass
         else:
-            raise NotImplementedError("APIVersion {} is not available".format(api_version))
-        return OperationClass(self._client, self.config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+            raise ValueError("API version {} does not have operation group 'service_diagnostic_settings'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+
+    @property
+    def subscription_diagnostic_settings(self):
+        """Instance depends on the API version:
+
+           * 2017-05-01-preview: :class:`SubscriptionDiagnosticSettingsOperations<azure.mgmt.monitor.v2017_05_01_preview.operations.SubscriptionDiagnosticSettingsOperations>`
+        """
+        api_version = self._get_api_version('subscription_diagnostic_settings')
+        if api_version == '2017-05-01-preview':
+            from .v2017_05_01_preview.operations import SubscriptionDiagnosticSettingsOperations as OperationClass
+        else:
+            raise ValueError("API version {} does not have operation group 'subscription_diagnostic_settings'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
 
     @property
     def tenant_activity_logs(self):
@@ -509,8 +656,8 @@ class MonitorManagementClient(MultiApiClientMixin, SDKClient):
         if api_version == '2015-04-01':
             from .v2015_04_01.operations import TenantActivityLogsOperations as OperationClass
         else:
-            raise NotImplementedError("APIVersion {} is not available".format(api_version))
-        return OperationClass(self._client, self.config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+            raise ValueError("API version {} does not have operation group 'tenant_activity_logs'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
 
     @property
     def vm_insights(self):
@@ -522,5 +669,13 @@ class MonitorManagementClient(MultiApiClientMixin, SDKClient):
         if api_version == '2018-11-27-preview':
             from .v2018_11_27_preview.operations import VMInsightsOperations as OperationClass
         else:
-            raise NotImplementedError("APIVersion {} is not available".format(api_version))
-        return OperationClass(self._client, self.config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+            raise ValueError("API version {} does not have operation group 'vm_insights'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+
+    def close(self):
+        self._client.close()
+    def __enter__(self):
+        self._client.__enter__()
+        return self
+    def __exit__(self, *exc_details):
+        self._client.__exit__(*exc_details)

@@ -249,6 +249,7 @@ class ContainerProxy(object):
 
         :param partition_key_range_id: ChangeFeed requests can be executed against specific partition key ranges.
             This is used to process the change feed in parallel across multiple consumers.
+        :param partition_key: partition key at which ChangeFeed requests are targetted.
         :param is_start_from_beginning: Get whether change feed should start from
             beginning (true) or from current (false). By default it's start from current (false).
         :param continuation: e_tag value to be used as continuation for reading change feed.
@@ -261,6 +262,9 @@ class ContainerProxy(object):
         response_hook = kwargs.pop('response_hook', None)
         if partition_key_range_id is not None:
             feed_options["partitionKeyRangeId"] = partition_key_range_id
+        partition_key = kwargs.pop("partitionKey", None)
+        if partition_key is not None:
+            feed_options["partitionKey"] = partition_key
         if is_start_from_beginning is not None:
             feed_options["isStartFromBeginning"] = is_start_from_beginning
         if max_item_count is not None:
@@ -282,7 +286,7 @@ class ContainerProxy(object):
     def query_items(
         self,
         query,  # type: str
-        parameters=None,  # type: Optional[List[str]]
+        parameters=None,  # type: Optional[List[Dict[str, object]]]
         partition_key=None,  # type: Optional[Any]
         enable_cross_partition_query=None,  # type: Optional[bool]
         max_item_count=None,  # type: Optional[int]
@@ -299,7 +303,9 @@ class ContainerProxy(object):
         the WHERE clause.
 
         :param query: The Azure Cosmos DB SQL query to execute.
-        :param parameters: Optional array of parameters to the query. Ignored if no query is provided.
+        :param parameters: Optional array of parameters to the query.
+            Each parameter is a dict() with 'name' and 'value' keys.
+            Ignored if no query is provided.
         :param partition_key: Specifies the partition key value for the item.
         :param enable_cross_partition_query: Allows sending of more than one request to
             execute the query in the Azure Cosmos DB service.
@@ -449,7 +455,11 @@ class ContainerProxy(object):
             request_options["postTriggerInclude"] = post_trigger_include
 
         result = self.client_connection.UpsertItem(
-            database_or_container_link=self.container_link, document=body, **kwargs)
+            database_or_container_link=self.container_link,
+            document=body,
+            options=request_options,
+            **kwargs
+        )
         if response_hook:
             response_hook(self.client_connection.last_response_headers, result)
         return result
@@ -475,6 +485,7 @@ class ContainerProxy(object):
         :param pre_trigger_include: trigger id to be used as pre operation trigger.
         :param post_trigger_include: trigger id to be used as post operation trigger.
         :param indexing_directive: Indicate whether the document should be omitted from indexing.
+        :keyword bool enable_automatic_id_generation: Enable automatic id generation if no id present.
         :keyword str session_token: Token for use with Session consistency.
         :keyword dict[str,str] initial_headers: Initial headers to be sent as part of the request.
         :keyword str etag: An ETag value, or the wildcard character (*). Used to check if the resource
@@ -488,7 +499,7 @@ class ContainerProxy(object):
         request_options = build_options(kwargs)
         response_hook = kwargs.pop('response_hook', None)
 
-        request_options["disableAutomaticIdGeneration"] = True
+        request_options["disableAutomaticIdGeneration"] = not kwargs.pop('enable_automatic_id_generation', False)
         if populate_query_metrics:
             request_options["populateQueryMetrics"] = populate_query_metrics
         if pre_trigger_include is not None:

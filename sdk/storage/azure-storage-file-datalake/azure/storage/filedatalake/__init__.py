@@ -4,6 +4,7 @@
 # license information.
 # --------------------------------------------------------------------------
 
+from ._download import StorageStreamDownloader
 from ._data_lake_file_client import DataLakeFileClient
 from ._data_lake_directory_client import DataLakeDirectoryClient
 from ._file_system_client import FileSystemClient
@@ -15,8 +16,8 @@ from ._models import (
     FileSystemProperties,
     FileSystemPropertiesPaged,
     DirectoryProperties,
+    FileProperties,
     PathProperties,
-    PathPropertiesPaged,
     LeaseProperties,
     ContentSettings,
     AccountSasPermissions,
@@ -24,8 +25,19 @@ from ._models import (
     DirectorySasPermissions,
     FileSasPermissions,
     UserDelegationKey,
-    PublicAccess
+    PublicAccess,
+    AccessPolicy,
+    DelimitedTextDialect,
+    DelimitedJsonDialect,
+    ArrowDialect,
+    ArrowType,
+    DataLakeFileQueryError,
+    AccessControlChangeResult,
+    AccessControlChangeCounters,
+    AccessControlChangeFailure,
+    AccessControlChanges,
 )
+
 from ._shared_access_signature import generate_account_sas, generate_file_system_sas, generate_directory_sas, \
     generate_file_sas
 
@@ -45,16 +57,21 @@ __all__ = [
     'LinearRetry',
     'LocationMode',
     'PublicAccess',
+    'AccessPolicy',
     'ResourceTypes',
     'StorageErrorCode',
     'UserDelegationKey',
     'FileSystemProperties',
     'FileSystemPropertiesPaged',
     'DirectoryProperties',
+    'FileProperties',
     'PathProperties',
-    'PathPropertiesPaged',
     'LeaseProperties',
     'ContentSettings',
+    'AccessControlChangeResult',
+    'AccessControlChangeCounters',
+    'AccessControlChangeFailure',
+    'AccessControlChanges',
     'AccountSasPermissions',
     'FileSystemSasPermissions',
     'DirectorySasPermissions',
@@ -64,4 +81,11 @@ __all__ = [
     'generate_directory_sas',
     'generate_file_sas',
     'VERSION',
+    'StorageStreamDownloader',
+    'DelimitedTextDialect',
+    'DelimitedJsonDialect',
+    'DataLakeFileQueryError',
+    'ArrowDialect',
+    'ArrowType',
+    'DataLakeFileQueryError'
 ]

@@ -2,17 +2,17 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 # ------------------------------------
-from typing import Any, AsyncIterable, Optional, Dict
+from typing import Any, Optional, Dict
 from functools import partial
 
 from azure.core.tracing.decorator import distributed_trace
 from azure.core.tracing.decorator_async import distributed_trace_async
-from azure.core.polling import async_poller
+from azure.core.async_paging import AsyncItemPaged
 
 from .._models import KeyVaultSecret, DeletedSecret, SecretProperties
 from .._shared import AsyncKeyVaultClientBase
 from .._shared.exceptions import error_map as _error_map
-from .._shared._polling_async import DeleteAsyncPollingMethod, RecoverDeletedAsyncPollingMethod
+from .._shared._polling_async import AsyncDeleteRecoverPollingMethod
 
 
 class SecretClient(AsyncKeyVaultClientBase):
@@ -21,7 +21,8 @@ class SecretClient(AsyncKeyVaultClientBase):
     :param str vault_url: URL of the vault the client will access
     :param credential: An object which can provide an access token for the vault, such as a credential from
         :mod:`azure.identity.aio`
-    :keyword str api_version: version of the Key Vault API to use. Defaults to the most recent.
+    :keyword api_version: version of the Key Vault API to use. Defaults to the most recent.
+    :paramtype api_version: ~azure.keyvault.secrets.ApiVersion
     :keyword transport: transport to use. Defaults to
      :class:`~azure.core.pipeline.transport.AioHttpTransport`.
     :paramtype transport: ~azure.core.pipeline.transport.AsyncHttpTransport
@@ -87,14 +88,25 @@ class SecretClient(AsyncKeyVaultClientBase):
         enabled = kwargs.pop("enabled", None)
         not_before = kwargs.pop("not_before", None)
         expires_on = kwargs.pop("expires_on", None)
+        content_type = kwargs.pop("content_type", None)
         if enabled is not None or not_before is not None or expires_on is not None:
-            attributes = self._client.models.SecretAttributes(
-                enabled=enabled, not_before=not_before, expires=expires_on
-            )
+            attributes = self._models.SecretAttributes(enabled=enabled, not_before=not_before, expires=expires_on)
         else:
             attributes = None
+
+        parameters = self._models.SecretSetParameters(
+            value=value,
+            tags=kwargs.pop("tags", None),
+            content_type=content_type,
+            secret_attributes=attributes
+        )
+
         bundle = await self._client.set_secret(
-            self.vault_url, name, value, secret_attributes=attributes, error_map=_error_map, **kwargs
+            self.vault_url,
+            name,
+            parameters=parameters,
+            error_map=_error_map,
+            **kwargs
         )
         return KeyVaultSecret._from_secret_bundle(bundle)
 
@@ -131,24 +143,30 @@ class SecretClient(AsyncKeyVaultClientBase):
         enabled = kwargs.pop("enabled", None)
         not_before = kwargs.pop("not_before", None)
         expires_on = kwargs.pop("expires_on", None)
+        content_type = kwargs.pop("content_type", None)
         if enabled is not None or not_before is not None or expires_on is not None:
-            attributes = self._client.models.SecretAttributes(
-                enabled=enabled, not_before=not_before, expires=expires_on
-            )
+            attributes = self._models.SecretAttributes(enabled=enabled, not_before=not_before, expires=expires_on)
         else:
             attributes = None
+
+        parameters = self._models.SecretUpdateParameters(
+            content_type=content_type,
+            secret_attributes=attributes,
+            tags=kwargs.pop("tags", None)
+        )
+
         bundle = await self._client.update_secret(
             self.vault_url,
             name,
             secret_version=version or "",
-            secret_attributes=attributes,
+            parameters=parameters,
             error_map=_error_map,
             **kwargs
         )
         return SecretProperties._from_secret_bundle(bundle)  # pylint: disable=protected-access
 
     @distributed_trace
-    def list_properties_of_secrets(self, **kwargs: "Any") -> AsyncIterable[SecretProperties]:
+    def list_properties_of_secrets(self, **kwargs: "Any") -> AsyncItemPaged[SecretProperties]:
         """List identifiers and attributes of all secrets in the vault. Requires secrets/list permission.
 
         List items don't include secret values. Use :func:`get_secret` to get a secret's value.
@@ -172,7 +190,7 @@ class SecretClient(AsyncKeyVaultClientBase):
         )
 
     @distributed_trace
-    def list_properties_of_secret_versions(self, name: str, **kwargs: "Any") -> AsyncIterable[SecretProperties]:
+    def list_properties_of_secret_versions(self, name: str, **kwargs: "Any") -> AsyncItemPaged[SecretProperties]:
         """List properties of all versions of a secret, excluding their values. Requires secrets/list permission.
 
         List items don't include secret values. Use :func:`get_secret` to get a secret's value.
@@ -207,7 +225,7 @@ class SecretClient(AsyncKeyVaultClientBase):
             :class:`~azure.core.exceptions.ResourceNotFoundError` if the secret doesn't exist,
             :class:`~azure.core.exceptions.HttpResponseError` for other errors
 
-         Example:
+        Example:
             .. literalinclude:: ../tests/test_samples_secrets_async.py
                 :start-after: [START backup_secret]
                 :end-before: [END backup_secret]
@@ -237,7 +255,12 @@ class SecretClient(AsyncKeyVaultClientBase):
                 :caption: Restore a backed up secret
                 :dedent: 8
         """
-        bundle = await self._client.restore_secret(self.vault_url, backup, error_map=_error_map, **kwargs)
+        bundle = await self._client.restore_secret(
+            self.vault_url,
+            parameters=self._models.SecretRestoreParameters(secret_bundle_backup=backup),
+            error_map=_error_map,
+            **kwargs
+        )
         return SecretProperties._from_secret_bundle(bundle)
 
     @distributed_trace_async
@@ -265,13 +288,17 @@ class SecretClient(AsyncKeyVaultClientBase):
         deleted_secret = DeletedSecret._from_deleted_secret_bundle(
             await self._client.delete_secret(self.vault_url, name, error_map=_error_map, **kwargs)
         )
-        sd_disabled = deleted_secret.recovery_id is None
-        command = partial(self.get_deleted_secret, name=name, **kwargs)
 
-        delete_secret_poller = DeleteAsyncPollingMethod(
-            initial_status="deleting", finished_status="deleted", sd_disabled=sd_disabled, interval=polling_interval
+        polling_method = AsyncDeleteRecoverPollingMethod(
+            # no recovery ID means soft-delete is disabled, in which case we initialize the poller as finished
+            command=partial(self.get_deleted_secret, name=name, **kwargs),
+            final_resource=deleted_secret,
+            finished=deleted_secret.recovery_id is None,
+            interval=polling_interval,
         )
-        return await async_poller(command, deleted_secret, None, delete_secret_poller)
+        await polling_method.run()
+
+        return polling_method.resource()
 
     @distributed_trace_async
     async def get_deleted_secret(self, name: str, **kwargs: "Any") -> DeletedSecret:
@@ -295,7 +322,7 @@ class SecretClient(AsyncKeyVaultClientBase):
         return DeletedSecret._from_deleted_secret_bundle(bundle)
 
     @distributed_trace
-    def list_deleted_secrets(self, **kwargs: "Any") -> AsyncIterable[DeletedSecret]:
+    def list_deleted_secrets(self, **kwargs: "Any") -> AsyncItemPaged[DeletedSecret]:
         """Lists all deleted secrets. Possible only in vaults with soft-delete enabled.
 
         Requires secrets/list permission.
@@ -371,9 +398,11 @@ class SecretClient(AsyncKeyVaultClientBase):
         recovered_secret = SecretProperties._from_secret_bundle(
             await self._client.recover_deleted_secret(self.vault_url, name, error_map=_error_map, **kwargs)
         )
-        command = partial(self.get_secret, name=name, **kwargs)
 
-        recover_secret_poller = RecoverDeletedAsyncPollingMethod(
-            initial_status="recovering", finished_status="recovered", interval=polling_interval
+        command = partial(self.get_secret, name=name, **kwargs)
+        polling_method = AsyncDeleteRecoverPollingMethod(
+            command=command, final_resource=recovered_secret, finished=False, interval=polling_interval
         )
-        return await async_poller(command, recovered_secret, None, recover_secret_poller)
+        await polling_method.run()
+
+        return polling_method.resource()

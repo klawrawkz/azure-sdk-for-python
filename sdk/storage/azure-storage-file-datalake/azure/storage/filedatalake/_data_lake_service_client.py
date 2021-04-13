@@ -3,6 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for
 # license information.
 # --------------------------------------------------------------------------
+from typing import Any
 
 try:
     from urllib.parse import urlparse
@@ -10,13 +11,14 @@ except ImportError:
     from urlparse import urlparse  # type: ignore
 
 from azure.core.paging import ItemPaged
+from azure.core.pipeline import Pipeline
 
 from azure.storage.blob import BlobServiceClient
-from ._shared.base_client import StorageAccountHostsMixin, parse_query, parse_connection_str
+from ._shared.base_client import TransportWrapper, StorageAccountHostsMixin, parse_query, parse_connection_str
 from ._file_system_client import FileSystemClient
 from ._data_lake_directory_client import DataLakeDirectoryClient
 from ._data_lake_file_client import DataLakeFileClient
-from ._models import UserDelegationKey, FileSystemPropertiesPaged
+from ._models import UserDelegationKey, FileSystemPropertiesPaged, LocationMode
 from ._serialize import convert_dfs_url_to_blob_url
 
 
@@ -29,8 +31,7 @@ class DataLakeServiceClient(StorageAccountHostsMixin):
     can also be retrieved using the `get_client` functions.
 
     :ivar str url:
-        The full endpoint URL to the datalake service endpoint. This could be either the
-        primary endpoint, or the secondary endpoint depending on the current `location_mode`.
+        The full endpoint URL to the datalake service endpoint.
     :ivar str primary_endpoint:
         The full primary endpoint URL.
     :ivar str primary_hostname:
@@ -41,20 +42,22 @@ class DataLakeServiceClient(StorageAccountHostsMixin):
         authenticated with a SAS token.
     :param credential:
         The credentials with which to authenticate. This is optional if the
-        account URL already has a SAS token. The value can be a SAS token string, and account
+        account URL already has a SAS token. The value can be a SAS token string,
+        an instance of a AzureSasCredential from azure.core.credentials, an account
         shared access key, or an instance of a TokenCredentials class from azure.identity.
-        If the URL already has a SAS token, specifying an explicit credential will take priority.
+        If the resource URI already contains a SAS token, this will be ignored in favor of an explicit credential
+        - except in the case of AzureSasCredential, where the conflicting SAS tokens will raise a ValueError.
 
     .. admonition:: Example:
 
-        .. literalinclude:: ../samples/test_datalake_authentication_samples.py
+        .. literalinclude:: ../samples/datalake_samples_service.py
             :start-after: [START create_datalake_service_client]
             :end-before: [END create_datalake_service_client]
             :language: python
             :dedent: 8
-            :caption: Creating the DataLakeServiceClient with account url and credential.
+            :caption: Creating the DataLakeServiceClient from connection string.
 
-        .. literalinclude:: ../samples/test_datalake_authentication_samples.py
+        .. literalinclude:: ../samples/datalake_samples_service.py
             :start-after: [START create_datalake_service_client_oauth]
             :end-before: [END create_datalake_service_client_oauth]
             :language: python
@@ -80,16 +83,32 @@ class DataLakeServiceClient(StorageAccountHostsMixin):
         blob_account_url = convert_dfs_url_to_blob_url(account_url)
         self._blob_account_url = blob_account_url
         self._blob_service_client = BlobServiceClient(blob_account_url, credential, **kwargs)
+        self._blob_service_client._hosts[LocationMode.SECONDARY] = ""  #pylint: disable=protected-access
 
         _, sas_token = parse_query(parsed_url.query)
         self._query_str, self._raw_credential = self._format_query_string(sas_token, credential)
 
         super(DataLakeServiceClient, self).__init__(parsed_url, service='dfs',
                                                     credential=self._raw_credential, **kwargs)
+        # ADLS doesn't support secondary endpoint, make sure it's empty
+        self._hosts[LocationMode.SECONDARY] = ""
+
+    def __enter__(self):
+        self._blob_service_client.__enter__()
+        return self
+
+    def __exit__(self, *args):
+        self._blob_service_client.close()
+
+    def close(self):
+        # type: () -> None
+        """ This method is to close the sockets opened by the client.
+        It need not be used when using with a context manager.
+        """
+        self._blob_service_client.close()
 
     def _format_url(self, hostname):
-        """Format the endpoint URL according to the current location
-        mode hostname.
+        """Format the endpoint URL according to hostname
         """
         formated_url = "{}://{}/{}".format(self.scheme, hostname, self._query_str)
         return formated_url
@@ -108,15 +127,23 @@ class DataLakeServiceClient(StorageAccountHostsMixin):
         :param credential:
             The credentials with which to authenticate. This is optional if the
             account URL already has a SAS token, or the connection string already has shared
-            access key values. The value can be a SAS token string, and account shared access
+            access key values. The value can be a SAS token string,
+            an instance of a AzureSasCredential from azure.core.credentials, an account shared access
             key, or an instance of a TokenCredentials class from azure.identity.
             Credentials provided here will take precedence over those in the connection string.
         :return a DataLakeServiceClient
         :rtype ~azure.storage.filedatalake.DataLakeServiceClient
+
+        .. admonition:: Example:
+
+            .. literalinclude:: ../samples/datalake_samples_file_system.py
+                :start-after: [START create_data_lake_service_client_from_conn_str]
+                :end-before: [END create_data_lake_service_client_from_conn_str]
+                :language: python
+                :dedent: 8
+                :caption: Creating the DataLakeServiceClient from a connection string.
         """
-        account_url, secondary, credential = parse_connection_str(conn_str, credential, 'dfs')
-        if 'secondary_hostname' not in kwargs:
-            kwargs['secondary_hostname'] = secondary
+        account_url, _, credential = parse_connection_str(conn_str, credential, 'dfs')
         return cls(account_url, credential=credential, **kwargs)
 
     def get_user_delegation_key(self, key_start_time,  # type: datetime
@@ -136,12 +163,20 @@ class DataLakeServiceClient(StorageAccountHostsMixin):
             The timeout parameter is expressed in seconds.
         :return: The user delegation key.
         :rtype: ~azure.storage.filedatalake.UserDelegationKey
+
+        .. admonition:: Example:
+
+            .. literalinclude:: ../samples/datalake_samples_service.py
+                :start-after: [START get_user_delegation_key]
+                :end-before: [END get_user_delegation_key]
+                :language: python
+                :dedent: 8
+                :caption: Get user delegation key from datalake service client.
         """
         delegation_key = self._blob_service_client.get_user_delegation_key(key_start_time=key_start_time,
                                                                            key_expiry_time=key_expiry_time,
                                                                            **kwargs)  # pylint: disable=protected-access
-        delegation_key._class_ = UserDelegationKey  # pylint: disable=protected-access
-        return delegation_key
+        return UserDelegationKey._from_generated(delegation_key)  # pylint: disable=protected-access
 
     def list_file_systems(self, name_starts_with=None,  # type: Optional[str]
                           include_metadata=None,  # type: Optional[bool]
@@ -163,16 +198,20 @@ class DataLakeServiceClient(StorageAccountHostsMixin):
             call. If the request does not specify the server will return up to 5,000 items per page.
         :keyword int timeout:
             The timeout parameter is expressed in seconds.
+        :keyword bool include_deleted:
+            Specifies that deleted file systems to be returned in the response. This is for file system restore enabled
+            account. The default value is `False`.
+            .. versionadded:: 12.3.0
         :returns: An iterable (auto-paging) of FileSystemProperties.
         :rtype: ~azure.core.paging.ItemPaged[~azure.storage.filedatalake.FileSystemProperties]
 
         .. admonition:: Example:
 
-            .. literalinclude:: ../samples/test_datalake_service_samples.py
-                :start-after: [START dsc_list_file_systems]
-                :end-before: [END dsc_list_file_systems]
+            .. literalinclude:: ../samples/datalake_samples_service.py
+                :start-after: [START list_file_systems]
+                :end-before: [END list_file_systems]
                 :language: python
-                :dedent: 12
+                :dedent: 8
                 :caption: Listing the file systems in the datalake service.
         """
         item_paged = self._blob_service_client.list_containers(name_starts_with=name_starts_with,
@@ -192,7 +231,8 @@ class DataLakeServiceClient(StorageAccountHostsMixin):
         be raised. This method returns a client with which to interact with the newly
         created file system.
 
-        :param str file_system: The name of the file system to create.
+        :param str file_system:
+            The name of the file system to create.
         :param metadata:
             A dict with name-value pairs to associate with the
             file system as metadata. Example: `{'Category':'test'}`
@@ -206,16 +246,65 @@ class DataLakeServiceClient(StorageAccountHostsMixin):
 
         .. admonition:: Example:
 
-            .. literalinclude:: ../samples/test_datalake_service_samples.py
-                :start-after: [START dsc_create_file_system]
-                :end-before: [END dsc_create_file_system]
+            .. literalinclude:: ../samples/datalake_samples_service.py
+                :start-after: [START create_file_system_from_service_client]
+                :end-before: [END create_file_system_from_service_client]
                 :language: python
-                :dedent: 12
+                :dedent: 8
                 :caption: Creating a file system in the datalake service.
         """
         file_system_client = self.get_file_system_client(file_system)
         file_system_client.create_file_system(metadata=metadata, public_access=public_access, **kwargs)
         return file_system_client
+
+    def _rename_file_system(self, name, new_name, **kwargs):
+        # type: (str, str, **Any) -> FileSystemClient
+        """Renames a filesystem.
+
+        Operation is successful only if the source filesystem exists.
+
+        :param str name:
+            The name of the filesystem to rename.
+        :param str new_name:
+            The new filesystem name the user wants to rename to.
+        :keyword lease:
+            Specify this to perform only if the lease ID given
+            matches the active lease ID of the source filesystem.
+        :paramtype lease: ~azure.storage.filedatalake.DataLakeLeaseClient or str
+        :keyword int timeout:
+            The timeout parameter is expressed in seconds.
+        :rtype: ~azure.storage.filedatalake.FileSystemClient
+        """
+        self._blob_service_client._rename_container(name, new_name, **kwargs)   # pylint: disable=protected-access
+        renamed_file_system = self.get_file_system_client(new_name)
+        return renamed_file_system
+
+    def undelete_file_system(self, name, deleted_version, **kwargs):
+        # type: (str, str, **Any) -> FileSystemClient
+        """Restores soft-deleted filesystem.
+
+        Operation will only be successful if used within the specified number of days
+        set in the delete retention policy.
+
+        .. versionadded:: 12.3.0
+            This operation was introduced in API version '2019-12-12'.
+
+        :param str name:
+            Specifies the name of the deleted filesystem to restore.
+        :param str deleted_version:
+            Specifies the version of the deleted filesystem to restore.
+        :keyword str new_name:
+            The new name for the deleted filesystem to be restored to.
+            If not specified "name" will be used as the restored filesystem name.
+        :keyword int timeout:
+            The timeout parameter is expressed in seconds.
+        :rtype: ~azure.storage.filedatalake.FileSystemClient
+        """
+        new_name = kwargs.pop('new_name', None)
+        file_system = self.get_file_system_client(new_name or name)
+        self._blob_service_client.undelete_container(
+            name, deleted_version, new_name=new_name, **kwargs)  # pylint: disable=protected-access
+        return file_system
 
     def delete_file_system(self, file_system,  # type: Union[FileSystemProperties, str]
                            **kwargs):
@@ -229,10 +318,11 @@ class DataLakeServiceClient(StorageAccountHostsMixin):
             The file system to delete. This can either be the name of the file system,
             or an instance of FileSystemProperties.
         :type file_system: str or ~azure.storage.filedatalake.FileSystemProperties
-        :keyword ~azure.storage.filedatalake.DataLakeLeaseClient lease:
+        :keyword lease:
             If specified, delete_file_system only succeeds if the
             file system's lease is active and matches this ID.
             Required if the file system has an active lease.
+        :paramtype lease: ~azure.storage.filedatalake.DataLakeLeaseClient or str
         :keyword ~datetime.datetime if_modified_since:
             A DateTime value. Azure expects the date value passed in to be UTC.
             If timezone is included, any non-UTC datetimes will be converted to UTC.
@@ -256,11 +346,11 @@ class DataLakeServiceClient(StorageAccountHostsMixin):
 
         .. admonition:: Example:
 
-            .. literalinclude:: ../samples/test_datalake_service_samples.py
-                :start-after: [START bsc_delete_file_system]
-                :end-before: [END bsc_delete_file_system]
+            .. literalinclude:: ../samples/datalake_samples_service.py
+                :start-after: [START delete_file_system_from_service_client]
+                :end-before: [END delete_file_system_from_service_client]
                 :language: python
-                :dedent: 12
+                :dedent: 8
                 :caption: Deleting a file system in the datalake service.
         """
         file_system_client = self.get_file_system_client(file_system)
@@ -283,15 +373,25 @@ class DataLakeServiceClient(StorageAccountHostsMixin):
 
         .. admonition:: Example:
 
-            .. literalinclude:: ../samples/test_datalake_service_samples.py
-                :start-after: [START bsc_get_file_system_client]
-                :end-before: [END bsc_get_file_system_client]
+            .. literalinclude:: ../samples/datalake_samples_file_system.py
+                :start-after: [START create_file_system_client_from_service]
+                :end-before: [END create_file_system_client_from_service]
                 :language: python
                 :dedent: 8
                 :caption: Getting the file system client to interact with a specific file system.
         """
-        return FileSystemClient(self.url, file_system, credential=self._raw_credential, _configuration=self._config,
-                                _pipeline=self._pipeline, _location_mode=self._location_mode, _hosts=self._hosts,
+        try:
+            file_system_name = file_system.name
+        except AttributeError:
+            file_system_name = file_system
+
+        _pipeline = Pipeline(
+            transport=TransportWrapper(self._pipeline._transport), # pylint: disable = protected-access
+            policies=self._pipeline._impl_policies # pylint: disable = protected-access
+        )
+        return FileSystemClient(self.url, file_system_name, credential=self._raw_credential,
+                                _configuration=self._config,
+                                _pipeline=_pipeline, _hosts=self._hosts,
                                 require_encryption=self.require_encryption, key_encryption_key=self.key_encryption_key,
                                 key_resolver_function=self.key_resolver_function)
 
@@ -316,17 +416,30 @@ class DataLakeServiceClient(StorageAccountHostsMixin):
 
         .. admonition:: Example:
 
-            .. literalinclude:: ../samples/test_datalake_service_samples.py
-                :start-after: [START bsc_get_directory_client]
-                :end-before: [END bsc_get_directory_client]
+            .. literalinclude:: ../samples/datalake_samples_service.py
+                :start-after: [START get_directory_client_from_service_client]
+                :end-before: [END get_directory_client_from_service_client]
                 :language: python
-                :dedent: 12
+                :dedent: 8
                 :caption: Getting the directory client to interact with a specific directory.
         """
-        return DataLakeDirectoryClient(self.url, file_system, directory_name=directory,
+        try:
+            file_system_name = file_system.name
+        except AttributeError:
+            file_system_name = file_system
+        try:
+            directory_name = directory.name
+        except AttributeError:
+            directory_name = directory
+
+        _pipeline = Pipeline(
+            transport=TransportWrapper(self._pipeline._transport), # pylint: disable = protected-access
+            policies=self._pipeline._impl_policies # pylint: disable = protected-access
+        )
+        return DataLakeDirectoryClient(self.url, file_system_name, directory_name=directory_name,
                                        credential=self._raw_credential,
-                                       _configuration=self._config, _pipeline=self._pipeline,
-                                       _location_mode=self._location_mode, _hosts=self._hosts,
+                                       _configuration=self._config, _pipeline=_pipeline,
+                                       _hosts=self._hosts,
                                        require_encryption=self.require_encryption,
                                        key_encryption_key=self.key_encryption_key,
                                        key_resolver_function=self.key_resolver_function
@@ -353,21 +466,29 @@ class DataLakeServiceClient(StorageAccountHostsMixin):
 
         .. admonition:: Example:
 
-            .. literalinclude:: ../samples/test_datalake_service_samples.py
-                :start-after: [START bsc_get_file_client]
-                :end-before: [END bsc_get_file_client]
+            .. literalinclude:: ../samples/datalake_samples_service.py
+                :start-after: [START get_file_client_from_service_client]
+                :end-before: [END get_file_client_from_service_client]
                 :language: python
-                :dedent: 12
+                :dedent: 8
                 :caption: Getting the file client to interact with a specific file.
         """
+        try:
+            file_system_name = file_system.name
+        except AttributeError:
+            file_system_name = file_system
         try:
             file_path = file_path.name
         except AttributeError:
             pass
 
+        _pipeline = Pipeline(
+            transport=TransportWrapper(self._pipeline._transport), # pylint: disable = protected-access
+            policies=self._pipeline._impl_policies # pylint: disable = protected-access
+        )
         return DataLakeFileClient(
-            self.url, file_system, file_path=file_path, credential=self._raw_credential,
-            _hosts=self._hosts, _configuration=self._config, _pipeline=self._pipeline,
-            _location_mode=self._location_mode, require_encryption=self.require_encryption,
+            self.url, file_system_name, file_path=file_path, credential=self._raw_credential,
+            _hosts=self._hosts, _configuration=self._config, _pipeline=_pipeline,
+            require_encryption=self.require_encryption,
             key_encryption_key=self.key_encryption_key,
             key_resolver_function=self.key_resolver_function)

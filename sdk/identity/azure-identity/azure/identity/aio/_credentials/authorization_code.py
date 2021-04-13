@@ -2,12 +2,11 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 # ------------------------------------
-import asyncio
 from typing import TYPE_CHECKING
 
 from azure.core.exceptions import ClientAuthenticationError
-from .base import AsyncCredentialBase
-from .._internal import AadClient
+from .._internal import AadClient, AsyncContextManager
+from .._internal.get_token_mixin import GetTokenMixin
 
 if TYPE_CHECKING:
     # pylint:disable=unused-import,ungrouped-imports
@@ -15,10 +14,10 @@ if TYPE_CHECKING:
     from azure.core.credentials import AccessToken
 
 
-class AuthorizationCodeCredential(AsyncCredentialBase):
+class AuthorizationCodeCredential(AsyncContextManager, GetTokenMixin):
     """Authenticates by redeeming an authorization code previously obtained from Azure Active Directory.
 
-    See https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow for more information
+    See https://docs.microsoft.com/azure/active-directory/develop/v2-oauth2-auth-code-flow for more information
     about the authentication flow.
 
     :param str tenant_id: ID of the application's Azure Active Directory tenant. Also called its 'directory' ID.
@@ -27,7 +26,7 @@ class AuthorizationCodeCredential(AsyncCredentialBase):
     :param str redirect_uri: The application's redirect URI. Must match the URI used to request the authorization code.
 
     :keyword str authority: Authority of an Azure Active Directory endpoint, for example 'login.microsoftonline.com',
-          the authority for Azure Public Cloud (which is the default). :class:`~azure.identity.KnownAuthorities`
+          the authority for Azure Public Cloud (which is the default). :class:`~azure.identity.AzureAuthorityHosts`
           defines authorities for other clouds.
     :keyword str client_secret: One of the application's client secrets. Required only for web apps and web APIs.
     """
@@ -51,37 +50,42 @@ class AuthorizationCodeCredential(AsyncCredentialBase):
         self._client_secret = kwargs.pop("client_secret", None)
         self._client = kwargs.pop("client", None) or AadClient(tenant_id, client_id, **kwargs)
         self._redirect_uri = redirect_uri
+        super().__init__()
 
     async def get_token(self, *scopes: str, **kwargs: "Any") -> "AccessToken":
         """Request an access token for `scopes`.
+
+        This method is called automatically by Azure SDK clients.
 
         The first time this method is called, the credential will redeem its authorization code. On subsequent calls
         the credential will return a cached access token or redeem a refresh token, if it acquired a refresh token upon
         redeeming the authorization code.
 
-        .. note:: This method is called by Azure SDK clients. It isn't intended for use in application code.
-
-        :param str scopes: desired scopes for the access token
+        :param str scopes: desired scopes for the access token. This method requires at least one scope.
         :rtype: :class:`azure.core.credentials.AccessToken`
         :raises ~azure.core.exceptions.ClientAuthenticationError: authentication failed. The error's ``message``
           attribute gives a reason. Any error response from Azure Active Directory is available as the error's
           ``response`` attribute.
-        :keyword ~concurrent.futures.Executor executor: An Executor instance used to execute asynchronous calls
-        :keyword loop: An event loop on which to schedule network I/O. If not provided, the currently running
-            loop will be used.
         """
+        return await super().get_token(*scopes, **kwargs)
 
+    async def _acquire_token_silently(self, *scopes: str) -> "Optional[AccessToken]":
+        return self._client.get_cached_access_token(scopes)
+
+    async def _request_token(self, *scopes: str, **kwargs: "Any") -> "AccessToken":
         if self._authorization_code:
-            loop = kwargs.pop("loop", None) or asyncio.get_event_loop()
             token = await self._client.obtain_token_by_authorization_code(
-                code=self._authorization_code, redirect_uri=self._redirect_uri, scopes=scopes, loop=loop, **kwargs
+                scopes=scopes, code=self._authorization_code, redirect_uri=self._redirect_uri, **kwargs
             )
             self._authorization_code = None  # auth codes are single-use
             return token
 
-        token = self._client.get_cached_access_token(scopes)
-        if not token:
-            token = await self._redeem_refresh_token(scopes, **kwargs)
+        token = None
+        for refresh_token in self._client.get_cached_refresh_tokens(scopes):
+            if "secret" in refresh_token:
+                token = await self._client.obtain_token_by_refresh_token(scopes, refresh_token["secret"], **kwargs)
+                if token:
+                    break
 
         if not token:
             raise ClientAuthenticationError(
@@ -89,11 +93,3 @@ class AuthorizationCodeCredential(AsyncCredentialBase):
             )
 
         return token
-
-    async def _redeem_refresh_token(self, scopes: "Iterable[str]", **kwargs: "Any") -> "Optional[AccessToken]":
-        loop = kwargs.pop("loop", None) or asyncio.get_event_loop()
-        for refresh_token in self._client.get_cached_refresh_tokens(scopes):
-            token = await self._client.obtain_token_by_refresh_token(refresh_token, scopes, loop=loop, **kwargs)
-            if token:
-                return token
-        return None

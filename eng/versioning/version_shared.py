@@ -15,6 +15,7 @@ import re
 import logging
 from packaging.version import parse
 
+from datetime import date
 from setup_parser import parse_setup
 
 root_dir = path.abspath(path.join(path.abspath(__file__), "..", "..", ".."))
@@ -23,6 +24,9 @@ sys.path.append(common_task_path)
 from common_tasks import process_glob_string, run_check_call
 
 VERSION_PY = "_version.py"
+# Auto generated code has version maintained in version.py. 
+# We need to handle this old file name until generated code creates _version.py for all packages
+OLD_VERSION_PY = "version.py"
 VERSION_REGEX = r'^VERSION\s*=\s*[\'"]([^\'"]*)[\'"]'
 VERSION_STRING = 'VERSION = "%s"'
 
@@ -56,6 +60,7 @@ def get_packages(args, package_name = ""):
         target_dir = root_dir
 
     paths = get_setup_py_paths(args.glob_string, target_dir)
+
     # Check if package is excluded if a package name param is passed
     if package_name and not any(filter(lambda x: package_name == os.path.basename(os.path.dirname(x)), paths)):
         logging.info("Package {} is excluded from version update tool".format(package_name))
@@ -80,6 +85,8 @@ def get_version_py(setup_py_location):
     for root, _, files in os.walk(azure_root_path):
         if(VERSION_PY in files):
             return path.join(root, VERSION_PY)
+        elif (OLD_VERSION_PY in files):
+            return path.join(root, OLD_VERSION_PY)
 
 def set_version_py(setup_py_location, new_version):
     version_py_location = get_version_py(setup_py_location)
@@ -124,21 +131,26 @@ def set_dev_classifier(setup_py_location, version):
 
         setup_py_file.write(replaced_setup_contents)
 
-def update_change_log(setup_py_location, version, is_unreleased, replace_version):
-    script = os.path.join(root_dir, "eng", "common", "Update-Change-Log.ps1")
+def update_change_log(setup_py_location, version, service, package, is_unreleased, replace_latest_entry_title, release_date=None):
+    script = os.path.join(root_dir, "eng", "common", "scripts", "Update-ChangeLog.ps1")
     pkg_root = os.path.abspath(os.path.join(setup_py_location, ".."))
+    changelog_path = os.path.join(pkg_root, "CHANGELOG.md")
     commands = [
         "pwsh",
         script,
         "--Version",
         version,
-        "--ChangeLogPath",
-        pkg_root,
-        "--Unreleased",
-        str(is_unreleased),
-        "--ReplaceVersion",
-        str(replace_version)
+        "--ServiceDirectory",
+        service,
+        "--PackageName",
+        package,
+        "--Unreleased:${}".format(is_unreleased),
+        "--ReplaceLatestEntryTitle:${}".format(replace_latest_entry_title),
+        "--ChangelogPath:{}".format(changelog_path)
     ]
+    if release_date is not None:
+        commands.append("--ReleaseDate:{}".format(release_date))
+
     # Run script to update change log
     run_check_call(commands, pkg_root)
 

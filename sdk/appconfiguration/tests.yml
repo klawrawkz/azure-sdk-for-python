@@ -1,17 +1,11 @@
 trigger: none
 
-resources:
-  repositories:
-    - repository: azure-sdk-tools
-      type: github
-      name: Azure/azure-sdk-tools
-      endpoint: azure
-
-jobs:
-  - template: ../../eng/pipelines/templates/jobs/archetype-sdk-tests.yml
+stages:
+  - template: ../../eng/pipelines/templates/stages/archetype-sdk-tests.yml
     parameters:
-      BuildTargetingString: $(BuildTargetingString)
+      AllocateResourceGroup: false
       ServiceDirectory: appconfiguration
+      DeployArmTemplate: true
       EnvVars:
         APP_CONFIG_CONNECTION: $(python-appconfiguration-connection-string)
         APP_CONFIG_ENDPOINT: $(python-appconfiguration-endpoint-string)

@@ -12,12 +12,6 @@
 from enum import Enum
 
 
-class KnowledgebaseEnvironmentType(str, Enum):
-
-    prod = "Prod"
-    test = "Test"
-
-
 class ErrorCodeType(str, Enum):
 
     bad_argument = "BadArgument"
@@ -42,6 +36,12 @@ class OperationStateType(str, Enum):
     not_started = "NotStarted"
     running = "Running"
     succeeded = "Succeeded"
+
+
+class StrictFiltersCompoundOperationType(str, Enum):
+
+    and_enum = "AND"
+    or_enum = "OR"
 
 
 class EnvironmentType(str, Enum):

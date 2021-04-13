@@ -1,7 +1,90 @@
 # Release History
 
-## 4.0.2 (Unreleased)
+## 4.4.0b5 (Unreleased)
 
+
+## 4.4.0b4 (2021-04-06)
+
+### Added
+- `CryptographyClient` can perform AES-CBCPAD encryption and decryption locally
+  ([#17762](https://github.com/Azure/azure-sdk-for-python/pull/17762))
+
+## 4.4.0b3 (2021-03-11)
+### Added
+- `CryptographyClient` will perform all operations locally if initialized with
+  the `.from_jwk` factory method
+  ([#16565](https://github.com/Azure/azure-sdk-for-python/pull/16565))
+- Added requirement for six>=1.12.0
+
+## 4.4.0b2 (2021-02-10)
+### Fixed
+- API versions older than 7.2-preview no longer raise `ImportError` when
+  performing async operations ([#16680](https://github.com/Azure/azure-sdk-for-python/pull/16680))
+
+## 4.4.0b1 (2021-02-10)
+### Changed
+- Key Vault API version 7.2-preview is now the default
+- Updated msrest requirement to >=0.6.21
+
+### Added
+- Support for Key Vault API version 7.2-preview
+  ([#16566](https://github.com/Azure/azure-sdk-for-python/pull/16566))
+  - Added `oct_hsm` to `KeyType`
+  - Added 128-, 192-, and 256-bit AES-GCM, AES-CBC, and AES-CBCPAD encryption
+    algorithms to `EncryptionAlgorithm`
+  - Added 128- and 192-bit AES-KW key wrapping algorithms to `KeyWrapAlgorithm`
+  - `CryptographyClient`'s `encrypt` method accepts `iv` and 
+    `additional_authenticated_data` keyword arguments
+  - `CryptographyClient`'s `decrypt` method accepts `iv`, 
+    `additional_authenticated_data`, and `authentication_tag` keyword arguments
+  - Added `iv`, `aad`, and `tag` properties to `EncryptResult`
+- Added method `parse_key_vault_key_id` that parses out a full ID returned by
+Key Vault, so users can easily access the key's `name`, `vault_url`, and `version`.
+
+## 4.3.1 (2020-12-03)
+### Fixed
+- `CryptographyClient` operations no longer raise `AttributeError` when
+  the client was constructed with a key ID
+  ([#15608](https://github.com/Azure/azure-sdk-for-python/issues/15608))
+
+## 4.3.0 (2020-10-06)
+### Changed
+- `CryptographyClient` can perform decrypt and sign operations locally
+  ([#9754](https://github.com/Azure/azure-sdk-for-python/issues/9754))
+
+### Fixed
+- Correct typing for async paging methods
+
+## 4.2.0 (2020-08-11)
+### Fixed
+- Values of `x-ms-keyvault-region` and `x-ms-keyvault-service-version` headers
+  are no longer redacted in logging output
+- `CryptographyClient` will no longer perform encrypt or wrap operations when
+  its key has expired or is not yet valid
+
+### Changed
+- Key Vault API version 7.1 is now the default
+- Updated minimum `azure-core` version to 1.7.0
+
+### Added
+- At construction, clients accept a `CustomHookPolicy` through the optional
+  keyword argument `custom_hook_policy`
+- All client requests include a unique ID in the header `x-ms-client-request-id`
+- Dependency on `azure-common` for multiapi support
+
+## 4.2.0b1 (2020-03-10)
+- Support for Key Vault API version 7.1-preview
+([#10124](https://github.com/Azure/azure-sdk-for-python/pull/10124))
+  - Added `import_key` to `KeyOperation`
+  - Added `recoverable_days` to `CertificateProperties`
+  - Added `ApiVersion` enum identifying Key Vault versions supported by this package
+
+## 4.1.0 (2020-03-10)
+- `KeyClient` instances have a `close` method which closes opened sockets. Used
+as a context manager, a `KeyClient` closes opened sockets on exit.
+([#9906](https://github.com/Azure/azure-sdk-for-python/pull/9906))
+- Pollers no longer sleep after operation completion
+([#9991](https://github.com/Azure/azure-sdk-for-python/pull/9991))
 
 ## 4.0.1 (2020-02-11)
 - `azure.keyvault.keys` defines `__version__`
@@ -15,11 +98,11 @@
 - Fix `AttributeError` in async CryptographyClient when verifying signatures remotely
 ([#9734](https://github.com/Azure/azure-sdk-for-python/pull/9734))
 
-## 2019-10-31 4.0.0
+## 4.0.0 (2019-10-31)
 ### Breaking changes:
 - Removed `KeyClient.get_cryptography_client()` and `CryptographyClient.get_key()`
 - Moved the optional parameters of several methods into kwargs (
-[docs](https://azure.github.io/azure-sdk-for-python/ref/azure.keyvault.keys.html)
+[docs](https://azuresdkdocs.blob.core.windows.net/$web/python/azure-keyvault-keys/4.0.0/index.html)
 detail the new keyword arguments):
   - `create_key` now has positional parameters `name` and `key_type`
   - `create_ec_key` and `create_rsa_key` now have one positional parameter, `name`
@@ -52,8 +135,8 @@ been renamed to `KeyCurveName`, `KeyOperation`, and `KeyType`, respectively.
 - `Key` now has attribute `properties`, which holds certain properties of the
 key, such as `version`. This changes the shape of the returned `Key` type,
 as certain properties of `Key` (such as `version`) have to be accessed
-through the `properties` property. See the updated [docs](https://azure.github.io/azure-sdk-for-python/ref/azure.keyvault.keys.html)
-for details.
+through the `properties` property.
+
 - `update_key` has been renamed to `update_key_properties`
 - The `vault_url` parameter of `KeyClient` has been renamed to `vault_endpoint`
 - The property `vault_url` has been renamed to `vault_endpoint` in all models

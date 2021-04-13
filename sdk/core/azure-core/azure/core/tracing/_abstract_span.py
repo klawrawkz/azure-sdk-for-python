@@ -11,10 +11,21 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Optional, Union, Callable, ContextManager
+    from typing import Any, Sequence, Dict, Optional, Union, Callable, ContextManager
 
     from azure.core.pipeline.transport import HttpRequest, HttpResponse, AsyncHttpResponse
     HttpResponseType = Union[HttpResponse, AsyncHttpResponse]
+    AttributeValue = Union[
+        str,
+        bool,
+        int,
+        float,
+        Sequence[str],
+        Sequence[bool],
+        Sequence[int],
+        Sequence[float],
+    ]
+    Attributes = Optional[Dict[str, AttributeValue]]
 
 try:
     from typing_extensions import Protocol
@@ -34,15 +45,15 @@ class SpanKind(Enum):
 class AbstractSpan(Protocol):
     """Wraps a span from a distributed tracing implementation."""
 
-    def __init__(self, span=None, name=None):  # pylint: disable=super-init-not-called
-        # type: (Optional[Any], Optional[str]) -> None
+    def __init__(self, span=None, name=None, **kwargs):  # pylint: disable=super-init-not-called
+        # type: (Optional[Any], Optional[str], Any) -> None
         """
         If a span is given wraps the span. Else a new span is created.
         The optional arguement name is given to the new span.
         """
 
-    def span(self, name="child_span"):
-        # type: (Optional[str]) -> AbstractSpan
+    def span(self, name="child_span", **kwargs):
+        # type: (Optional[str], Any) -> AbstractSpan
         """
         Create a child span for the current span and append it to the child spans list.
         The child span must be wrapped by an implementation of AbstractSpan
@@ -119,8 +130,8 @@ class AbstractSpan(Protocol):
         """
 
     @classmethod
-    def link(cls, traceparent):
-        # type: (Dict[str, str]) -> None
+    def link(cls, traceparent, attributes=None):
+        # type: (str, Attributes) -> None
         """
         Given a traceparent, extracts the context and links the context to the current tracer.
 
@@ -129,8 +140,8 @@ class AbstractSpan(Protocol):
         """
 
     @classmethod
-    def link_from_headers(cls, headers):
-        # type: (Dict[str, str]) -> None
+    def link_from_headers(cls, headers, attributes=None):
+        # type: (Dict[str, str], Attributes) -> None
         """
         Given a dictionary, extracts the context and links the context to the current tracer.
 
@@ -221,3 +232,16 @@ class HttpSpanMixin(_MIXIN_BASE):
             self.add_attribute(self._HTTP_STATUS_CODE, response.status_code)
         else:
             self.add_attribute(self._HTTP_STATUS_CODE, 504)
+
+class Link(object):
+    """
+    This is a wrapper class to link the context to the current tracer.
+    :param headers: A dictionary of the request header as key value pairs.
+    :type headers: dict
+    :param attributes: Any additional attributes that should be added to link
+    :type attributes: dict
+    """
+    def __init__(self, headers, attributes=None):
+        # type: (Dict[str, str], Attributes) -> None
+        self.headers = headers
+        self.attributes = attributes

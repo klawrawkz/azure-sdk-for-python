@@ -11,14 +11,18 @@
 
 try:
     from ._models_py3 import AdultInfo
+    from ._models_py3 import AnalyzeResults
+    from ._models_py3 import Appearance
     from ._models_py3 import AreaOfInterestResult
     from ._models_py3 import BoundingRect
     from ._models_py3 import Category
     from ._models_py3 import CategoryDetail
     from ._models_py3 import CelebritiesModel
-    from ._models_py3 import CelebrityResults
     from ._models_py3 import ColorInfo
-    from ._models_py3 import ComputerVisionError, ComputerVisionErrorException
+    from ._models_py3 import ComputerVisionError
+    from ._models_py3 import ComputerVisionErrorResponse, ComputerVisionErrorResponseException
+    from ._models_py3 import ComputerVisionInnerError
+    from ._models_py3 import ComputerVisionOcrError, ComputerVisionOcrErrorException
     from ._models_py3 import DetectedBrand
     from ._models_py3 import DetectedObject
     from ._models_py3 import DetectResult
@@ -33,7 +37,6 @@ try:
     from ._models_py3 import ImageTag
     from ._models_py3 import ImageType
     from ._models_py3 import ImageUrl
-    from ._models_py3 import LandmarkResults
     from ._models_py3 import LandmarksModel
     from ._models_py3 import Line
     from ._models_py3 import ListModelsResult
@@ -44,20 +47,24 @@ try:
     from ._models_py3 import OcrResult
     from ._models_py3 import OcrWord
     from ._models_py3 import ReadOperationResult
+    from ._models_py3 import ReadResult
+    from ._models_py3 import Style
     from ._models_py3 import TagResult
-    from ._models_py3 import TextOperationResult
-    from ._models_py3 import TextRecognitionResult
     from ._models_py3 import Word
 except (SyntaxError, ImportError):
     from ._models import AdultInfo
+    from ._models import AnalyzeResults
+    from ._models import Appearance
     from ._models import AreaOfInterestResult
     from ._models import BoundingRect
     from ._models import Category
     from ._models import CategoryDetail
     from ._models import CelebritiesModel
-    from ._models import CelebrityResults
     from ._models import ColorInfo
-    from ._models import ComputerVisionError, ComputerVisionErrorException
+    from ._models import ComputerVisionError
+    from ._models import ComputerVisionErrorResponse, ComputerVisionErrorResponseException
+    from ._models import ComputerVisionInnerError
+    from ._models import ComputerVisionOcrError, ComputerVisionOcrErrorException
     from ._models import DetectedBrand
     from ._models import DetectedObject
     from ._models import DetectResult
@@ -72,7 +79,6 @@ except (SyntaxError, ImportError):
     from ._models import ImageTag
     from ._models import ImageType
     from ._models import ImageUrl
-    from ._models import LandmarkResults
     from ._models import LandmarksModel
     from ._models import Line
     from ._models import ListModelsResult
@@ -83,32 +89,38 @@ except (SyntaxError, ImportError):
     from ._models import OcrResult
     from ._models import OcrWord
     from ._models import ReadOperationResult
+    from ._models import ReadResult
+    from ._models import Style
     from ._models import TagResult
-    from ._models import TextOperationResult
-    from ._models import TextRecognitionResult
     from ._models import Word
 from ._computer_vision_client_enums import (
+    ComputerVisionErrorCodes,
+    ComputerVisionInnerErrorCodeValue,
     DescriptionExclude,
     Details,
     Gender,
+    OcrDetectionLanguage,
     OcrLanguages,
-    TextOperationStatusCodes,
-    TextRecognitionMode,
-    TextRecognitionResultConfidenceClass,
+    OperationStatusCodes,
     TextRecognitionResultDimensionUnit,
+    TextStyle,
     VisualFeatureTypes,
 )
 
 __all__ = [
     'AdultInfo',
+    'AnalyzeResults',
+    'Appearance',
     'AreaOfInterestResult',
     'BoundingRect',
     'Category',
     'CategoryDetail',
     'CelebritiesModel',
-    'CelebrityResults',
     'ColorInfo',
-    'ComputerVisionError', 'ComputerVisionErrorException',
+    'ComputerVisionError',
+    'ComputerVisionErrorResponse', 'ComputerVisionErrorResponseException',
+    'ComputerVisionInnerError',
+    'ComputerVisionOcrError', 'ComputerVisionOcrErrorException',
     'DetectedBrand',
     'DetectedObject',
     'DetectResult',
@@ -123,7 +135,6 @@ __all__ = [
     'ImageTag',
     'ImageType',
     'ImageUrl',
-    'LandmarkResults',
     'LandmarksModel',
     'Line',
     'ListModelsResult',
@@ -134,17 +145,19 @@ __all__ = [
     'OcrResult',
     'OcrWord',
     'ReadOperationResult',
+    'ReadResult',
+    'Style',
     'TagResult',
-    'TextOperationResult',
-    'TextRecognitionResult',
     'Word',
     'Gender',
-    'TextOperationStatusCodes',
-    'TextRecognitionResultDimensionUnit',
-    'TextRecognitionResultConfidenceClass',
+    'ComputerVisionErrorCodes',
+    'ComputerVisionInnerErrorCodeValue',
     'DescriptionExclude',
     'OcrLanguages',
     'VisualFeatureTypes',
-    'TextRecognitionMode',
     'Details',
+    'OperationStatusCodes',
+    'TextRecognitionResultDimensionUnit',
+    'TextStyle',
+    'OcrDetectionLanguage',
 ]

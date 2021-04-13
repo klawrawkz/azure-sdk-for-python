@@ -1,14 +1,14 @@
 # Generation of SDK
 
-Assuming your Swagger are associated with correct Readmes (otherwise see previous chapter [Swagger conf](./swagger_conf.md)), this page explains how to generate your packages.
+Assuming your Swagger are associated with correct Readmes (otherwise see previous chapter [Swagger conf](https://github.com/Azure/azure-sdk-for-python/blob/master/doc/dev/mgmt/swagger_conf.md)), this page explains how to generate your packages.
 
-IMPORTANT NOTE: All the commands prefixed by `python` in this page assumes you have loaded the [dev_setup](../dev_setup.md) in your currently loaded virtual environment.
+IMPORTANT NOTE: All the commands prefixed by `python` in this page assumes you have loaded the [dev_setup](https://github.com/Azure/azure-sdk-for-python/blob/master/doc/dev/dev_setup.md) in your currently loaded virtual environment.
 
 ## Building the code
 
 ### Autorest versioning
 
-A few notes on [Autorest for Python versionning](https://github.com/Azure/autorest.python/blob/master/ChangeLog.md):
+A few notes on [Autorest for Python versioning](https://github.com/Azure/autorest.python/blob/master/ChangeLog.md):
 - Autorest for Python v2.x is deprecated, and should not be used anymore for any generation under any circumstances.
 - Autorest for Python v3.x is the most currently used one. Should not be used, but still ok if service team are still in v3.x and they want to avoid breaking changes for a given version (rare).
 - Autorest for Python v4.x is the current recommendation. This generator can generates async code, but this should be disabled with --no-async. No package should be shipped with async based on v4

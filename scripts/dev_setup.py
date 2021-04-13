@@ -77,7 +77,7 @@ args = parser.parse_args()
 
 packages = {
     tuple(os.path.dirname(f).rsplit(os.sep, 1))
-    for f in glob.glob("sdk/*/azure-*/setup.py") + glob.glob("tools/azure-*/setup.py")
+    for f in glob.glob(os.path.join(root_dir, "sdk/*/azure-*/setup.py")) + glob.glob(os.path.join(root_dir, "tools/azure-*/setup.py"))
 }
 # [(base_folder, package_name), ...] to {package_name: base_folder, ...}
 packages = {package_name: base_folder for (base_folder, package_name) in packages}
@@ -96,7 +96,7 @@ else:
 nspkg_packages = [p for p in packages.keys() if "nspkg" in p]
 nspkg_packages.sort(key=lambda x: len([c for c in x if c == "-"]))
 
-# Manually push meta-packages at the end, in reverse dependency order
+# Meta-packages to ignore
 meta_packages = ["azure-keyvault", "azure-mgmt", "azure"]
 
 content_packages = sorted(

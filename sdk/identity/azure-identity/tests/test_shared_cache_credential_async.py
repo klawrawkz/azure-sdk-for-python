@@ -3,11 +3,13 @@
 # Licensed under the MIT License.
 # ------------------------------------
 from unittest.mock import Mock, patch
+from urllib.parse import urlparse
 
 from azure.core.exceptions import ClientAuthenticationError
 from azure.core.pipeline.policies import SansIOHTTPPolicy
-from azure.identity import KnownAuthorities
+from azure.identity import CredentialUnavailableError
 from azure.identity.aio import SharedTokenCacheCredential
+from azure.identity._constants import EnvironmentVariables
 from azure.identity._internal.shared_token_cache import (
     KNOWN_ALIASES,
     MULTIPLE_ACCOUNTS,
@@ -24,12 +26,32 @@ from helpers_async import async_validating_transport, AsyncMockTransport
 from test_shared_cache_credential import get_account_event, populated_cache
 
 
+def test_supported():
+    """the cache is supported on Linux, macOS, Windows, so this should pass unless you're developing on e.g. FreeBSD"""
+    assert SharedTokenCacheCredential.supported()
+
+
+@pytest.mark.asyncio
+async def test_no_scopes():
+    """The credential should raise when get_token is called with no scopes"""
+
+    credential = SharedTokenCacheCredential(_cache=TokenCache())
+    with pytest.raises(ValueError):
+        await credential.get_token()
+
+
 @pytest.mark.asyncio
 async def test_close():
-    transport = AsyncMockTransport()
+    async def send(*_, **__):
+        return mock_response(json_payload=build_aad_response(access_token="**"))
+
+    transport = AsyncMockTransport(send=send)
     credential = SharedTokenCacheCredential(
         _cache=populated_cache(get_account_event("test@user", "uid", "utid")), transport=transport
     )
+
+    # the credential doesn't open a transport session before one is needed, so we send a request
+    await credential.get_token("scope")
 
     await credential.close()
 
@@ -38,16 +60,26 @@ async def test_close():
 
 @pytest.mark.asyncio
 async def test_context_manager():
-    transport = AsyncMockTransport()
+    async def send(*_, **__):
+        return mock_response(json_payload=build_aad_response(access_token="**"))
+
+    transport = AsyncMockTransport(send=send)
     credential = SharedTokenCacheCredential(
         _cache=populated_cache(get_account_event("test@user", "uid", "utid")), transport=transport
     )
 
+    # async with before initialization: credential should call aexit but not aenter
     async with credential:
-        assert transport.__aenter__.call_count == 1
+        await credential.get_token("scope")
 
-    assert transport.__aenter__.call_count == 1
+    assert transport.__aenter__.call_count == 0
     assert transport.__aexit__.call_count == 1
+
+    # async with after initialization: credential should call aenter and aexit
+    async with credential:
+        await credential.get_token("scope")
+        assert transport.__aenter__.call_count == 1
+    assert transport.__aexit__.call_count == 2
 
 
 @pytest.mark.asyncio
@@ -55,8 +87,8 @@ async def test_context_manager_no_cache():
     """the credential shouldn't open/close sessions when instantiated in an environment with no cache"""
 
     transport = AsyncMockTransport()
-    with patch.dict("azure.identity._internal.shared_token_cache.os.environ", {}, clear=True):
-        # clearing the environment ensures the credential won't try to load a cache
+
+    with patch("azure.identity._persistent_cache._load_persistent_cache", Mock(side_effect=NotImplementedError)):
         credential = SharedTokenCacheCredential(transport=transport)
 
     async with credential:
@@ -98,15 +130,37 @@ async def test_user_agent():
     await credential.get_token("scope")
 
 
+@pytest.mark.parametrize("authority", ("localhost", "https://localhost"))
+def test_authority(authority):
+    """the credential should accept an authority, with or without scheme, as an argument or environment variable"""
+
+    parsed_authority = urlparse(authority)
+    expected_netloc = parsed_authority.netloc or authority  # "localhost" parses to netloc "", path "localhost"
+
+    class MockCredential(SharedTokenCacheCredential):
+        def _get_auth_client(self, authority=None, **kwargs):
+            actual = urlparse(authority)
+            assert actual.scheme == "https"
+            assert actual.netloc == expected_netloc
+
+    transport = Mock(send=Mock(side_effect=Exception("credential shouldn't send a request")))
+    MockCredential(_cache=TokenCache(), authority=authority, transport=transport)
+
+    with patch.dict("os.environ", {EnvironmentVariables.AZURE_AUTHORITY_HOST: authority}, clear=True):
+        MockCredential(_cache=TokenCache(), authority=authority, transport=transport)
+
+
 @pytest.mark.asyncio
 async def test_empty_cache():
-    with pytest.raises(ClientAuthenticationError, match=NO_ACCOUNTS):
+    """the credential should raise CredentialUnavailableError when the cache is empty"""
+
+    with pytest.raises(CredentialUnavailableError, match=NO_ACCOUNTS):
         await SharedTokenCacheCredential(_cache=TokenCache()).get_token("scope")
-    with pytest.raises(ClientAuthenticationError, match=NO_ACCOUNTS):
+    with pytest.raises(CredentialUnavailableError, match=NO_ACCOUNTS):
         await SharedTokenCacheCredential(_cache=TokenCache(), username="not@cache").get_token("scope")
-    with pytest.raises(ClientAuthenticationError, match=NO_ACCOUNTS):
+    with pytest.raises(CredentialUnavailableError, match=NO_ACCOUNTS):
         await SharedTokenCacheCredential(_cache=TokenCache(), tenant_id="not-cached").get_token("scope")
-    with pytest.raises(ClientAuthenticationError, match=NO_ACCOUNTS):
+    with pytest.raises(CredentialUnavailableError, match=NO_ACCOUNTS):
         credential = SharedTokenCacheCredential(_cache=TokenCache(), tenant_id="not-cached", username="not@cache")
         await credential.get_token("scope")
 
@@ -120,12 +174,11 @@ async def test_no_matching_account_for_username():
     account = get_account_event(username=upn, uid="uid", utid=tenant, refresh_token="refresh-token")
     cache = populated_cache(account)
 
-    with pytest.raises(ClientAuthenticationError) as ex:
+    with pytest.raises(CredentialUnavailableError) as ex:
         await SharedTokenCacheCredential(_cache=cache, username="not" + upn).get_token("scope")
 
     assert ex.value.message.startswith(NO_MATCHING_ACCOUNTS[: NO_MATCHING_ACCOUNTS.index("{")])
-    discovered_accounts = ex.value.message.splitlines()[-1]
-    assert upn in discovered_accounts and tenant in discovered_accounts
+    assert "not" + upn in ex.value.message
 
 
 @pytest.mark.asyncio
@@ -137,12 +190,11 @@ async def test_no_matching_account_for_tenant():
     account = get_account_event(username=upn, uid="uid", utid=tenant, refresh_token="refresh-token")
     cache = populated_cache(account)
 
-    with pytest.raises(ClientAuthenticationError) as ex:
+    with pytest.raises(CredentialUnavailableError) as ex:
         await SharedTokenCacheCredential(_cache=cache, tenant_id="not-" + tenant).get_token("scope")
 
     assert ex.value.message.startswith(NO_MATCHING_ACCOUNTS[: NO_MATCHING_ACCOUNTS.index("{")])
-    discovered_accounts = ex.value.message.splitlines()[-1]
-    assert upn in discovered_accounts and tenant in discovered_accounts
+    assert "not-" + tenant in ex.value.message
 
 
 @pytest.mark.asyncio
@@ -154,14 +206,13 @@ async def test_no_matching_account_for_tenant_and_username():
     account = get_account_event(username=upn, uid="uid", utid=tenant, refresh_token="refresh-token")
     cache = populated_cache(account)
 
-    with pytest.raises(ClientAuthenticationError) as ex:
+    with pytest.raises(CredentialUnavailableError) as ex:
         await SharedTokenCacheCredential(_cache=cache, tenant_id="not-" + tenant, username="not" + upn).get_token(
             "scope"
         )
 
     assert ex.value.message.startswith(NO_MATCHING_ACCOUNTS[: NO_MATCHING_ACCOUNTS.index("{")])
-    discovered_accounts = ex.value.message.splitlines()[-1]
-    assert upn in discovered_accounts and tenant in discovered_accounts
+    assert "not" + upn in ex.value.message and "not-" + tenant in ex.value.message
 
 
 @pytest.mark.asyncio
@@ -181,18 +232,16 @@ async def test_no_matching_account_for_tenant_or_username():
     transport = Mock(side_effect=Exception())  # credential shouldn't use the network
 
     credential = SharedTokenCacheCredential(username=upn_a, tenant_id=tenant_b, _cache=cache, transport=transport)
-    with pytest.raises(ClientAuthenticationError) as ex:
+    with pytest.raises(CredentialUnavailableError) as ex:
         await credential.get_token("scope")
     assert ex.value.message.startswith(NO_MATCHING_ACCOUNTS[: NO_MATCHING_ACCOUNTS.index("{")])
-    discovered_accounts = ex.value.message.splitlines()[-1]
-    assert all(s in discovered_accounts for s in (upn_a, upn_b, tenant_a, tenant_b))
+    assert upn_a in ex.value.message and tenant_b in ex.value.message
 
     credential = SharedTokenCacheCredential(username=upn_b, tenant_id=tenant_a, _cache=cache, transport=transport)
-    with pytest.raises(ClientAuthenticationError) as ex:
+    with pytest.raises(CredentialUnavailableError) as ex:
         await credential.get_token("scope")
     assert ex.value.message.startswith(NO_MATCHING_ACCOUNTS[: NO_MATCHING_ACCOUNTS.index("{")])
-    discovered_accounts = ex.value.message.splitlines()[-1]
-    assert all(s in discovered_accounts for s in (upn_a, upn_b, tenant_a, tenant_b))
+    assert upn_b in ex.value.message and tenant_a in ex.value.message
 
 
 @pytest.mark.asyncio
@@ -286,11 +335,11 @@ async def test_no_refresh_token():
     transport = Mock(side_effect=Exception())  # credential shouldn't use the network
 
     credential = SharedTokenCacheCredential(_cache=cache, transport=transport)
-    with pytest.raises(ClientAuthenticationError, match=NO_ACCOUNTS):
+    with pytest.raises(CredentialUnavailableError, match=NO_ACCOUNTS):
         await credential.get_token("scope")
 
     credential = SharedTokenCacheCredential(_cache=cache, transport=transport, username="not@cache")
-    with pytest.raises(ClientAuthenticationError, match=NO_ACCOUNTS):
+    with pytest.raises(CredentialUnavailableError, match=NO_ACCOUNTS):
         await credential.get_token("scope")
 
 
@@ -307,14 +356,10 @@ async def test_two_accounts_no_username_or_tenant():
     # credential can't select an identity => it shouldn't use the network
     transport = Mock(side_effect=Exception())
 
-    # two users in the cache, no username specified -> ClientAuthenticationError
+    # two users in the cache, no username specified -> CredentialUnavailableError
     credential = SharedTokenCacheCredential(_cache=cache, transport=transport)
-    with pytest.raises(ClientAuthenticationError) as ex:
+    with pytest.raises(ClientAuthenticationError, match=MULTIPLE_ACCOUNTS) as ex:
         await credential.get_token("scope")
-
-    # error message should mention multiple accounts and list usernames in the cache
-    assert upn_a in ex.value.message and upn_b in ex.value.message
-    assert ex.value.message.splitlines()[:-1] == MULTIPLE_ACCOUNTS.splitlines()[:-1]
 
 
 @pytest.mark.asyncio
@@ -404,13 +449,11 @@ async def test_same_username_different_tenants():
     # with no tenant specified the credential can't select an identity
     transport = Mock(side_effect=Exception())  # (so it shouldn't use the network)
     credential = SharedTokenCacheCredential(username=upn, _cache=cache, transport=transport)
-    with pytest.raises(ClientAuthenticationError) as ex:
+    with pytest.raises(CredentialUnavailableError) as ex:
         await credential.get_token("scope")
-    # error message should indicate multiple matching accounts, and list discovered accounts
+
     assert ex.value.message.startswith(MULTIPLE_MATCHING_ACCOUNTS[: MULTIPLE_MATCHING_ACCOUNTS.index("{")])
-    discovered_accounts = ex.value.message.splitlines()[-1]
-    assert discovered_accounts.count(upn) == 2
-    assert tenant_a in discovered_accounts and tenant_b in discovered_accounts
+    assert upn in ex.value.message
 
     # with tenant specified, the credential should auth the matching account
     scope = "scope"
@@ -450,13 +493,11 @@ async def test_same_tenant_different_usernames():
     # with no username specified the credential can't select an identity
     transport = Mock(side_effect=Exception())  # (so it shouldn't use the network)
     credential = SharedTokenCacheCredential(tenant_id=tenant_id, _cache=cache, transport=transport)
-    with pytest.raises(ClientAuthenticationError) as ex:
+    with pytest.raises(CredentialUnavailableError) as ex:
         await credential.get_token("scope")
-    # error message should indicate multiple matching accounts, and list discovered accounts
+
     assert ex.value.message.startswith(MULTIPLE_MATCHING_ACCOUNTS[: MULTIPLE_MATCHING_ACCOUNTS.index("{")])
-    discovered_accounts = ex.value.message.splitlines()[-1]
-    assert discovered_accounts.count(tenant_id) == 2
-    assert upn_a in discovered_accounts and upn_b in discovered_accounts
+    assert tenant_id in ex.value.message
 
     # with a username specified, the credential should auth the matching account
     scope = "scope"
@@ -527,3 +568,38 @@ async def test_authority_with_no_known_alias():
     credential = SharedTokenCacheCredential(authority=authority, _cache=cache, transport=transport)
     token = await credential.get_token("scope")
     assert token.token == expected_access_token
+
+
+@pytest.mark.asyncio
+async def test_authority_environment_variable():
+    """the credential should accept an authority by environment variable when none is otherwise specified"""
+
+    authority = "localhost"
+    expected_access_token = "access-token"
+    expected_refresh_token = "refresh-token"
+    account = get_account_event("spam@eggs", "uid", "tenant", authority=authority, refresh_token=expected_refresh_token)
+    cache = populated_cache(account)
+    transport = async_validating_transport(
+        requests=[Request(authority=authority, required_data={"refresh_token": expected_refresh_token})],
+        responses=[mock_response(json_payload=build_aad_response(access_token=expected_access_token))],
+    )
+    with patch.dict("os.environ", {EnvironmentVariables.AZURE_AUTHORITY_HOST: authority}, clear=True):
+        credential = SharedTokenCacheCredential(transport=transport, _cache=cache)
+    token = await credential.get_token("scope")
+    assert token.token == expected_access_token
+
+
+@pytest.mark.asyncio
+async def test_initialization():
+    """the credential should attempt to load the cache only once, when it's first needed"""
+
+    with patch("azure.identity._persistent_cache._get_persistence") as mock_cache_loader:
+        mock_cache_loader.side_effect = Exception("it didn't work")
+
+        credential = SharedTokenCacheCredential()
+        assert mock_cache_loader.call_count == 0
+
+        for _ in range(2):
+            with pytest.raises(CredentialUnavailableError, match="Shared token cache unavailable"):
+                await credential.get_token("scope")
+            assert mock_cache_loader.call_count == 1

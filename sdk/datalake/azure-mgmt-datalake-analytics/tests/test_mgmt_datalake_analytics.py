@@ -154,7 +154,7 @@ AS BEGIN
     )
   AS
   T(a, b);
-END;""".format(self.db_name, self.table_name, self.tvf_name, self.view_name, self.proc_name)
+END;""".format(self.db_name, self.table_name, self.tvf_name, self.view_name, self.proc_name)    # nosec
 
         # define all the job IDs to be used during execution
         if self.is_playback():
@@ -203,7 +203,7 @@ END;""".format(self.db_name, self.table_name, self.tvf_name, self.view_name, sel
             location = location
         )
 
-        adls_account = self.adls_account_client.accounts.create(
+        adls_account = self.adls_account_client.accounts.begin_create(
             resource_group.name,
             self.adls_account_name,
             params_create,

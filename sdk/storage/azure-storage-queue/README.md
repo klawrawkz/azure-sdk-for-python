@@ -149,7 +149,7 @@ The Azure Storage Queues client library for Python allows you to interact with e
 use of a dedicated client object.
 
 ### Clients
-Two different clients are provided to to interact with the various components of the Queue Service:
+Two different clients are provided to interact with the various components of the Queue Service:
 1. [QueueServiceClient](https://aka.ms/azsdk-python-storage-queue-queueserviceclient) -
     this client represents interaction with the Azure storage account itself, and allows you to acquire preconfigured
     client instances to access the queues within. It provides operations to retrieve and configure the account
@@ -304,7 +304,8 @@ the client level to enable it for all requests.
 ## Troubleshooting
 ### General
 Storage Queue clients raise exceptions defined in [Azure Core](https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/core/azure-core/README.md).
-All Queue service operations will throw a `StorageErrorException` on failure with helpful [error codes](https://docs.microsoft.com/rest/api/storageservices/queue-service-error-codes).
+
+This list can be used for reference to catch thrown exceptions. To get the specific error code of the exception, use the `error_code` attribute, i.e, `exception.error_code`.
 
 ### Logging
 This library uses the standard

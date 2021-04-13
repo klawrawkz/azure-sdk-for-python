@@ -6,6 +6,7 @@
 
 from ._text_analytics_client import TextAnalyticsClient
 from ._version import VERSION
+from ._base_client import TextAnalyticsApiVersion
 from ._models import (
     DetectLanguageInput,
     TextDocumentInput,
@@ -17,28 +18,53 @@ from ._models import (
     RecognizeEntitiesResult,
     DetectLanguageResult,
     TextAnalyticsError,
+    TextAnalyticsWarning,
     ExtractKeyPhrasesResult,
     RecognizeLinkedEntitiesResult,
-    RecognizePiiEntitiesResult,
     TextDocumentStatistics,
     LinkedEntityMatch,
     TextDocumentBatchStatistics,
     SentenceSentiment,
-    SentimentConfidenceScorePerLabel,
-    PiiEntity
+    SentimentConfidenceScores,
+    MinedOpinion,
+    TargetSentiment,
+    AssessmentSentiment,
+    RecognizePiiEntitiesResult,
+    PiiEntity,
+    PiiEntityDomainType,
+    AnalyzeHealthcareEntitiesResultItem,
+    HealthcareEntity,
+    HealthcareEntityDataSource,
+    RecognizeEntitiesAction,
+    RecognizeLinkedEntitiesAction,
+    RecognizePiiEntitiesAction,
+    ExtractKeyPhrasesAction,
+    AnalyzeBatchActionsResult,
+    RequestStatistics,
+    AnalyzeBatchActionsType,
+    AnalyzeBatchActionsError,
+    HealthcareEntityRelationRoleType,
+    HealthcareRelation,
+    HealthcareRelationRole,
+    HealthcareEntityAssertion,
 )
-from ._credential import TextAnalyticsApiKeyCredential
+from ._paging import AnalyzeHealthcareEntitiesResult
+from ._generated.v3_1_preview_4.models import (
+    PiiCategory as PiiEntityCategoryType,
+    RelationType as HealthcareEntityRelationType
+)
 
 __all__ = [
+    'TextAnalyticsApiVersion',
     'TextAnalyticsClient',
     'DetectLanguageInput',
     'TextDocumentInput',
     'DetectedLanguage',
     'RecognizeEntitiesResult',
-    'RecognizePiiEntitiesResult',
     'DetectLanguageResult',
     'CategorizedEntity',
     'TextAnalyticsError',
+    'TextAnalyticsWarning',
     'ExtractKeyPhrasesResult',
     'RecognizeLinkedEntitiesResult',
     'AnalyzeSentimentResult',
@@ -48,9 +74,31 @@ __all__ = [
     'LinkedEntityMatch',
     'TextDocumentBatchStatistics',
     'SentenceSentiment',
-    'SentimentConfidenceScorePerLabel',
-    'TextAnalyticsApiKeyCredential',
-    'PiiEntity'
+    'SentimentConfidenceScores',
+    'MinedOpinion',
+    'TargetSentiment',
+    'AssessmentSentiment',
+    'RecognizePiiEntitiesResult',
+    'PiiEntity',
+    'PiiEntityDomainType',
+    'AnalyzeHealthcareEntitiesResultItem',
+    'AnalyzeHealthcareEntitiesResult',
+    'HealthcareEntity',
+    'HealthcareEntityDataSource',
+    'RecognizeEntitiesAction',
+    'RecognizeLinkedEntitiesAction',
+    'RecognizePiiEntitiesAction',
+    'ExtractKeyPhrasesAction',
+    'AnalyzeBatchActionsResult',
+    'RequestStatistics',
+    'AnalyzeBatchActionsType',
+    "AnalyzeBatchActionsError",
+    "PiiEntityCategoryType",
+    "HealthcareEntityRelationType",
+    "HealthcareEntityRelationRoleType",
+    "HealthcareRelation",
+    "HealthcareRelationRole",
+    "HealthcareEntityAssertion",
 ]
 
 __version__ = VERSION

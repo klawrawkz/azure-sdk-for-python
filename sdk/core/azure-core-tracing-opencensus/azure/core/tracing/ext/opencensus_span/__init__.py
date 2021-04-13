@@ -22,9 +22,20 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-    from typing import Dict, Optional, Union, Callable
+    from typing import Dict, Optional, Union, Callable, Sequence
 
     from azure.core.pipeline.transport import HttpRequest, HttpResponse
+    AttributeValue = Union[
+        str,
+        bool,
+        int,
+        float,
+        Sequence[str],
+        Sequence[bool],
+        Sequence[int],
+        Sequence[float],
+    ]
+    Attributes = Optional[Dict[str, AttributeValue]]
 
 
 __version__ = VERSION
@@ -35,8 +46,8 @@ _config_integration.trace_integrations(['threading'])
 class OpenCensusSpan(HttpSpanMixin, object):
     """Wraps a given OpenCensus Span so that it implements azure.core.tracing.AbstractSpan"""
 
-    def __init__(self, span=None, name="span"):
-        # type: (Optional[Span], Optional[str]) -> None
+    def __init__(self, span=None, name="span", **kwargs):
+        # type: (Optional[Span], Optional[str], Any) -> None
         """
         If a span is not passed in, creates a new tracer. If the instrumentation key for Azure Exporter is given, will
         configure the azure exporter else will just create a new tracer.
@@ -45,9 +56,12 @@ class OpenCensusSpan(HttpSpanMixin, object):
         :type span: :class: opencensus.trace.Span
         :param name: The name of the OpenCensus span to create if a new span is needed
         :type name: str
+        :keyword SpanKind kind: The span kind of this span.
+        :keyword links: The list of links to be added to the span.
+        :paramtype links: list[~azure.core.tracing.Link]
         """
         tracer = self.get_current_tracer()
-        self._span_instance = span or tracer.start_span(name=name)
+        self._span_instance = span or tracer.start_span(name=name, **kwargs)
 
     @property
     def span_instance(self):
@@ -57,15 +71,18 @@ class OpenCensusSpan(HttpSpanMixin, object):
         """
         return self._span_instance
 
-    def span(self, name="span"):
-        # type: (Optional[str]) -> OpenCensusSpan
+    def span(self, name="span", **kwargs):
+        # type: (Optional[str], Any) -> OpenCensusSpan
         """
         Create a child span for the current span and append it to the child spans list in the span instance.
         :param name: Name of the child span
         :type name: str
+        :keyword SpanKind kind: The span kind of this span.
+        :keyword links: The list of links to be added to the span.
+        :paramtype links: list[~azure.core.tracing.Link]
         :return: The OpenCensusSpan that is wrapping the child span instance
         """
-        return self.__class__(name=name)
+        return self.__class__(name=name, **kwargs)
 
     @property
     def kind(self):
@@ -160,8 +177,8 @@ class OpenCensusSpan(HttpSpanMixin, object):
         return self.to_header()['traceparent']
 
     @classmethod
-    def link(cls, traceparent):
-        # type: (str) -> None
+    def link(cls, traceparent, attributes=None):
+        # type: (str, Attributes) -> None
         """
         Links the context to the current tracer.
 
@@ -170,11 +187,11 @@ class OpenCensusSpan(HttpSpanMixin, object):
         """
         cls.link_from_headers({
             'traceparent': traceparent
-        })
+        }, attributes)
 
     @classmethod
-    def link_from_headers(cls, headers):
-        # type: (Dict[str, str]) -> None
+    def link_from_headers(cls, headers, attributes=None):
+        # type: (Dict[str, str], Attributes) -> None
         """
         Given a dictionary, extracts the context and links the context to the current tracer.
 
@@ -183,7 +200,11 @@ class OpenCensusSpan(HttpSpanMixin, object):
         """
         ctx = trace_context_http_header_format.TraceContextPropagator().from_headers(headers)
         current_span = cls.get_current_span()
-        current_span.add_link(Link(ctx.trace_id, ctx.span_id))
+        current_span.add_link(Link(
+            trace_id=ctx.trace_id,
+            span_id=ctx.span_id,
+            attributes=attributes
+        ))
 
     @classmethod
     def get_current_span(cls):

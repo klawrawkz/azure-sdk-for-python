@@ -65,7 +65,9 @@ def raise_with_traceback(exception, *args, **kwargs):
     message = kwargs.pop("message", "")
     exc_type, exc_value, exc_traceback = sys.exc_info()
     # If not called inside a "except", exc_type will be None. Assume it will not happen
-    exc_msg = "{}, {}: {}".format(message, exc_type.__name__, exc_value)  # type: ignore
+    if exc_type is None:
+        raise ValueError("raise_with_traceback can only be used in except clauses")
+    exc_msg = "{}, {}: {}".format(message, exc_type.__name__, exc_value)
     error = exception(exc_msg, *args, **kwargs)
     try:
         raise error.with_traceback(exc_traceback)
@@ -73,6 +75,22 @@ def raise_with_traceback(exception, *args, **kwargs):
         error.__traceback__ = exc_traceback
         raise error
 
+class ErrorMap(object):
+    """Error Map class. To be used in map_error method, behaves like a dictionary.
+    It returns the error type if it is found in custom_error_map. Or return default_error
+
+    :param dict custom_error_map: User-defined error map, it is used to map status codes to error types.
+    :keyword error default_error: Default error type. It is returned if the status code is not found in custom_error_map
+    """
+    def __init__(self, custom_error_map=None, **kwargs):
+        self._custom_error_map = custom_error_map or {}
+        self._default_error = kwargs.pop("default_error", None)
+
+    def get(self, key):
+        ret = self._custom_error_map.get(key)
+        if ret:
+            return ret
+        return self._default_error
 
 def map_error(status_code, response, error_map):
     if not error_map:
@@ -122,10 +140,12 @@ class ODataV4Format(object):
         self.target = json_object.get(cls.TARGET_LABEL)  # type: Optional[str]
 
         # details is recursive of this very format
-        self.details = [
-            self.__class__(detail_node)
-            for detail_node in json_object.get(cls.DETAILS_LABEL, [])
-        ]  # type: List[ODataV4Format]
+        self.details = []  # type: List[ODataV4Format]
+        for detail_node in json_object.get(cls.DETAILS_LABEL, []):
+            try:
+                self.details.append(self.__class__(detail_node))
+            except Exception:  # pylint: disable=broad-except
+                pass
 
         self.innererror = json_object.get(cls.INNERERROR_LABEL, {})  # type: Dict[str, Any]
 
@@ -172,12 +192,14 @@ class AzureError(Exception):
     :paramtype error: Exception
 
     :ivar inner_exception: The exception passed with the 'error' kwarg
-    :type inner_exception: Exception
+    :vartype inner_exception: Exception
     :ivar exc_type: The exc_type from sys.exc_info()
     :ivar exc_value: The exc_value from sys.exc_info()
     :ivar exc_traceback: The exc_traceback from sys.exc_info()
     :ivar exc_msg: A string formatting of message parameter, exc_type and exc_value
     :ivar str message: A stringified version of the message parameter
+    :ivar str continuation_token: A token reference to continue an incomplete operation. This value is optional
+     and will be `None` where continuation is either unavailable or not applicable.
     """
 
     def __init__(self, message, *args, **kwargs):
@@ -186,8 +208,9 @@ class AzureError(Exception):
         self.exc_type = (
             self.exc_type.__name__ if self.exc_type else type(self.inner_exception)
         )
-        self.exc_msg = "{}, {}: {}".format(message, self.exc_type, self.exc_value)  # type: ignore
+        self.exc_msg = "{}, {}: {}".format(message, self.exc_type, self.exc_value)
         self.message = str(message)
+        self.continuation_token = kwargs.get('continuation_token')
         super(AzureError, self).__init__(self.message, *args)
 
     def raise_with_traceback(self):
@@ -209,6 +232,11 @@ class ServiceResponseError(AzureError):
     The connection may have timed out. These errors can be retried for idempotent or
     safe operations"""
 
+class ServiceRequestTimeoutError(ServiceRequestError):
+    """Error raised when timeout happens"""
+
+class ServiceResponseTimeoutError(ServiceResponseError):
+    """Error raised when timeout happens"""
 
 class HttpResponseError(AzureError):
     """A request was made, and a non-success status code was received from the service.
@@ -219,11 +247,15 @@ class HttpResponseError(AzureError):
     :type response: ~azure.core.pipeline.transport.HttpResponse or ~azure.core.pipeline.transport.AsyncHttpResponse
 
     :ivar reason: The HTTP response reason
-    :type reason: str
+    :vartype reason: str
     :ivar status_code: HttpResponse's status code
-    :type status_code: int
+    :vartype status_code: int
     :ivar response: The response that triggered the exception.
-    :type response: ~azure.core.pipeline.transport.HttpResponse or ~azure.core.pipeline.transport.AsyncHttpResponse
+    :vartype response: ~azure.core.pipeline.transport.HttpResponse or ~azure.core.pipeline.transport.AsyncHttpResponse
+    :ivar model: The request body/response body model
+    :vartype model: ~msrest.serialization.Model
+    :ivar error: The formatted error
+    :vartype error: ODataV4Format
     """
 
     def __init__(self, message=None, response=None, **kwargs):

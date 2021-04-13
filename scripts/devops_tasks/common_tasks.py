@@ -19,18 +19,20 @@ import ast
 import textwrap
 import io
 import re
-import pdb
+import fnmatch
 
 # Assumes the presence of setuptools
-from pkg_resources import parse_version, parse_requirements, Requirement
+from pkg_resources import parse_version, parse_requirements, Requirement, WorkingSet, working_set
 
 # this assumes the presence of "packaging"
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
+from packaging.version import parse
 
 
 DEV_REQ_FILE = "dev_requirements.txt"
 NEW_DEV_REQ_FILE = "new_dev_requirements.txt"
+NEW_REQ_PACKAGES = ["azure-core", "azure-mgmt-core"]
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -38,6 +40,10 @@ OMITTED_CI_PACKAGES = [
     "azure-mgmt-documentdb",
     "azure-servicemanagement-legacy",
     "azure-mgmt-scheduler",
+    "azure",
+    "azure-mgmt",
+    "azure-storage",
+    "azure-mgmt-regionmove"
 ]
 MANAGEMENT_PACKAGE_IDENTIFIERS = [
     "mgmt",
@@ -45,11 +51,16 @@ MANAGEMENT_PACKAGE_IDENTIFIERS = [
     "azure-servicefabric",
     "nspkg",
     "azure-keyvault",
-    "azure-synapse"
+    "azure-synapse",
+    "azure-ai-anomalydetector",
 ]
 META_PACKAGES = ["azure", "azure-mgmt", "azure-keyvault"]
 REGRESSION_EXCLUDED_PACKAGES = [
     "azure-common",
+]
+
+MANAGEMENT_PACKAGES_FILTER_EXCLUSIONS = [
+    "azure-mgmt-core",
 ]
 
 omit_regression = (
@@ -62,12 +73,15 @@ omit_regression = (
 omit_docs = lambda x: "nspkg" not in x and os.path.basename(x) not in META_PACKAGES
 omit_build = lambda x: x # Dummy lambda to match omit type
 lambda_filter_azure_pkg = lambda x: x.startswith("azure") and "-nspkg" not in x
+omit_mgmt = lambda x: "mgmt" not in x or os.path.basename(x) in MANAGEMENT_PACKAGES_FILTER_EXCLUSIONS
+
 
 # dict of filter type and filter function
 omit_funct_dict = {
     "Build": omit_build,
     "Docs": omit_docs,
     "Regression": omit_regression,
+    "Omit_management": omit_mgmt,
 }
 
 def log_file(file_location, is_error=False):
@@ -107,6 +121,15 @@ def clean_coverage(coverage_dir):
         else:
             raise
 
+def str_to_bool(input_string):
+    if isinstance(input_string, bool):
+        return input_string
+    elif input_string.lower() in ("true", "t", "1"):
+        return True
+    elif input_string.lower() in ("false", "f", "0"):
+        return False
+    else:
+        return False
 
 def parse_setup(setup_path):
     setup_filename = os.path.join(setup_path, "setup.py")
@@ -170,6 +193,10 @@ def parse_setup_requires(setup_path):
     return python_requires
 
 
+def get_name_from_specifier(version):
+    return re.split(r'[><=]', version)[0]
+
+
 def filter_for_compatibility(package_set):
     collected_packages = []
     v = sys.version_info
@@ -219,36 +246,35 @@ def process_glob_string(
     # if we have individually queued this specific package, it's obvious that we want to build it specifically
     # in this case, do not honor the omission list
     if len(collected_directories) == 1:
-        return filter_for_compatibility(collected_directories)
+        pkg_set_ci_filtered = filter_for_compatibility(collected_directories)
     # however, if there are multiple packages being built, we should honor the omission list and NOT build the omitted
     # packages
     else:
-        allowed_package_set = remove_omitted_packages(collected_directories, filter_type)
-        logging.info(
-            "Target packages after filtering by omission list: {}".format(
-                allowed_package_set
-            )
-        )
-
+        allowed_package_set = remove_omitted_packages(collected_directories)
         pkg_set_ci_filtered = filter_for_compatibility(allowed_package_set)
-        logging.info(
-            "Package(s) omitted by CI filter: {}".format(
-                list(set(allowed_package_set) - set(pkg_set_ci_filtered))
-            )
+
+    # Apply filter based on filter type. for e.g. Docs, Regression, Management
+    pkg_set_ci_filtered = list(filter(omit_funct_dict.get(filter_type, omit_build), pkg_set_ci_filtered))
+    logging.info(
+        "Target packages after filtering by CI: {}".format(
+            pkg_set_ci_filtered
         )
+    )
+    logging.info(
+        "Package(s) omitted by CI filter: {}".format(
+            list(set(collected_directories) - set(pkg_set_ci_filtered))
+        )
+    )
+    return sorted(pkg_set_ci_filtered)
 
-        return sorted(pkg_set_ci_filtered)
 
-
-def remove_omitted_packages(collected_directories, filter_type="Build"):
-
+def remove_omitted_packages(collected_directories):
     packages = [
         package_dir
         for package_dir in collected_directories
         if os.path.basename(package_dir) not in OMITTED_CI_PACKAGES
     ]
 
-    packages = list(filter(omit_funct_dict.get(filter_type, omit_build), packages))
     return packages
 
 
@@ -292,6 +318,7 @@ def create_code_coverage_params(parsed_args, package_name):
     else:
         current_package_name = package_name.replace("-", ".")
         coverage_args.append("--cov={}".format(current_package_name))
+        coverage_args.append("--cov-append")
         logging.info(
             "Code coverage is enabled for package {0}, pytest arguements: {1}".format(
                 current_package_name, coverage_args
@@ -330,18 +357,26 @@ def find_whl(package_name, version, whl_directory):
         logging.error("Whl directory is incorrect")
         exit(1)
 
-    logging.info("Searching whl for package {}".format(package_name))
-    whl_name = "{0}-{1}*.whl".format(package_name.replace("-", "_"), version)
-    paths = glob.glob(os.path.join(whl_directory, whl_name))
-    if not paths:
+    parsed_version = parse(version)
+
+    logging.info("Searching whl for package {0}-{1}".format(package_name, parsed_version.base_version))
+    whl_name_format = "{0}-{1}*.whl".format(package_name.replace("-", "_"), parsed_version.base_version)
+    whls = []
+    for root, dirnames, filenames in os.walk(whl_directory):
+        for filename in fnmatch.filter(filenames, whl_name_format):
+            whls.append(os.path.join(root, filename))
+
+    whls = [os.path.relpath(w, whl_directory) for w in whls]
+
+    if not whls:
         logging.error(
-            "whl is not found in whl directory {0} for package {1}".format(
-                whl_directory, package_name
+            "whl is not found in whl directory {0} for package {1}-{2}".format(
+                whl_directory, package_name, parsed_version.base_version
             )
         )
         exit(1)
 
-    return paths[0]
+    return whls[0]
 
 # This method installs package from a pre-built whl
 def install_package_from_whl(
@@ -378,10 +413,29 @@ def filter_dev_requirements(pkg_root_path, packages_to_exclude, dest_dir):
 
     return new_dev_req_path
 
+def extend_dev_requirements(dev_req_path, packages_to_include):
+    requirements = []
+    with open(dev_req_path, "r") as dev_req_file:
+        requirements = dev_req_file.readlines()
+
+    # include any package given in included list. omit duplicate
+    for requirement in packages_to_include:
+        if requirement not in requirements:
+            requirements.insert(0, requirement.rstrip() + '\n')
+
+    logging.info("Extending dev requirements. New result:: {}".format(requirements))
+    # create new dev requirements file with different name for filtered requirements
+    with open(dev_req_path, "w") as dev_req_file:
+        dev_req_file.writelines(requirements)
+
 def is_required_version_on_pypi(package_name, spec):
     from pypi_tools.pypi import PyPIClient
     client = PyPIClient()
-    versions = [str(v) for v in client.get_ordered_versions(package_name) if str(v) in spec]
+    versions = []
+    try:
+        versions = [str(v) for v in client.get_ordered_versions(package_name) if str(v) in spec]
+    except:
+        logging.error("Package {} is not found on PyPI", package_name)
     return versions
 
 def find_packages_missing_on_pypi(path):
@@ -401,3 +455,28 @@ def find_packages_missing_on_pypi(path):
         logging.error("Packages not found on PyPI: {}".format(missing_packages))
     return missing_packages
 
+
+def find_tools_packages(root_path):
+    """Find packages in tools directory. For e.g. azure-sdk-tools, azure-devtools
+    """
+    glob_string = os.path.join(root_path, "tools", "*", "setup.py")
+    pkgs = [os.path.basename(os.path.dirname(p)) for p in glob.glob(glob_string)]
+    logging.info("Packages in tools: {}".format(pkgs))
+    return pkgs
+
+
+def get_installed_packages(paths = None):
+    """Find packages in default or given lib paths
+    """
+    # WorkingSet returns installed packages in given path
+    # working_set returns installed packages in default path
+    # if paths is set then find installed packages from given paths
+    ws = WorkingSet(paths) if paths else working_set
+    return ["{0}=={1}".format(p.project_name, p.version) for p in ws]
+
+def get_package_properties(setup_py_path):
+    """Parse setup.py and return package details like package name, version, whether it's new SDK
+    """
+    pkgName, version, _, requires = parse_setup(setup_py_path)
+    is_new_sdk = pkgName in NEW_REQ_PACKAGES or any(map(lambda x: (parse_require(x)[0] in NEW_REQ_PACKAGES), requires))
+    return pkgName, version, is_new_sdk, setup_py_path

@@ -1,14 +1,141 @@
-# Change Log azure-ai-textanalytics
+# Release History
 
-## 1.0.0b3 (Unreleased)
+## 5.1.0b7 (Unreleased)
+
+
+## 5.1.0b6 (2021-03-09)
+
+**Breaking Changes**
+- By default, we now target the service's `v3.1-preview.4` endpoint through enum value `TextAnalyticsApiVersion.V3_1_PREVIEW`
+- Removed property `related_entities` on `HealthcareEntity` and added `entity_relations` onto the document response level for healthcare
+- Renamed properties `aspect` and `opinions` to `target` and `assessments` respectively in class `MinedOpinion`.
+- Renamed classes `AspectSentiment` and `OpinionSentiment` to `TargetSentiment` and `AssessmentSentiment` respectively.
+
+**New Features**
+- Added `RecognizeLinkedEntitiesAction` as a supported action type for `begin_analyze_batch_actions`.
+- Added parameter `categories_filter` to the `recognize_pii_entities` client method.
+- Added enum `PiiEntityCategoryType`.
+- Add property `normalized_text` to `HealthcareEntity`. This property is a normalized version of the `text` property that already
+exists on the `HealthcareEntity`
+- Add property `assertion` onto `HealthcareEntity`. This contains assertions about the entity itself, i.e. if the entity represents a diagnosis,
+is this diagnosis conditional on a symptom?
+
+**Known Issues**
+
+- `begin_analyze_healthcare_entities` is currently in gated preview and can not be used with AAD credentials. For more information, see [the Text Analytics for Health documentation](https://docs.microsoft.com/azure/cognitive-services/text-analytics/how-tos/text-analytics-for-health?tabs=ner#request-access-to-the-public-preview).
+- At time of this SDK release, the service is not respecting the value passed through `model_version` to `begin_analyze_healthcare_entities`, it only uses the latest model.
+
+## 5.1.0b5 (2021-02-10)
+
+**Breaking Changes**
+
+- Rename `begin_analyze` to `begin_analyze_batch_actions`.
+- Now instead of separate parameters for all of the different types of actions you can pass to `begin_analyze_batch_actions`, we accept one parameter `actions`,
+which is a list of actions you would like performed. The results of the actions are returned in the same order as when inputted.
+- The response object from `begin_analyze_batch_actions` has also changed. Now, after the completion of your long running operation, we return a paged iterable
+of action results, in the same order they've been inputted. The actual document results for each action are included under property `document_results` of
+each action result.
+
+**New Features**
+- Renamed `begin_analyze_healthcare` to `begin_analyze_healthcare_entities`.
+- Renamed `AnalyzeHealthcareResult` to `AnalyzeHealthcareEntitiesResult` and `AnalyzeHealthcareResultItem` to `AnalyzeHealthcareEntitiesResultItem`.
+- Renamed `HealthcareEntityLink` to `HealthcareEntityDataSource` and renamed its properties `id` to `entity_id` and `data_source` to `name`.
+- Removed `relations` from `AnalyzeHealthcareEntitiesResultItem` and added `related_entities` to `HealthcareEntity`.
+- Moved the cancellation logic for the Analyze Healthcare Entities service from
+the service client to the poller object returned from `begin_analyze_healthcare_entities`.
+- Exposed Analyze Healthcare Entities operation metadata on the poller object returned from `begin_analyze_healthcare_entities`.
+- No longer need to specify `api_version=TextAnalyticsApiVersion.V3_1_PREVIEW_3` when calling `begin_analyze` and `begin_analyze_healthcare_entities`. `begin_analyze_healthcare_entities` is still in gated preview though.
+- Added a new parameter `string_index_type` to the service client methods `begin_analyze_healthcare_entities`, `analyze_sentiment`, `recognize_entities`, `recognize_pii_entities`, and `recognize_linked_entities` which tells the service how to interpret string offsets.
+- Added property `length` to `CategorizedEntity`, `SentenceSentiment`, `LinkedEntityMatch`, `AspectSentiment`, `OpinionSentiment`, `PiiEntity` and
+`HealthcareEntity`.
+
+## 5.1.0b4 (2021-01-12)
+
+**Bug Fixes**
+
+- Package requires [azure-core](https://pypi.org/project/azure-core/) version 1.8.2 or greater
+
+
+## 5.1.0b3 (2020-11-19)
+
+**New Features**
+- We have added method `begin_analyze`, which supports long-running batch process of Named Entity Recognition, Personally identifiable Information, and Key Phrase Extraction. To use, you must specify `api_version=TextAnalyticsApiVersion.V3_1_PREVIEW_3` when creating your client.
+- We have added method `begin_analyze_healthcare`, which supports the service's Health API. Since the Health API is currently only available in a gated preview, you need to have your subscription on the service's allow list, and you must specify `api_version=TextAnalyticsApiVersion.V3_1_PREVIEW_3` when creating your client. Note that since this is a gated preview, AAD is not supported. More information [here](https://docs.microsoft.com/azure/cognitive-services/text-analytics/how-tos/text-analytics-for-health?tabs=ner#request-access-to-the-public-preview).
+
+
+## 5.1.0b2 (2020-10-06)
 
 **Breaking changes**
-- `SentimentScorePerLabel` has been renamed to `SentimentConfidenceScorePerLabel`
+- Removed property `length` from `CategorizedEntity`, `SentenceSentiment`, `LinkedEntityMatch`, `AspectSentiment`, `OpinionSentiment`, and `PiiEntity`.
+To get the length of the text in these models, just call `len()` on the `text` property.
+- When a parameter or endpoint is not compatible with the API version you specify, we will now return a `ValueError` instead of a `NotImplementedError`.
+- Client side validation of input is now disabled by default. This means there will be no `ValidationError`s thrown by the client SDK in the case of malformed input. The error will now be thrown by the service through an `HttpResponseError`.
+
+## 5.1.0b1 (2020-09-17)
+
+**New features**
+- We are now targeting the service's v3.1-preview API as the default. If you would like to still use version v3.0 of the service,
+pass in `v3.0` to the kwarg `api_version` when creating your TextAnalyticsClient
+- We have added an API `recognize_pii_entities` which returns entities containing personally identifiable information for a batch of documents. Only available for API version v3.1-preview and up.
+- Added `offset` and `length` properties for `CategorizedEntity`, `SentenceSentiment`, and `LinkedEntityMatch`. These properties are only available for API versions v3.1-preview and up.
+  - `length` is the number of characters in the text of these models
+  - `offset` is the offset of the text from the start of the document
+- We now have added support for opinion mining. To use this feature, you need to make sure you are using the service's
+v3.1-preview API. To get this support pass `show_opinion_mining` as True when calling the `analyze_sentiment` endpoint
+- Add property `bing_entity_search_api_id` to the `LinkedEntity` class. This property is only available for v3.1-preview and up, and it is to be
+used in conjunction with the Bing Entity Search API to fetch additional relevant information about the returned entity.
+
+## 5.0.0 (2020-07-27)
+
+- Re-release of GA version 1.0.0 with an updated version
+
+## 1.0.0 (2020-06-09)
+
+- First stable release of the azure-ai-textanalytics package. Targets the service's v3.0 API.
+
+## 1.0.0b6 (2020-05-27)
+
+**New features**
+- We now have a `warnings` property on each document-level response object returned from the endpoints. It is a list of `TextAnalyticsWarning`s.
+- Added `text` property to `SentenceSentiment`
+
+**Breaking changes**
+- Now targets only the service's v3.0 API, instead of the v3.0-preview.1 API
+- `score` attribute of `DetectedLanguage` has been renamed to `confidence_score`
+- Removed `grapheme_offset` and `grapheme_length` from `CategorizedEntity`, `SentenceSentiment`, and `LinkedEntityMatch`
+- `TextDocumentStatistics` attribute `grapheme_count` has been renamed to `character_count`
+
+## 1.0.0b5 
+
+- This was a broken release
+
+## 1.0.0b4 (2020-04-07)
+
+**Breaking changes**
+- Removed the `recognize_pii_entities` endpoint and all related models (`RecognizePiiEntitiesResult` and `PiiEntity`)
+from this library.
+- Removed `TextAnalyticsApiKeyCredential` and now using `AzureKeyCredential` from azure.core.credentials as key credential
+- `score` attribute has been renamed to `confidence_score` for the `CategorizedEntity`, `LinkedEntityMatch`, and
+`PiiEntity` models
+- All input parameters `inputs` have been renamed to `documents`
+
+## 1.0.0b3 (2020-03-10)
+
+**Breaking changes**
+- `SentimentScorePerLabel` has been renamed to `SentimentConfidenceScores`
 - `AnalyzeSentimentResult` and `SentenceSentiment` attribute `sentiment_scores` has been renamed to `confidence_scores`
+- `TextDocumentStatistics` attribute `character_count` has been renamed to `grapheme_count`
 - `LinkedEntity` attribute `id` has been renamed to `data_source_entity_id`
+- Parameters `country_hint` and `language` are now passed as keyword arguments
+- The keyword argument `response_hook` has been renamed to `raw_response_hook`
+- `length` and `offset` attributes have been renamed to `grapheme_length` and `grapheme_offset` for the `SentenceSentiment`,
+`CategorizedEntity`, `PiiEntity`, and `LinkedEntityMatch` models
 
 **New features**
 - Pass `country_hint="none"` to not use the default country hint of `"US"`.
+
+**Dependency updates**
+- Adopted [azure-core](https://pypi.org/project/azure-core/) version 1.3.0 or greater
 
 ## 1.0.0b2 (2020-02-11)
 
@@ -16,7 +143,7 @@
 
 - The single text, module-level operations `single_detect_language()`, `single_recognize_entities()`, `single_extract_key_phrases()`, `single_analyze_sentiment()`, `single_recognize_pii_entities()`, and `single_recognize_linked_entities()`
 have been removed from the client library. Use the batching methods for optimal performance in production environments.
-- To use an API key as the credential for authenticating the client, a new credential class `TextAnalyticsApiKeyCredential("<api_key>")` must be passed in for the `credential` parameter. 
+- To use an API key as the credential for authenticating the client, a new credential class `TextAnalyticsApiKeyCredential("<api_key>")` must be passed in for the `credential` parameter.
 Passing the API key as a string is no longer supported.
 - `detect_languages()` is renamed to `detect_language()`.
 - The `TextAnalyticsError` model has been simplified to an object with only attributes `code`, `message`, and `target`.
@@ -85,8 +212,8 @@ https://azure.github.io/azure-sdk/releases/latest/python.html.
   - `show_stats` and `model_version` parameters move to keyword only arguments.
 
 - New return types
-  - The return types for the batching methods (`detect_languages`, `recognize_entities`, `recognize_pii_entities`, `recognize_linked_entities`, `extract_key_phrases`, `analyze_sentiment`) now return a heterogeneous list of 
-  result objects and document errors in the order passed in with the request. To iterate over the list and filter for result or error, a boolean property on each object called `is_error` can be used to determine whether the returned response object at 
+  - The return types for the batching methods (`detect_languages`, `recognize_entities`, `recognize_pii_entities`, `recognize_linked_entities`, `extract_key_phrases`, `analyze_sentiment`) now return a heterogeneous list of
+  result objects and document errors in the order passed in with the request. To iterate over the list and filter for result or error, a boolean property on each object called `is_error` can be used to determine whether the returned response object at
   that index is a result or an error:
   - `detect_languages` now returns a List[Union[`DetectLanguageResult`, `DocumentError`]]
   - `recognize_entities` now returns a List[Union[`RecognizeEntitiesResult`, `DocumentError`]]

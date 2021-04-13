@@ -2,22 +2,15 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 # ------------------------------------
-import os
 import uuid
-from azure.identity.aio import DefaultAzureCredential
 from azure.keyvault.secrets.aio import SecretClient
+from key_vault_base_async import KeyVaultBaseAsync
 
 
-class KeyVaultSecrets:
+class KeyVaultSecrets(KeyVaultBaseAsync):
     def __init__(self):
-        # DefaultAzureCredential() expects the following environment variables:
-        # * AZURE_CLIENT_ID
-        # * AZURE_CLIENT_SECRET
-        # * AZURE_TENANT_ID
-        credential = DefaultAzureCredential()
-        self.secret_client = SecretClient(
-            vault_url=os.environ["AZURE_PROJECT_URL"], credential=credential
-        )
+        args = self.get_client_args()
+        self.secret_client = SecretClient(**args)
         self.secret_name = "secret-name-" + uuid.uuid1().hex
         self.secret_value = "secret-value"
 

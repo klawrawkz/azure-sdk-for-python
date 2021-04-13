@@ -3,13 +3,18 @@
 # Licensed under the MIT License.
 # ------------------------------------
 import abc
-import os
-import sys
+import platform
+import time
 
+import msal
+import six
+from six.moves.urllib_parse import urlparse
 
-from msal import TokenCache
-from azure.core.exceptions import ClientAuthenticationError
+from azure.core.credentials import AccessToken
+from .. import CredentialUnavailableError
 from .._constants import KnownAuthorities
+from .._internal import get_default_authority, normalize_authority, wrap_exceptions
+from .._persistent_cache import _load_persistent_cache, TokenCachePersistenceOptions
 
 try:
     ABC = abc.ABC
@@ -24,29 +29,21 @@ except ImportError:
 if TYPE_CHECKING:
     # pylint:disable=unused-import,ungrouped-imports
     from typing import Any, Iterable, List, Mapping, Optional
-    import msal_extensions
-    from azure.core.credentials import AccessToken
     from .._internal import AadClientBase
 
     CacheItem = Mapping[str, str]
 
 
-MULTIPLE_ACCOUNTS = """Multiple users were discovered in the shared token cache. If using DefaultAzureCredential, set
-the AZURE_USERNAME environment variable to the preferred username. Otherwise,
-specify it when constructing SharedTokenCacheCredential.
-Discovered accounts: {}"""
+MULTIPLE_ACCOUNTS = """SharedTokenCacheCredential authentication unavailable. Multiple accounts
+were found in the cache. Use username and tenant id to disambiguate."""
 
-MULTIPLE_MATCHING_ACCOUNTS = """Found multiple accounts matching{}{}. If using DefaultAzureCredential, set environment
-variables AZURE_USERNAME and AZURE_TENANT_ID with the preferred username and tenant.
-Otherwise, specify them when constructing SharedTokenCacheCredential.
-Discovered accounts: {}"""
+MULTIPLE_MATCHING_ACCOUNTS = """SharedTokenCacheCredential authentication unavailable. Multiple accounts
+matching the specified{}{} were found in the cache."""
 
-NO_ACCOUNTS = """The shared cache contains no signed-in accounts. To authenticate with SharedTokenCacheCredential, login
-through developer tooling supporting Azure single sign on"""
+NO_ACCOUNTS = """SharedTokenCacheCredential authentication unavailable. No accounts were found in the cache."""
 
-NO_MATCHING_ACCOUNTS = """The cache contains no account matching the specified{}{}. To authenticate with
-SharedTokenCacheCredential, login through developer tooling supporting Azure single sign on.
-Discovered accounts: {}"""
+NO_MATCHING_ACCOUNTS = """SharedTokenCacheCredential authentication unavailable. No account
+matching the specified{}{} was found in the cache."""
 
 NO_TOKEN = """Token acquisition failed for user '{}'. To fix, re-authenticate
 through developer tooling supporting Azure single sign on"""
@@ -91,32 +88,40 @@ def _filtered_accounts(accounts, username=None, tenant_id=None):
 class SharedTokenCacheBase(ABC):
     def __init__(self, username=None, **kwargs):  # pylint:disable=unused-argument
         # type: (Optional[str], **Any) -> None
-
-        self._authority = kwargs.pop("authority", None) or KnownAuthorities.AZURE_PUBLIC_CLOUD
-        self._authority_aliases = KNOWN_ALIASES.get(self._authority) or frozenset((self._authority,))
+        authority = kwargs.pop("authority", None)
+        self._authority = normalize_authority(authority) if authority else get_default_authority()
+        environment = urlparse(self._authority).netloc
+        self._environment_aliases = KNOWN_ALIASES.get(environment) or frozenset((environment,))
         self._username = username
         self._tenant_id = kwargs.pop("tenant_id", None)
+        self._cache = kwargs.pop("_cache", None)
+        self._client = None  # type: Optional[AadClientBase]
+        self._client_kwargs = kwargs
+        self._client_kwargs["tenant_id"] = "organizations"
+        self._initialized = False
 
-        cache = kwargs.pop("_cache", None)  # for ease of testing
+    def _initialize(self):
+        if self._initialized:
+            return
 
-        if not cache and sys.platform.startswith("win") and "LOCALAPPDATA" in os.environ:
-            from msal_extensions.token_cache import WindowsTokenCache
-
-            cache = WindowsTokenCache(
-                cache_location=os.path.join(os.environ["LOCALAPPDATA"], ".IdentityService", "msal.cache")
+        self._load_cache()
+        if self._cache:
+            # pylint:disable=protected-access
+            self._client = self._get_auth_client(
+                authority=self._authority, cache=self._cache, **self._client_kwargs
             )
 
-            # prevent writing to the shared cache
-            # TODO: seperating deserializing access tokens from caching them would make this cleaner
-            cache.add = lambda *_, **__: None
+        self._initialized = True
 
-        if cache:
-            self._cache = cache
-            self._client = self._get_auth_client(
-                authority=self._authority, cache=cache, **kwargs
-            )  # type: Optional[AadClientBase]
-        else:
-            self._client = None
+    def _load_cache(self):
+        if not self._cache and self.supported():
+            try:
+                # This credential accepts the user's default cache regardless of whether it's encrypted. It doesn't
+                # create a new cache. If the default cache exists, the user must have created it earlier. If it's
+                # unencrypted, the user must have allowed that.
+                self._cache = _load_persistent_cache(TokenCachePersistenceOptions(allow_unencrypted_storage=True))
+            except Exception:  # pylint:disable=broad-except
+                pass
 
     @abc.abstractmethod
     def _get_auth_client(self, **kwargs):
@@ -124,13 +129,13 @@ class SharedTokenCacheBase(ABC):
         pass
 
     def _get_cache_items_for_authority(self, credential_type):
-        # type: (TokenCache.CredentialType) -> List[CacheItem]
+        # type: (msal.TokenCache.CredentialType) -> List[CacheItem]
         """yield cache items matching this credential's authority or one of its aliases"""
 
         items = []
         for item in self._cache.find(credential_type):
             environment = item.get("environment")
-            if environment in self._authority_aliases:
+            if environment in self._environment_aliases:
                 items.append(item)
         return items
 
@@ -138,8 +143,8 @@ class SharedTokenCacheBase(ABC):
         # type: () -> Iterable[CacheItem]
         """returns an iterable of cached accounts which have a matching refresh token"""
 
-        refresh_tokens = self._get_cache_items_for_authority(TokenCache.CredentialType.REFRESH_TOKEN)
-        all_accounts = self._get_cache_items_for_authority(TokenCache.CredentialType.ACCOUNT)
+        refresh_tokens = self._get_cache_items_for_authority(msal.TokenCache.CredentialType.REFRESH_TOKEN)
+        all_accounts = self._get_cache_items_for_authority(msal.TokenCache.CredentialType.ACCOUNT)
 
         accounts = {}
         for refresh_token in refresh_tokens:
@@ -155,6 +160,7 @@ class SharedTokenCacheBase(ABC):
                     accounts[account["home_account_id"]] = account
         return accounts.values()
 
+    @wrap_exceptions
     def _get_account(self, username=None, tenant_id=None):
         # type: (Optional[str], Optional[str]) -> CacheItem
         """returns exactly one account which has a refresh token and matches username and/or tenant_id"""
@@ -162,7 +168,7 @@ class SharedTokenCacheBase(ABC):
         accounts = self._get_accounts_having_matching_refresh_tokens()
         if not accounts:
             # cache is empty or contains no refresh token -> user needs to sign in
-            raise ClientAuthenticationError(message=NO_ACCOUNTS)
+            raise CredentialUnavailableError(message=NO_ACCOUNTS)
 
         filtered_accounts = _filtered_accounts(accounts, username, tenant_id)
         if len(filtered_accounts) == 1:
@@ -174,18 +180,47 @@ class SharedTokenCacheBase(ABC):
             username_string = " username: {}".format(username) if username else ""
             tenant_string = " tenant: {}".format(tenant_id) if tenant_id else ""
             if filtered_accounts:
-                message = MULTIPLE_MATCHING_ACCOUNTS.format(username_string, tenant_string, cached_accounts)
+                message = MULTIPLE_MATCHING_ACCOUNTS.format(username_string, tenant_string)
             else:
-                message = NO_MATCHING_ACCOUNTS.format(username_string, tenant_string, cached_accounts)
+                message = NO_MATCHING_ACCOUNTS.format(username_string, tenant_string)
         else:
             message = MULTIPLE_ACCOUNTS.format(cached_accounts)
 
-        raise ClientAuthenticationError(message=message)
+        raise CredentialUnavailableError(message=message)
+
+    def _get_cached_access_token(self, scopes, account):
+        # type: (Iterable[str], CacheItem) -> Optional[AccessToken]
+        if "home_account_id" not in account:
+            return None
+
+        try:
+            cache_entries = self._cache.find(
+                msal.TokenCache.CredentialType.ACCESS_TOKEN,
+                target=list(scopes),
+                query={"home_account_id": account["home_account_id"]},
+            )
+            for token in cache_entries:
+                expires_on = int(token["expires_on"])
+                if expires_on - 300 > int(time.time()):
+                    return AccessToken(token["secret"], expires_on)
+        except Exception as ex:  # pylint:disable=broad-except
+            message = "Error accessing cached data: {}".format(ex)
+            six.raise_from(CredentialUnavailableError(message=message), ex)
+
+        return None
 
     def _get_refresh_tokens(self, account):
-        return self._cache.find(
-            TokenCache.CredentialType.REFRESH_TOKEN, query={"home_account_id": account.get("home_account_id")}
-        )
+        if "home_account_id" not in account:
+            return None
+
+        try:
+            cache_entries = self._cache.find(
+                msal.TokenCache.CredentialType.REFRESH_TOKEN, query={"home_account_id": account["home_account_id"]}
+            )
+            return [token["secret"] for token in cache_entries if "secret" in token]
+        except Exception as ex:  # pylint:disable=broad-except
+            message = "Error accessing cached data: {}".format(ex)
+            six.raise_from(CredentialUnavailableError(message=message), ex)
 
     @staticmethod
     def supported():
@@ -194,4 +229,4 @@ class SharedTokenCacheBase(ABC):
 
         :rtype: bool
         """
-        return sys.platform.startswith("win")
+        return platform.system() in {"Darwin", "Linux", "Windows"}

@@ -1,0 +1,82 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json;odata.metadata=minimal
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '0'
+      User-Agent:
+      - azsdk-python-search-documents/11.1.1 Python/3.8.6 (Windows-10-10.0.19041-SP0)
+    method: DELETE
+    uri: https://searchf61a1409.search.windows.net/indexes('drgqefsg')?api-version=2020-06-30-Preview
+  response:
+    body:
+      string: ''
+    headers:
+      cache-control:
+      - no-cache
+      date:
+      - Thu, 25 Mar 2021 20:11:25 GMT
+      elapsed-time:
+      - '163'
+      expires:
+      - '-1'
+      pragma:
+      - no-cache
+      request-id:
+      - 468f124f-8da6-11eb-aa9d-a0481ca055a9
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+    status:
+      code: 204
+      message: No Content
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/json;odata.metadata=minimal
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - azsdk-python-search-documents/11.1.1 Python/3.8.6 (Windows-10-10.0.19041-SP0)
+    method: GET
+    uri: https://searchf61a1409.search.windows.net/indexes?api-version=2020-06-30-Preview
+  response:
+    body:
+      string: '{"@odata.context":"https://searchf61a1409.search.windows.net/$metadata#indexes","value":[]}'
+    headers:
+      cache-control:
+      - no-cache
+      content-length:
+      - '91'
+      content-type:
+      - application/json; odata.metadata=minimal
+      date:
+      - Thu, 25 Mar 2021 20:11:30 GMT
+      elapsed-time:
+      - '34'
+      expires:
+      - '-1'
+      odata-version:
+      - '4.0'
+      pragma:
+      - no-cache
+      preference-applied:
+      - odata.include-annotations="*"
+      request-id:
+      - 49d8c6f4-8da6-11eb-9a36-a0481ca055a9
+      strict-transport-security:
+      - max-age=15724800; includeSubDomains
+      vary:
+      - Accept-Encoding
+    status:
+      code: 200
+      message: OK
+version: 1

@@ -23,6 +23,8 @@ class EndpointKeysDTO(Model):
     :type installed_version: str
     :param last_stable_version: Latest version of runtime.
     :type last_stable_version: str
+    :param language: Language setting of runtime.
+    :type language: str
     """
 
     _attribute_map = {
@@ -30,6 +32,7 @@ class EndpointKeysDTO(Model):
         'secondary_endpoint_key': {'key': 'secondaryEndpointKey', 'type': 'str'},
         'installed_version': {'key': 'installedVersion', 'type': 'str'},
         'last_stable_version': {'key': 'lastStableVersion', 'type': 'str'},
+        'language': {'key': 'language', 'type': 'str'},
     }
 
     def __init__(self, **kwargs):
@@ -38,3 +41,4 @@ class EndpointKeysDTO(Model):
         self.secondary_endpoint_key = kwargs.get('secondary_endpoint_key', None)
         self.installed_version = kwargs.get('installed_version', None)
         self.last_stable_version = kwargs.get('last_stable_version', None)
+        self.language = kwargs.get('language', None)

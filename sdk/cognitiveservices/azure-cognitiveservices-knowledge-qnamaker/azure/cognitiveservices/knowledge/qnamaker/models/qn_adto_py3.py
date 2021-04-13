@@ -29,12 +29,18 @@ class QnADTO(Model):
     :param metadata: List of metadata associated with the answer.
     :type metadata:
      list[~azure.cognitiveservices.knowledge.qnamaker.models.MetadataDTO]
+    :param context: Context of a QnA
+    :type context:
+     ~azure.cognitiveservices.knowledge.qnamaker.models.QnADTOContext
+    :param last_updated_timestamp: Timestamp when the QnA was last updated.
+    :type last_updated_timestamp: str
     """
 
     _validation = {
         'answer': {'required': True, 'max_length': 25000, 'min_length': 1},
         'source': {'max_length': 300},
         'questions': {'required': True},
+        'last_updated_timestamp': {'max_length': 300},
     }
 
     _attribute_map = {
@@ -43,12 +49,16 @@ class QnADTO(Model):
         'source': {'key': 'source', 'type': 'str'},
         'questions': {'key': 'questions', 'type': '[str]'},
         'metadata': {'key': 'metadata', 'type': '[MetadataDTO]'},
+        'context': {'key': 'context', 'type': 'QnADTOContext'},
+        'last_updated_timestamp': {'key': 'lastUpdatedTimestamp', 'type': 'str'},
     }
 
-    def __init__(self, *, answer: str, questions, id: int=None, source: str=None, metadata=None, **kwargs) -> None:
+    def __init__(self, *, answer: str, questions, id: int=None, source: str=None, metadata=None, context=None, last_updated_timestamp: str=None, **kwargs) -> None:
         super(QnADTO, self).__init__(**kwargs)
         self.id = id
         self.answer = answer
         self.source = source
         self.questions = questions
         self.metadata = metadata
+        self.context = context
+        self.last_updated_timestamp = last_updated_timestamp
