@@ -3,7 +3,6 @@
 trigger:
   branches:
     include:
-    - master
     - main
     - hotfix/*
     - release/*
@@ -13,11 +12,12 @@ trigger:
     - sdk/core/
     - eng/
     - tools/
+    exclude:
+    - eng/common/
 
 pr:
   branches:
     include:
-    - master
     - main
     - feature/*
     - hotfix/*
@@ -28,11 +28,15 @@ pr:
     - sdk/core/
     - eng/
     - tools/
+    exclude:
+    - eng/common/
 
 extends:
   template: ../../eng/pipelines/templates/stages/archetype-sdk-client.yml
   parameters:
     ServiceDirectory: core
+    BuildTargetingString: "*"
+    ValidateFormatting: true
     Artifacts:
     - name: azure-core
       safeName: azurecore
@@ -44,11 +48,8 @@ extends:
       safeName: azurecorecoretracingtelemetry
     - name: azure-common
       safeName: azurecommon
-    CondaArtifacts:
-    - name: azure-core
-      meta_source: meta.yaml
-      common_root: azure
-      checkout:
-        - package: azure-core
-          checkout_path: sdk/core
-          version: 1.12.0
+      skipPublishDocMs: true
+    - name: azure-core-experimental
+      safeName: azurecoreexperimental
+    - name: corehttp
+      safeName: corehttp

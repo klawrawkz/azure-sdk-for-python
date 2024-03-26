@@ -5,8 +5,10 @@
 # --------------------------------------------------------------------------
 # pylint: disable=invalid-overridden-method
 import functools
-from typing import (  # pylint: disable=unused-import
-    Union, Optional, Any, Iterable, Dict, List,
+import sys
+import warnings
+from typing import (
+    Union, Optional, Any, Dict, List,
     TYPE_CHECKING
 )
 
@@ -15,7 +17,6 @@ from azure.core.exceptions import HttpResponseError
 from azure.core.tracing.decorator import distributed_trace
 from azure.core.pipeline import AsyncPipeline
 from azure.core.tracing.decorator_async import distributed_trace_async
-
 from .._shared.base_client_async import AsyncStorageAccountHostsMixin, AsyncTransportWrapper
 from .._shared.response_handlers import process_storage_error
 from .._shared.policies_async import ExponentialRetry
@@ -27,9 +28,14 @@ from ._share_client_async import ShareClient
 from ._models import SharePropertiesPaged
 from .._models import service_properties_deserialize
 
+if sys.version_info >= (3, 8):
+    from typing import Literal  # pylint: disable=no-name-in-module, ungrouped-imports
+else:
+    from typing_extensions import Literal  # pylint: disable=ungrouped-imports
+
 if TYPE_CHECKING:
-    from datetime import datetime
-    from .._shared.models import ResourceTypes, AccountSasPermissions
+    from azure.core.credentials import AzureNamedKeyCredential, AzureSasCredential
+    from azure.core.credentials_async import AsyncTokenCredential
     from .._models import (
         ShareProperties,
         Metrics,
@@ -51,20 +57,32 @@ class ShareServiceClient(AsyncStorageAccountHostsMixin, ShareServiceClientBase):
         in the URL path (e.g. share or file) will be discarded. This URL can be optionally
         authenticated with a SAS token.
     :param credential:
-        The credential with which to authenticate. This is optional if the
+        The credentials with which to authenticate. This is optional if the
         account URL already has a SAS token. The value can be a SAS token string,
-        an instance of a AzureSasCredential from azure.core.credentials or an account
-        shared access key.
+        an instance of a AzureSasCredential or AzureNamedKeyCredential from azure.core.credentials,
+        an account shared access key, or an instance of a TokenCredentials class from azure.identity.
+        If the resource URI already contains a SAS token, this will be ignored in favor of an explicit credential
+        - except in the case of AzureSasCredential, where the conflicting SAS tokens will raise a ValueError.
+        If using an instance of AzureNamedKeyCredential, "name" should be the storage account name, and "key"
+        should be the storage account key.
+    :keyword token_intent:
+        Required when using `TokenCredential` for authentication and ignored for other forms of authentication.
+        Specifies the intent for all requests when using `TokenCredential` authentication. Possible values are:
+
+        backup - Specifies requests are intended for backup/admin type operations, meaning that all file/directory
+                 ACLs are bypassed and full permissions are granted. User must also have required RBAC permission.
+
+    :paramtype token_intent: Literal['backup']
+    :keyword bool allow_trailing_dot: If true, the trailing dot will not be trimmed from the target URI.
+    :keyword bool allow_source_trailing_dot: If true, the trailing dot will not be trimmed from the source URI.
     :keyword str api_version:
-        The Storage API version to use for requests. Default value is '2019-07-07'.
-        Setting to an older version may result in reduced feature compatibility.
+        The Storage API version to use for requests. Default value is the most recent service version that is
+        compatible with the current SDK. Setting to an older version may result in reduced feature compatibility.
 
         .. versionadded:: 12.1.0
 
     :keyword str secondary_hostname:
         The hostname of the secondary endpoint.
-    :keyword loop:
-        The event loop to run the asynchronous tasks.
     :keyword int max_range_size: The maximum range size used for a file upload. Defaults to 4*1024*1024.
 
     .. admonition:: Example:
@@ -77,22 +95,27 @@ class ShareServiceClient(AsyncStorageAccountHostsMixin, ShareServiceClientBase):
             :caption: Create the share service client with url and credential.
     """
     def __init__(
-            self, account_url,  # type: str
-            credential=None,  # type: Optional[Any]
-            **kwargs  # type: Any
-        ):
-        # type: (...) -> None
+            self, account_url: str,
+            credential: Optional[Union[str, Dict[str, str], "AzureNamedKeyCredential", "AzureSasCredential", "AsyncTokenCredential"]] = None,  # pylint: disable=line-too-long
+            *,
+            token_intent: Optional[Literal['backup']] = None,
+            **kwargs: Any
+        ) -> None:
         kwargs['retry_policy'] = kwargs.get('retry_policy') or ExponentialRetry(**kwargs)
         loop = kwargs.pop('loop', None)
+        if loop and sys.version_info >= (3, 8):
+            warnings.warn("The 'loop' parameter was deprecated from asyncio's high-level"
+            "APIs in Python 3.8 and is no longer supported.", DeprecationWarning)
         super(ShareServiceClient, self).__init__(
             account_url,
             credential=credential,
-            loop=loop,
+            token_intent=token_intent,
             **kwargs)
-        self._client = AzureFileStorage(url=self.url, pipeline=self._pipeline, loop=loop)
-        default_api_version = self._client._config.version  # pylint: disable=protected-access
-        self._client._config.version = get_api_version(kwargs, default_api_version)  # pylint: disable=protected-access
-        self._loop = loop
+        self._client = AzureFileStorage(url=self.url, base_url=self.url, pipeline=self._pipeline,
+                                        allow_trailing_dot=self.allow_trailing_dot,
+                                        allow_source_trailing_dot=self.allow_source_trailing_dot,
+                                        file_request_intent=self.file_request_intent)
+        self._client._config.version = get_api_version(kwargs)  # pylint: disable=protected-access
 
     @distributed_trace_async
     async def get_service_properties(self, **kwargs):
@@ -101,7 +124,11 @@ class ShareServiceClient(AsyncStorageAccountHostsMixin, ShareServiceClientBase):
         Azure Storage Analytics.
 
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
         :returns: A dictionary containing file service properties such as
             analytics logging, hour/minute metrics, cors rules, etc.
         :rtype: Dict[str, Any]
@@ -127,7 +154,7 @@ class ShareServiceClient(AsyncStorageAccountHostsMixin, ShareServiceClientBase):
             self, hour_metrics=None,  # type: Optional[Metrics]
             minute_metrics=None,  # type: Optional[Metrics]
             cors=None,  # type: Optional[List[CorsRule]]
-            protocol=None,  # type: Optional[ShareProtocolSettings],
+            protocol=None,  # type: Optional[ShareProtocolSettings]
             **kwargs
         ):
         # type: (...) -> None
@@ -148,11 +175,15 @@ class ShareServiceClient(AsyncStorageAccountHostsMixin, ShareServiceClientBase):
             list. If an empty list is specified, all CORS rules will be deleted,
             and CORS will be disabled for the service.
         :type cors: list(:class:`~azure.storage.fileshare.CorsRule`)
-        :param protocol_settings:
+        :param protocol:
             Sets protocol settings
         :type protocol: ~azure.storage.fileshare.ShareProtocolSettings
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
         :rtype: None
 
         .. admonition:: Example:
@@ -198,7 +229,11 @@ class ShareServiceClient(AsyncStorageAccountHostsMixin, ShareServiceClientBase):
             Specifies that deleted shares be returned in the response.
             This is only for share soft delete enabled account.
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
         :returns: An iterable (auto-paging) of ShareProperties.
         :rtype: ~azure.core.async_paging.AsyncItemPaged[~azure.storage.fileshare.ShareProperties]
 
@@ -213,13 +248,13 @@ class ShareServiceClient(AsyncStorageAccountHostsMixin, ShareServiceClientBase):
         """
         timeout = kwargs.pop('timeout', None)
         include = []
+        include_deleted = kwargs.pop('include_deleted', None)
+        if include_deleted:
+            include.append("deleted")
         if include_metadata:
             include.append('metadata')
         if include_snapshots:
             include.append('snapshots')
-        include_deleted = kwargs.pop('include_deleted', None)
-        if include_deleted:
-            include.append("deleted")
 
         results_per_page = kwargs.pop('results_per_page', None)
         command = functools.partial(
@@ -248,7 +283,12 @@ class ShareServiceClient(AsyncStorageAccountHostsMixin, ShareServiceClientBase):
         :keyword int quota:
             Quota in bytes.
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
+        :return: A ShareClient for the newly created Share.
         :rtype: ~azure.storage.fileshare.aio.ShareClient
 
         .. admonition:: Example:
@@ -285,7 +325,11 @@ class ShareServiceClient(AsyncStorageAccountHostsMixin, ShareServiceClientBase):
         :param bool delete_snapshots:
             Indicates if snapshots are to be deleted.
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
         :rtype: None
 
         .. admonition:: Example:
@@ -319,7 +363,12 @@ class ShareServiceClient(AsyncStorageAccountHostsMixin, ShareServiceClientBase):
         :param str deleted_share_version:
             Specifies the version of the deleted share to restore.
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
+        :return: A ShareClient for the undeleted Share.
         :rtype: ~azure.storage.fileshare.aio.ShareClient
         """
         share = self.get_share_client(deleted_share_name)
@@ -367,4 +416,5 @@ class ShareServiceClient(AsyncStorageAccountHostsMixin, ShareServiceClientBase):
         return ShareClient(
             self.url, share_name=share_name, snapshot=snapshot, credential=self.credential,
             api_version=self.api_version, _hosts=self._hosts, _configuration=self._config,
-            _pipeline=_pipeline, _location_mode=self._location_mode, loop=self._loop)
+            _pipeline=_pipeline, _location_mode=self._location_mode, allow_trailing_dot=self.allow_trailing_dot,
+            allow_source_trailing_dot=self.allow_source_trailing_dot, token_intent=self.file_request_intent)

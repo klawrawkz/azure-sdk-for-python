@@ -24,15 +24,22 @@
 #
 # --------------------------------------------------------------------------
 from ._version import VERSION
+
 __version__ = VERSION
 
 from ._schema_registry_client import SchemaRegistryClient
-from ._common._constants import SerializationType
+from ._common._constants import SchemaFormat, ApiVersion
 from ._common._schema import Schema, SchemaProperties
+from ._encoder_protocols import SchemaContentValidate, MessageContent, MessageType, SchemaEncoder
 
 __all__ = [
+    "ApiVersion",
     "SchemaRegistryClient",
-    "SerializationType",
+    "SchemaFormat",
     "Schema",
-    "SchemaProperties"
+    "SchemaProperties",
+    "SchemaContentValidate",
+    "MessageContent",
+    "MessageType",
+    "SchemaEncoder"
 ]

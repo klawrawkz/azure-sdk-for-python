@@ -1,5 +1,92 @@
 # Release History
 
+## 17.3.0 (2024-03-19)
+
+### Features Added
+
+  - Model Pool has a new parameter upgrade_policy
+  - Model SupportedSku has a new parameter batch_support_end_of_life
+
+## 17.2.0 (2023-12-18)
+
+### Features Added
+
+  - Model OSDisk has a new parameter caching
+  - Model OSDisk has a new parameter disk_size_gb
+  - Model OSDisk has a new parameter managed_disk
+  - Model OSDisk has a new parameter write_accelerator_enabled
+  - Model Pool has a new parameter resource_tags
+  - Model VirtualMachineConfiguration has a new parameter security_profile
+  - Model VirtualMachineConfiguration has a new parameter service_artifact_reference
+
+## 17.1.0 (2023-07-21)
+
+### Features Added
+
+  - Model NetworkConfiguration has a new parameter enable_accelerated_networking
+  - Model VMExtension has a new parameter enable_automatic_upgrade
+  - Model ContainerConfiguration allows two possible values: `dockerCompatible` and `criCompatible` instead of fixed value `dockerCompatible`
+
+## 17.0.0 (2022-11-23)
+
+### Features Added
+
+  - Model NetworkConfiguration has a new parameter dynamic_vnet_assignment_scope
+  - Model Pool has a new parameter current_node_communication_mode
+  - Model Pool has a new parameter target_node_communication_mode
+  - Model PrivateLinkServiceConnectionState has a new parameter actions_required
+
+### Breaking Changes
+
+  - Model CIFSMountConfiguration has a new required parameter user_name
+  - Model CIFSMountConfiguration no longer has parameter username
+  - Model NetworkConfiguration no longer has parameter dynamic_v_net_assignment_scope
+  - Model PrivateLinkServiceConnectionState no longer has parameter action_required
+
+## 16.2.0 (2022-06-06)
+
+**Features**
+
+  - Added operation PrivateEndpointConnectionOperations.begin_delete
+  - Model BatchAccount has a new parameter network_profile
+  - Model BatchAccount has a new parameter node_management_endpoint
+  - Model BatchAccountCreateParameters has a new parameter network_profile
+  - Model BatchAccountUpdateParameters has a new parameter network_profile
+  - Model BatchAccountUpdateParameters has a new parameter public_network_access
+  - Model PrivateEndpointConnection has a new parameter group_ids
+
+## 16.1.0 (2022-02-24)
+
+**Features**
+
+  - Added operation BatchAccountOperations.get_detector
+  - Added operation BatchAccountOperations.list_detectors
+  - Model NetworkConfiguration has a new parameter dynamic_v_net_assignment_scope
+
+## 16.0.0 (2021-07-30)
+
+**Features**
+
+  - Model BatchAccount has a new parameter allowed_authentication_modes
+  - Model AutoStorageBaseProperties has a new parameter node_identity_reference
+  - Model AutoStorageBaseProperties has a new parameter authentication_mode
+  - Model AzureBlobFileSystemConfiguration has a new parameter identity_reference
+  - Model BatchAccountUpdateParameters has a new parameter allowed_authentication_modes
+  - Model ContainerRegistry has a new parameter identity_reference
+  - Model Operation has a new parameter is_data_action
+  - Model BatchAccountCreateParameters has a new parameter allowed_authentication_modes
+  - Model AutoStorageProperties has a new parameter node_identity_reference
+  - Model AutoStorageProperties has a new parameter authentication_mode
+  - Model ResourceFile has a new parameter identity_reference
+  - Model VirtualMachineConfiguration has a new parameter os_disk
+  - Added operation BatchAccountOperations.list_outbound_network_dependencies_endpoints
+  - Added operation LocationOperations.list_supported_cloud_service_skus
+  - Added operation LocationOperations.list_supported_virtual_machine_skus
+
+**Breaking changes**
+
+  - Rename `BatchManagement` to `BatchManagementClient`
+
 ## 15.0.0 (2021-02-01)
 
 - Fix changelog
@@ -38,7 +125,7 @@ This version uses a next-generation code generator that introduces important bre
   - `credentials` parameter has been renamed `credential`
 
 - The `config` attribute no longer exists on a client, configuration should be passed as kwarg. Example: `MyClient(credential, subscription_id, enable_logging=True)`. For a complete set of
-  supported options, see the [parameters accept in init documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
+  supported options, see the [parameters accept in init documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
 - You can't import a `version` module anymore, use `__version__` instead
 - Operations that used to return a `msrest.polling.LROPoller` now returns a `azure.core.polling.LROPoller` and are prefixed with `begin_`.
 - Exceptions tree have been simplified and most exceptions are now `azure.core.exceptions.HttpResponseError` (`CloudError` has been removed).
@@ -46,13 +133,13 @@ This version uses a next-generation code generator that introduces important bre
 
   - `raw` has been removed. Equivalent feature can be found using `cls`, a callback that will give access to internal HTTP response for advanced user
   - For a complete set of
-  supported options, see the [parameters accept in Request documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
+  supported options, see the [parameters accept in Request documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
 
 **General new features**
 
 - Type annotations support using `typing`. SDKs are mypy ready.
 - This client has now stable and official support for async. Check the `aio` namespace of your package to find the async client.
-- This client now support natively tracing library like OpenCensus or OpenTelemetry. See this [tracing quickstart](https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/core/azure-core-tracing-opentelemetry) for an overview.
+- This client now support natively tracing library like OpenCensus or OpenTelemetry. See this [tracing quickstart](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/core/azure-core-tracing-opentelemetry) for an overview.
 
 ## 9.0.0 (2020-05-29)
 ### REST API version
@@ -122,17 +209,17 @@ This version uses a next-generation code generator that introduces important bre
 ## 6.0.0 (2019-01-14)
 
   -   - **[Breaking]** ResourceFile improvements
-        
+
           - Added the ability specify an entire Azure Storage container
             in `ResourceFile`.
-        
+
           - A new property `HttpUrl` replaces `BlobSource`. This can
             be any HTTP URL. Previously, this had to be an Azure Blob
             Storage URL.
-        
+
           -   - When constructing a `ResourceFile` you can now choose
                 from one of the following options:
-                
+
                   - `HttpUrl`: Specify an HTTP URL pointing to a
                     specific file to download.
                   - `StorageContainerUrl`: Specify an Azure Storage

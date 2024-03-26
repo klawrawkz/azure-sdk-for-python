@@ -4,11 +4,9 @@
 # license information.
 # --------------------------------------------------------------------------
 import pytest
-import os
 import time
-from datetime import datetime
-from devtools_testutils import AzureTestCase
-from msrest.serialization import TZ_UTC
+from datetime import datetime, timezone
+from devtools_testutils import AzureRecordedTestCase, is_live
 
 from azure.communication.identity import CommunicationIdentityClient
 from azure.communication.chat import (
@@ -19,27 +17,16 @@ from azure.communication.chat import (
 )
 from azure.communication.chat._shared.utils import parse_connection_str
 
-from azure_devtools.scenario_tests import RecordingProcessor
-from helper import URIIdentityReplacer
-from chat_e2e_helper import ChatURIReplacer
-from _shared.testcase import (
-    CommunicationTestCase,
-    BodyReplacerProcessor
-)
+from chat_e2e_helper import get_connection_str
+from _shared.utils import get_http_logging_policy
 
 
-class ChatThreadClientTest(CommunicationTestCase):
-    def setUp(self):
-        super(ChatThreadClientTest, self).setUp()
-        self.recording_processors.extend([
-            BodyReplacerProcessor(keys=["id", "token", "senderId", "chatMessageId", "nextLink", "participants", "multipleStatus", "value"]),
-            URIIdentityReplacer(),
-            ChatURIReplacer()])
+class TestChatThreadClient(AzureRecordedTestCase):
+    def setup_method(self):
+        connection_str = get_connection_str()
+        self.identity_client = CommunicationIdentityClient.from_connection_string(connection_str)
 
-        self.identity_client = CommunicationIdentityClient.from_connection_string(
-            self.connection_str)
-
-        endpoint, _ = parse_connection_str(self.connection_str)
+        endpoint, _ = parse_connection_str(connection_str)
         self.endpoint = endpoint
 
         # create user and issue token
@@ -53,14 +40,20 @@ class ChatThreadClientTest(CommunicationTestCase):
         self.token_new_user = tokenresponse.token
 
         # create ChatClient
-        self.chat_client = ChatClient(self.endpoint, CommunicationTokenCredential(self.token))
-        self.chat_client_new_user = ChatClient(self.endpoint, CommunicationTokenCredential(self.token_new_user))
+        self.chat_client = ChatClient(
+            self.endpoint, 
+            CommunicationTokenCredential(self.token),
+            http_logging_policy=get_http_logging_policy()
+        )
+        self.chat_client_new_user = ChatClient(
+            self.endpoint, 
+            CommunicationTokenCredential(self.token_new_user),
+            http_logging_policy=get_http_logging_policy()
+        )
 
-    def tearDown(self):
-        super(ChatThreadClientTest, self).tearDown()
-
+    def teardown_method(self):
         # delete created users and chat threads
-        if not self.is_playback():
+        if is_live():
             self.chat_client.delete_chat_thread(self.thread_id)
             self.identity_client.delete_user(self.user)
             self.identity_client.delete_user(self.new_user)
@@ -72,7 +65,7 @@ class ChatThreadClientTest(CommunicationTestCase):
         # create chat thread, and ChatThreadClient
         topic = "test topic"
         share_history_time = datetime.utcnow()
-        share_history_time = share_history_time.replace(tzinfo=TZ_UTC)
+        share_history_time = share_history_time.replace(tzinfo=timezone.utc)
         participants = [ChatParticipant(
             identifier=self.user,
             display_name='name',
@@ -89,7 +82,7 @@ class ChatThreadClientTest(CommunicationTestCase):
         # create chat thread, and ChatThreadClient
         topic = "test topic"
         share_history_time = datetime.utcnow()
-        share_history_time = share_history_time.replace(tzinfo=TZ_UTC)
+        share_history_time = share_history_time.replace(tzinfo=timezone.utc)
         participants = [
             ChatParticipant(
                 identifier=self.user,
@@ -177,7 +170,7 @@ class ChatThreadClientTest(CommunicationTestCase):
 
         # add another participant
         share_history_time = datetime.utcnow()
-        share_history_time = share_history_time.replace(tzinfo=TZ_UTC)
+        share_history_time = share_history_time.replace(tzinfo=timezone.utc)
         new_participant = ChatParticipant(
             identifier=self.new_user,
             display_name='name',
@@ -203,7 +196,7 @@ class ChatThreadClientTest(CommunicationTestCase):
         self._create_thread()
 
         share_history_time = datetime.utcnow()
-        share_history_time = share_history_time.replace(tzinfo=TZ_UTC)
+        share_history_time = share_history_time.replace(tzinfo=timezone.utc)
         new_participant = ChatParticipant(
                 identifier=self.new_user,
                 display_name='name',
@@ -222,7 +215,7 @@ class ChatThreadClientTest(CommunicationTestCase):
 
         # add participant first
         share_history_time = datetime.utcnow()
-        share_history_time = share_history_time.replace(tzinfo=TZ_UTC)
+        share_history_time = share_history_time.replace(tzinfo=timezone.utc)
         new_participant = ChatParticipant(
                 identifier=self.new_user,
                 display_name='name',
@@ -239,6 +232,12 @@ class ChatThreadClientTest(CommunicationTestCase):
         self._create_thread()
 
         self.chat_thread_client.send_typing_notification()
+
+    @pytest.mark.live_test_only
+    def test_send_typing_notification_with_display_name(self):
+        self._create_thread()
+
+        self.chat_thread_client.send_typing_notification(sender_display_name="John")
 
     @pytest.mark.live_test_only
     def test_send_read_receipt(self):

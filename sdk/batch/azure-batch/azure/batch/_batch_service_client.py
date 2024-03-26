@@ -16,12 +16,13 @@ from ._configuration import BatchServiceClientConfiguration
 from .operations import ApplicationOperations
 from .operations import PoolOperations
 from .operations import AccountOperations
-from .operations import JobOperations
 from .operations import CertificateOperations
 from .operations import FileOperations
 from .operations import JobScheduleOperations
+from .operations import JobOperations
 from .operations import TaskOperations
 from .operations import ComputeNodeOperations
+from .operations import ComputeNodeExtensionOperations
 from . import models
 from .custom.patch import patch_client
 
@@ -37,18 +38,20 @@ class BatchServiceClient(SDKClient):
     :vartype pool: azure.batch.operations.PoolOperations
     :ivar account: Account operations
     :vartype account: azure.batch.operations.AccountOperations
-    :ivar job: Job operations
-    :vartype job: azure.batch.operations.JobOperations
     :ivar certificate: Certificate operations
     :vartype certificate: azure.batch.operations.CertificateOperations
     :ivar file: File operations
     :vartype file: azure.batch.operations.FileOperations
     :ivar job_schedule: JobSchedule operations
     :vartype job_schedule: azure.batch.operations.JobScheduleOperations
+    :ivar job: Job operations
+    :vartype job: azure.batch.operations.JobOperations
     :ivar task: Task operations
     :vartype task: azure.batch.operations.TaskOperations
     :ivar compute_node: ComputeNode operations
     :vartype compute_node: azure.batch.operations.ComputeNodeOperations
+    :ivar compute_node_extension: ComputeNodeExtension operations
+    :vartype compute_node_extension: azure.batch.operations.ComputeNodeExtensionOperations
 
     :param credentials: Credentials needed for the client to connect to Azure.
     :type credentials: :mod:`A msrestazure Credentials
@@ -64,7 +67,7 @@ class BatchServiceClient(SDKClient):
         super(BatchServiceClient, self).__init__(self.config.credentials, self.config)
 
         client_models = {k: v for k, v in models.__dict__.items() if isinstance(v, type)}
-        self.api_version = '2020-09-01.12.0'
+        self.api_version = '2023-11-01.18.0'
         self._serialize = Serializer(client_models)
         self._deserialize = Deserializer(client_models)
 
@@ -74,16 +77,19 @@ class BatchServiceClient(SDKClient):
             self._client, self.config, self._serialize, self._deserialize)
         self.account = AccountOperations(
             self._client, self.config, self._serialize, self._deserialize)
-        self.job = JobOperations(
-            self._client, self.config, self._serialize, self._deserialize)
         self.certificate = CertificateOperations(
             self._client, self.config, self._serialize, self._deserialize)
         self.file = FileOperations(
             self._client, self.config, self._serialize, self._deserialize)
         self.job_schedule = JobScheduleOperations(
             self._client, self.config, self._serialize, self._deserialize)
+        self.job = JobOperations(
+            self._client, self.config, self._serialize, self._deserialize)
         self.task = TaskOperations(
             self._client, self.config, self._serialize, self._deserialize)
         self.compute_node = ComputeNodeOperations(
             self._client, self.config, self._serialize, self._deserialize)
+        self.compute_node_extension = ComputeNodeExtensionOperations(
+            self._client, self.config, self._serialize, self._deserialize)
+
 patch_client()

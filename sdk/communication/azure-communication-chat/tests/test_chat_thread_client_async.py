@@ -4,8 +4,7 @@
 # license information.
 # -------------------------------------------------------------------------
 from azure.core.credentials import AccessToken
-from datetime import datetime
-from msrest.serialization import TZ_UTC
+from datetime import datetime, timezone
 from azure.communication.chat.aio import ChatThreadClient
 from azure.communication.chat import (
     ChatParticipant,
@@ -17,23 +16,18 @@ from azure.communication.chat._shared.models import(
 from unittest_helpers import mock_response
 from azure.core.exceptions import HttpResponseError
 
-try:
-    from unittest.mock import Mock, patch
-except ImportError:  # python < 3.3
-    from mock import Mock, patch  # type: ignore
+from unittest.mock import Mock, patch
 
 import pytest
 import time
-
+import calendar
 
 def _convert_datetime_to_utc_int(input):
-    epoch = time.mktime(datetime(1970, 1, 1).timetuple())
-    input_datetime_as_int = epoch - time.mktime(input.timetuple())
-    return input_datetime_as_int
+    return int(calendar.timegm(input.utctimetuple()))
 
 
-async def mock_get_token():
-    return AccessToken("some_token", _convert_datetime_to_utc_int(datetime.now().replace(tzinfo=TZ_UTC)))
+async def mock_get_token(*_, **__):
+    return AccessToken("some_token", _convert_datetime_to_utc_int(datetime.now().replace(tzinfo=timezone.utc)))
 
 credential = Mock(get_token=mock_get_token)
 
@@ -69,10 +63,12 @@ async def test_send_message():
     try:
         content='hello world'
         sender_display_name='sender name'
+        metadata={ "tags": "tag" }
 
         create_message_result = await chat_thread_client.send_message(
             content,
-            sender_display_name=sender_display_name)
+            sender_display_name=sender_display_name,
+            metadata=metadata)
         create_message_result_id = create_message_result.id
     except:
         raised = True
@@ -199,7 +195,10 @@ async def test_get_message():
                         "senderCommunicationIdentifier": {"rawId": "string", "communicationUser": {
                             "id": "8:acs:8540c0de-899f-5cce-acb5-3ec493af3800_0e59221d-0c1d-46ae-9544-c963ce56c10b"}},
                         "deletedOn": "2021-01-27T01:37:33Z",
-                        "editedOn": "2021-01-27T01:37:33Z"
+                        "editedOn": "2021-01-27T01:37:33Z",
+                        "metadata": {
+                            "tags": "tag"
+                        }
                     })
     chat_thread_client = ChatThreadClient("https://endpoint", credential, thread_id, transport=Mock(send=mock_send))
 
@@ -213,6 +212,7 @@ async def test_get_message():
     assert message.id == message_id
     assert message.type == ChatMessageType.TEXT
     assert message.content.message == message_str
+    assert message.metadata["tags"] == "tag"
     assert len(message.content.participants) > 0
 
 @pytest.mark.asyncio
@@ -345,7 +345,7 @@ async def test_list_messages_with_start_time():
     assert len(items) == 2
 
 @pytest.mark.asyncio
-async def test_update_message():
+async def test_update_message_content():
     thread_id = "19:bcaebfba0d314c2aa3e920d38fa3df08@thread.v2"
     message_id='1596823919339'
     raised = False
@@ -357,6 +357,24 @@ async def test_update_message():
     try:
         content = "updated message content"
         await chat_thread_client.update_message(message_id, content=content)
+    except:
+        raised = True
+
+    assert raised == False
+
+@pytest.mark.asyncio
+async def test_update_message_metadata():
+    thread_id = "19:bcaebfba0d314c2aa3e920d38fa3df08@thread.v2"
+    message_id='1596823919339'
+    raised = False
+
+    async def mock_send(*_, **__):
+        return mock_response(status_code=204)
+    chat_thread_client = ChatThreadClient("https://endpoint", credential, thread_id, transport=Mock(send=mock_send))
+
+    try:
+        metadata={ "tags": "tag" }
+        await chat_thread_client.update_message(message_id, metadata=metadata)
     except:
         raised = True
 
@@ -555,6 +573,22 @@ async def test_send_typing_notification():
 
     try:
         await chat_thread_client.send_typing_notification()
+    except:
+        raised = True
+
+    assert raised == False
+
+@pytest.mark.asyncio
+async def test_send_typing_notification_with_sender_display_name():
+    thread_id = "19:bcaebfba0d314c2aa3e920d38fa3df08@thread.v2"
+    raised = False
+
+    async def mock_send(*_, **__):
+        return mock_response(status_code=200)
+    chat_thread_client = ChatThreadClient("https://endpoint", credential, thread_id, transport=Mock(send=mock_send))
+
+    try:
+        await chat_thread_client.send_typing_notification(sender_display_name="John")
     except:
         raised = True
 

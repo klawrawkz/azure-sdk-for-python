@@ -6,28 +6,26 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
-try:
-    from ._models_py3 import ComponentLinkedStorageAccounts
-    from ._models_py3 import ComponentLinkedStorageAccountsPatch
-    from ._models_py3 import ErrorResponse
-    from ._models_py3 import ProxyResource
-    from ._models_py3 import Resource
-except (SyntaxError, ImportError):
-    from ._models import ComponentLinkedStorageAccounts  # type: ignore
-    from ._models import ComponentLinkedStorageAccountsPatch  # type: ignore
-    from ._models import ErrorResponse  # type: ignore
-    from ._models import ProxyResource  # type: ignore
-    from ._models import Resource  # type: ignore
+from ._models_py3 import ComponentLinkedStorageAccounts
+from ._models_py3 import ComponentLinkedStorageAccountsPatch
+from ._models_py3 import ErrorResponseLinkedStorage
+from ._models_py3 import ErrorResponseLinkedStorageError
+from ._models_py3 import ProxyResource
+from ._models_py3 import Resource
 
-from ._application_insights_management_client_enums import (
-    StorageType,
-)
+from ._application_insights_management_client_enums import StorageType
+from ._patch import __all__ as _patch_all
+from ._patch import *  # pylint: disable=unused-wildcard-import
+from ._patch import patch_sdk as _patch_sdk
 
 __all__ = [
-    'ComponentLinkedStorageAccounts',
-    'ComponentLinkedStorageAccountsPatch',
-    'ErrorResponse',
-    'ProxyResource',
-    'Resource',
-    'StorageType',
+    "ComponentLinkedStorageAccounts",
+    "ComponentLinkedStorageAccountsPatch",
+    "ErrorResponseLinkedStorage",
+    "ErrorResponseLinkedStorageError",
+    "ProxyResource",
+    "Resource",
+    "StorageType",
 ]
+__all__.extend([p for p in _patch_all if p not in __all__])
+_patch_sdk()

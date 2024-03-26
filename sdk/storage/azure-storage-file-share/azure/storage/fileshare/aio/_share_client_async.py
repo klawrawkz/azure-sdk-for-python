@@ -4,8 +4,10 @@
 # license information.
 # --------------------------------------------------------------------------
 # pylint: disable=invalid-overridden-method
+import warnings
+import sys
 from typing import ( # pylint: disable=unused-import
-    Optional, Union, Dict, Any, Iterable, TYPE_CHECKING
+    Optional, Union, Dict, Any, Iterable, Literal, TYPE_CHECKING
 )
 
 from azure.core.exceptions import HttpResponseError
@@ -24,7 +26,7 @@ from .._generated.models import (
     SignedIdentifier,
     DeleteSnapshotsOptionType)
 from .._deserialize import deserialize_share_properties, deserialize_permission
-from .._serialize import get_api_version
+from .._serialize import get_api_version, get_access_conditions
 from .._share_client import ShareClient as ShareClientBase
 from ._directory_client_async import ShareDirectoryClient
 from ._file_client_async import ShareFileClient
@@ -32,6 +34,8 @@ from ..aio._lease_async import ShareLeaseClient
 from .._models import ShareProtocols
 
 if TYPE_CHECKING:
+    from azure.core.credentials import AzureNamedKeyCredential, AzureSasCredential
+    from azure.core.credentials_async import AsyncTokenCredential
     from .._models import ShareProperties, AccessPolicy
 
 
@@ -51,43 +55,60 @@ class ShareClient(AsyncStorageAccountHostsMixin, ShareClientBase):
         An optional share snapshot on which to operate. This can be the snapshot ID string
         or the response returned from :func:`create_snapshot`.
     :param credential:
-        The credential with which to authenticate. This is optional if the
+        The credentials with which to authenticate. This is optional if the
         account URL already has a SAS token. The value can be a SAS token string,
-        an instance of a AzureSasCredential from azure.core.credentials or an account
-        shared access key.
+        an instance of a AzureSasCredential or AzureNamedKeyCredential from azure.core.credentials,
+        an account shared access key, or an instance of a TokenCredentials class from azure.identity.
+        If the resource URI already contains a SAS token, this will be ignored in favor of an explicit credential
+        - except in the case of AzureSasCredential, where the conflicting SAS tokens will raise a ValueError.
+        If using an instance of AzureNamedKeyCredential, "name" should be the storage account name, and "key"
+        should be the storage account key.
+    :keyword token_intent:
+        Required when using `TokenCredential` for authentication and ignored for other forms of authentication.
+        Specifies the intent for all requests when using `TokenCredential` authentication. Possible values are:
+
+        backup - Specifies requests are intended for backup/admin type operations, meaning that all file/directory
+                 ACLs are bypassed and full permissions are granted. User must also have required RBAC permission.
+
+    :paramtype token_intent: Literal['backup']
+    :keyword bool allow_trailing_dot: If true, the trailing dot will not be trimmed from the target URI.
+    :keyword bool allow_source_trailing_dot: If true, the trailing dot will not be trimmed from the source URI.
     :keyword str api_version:
-        The Storage API version to use for requests. Default value is '2019-07-07'.
-        Setting to an older version may result in reduced feature compatibility.
+        The Storage API version to use for requests. Default value is the most recent service version that is
+        compatible with the current SDK. Setting to an older version may result in reduced feature compatibility.
 
         .. versionadded:: 12.1.0
 
     :keyword str secondary_hostname:
         The hostname of the secondary endpoint.
-    :keyword loop:
-        The event loop to run the asynchronous tasks.
     :keyword int max_range_size: The maximum range size used for a file upload. Defaults to 4*1024*1024.
     """
-    def __init__( # type: ignore
-            self, account_url,  # type: str
-            share_name,  # type: str
-            snapshot=None,  # type: Optional[Union[str, Dict[str, Any]]]
-            credential=None,  # type: Optional[Any]
-            **kwargs  # type: Any
-        ):
-        # type: (...) -> None
+    def __init__(
+            self, account_url: str,
+            share_name: str,
+            snapshot: Optional[Union[str, Dict[str, Any]]] = None,
+            credential: Optional[Union[str, Dict[str, str], "AzureNamedKeyCredential", "AzureSasCredential", "AsyncTokenCredential"]] = None,  # pylint: disable=line-too-long
+            *,
+            token_intent: Optional[Literal['backup']] = None,
+            **kwargs: Any
+        ) -> None:
         kwargs['retry_policy'] = kwargs.get('retry_policy') or ExponentialRetry(**kwargs)
         loop = kwargs.pop('loop', None)
+        if loop and sys.version_info >= (3, 8):
+            warnings.warn("The 'loop' parameter was deprecated from asyncio's high-level"
+            "APIs in Python 3.8 and is no longer supported.", DeprecationWarning)
         super(ShareClient, self).__init__(
             account_url,
             share_name=share_name,
             snapshot=snapshot,
             credential=credential,
-            loop=loop,
+            token_intent=token_intent,
             **kwargs)
-        self._client = AzureFileStorage(url=self.url, pipeline=self._pipeline, loop=loop)
-        default_api_version = self._client._config.version  # pylint: disable=protected-access
-        self._client._config.version = get_api_version(kwargs, default_api_version)  # pylint: disable=protected-access
-        self._loop = loop
+        self._client = AzureFileStorage(url=self.url, base_url=self.url, pipeline=self._pipeline,
+                                        allow_trailing_dot=self.allow_trailing_dot,
+                                        allow_source_trailing_dot=self.allow_source_trailing_dot,
+                                        file_request_intent=self.file_request_intent)
+        self._client._config.version = get_api_version(kwargs)  # pylint: disable=protected-access
 
     def get_directory_client(self, directory_path=None):
         # type: (Optional[str]) -> ShareDirectoryClient
@@ -107,7 +128,8 @@ class ShareClient(AsyncStorageAccountHostsMixin, ShareClientBase):
         return ShareDirectoryClient(
             self.url, share_name=self.share_name, directory_path=directory_path or "", snapshot=self.snapshot,
             credential=self.credential, api_version=self.api_version, _hosts=self._hosts, _configuration=self._config,
-            _pipeline=_pipeline, _location_mode=self._location_mode, loop=self._loop)
+            _pipeline=_pipeline, _location_mode=self._location_mode, allow_trailing_dot=self.allow_trailing_dot,
+            allow_source_trailing_dot=self.allow_source_trailing_dot, token_intent=self.file_request_intent)
 
     def get_file_client(self, file_path):
         # type: (str) -> ShareFileClient
@@ -127,29 +149,34 @@ class ShareClient(AsyncStorageAccountHostsMixin, ShareClientBase):
         return ShareFileClient(
             self.url, share_name=self.share_name, file_path=file_path, snapshot=self.snapshot,
             credential=self.credential, api_version=self.api_version, _hosts=self._hosts, _configuration=self._config,
-            _pipeline=_pipeline, _location_mode=self._location_mode, loop=self._loop)
+            _pipeline=_pipeline, _location_mode=self._location_mode, allow_trailing_dot=self.allow_trailing_dot,
+            allow_source_trailing_dot=self.allow_source_trailing_dot, token_intent=self.file_request_intent)
 
-    @distributed_trace_async()
-    async def _acquire_lease(self, lease_duration=-1, lease_id=None, **kwargs):
-        # type: (int, Optional[str], **Any) -> ShareLeaseClient
+    @distributed_trace_async
+    async def acquire_lease(self, **kwargs):
+        # type: (**Any) -> ShareLeaseClient
         """Requests a new lease.
 
         If the share does not have an active lease, the Share
         Service creates a lease on the share and returns a new lease.
 
-        .. versionadded:: 12.6.0
+        .. versionadded:: 12.5.0
 
-        :param int lease_duration:
+        :keyword int lease_duration:
             Specifies the duration of the lease, in seconds, or negative one
             (-1) for a lease that never expires. A non-infinite lease can be
             between 15 and 60 seconds. A lease duration cannot be changed
             using renew or change. Default is -1 (infinite lease).
-        :param str lease_id:
+        :keyword str lease_id:
             Proposed lease ID, in a GUID string format. The Share Service
             returns 400 (Invalid request) if the proposed lease ID is not
             in the correct format.
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
         :returns: A ShareLeaseClient object.
         :rtype: ~azure.storage.fileshare.ShareLeaseClient
 
@@ -162,7 +189,8 @@ class ShareClient(AsyncStorageAccountHostsMixin, ShareClientBase):
                 :dedent: 8
                 :caption: Acquiring a lease on a share.
         """
-        kwargs['lease_duration'] = lease_duration
+        kwargs['lease_duration'] = kwargs.pop('lease_duration', -1)
+        lease_id = kwargs.pop('lease_id', None)
         lease = ShareLeaseClient(self, lease_id=lease_id)  # type: ignore
         await lease.acquire(**kwargs)
         return lease
@@ -182,10 +210,14 @@ class ShareClient(AsyncStorageAccountHostsMixin, ShareClientBase):
             Possible values: 'TransactionOptimized', 'Hot', 'Cool'
         :paramtype access_tier: str or ~azure.storage.fileshare.models.ShareAccessTier
 
-            .. versionadded:: 12.6.0
+            .. versionadded:: 12.4.0
 
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
         :keyword protocols:
             Protocols to enable on the share. Only one protocol can be enabled on the share.
         :paramtype protocols: str or ~azure.storage.fileshare.ShareProtocols
@@ -194,7 +226,7 @@ class ShareClient(AsyncStorageAccountHostsMixin, ShareClientBase):
             Only valid for NFS shares. Possible values include: 'NoRootSquash', 'RootSquash', 'AllSquash'.
         :paramtype root_squash: str or ~azure.storage.fileshare.ShareRootSquash
         :returns: Share-updated property dict (Etag and last modified).
-        :rtype: dict(str, Any)
+        :rtype: Dict[str, Any]
 
         .. admonition:: Example:
 
@@ -251,7 +283,11 @@ class ShareClient(AsyncStorageAccountHostsMixin, ShareClientBase):
         :keyword dict(str,str) metadata:
             Name-value pairs associated with the share as metadata.
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
         :returns: Share-updated property dict (Snapshot ID, Etag, and last modified).
         :rtype: dict[str, Any]
 
@@ -279,17 +315,29 @@ class ShareClient(AsyncStorageAccountHostsMixin, ShareClientBase):
 
     @distributed_trace_async
     async def delete_share(
-            self, delete_snapshots=False, # type: Optional[bool]
-            **kwargs
-        ):
-        # type: (...) -> None
+        self, delete_snapshots: Optional[Union[bool, Literal['include', 'include-leased']]] = False,
+        **kwargs: Any
+        ) -> None:
         """Marks the specified share for deletion. The share is
         later deleted during garbage collection.
 
-        :param bool delete_snapshots:
+        :param delete_snapshots:
             Indicates if snapshots are to be deleted.
+        :type delete_snapshots:
+            Optional[Union[bool, Literal['include', 'include-leased']]]
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
+        :keyword lease:
+            Required if the share has an active lease. Value can be a ShareLeaseClient object
+            or the lease ID as a string.
+
+            .. versionadded:: 12.5.0
+            This keyword argument was introduced in API version '2020-08-04'.
+
         .. admonition:: Example:
 
             .. literalinclude:: ../samples/file_samples_share_async.py
@@ -299,15 +347,22 @@ class ShareClient(AsyncStorageAccountHostsMixin, ShareClientBase):
                 :dedent: 16
                 :caption: Deletes the share and any snapshots.
         """
+        access_conditions = get_access_conditions(kwargs.pop('lease', None))
         timeout = kwargs.pop('timeout', None)
         delete_include = None
-        if delete_snapshots:
-            delete_include = DeleteSnapshotsOptionType.include
+        if isinstance(delete_snapshots, bool) and delete_snapshots:
+            delete_include = DeleteSnapshotsOptionType.INCLUDE
+        else:
+            if delete_snapshots == 'include':
+                delete_include = DeleteSnapshotsOptionType.INCLUDE
+            elif delete_snapshots == 'include-leased':
+                delete_include = DeleteSnapshotsOptionType.INCLUDE_LEASED
         try:
             await self._client.share.delete(
                 timeout=timeout,
                 sharesnapshot=self.snapshot,
                 delete_snapshots=delete_include,
+                lease_access_conditions=access_conditions,
                 **kwargs)
         except HttpResponseError as error:
             process_storage_error(error)
@@ -320,7 +375,18 @@ class ShareClient(AsyncStorageAccountHostsMixin, ShareClientBase):
         list of files or directories.
 
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
+        :keyword lease:
+            Required if the share has an active lease. Value can be a ShareLeaseClient object
+            or the lease ID as a string.
+
+            .. versionadded:: 12.5.0
+            This keyword argument was introduced in API version '2020-08-04'.
+
         :returns: The share properties.
         :rtype: ~azure.storage.fileshare.ShareProperties
 
@@ -333,12 +399,14 @@ class ShareClient(AsyncStorageAccountHostsMixin, ShareClientBase):
                 :dedent: 16
                 :caption: Gets the share properties.
         """
+        access_conditions = get_access_conditions(kwargs.pop('lease', None))
         timeout = kwargs.pop('timeout', None)
         try:
             props = await self._client.share.get_properties(
                 timeout=timeout,
                 sharesnapshot=self.snapshot,
                 cls=deserialize_share_properties,
+                lease_access_conditions=access_conditions,
                 **kwargs)
         except HttpResponseError as error:
             process_storage_error(error)
@@ -355,7 +423,18 @@ class ShareClient(AsyncStorageAccountHostsMixin, ShareClientBase):
             Specifies the maximum size of the share, in gigabytes.
             Must be greater than 0, and less than or equal to 5TB.
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
+        :keyword lease:
+            Required if the share has an active lease. Value can be a ShareLeaseClient object
+            or the lease ID as a string.
+
+            .. versionadded:: 12.5.0
+            This keyword argument was introduced in API version '2020-08-04'.
+
         :returns: Share-updated property dict (Etag and last modified).
         :rtype: dict(str, Any)
 
@@ -368,6 +447,7 @@ class ShareClient(AsyncStorageAccountHostsMixin, ShareClientBase):
                 :dedent: 16
                 :caption: Sets the share quota.
         """
+        access_conditions = get_access_conditions(kwargs.pop('lease', None))
         timeout = kwargs.pop('timeout', None)
         try:
             return await self._client.share.set_properties( # type: ignore
@@ -375,15 +455,17 @@ class ShareClient(AsyncStorageAccountHostsMixin, ShareClientBase):
                 quota=quota,
                 access_tier=None,
                 cls=return_response_headers,
+                lease_access_conditions=access_conditions,
                 **kwargs)
         except HttpResponseError as error:
             process_storage_error(error)
 
+    @distributed_trace_async
     async def set_share_properties(self, **kwargs):
         # type: (Any) ->  Dict[str, Any]
         """Sets the share properties.
 
-        .. versionadded:: 12.6.0
+        .. versionadded:: 12.3.0
 
         :keyword access_tier:
             Specifies the access tier of the share.
@@ -393,11 +475,18 @@ class ShareClient(AsyncStorageAccountHostsMixin, ShareClientBase):
             Specifies the maximum size of the share, in gigabytes.
             Must be greater than 0, and less than or equal to 5TB.
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
         :keyword root_squash:
             Root squash to set on the share.
             Only valid for NFS shares. Possible values include: 'NoRootSquash', 'RootSquash', 'AllSquash'
         :paramtype root_squash: str or ~azure.storage.fileshare.ShareRootSquash
+        :keyword lease:
+            Required if the share has an active lease. Value can be a ShareLeaseClient object
+            or the lease ID as a string.
         :returns: Share-updated property dict (Etag and last modified).
         :rtype: dict(str, Any)
 
@@ -410,6 +499,7 @@ class ShareClient(AsyncStorageAccountHostsMixin, ShareClientBase):
                 :dedent: 16
                 :caption: Sets the share properties.
         """
+        access_conditions = get_access_conditions(kwargs.pop('lease', None))
         timeout = kwargs.pop('timeout', None)
         access_tier = kwargs.pop('access_tier', None)
         quota = kwargs.pop('quota', None)
@@ -422,6 +512,7 @@ class ShareClient(AsyncStorageAccountHostsMixin, ShareClientBase):
                 quota=quota,
                 access_tier=access_tier,
                 root_squash=root_squash,
+                lease_access_conditions=access_conditions,
                 cls=return_response_headers,
                 **kwargs)
         except HttpResponseError as error:
@@ -440,7 +531,18 @@ class ShareClient(AsyncStorageAccountHostsMixin, ShareClientBase):
             Name-value pairs associated with the share as metadata.
         :type metadata: dict(str, str)
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
+        :keyword lease:
+            Required if the share has an active lease. Value can be a ShareLeaseClient object
+            or the lease ID as a string.
+
+            .. versionadded:: 12.5.0
+            This keyword argument was introduced in API version '2020-08-04'.
+
         :returns: Share-updated property dict (Etag and last modified).
         :rtype: dict(str, Any)
 
@@ -453,6 +555,7 @@ class ShareClient(AsyncStorageAccountHostsMixin, ShareClientBase):
                 :dedent: 16
                 :caption: Sets the share metadata.
         """
+        access_conditions = get_access_conditions(kwargs.pop('lease', None))
         timeout = kwargs.pop('timeout', None)
         headers = kwargs.pop('headers', {})
         headers.update(add_metadata_headers(metadata))
@@ -461,6 +564,7 @@ class ShareClient(AsyncStorageAccountHostsMixin, ShareClientBase):
                 timeout=timeout,
                 cls=return_response_headers,
                 headers=headers,
+                lease_access_conditions=access_conditions,
                 **kwargs)
         except HttpResponseError as error:
             process_storage_error(error)
@@ -472,15 +576,28 @@ class ShareClient(AsyncStorageAccountHostsMixin, ShareClientBase):
         indicate whether files in a share may be accessed publicly.
 
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
+        :keyword lease:
+            Required if the share has an active lease. Value can be a ShareLeaseClient object
+            or the lease ID as a string.
+
+            .. versionadded:: 12.5.0
+            This keyword argument was introduced in API version '2020-08-04'.
+
         :returns: Access policy information in a dict.
         :rtype: dict[str, Any]
         """
+        access_conditions = get_access_conditions(kwargs.pop('lease', None))
         timeout = kwargs.pop('timeout', None)
         try:
             response, identifiers = await self._client.share.get_access_policy(
                 timeout=timeout,
                 cls=return_headers_and_deserialized,
+                lease_access_conditions=access_conditions,
                 **kwargs)
         except HttpResponseError as error:
             process_storage_error(error)
@@ -502,10 +619,22 @@ class ShareClient(AsyncStorageAccountHostsMixin, ShareClientBase):
             will clear the access policies set on the service.
         :type signed_identifiers: dict(str, :class:`~azure.storage.fileshare.AccessPolicy`)
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
+        :keyword lease:
+            Required if the share has an active lease. Value can be a ShareLeaseClient object
+            or the lease ID as a string.
+
+            .. versionadded:: 12.5.0
+            This keyword argument was introduced in API version '2020-08-04'.
+
         :returns: Share-updated property dict (Etag and last modified).
         :rtype: dict(str, Any)
         """
+        access_conditions = get_access_conditions(kwargs.pop('lease', None))
         timeout = kwargs.pop('timeout', None)
         if len(signed_identifiers) > 5:
             raise ValueError(
@@ -524,6 +653,7 @@ class ShareClient(AsyncStorageAccountHostsMixin, ShareClientBase):
                 share_acl=signed_identifiers or None,
                 timeout=timeout,
                 cls=return_response_headers,
+                lease_access_conditions=access_conditions,
                 **kwargs)
         except HttpResponseError as error:
             process_storage_error(error)
@@ -537,14 +667,27 @@ class ShareClient(AsyncStorageAccountHostsMixin, ShareClientBase):
         or recently re-sized files.
 
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
+        :keyword lease:
+            Required if the share has an active lease. Value can be a ShareLeaseClient object
+            or the lease ID as a string.
+
+            .. versionadded:: 12.5.0
+            This keyword argument was introduced in API version '2020-08-04'.
+
         :return: The approximate size of the data (in bytes) stored on the share.
         :rtype: int
         """
+        access_conditions = get_access_conditions(kwargs.pop('lease', None))
         timeout = kwargs.pop('timeout', None)
         try:
             stats = await self._client.share.get_statistics(
                 timeout=timeout,
+                lease_access_conditions=access_conditions,
                 **kwargs)
             return stats.share_usage_bytes # type: ignore
         except HttpResponseError as error:
@@ -569,9 +712,27 @@ class ShareClient(AsyncStorageAccountHostsMixin, ShareClientBase):
             An opaque continuation token. This value can be retrieved from the
             next_marker field of a previous generator object. If specified,
             this generator will begin returning results from this point.
+        :keyword list[str] include:
+            Include this parameter to specify one or more datasets to include in the response.
+            Possible str values are "timestamps", "Etag", "Attributes", "PermissionKey".
+
+            .. versionadded:: 12.6.0
+            This keyword argument was introduced in API version '2020-10-02'.
+
+        :keyword bool include_extended_info:
+            If this is set to true, file id will be returned in listed results.
+
+            .. versionadded:: 12.6.0
+            This keyword argument was introduced in API version '2020-10-02'.
+
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
         :returns: An auto-paging iterable of dict-like DirectoryProperties and FileProperties
+        :rtype: Iterable[Dict[str,str]]
 
         .. admonition:: Example:
 
@@ -601,7 +762,11 @@ class ShareClient(AsyncStorageAccountHostsMixin, ShareClientBase):
         :param str file_permission:
             File permission, a Portable SDDL
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
         :returns: A file permission key
         :rtype: str
         """
@@ -625,7 +790,11 @@ class ShareClient(AsyncStorageAccountHostsMixin, ShareClientBase):
         :param str permission_key:
             Key of the file permission to retrieve
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
         :returns: A file permission (a portable SDDL)
         :rtype: str
         """
@@ -650,7 +819,11 @@ class ShareClient(AsyncStorageAccountHostsMixin, ShareClientBase):
         :keyword dict(str,str) metadata:
             Name-value pairs associated with the directory as metadata.
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
         :returns: ShareDirectoryClient
         :rtype: ~azure.storage.fileshare.aio.ShareDirectoryClient
         """
@@ -668,7 +841,11 @@ class ShareClient(AsyncStorageAccountHostsMixin, ShareClientBase):
         :param str directory_name:
             The name of the directory.
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
         :rtype: None
         """
         directory = self.get_directory_client(directory_name)

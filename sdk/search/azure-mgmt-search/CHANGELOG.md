@@ -1,5 +1,56 @@
 # Release History
 
+## 9.2.0b1 (2024-03-18)
+
+### Features Added
+
+  - Added operation group NetworkSecurityPerimeterConfigurationsOperations
+  - Model Identity has a new parameter user_assigned_identities
+  - Model NetworkRuleSet has a new parameter bypass
+  - Model Operation has a new parameter is_data_action
+  - Model Operation has a new parameter origin
+  - Model Operation has a new parameter properties
+  - Model SearchService has a new parameter disabled_data_exfiltration_options
+  - Model SearchService has a new parameter e_tag
+  - Model SearchServiceUpdate has a new parameter disabled_data_exfiltration_options
+  - Model SearchServiceUpdate has a new parameter e_tag
+
+## 9.1.0 (2023-10-23)
+
+### Features Added
+
+  - Added operation group SearchManagementClientOperationsMixin
+  - Added operation group UsagesOperations
+  - Model SearchService has a new parameter semantic_search
+  - Model SearchServiceUpdate has a new parameter semantic_search
+
+## 9.0.0 (2023-02-15)
+
+### Features Added
+
+  - Model PrivateEndpointConnectionProperties has a new parameter group_id
+  - Model PrivateEndpointConnectionProperties has a new parameter provisioning_state
+  - Model SearchService has a new parameter auth_options
+  - Model SearchService has a new parameter disable_local_auth
+  - Model SearchService has a new parameter encryption_with_cmk
+  - Model SearchServiceUpdate has a new parameter auth_options
+  - Model SearchServiceUpdate has a new parameter disable_local_auth
+  - Model SearchServiceUpdate has a new parameter encryption_with_cmk
+
+## 9.0.0b1 (2022-10-28)
+
+### Features Added
+
+  - Model Resource has a new parameter identity
+  - Model Resource has a new parameter location
+  - Model Resource has a new parameter tags
+
+### Breaking Changes
+
+  - Model PrivateLinkResourceProperties no longer has parameter shareable_private_link_resource_types
+  - Model SearchService no longer has parameter shared_private_link_resources
+  - Removed operation group SharedPrivateLinkResourcesOperations
+
 ## 8.0.0 (2020-12-22)
 
 - GA release
@@ -18,7 +69,7 @@ This version uses a next-generation code generator that introduces important bre
   - `credentials` parameter has been renamed `credential`
 
 - The `config` attribute no longer exists on a client, configuration should be passed as kwarg. Example: `MyClient(credential, subscription_id, enable_logging=True)`. For a complete set of
-  supported options, see the [parameters accept in init documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
+  supported options, see the [parameters accept in init documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
 - You can't import a `version` module anymore, use `__version__` instead
 - Operations that used to return a `msrest.polling.LROPoller` now returns a `azure.core.polling.LROPoller` and are prefixed with `begin_`.
 - Exceptions tree have been simplified and most exceptions are now `azure.core.exceptions.HttpResponseError` (`CloudError` has been removed).
@@ -26,13 +77,13 @@ This version uses a next-generation code generator that introduces important bre
 
   - `raw` has been removed. Equivalent feature can be found using `cls`, a callback that will give access to internal HTTP response for advanced user
   - For a complete set of
-  supported options, see the [parameters accept in Request documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
+  supported options, see the [parameters accept in Request documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
 
 **General new features**
 
 - Type annotations support using `typing`. SDKs are mypy ready.
 - This client has now stable and official support for async. Check the `aio` namespace of your package to find the async client.
-- This client now support natively tracing library like OpenCensus or OpenTelemetry. See this [tracing quickstart](https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/core/azure-core-tracing-opentelemetry) for an overview.
+- This client now support natively tracing library like OpenCensus or OpenTelemetry. See this [tracing quickstart](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/core/azure-core-tracing-opentelemetry) for an overview.
 
 ## 3.0.0 (2019-09-28)
 

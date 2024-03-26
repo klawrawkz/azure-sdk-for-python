@@ -225,13 +225,13 @@ class ContainerSamples(object):
         blob_service_client = BlobServiceClient.from_connection_string(self.connection_string)
 
         # [START get_container_client_from_blob_client]
-        container_client1 = blob_service_client.get_container_client("blobcontainer")
+        container_client1 = blob_service_client.get_container_client("blobcontainer1")
         container_client1.create_container()
         print(container_client1.get_container_properties())
         blob_client1 = container_client1.get_blob_client("blob")
         blob_client1.upload_blob("hello")
 
-        container_client2 = blob_client1.get_container_client()
+        container_client2 = blob_client1._get_container_client()
         print(container_client2.get_container_properties())
         container_client2.delete_container()
         # [END get_container_client_from_blob_client]

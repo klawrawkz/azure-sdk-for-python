@@ -33,7 +33,7 @@ async def main():
     status = None
     blob_service_client = BlobServiceClient.from_connection_string(CONNECTION_STRING)
     async with blob_service_client:
-        source_blob = "http://www.gutenberg.org/files/59466/59466-0.txt"
+        source_blob = "https://www.gutenberg.org/files/59466/59466-0.txt"
         copied_blob = blob_service_client.get_blob_client("mycontainer", '59466-0.txt')
         # Copy started"
         await copied_blob.start_copy_from_url(source_blob)
@@ -56,5 +56,4 @@ async def main():
             print(props.copy.status)
 
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+    asyncio.run(main())

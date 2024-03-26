@@ -1,0 +1,2 @@
+twine==4.0.2; python_version >= '3.6'
+tools/azure-sdk-tools

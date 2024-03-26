@@ -57,9 +57,10 @@ setup(
     license='MIT License',
     author='Microsoft Corporation',
     author_email='azpysdkhelp@microsoft.com',
-    url='https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/media/azure-media-analytics-edge',
+    url='https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/media/azure-media-analytics-edge',
+    keywords="azure, azure sdk",
     classifiers=[
-        "Development Status :: 4 - Beta",
+        "Development Status :: 7 - Inactive",
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
@@ -81,8 +82,12 @@ setup(
             "azure.media",
         ]
     ),
+    include_package_data=True,
+    package_data={
+        'pytyped': ['py.typed'],
+    },
     install_requires=[
-        "msrest>=0.5.0",
+        "msrest>=0.6.21",
     ],
     extras_require={
         ":python_version<'3.0'": ['azure-media-nspkg'],

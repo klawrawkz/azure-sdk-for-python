@@ -6,27 +6,11 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
-from enum import Enum, EnumMeta
-from six import with_metaclass
-
-class _CaseInsensitiveEnumMeta(EnumMeta):
-    def __getitem__(self, name):
-        return super().__getitem__(name.upper())
-
-    def __getattr__(cls, name):
-        """Return the enum member matching `name`
-        We use __getattr__ instead of descriptors or inserting into the enum
-        class' __dict__ in order to support `name` and `value` being both
-        properties for enum members (which live in the class' __dict__) and
-        enum members themselves.
-        """
-        try:
-            return cls._member_map_[name.upper()]
-        except KeyError:
-            raise AttributeError(name)
+from enum import Enum
+from azure.core import CaseInsensitiveEnumMeta
 
 
-class CleanupOptions(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
+class CleanupOptions(str, Enum, metaclass=CaseInsensitiveEnumMeta):
     """The clean up preference when the script execution gets in a terminal state. Default setting is
     'Always'.
     """
@@ -35,24 +19,24 @@ class CleanupOptions(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
     ON_SUCCESS = "OnSuccess"
     ON_EXPIRATION = "OnExpiration"
 
-class CreatedByType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The type of identity that created the resource.
-    """
+
+class CreatedByType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The type of identity that created the resource."""
 
     USER = "User"
     APPLICATION = "Application"
     MANAGED_IDENTITY = "ManagedIdentity"
     KEY = "Key"
 
-class ManagedServiceIdentityType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """Type of the managed identity.
-    """
+
+class ManagedServiceIdentityType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """Type of the managed identity."""
 
     USER_ASSIGNED = "UserAssigned"
 
-class ScriptProvisioningState(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """State of the script execution. This only appears in the response.
-    """
+
+class ScriptProvisioningState(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """State of the script execution. This only appears in the response."""
 
     CREATING = "Creating"
     PROVISIONING_RESOURCES = "ProvisioningResources"
@@ -61,9 +45,9 @@ class ScriptProvisioningState(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum
     FAILED = "Failed"
     CANCELED = "Canceled"
 
-class ScriptType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """Type of the script.
-    """
+
+class ScriptType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """Type of the script."""
 
     AZURE_POWER_SHELL = "AzurePowerShell"
     AZURE_CLI = "AzureCLI"

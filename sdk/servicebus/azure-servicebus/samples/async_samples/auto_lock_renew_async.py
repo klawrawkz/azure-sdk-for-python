@@ -9,9 +9,11 @@
 Example to show usage of AutoLockRenewer asynchronously:
     1. Automatically renew locks on messages received from non-sessionful entity
     2. Automatically renew locks on the session of sessionful entity
-"""
 
-# pylint: disable=C0111
+We do not guarantee that this SDK is thread-safe. We do not recommend reusing the ServiceBusClient,
+ ServiceBusSender, ServiceBusReceiver across threads. It is up to the running 
+ application to use these classes in a thread-safe manner.
+"""
 
 import os
 import asyncio
@@ -20,9 +22,9 @@ from azure.servicebus import ServiceBusMessage
 from azure.servicebus.aio import ServiceBusClient, AutoLockRenewer
 from azure.servicebus.exceptions import ServiceBusError
 
-CONNECTION_STR = os.environ['SERVICE_BUS_CONNECTION_STR']
-QUEUE_NAME = os.environ["SERVICE_BUS_QUEUE_NAME"]
-SESSION_QUEUE_NAME = os.environ['SERVICE_BUS_SESSION_QUEUE_NAME']
+CONNECTION_STR = os.environ['SERVICEBUS_CONNECTION_STR']
+QUEUE_NAME = os.environ["SERVICEBUS_QUEUE_NAME"]
+SESSION_QUEUE_NAME = os.environ['SERVICEBUS_SESSION_QUEUE_NAME']
 
 
 async def renew_lock_on_message_received_from_non_sessionful_entity():
@@ -127,8 +129,6 @@ async def renew_lock_with_lock_renewal_failure_callback():
                 print('Lock renew failure demonstration complete.')
 
 
-
-loop = asyncio.get_event_loop()
-loop.run_until_complete(renew_lock_on_message_received_from_non_sessionful_entity())
-loop.run_until_complete(renew_lock_on_session_of_the_sessionful_entity())
-loop.run_until_complete(renew_lock_with_lock_renewal_failure_callback())
+asyncio.run(renew_lock_on_message_received_from_non_sessionful_entity())
+asyncio.run(renew_lock_on_session_of_the_sessionful_entity())
+asyncio.run(renew_lock_with_lock_renewal_failure_callback())

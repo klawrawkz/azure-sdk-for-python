@@ -3,278 +3,160 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 # ------------------------------------
-import copy
-from datetime import datetime
-import json
+import logging
 import os
-import pytest
-import re
-import six
-import time
+import json
+from io import BytesIO
 
-from azure.containerregistry import (
-    ContainerRepositoryClient,
-    ContainerRegistryClient,
-    TagProperties,
-    ContentPermissions,
-    RegistryArtifactProperties,
-)
+from azure.containerregistry import ContainerRegistryClient
+from azure.containerregistry._helpers import _is_tag
+from azure.identity import AzureAuthorityHosts, ClientSecretCredential
 
-from azure.core.credentials import AccessToken
-from azure.mgmt.containerregistry import ContainerRegistryManagementClient
-from azure.mgmt.containerregistry.models import ImportImageParameters, ImportSource, ImportMode
-from azure.identity import DefaultAzureCredential
+from devtools_testutils import AzureRecordedTestCase, FakeTokenCredential
 
-from azure_devtools.scenario_tests import RecordingProcessor
-from devtools_testutils import AzureTestCase
+logger = logging.getLogger()
 
 
-REDACTED = "REDACTED"
-
-
-class AcrBodyReplacer(RecordingProcessor):
-    """Replace request body for oauth2 exchanges"""
-
-    def __init__(self, replacement="redacted"):
-        self._replacement = replacement
-        self._401_replacement = 'Bearer realm="https://fake_url.azurecr.io/oauth2/token",service="fake_url.azurecr.io",scope="fake_scope",error="invalid_token"'
-        self._redacted_service = "https://fakeurl.azurecr.io"
-        self._regex = r"(https://)[a-zA-Z0-9]+(\.azurecr.io)"
-
-    def _scrub_body(self, body):
-        # type: (bytes) -> bytes
-        if isinstance(body, dict):
-            return self._scrub_body_dict(body)
-        if not isinstance(body, six.binary_type):
-            return body
-        s = body.decode("utf-8")
-        if "access_token" not in s and "refresh_token" not in s:
-            return body
-        s = s.split("&")
-        for idx, pair in enumerate(s):
-            [k, v] = pair.split("=")
-            if k == "access_token" or k == "refresh_token":
-                v = REDACTED
-            if k == "service":
-                v = "fake_url.azurecr.io"
-            s[idx] = "=".join([k, v])
-        s = "&".join(s)
-        return s.encode("utf-8")
-
-    def _scrub_body_dict(self, body):
-        new_body = copy.deepcopy(body)
-        for k in ["access_token", "refresh_token"]:
-            if k in new_body.keys():
-                new_body[k] = REDACTED
-        if "service" in new_body.keys():
-            new_body["service"] = "fake_url.azurecr.io"
-        return new_body
-
-    def process_request(self, request):
-        if request.body:
-            request.body = self._scrub_body(request.body)
-
-        return request
-
-    def process_response(self, response):
-        try:
-            self.process_url(response)
-            headers = response["headers"]
-
-            if "www-authenticate" in headers:
-                headers["www-authenticate"] = (
-                    [self._401_replacement] if isinstance(headers["www-authenticeate"], list) else self._401_replacement
-                )
-
-            body = response["body"]
-            try:
-                if body["string"] == b"" or body["string"] == "null":
-                    return response
-
-                refresh = json.loads(body["string"])
-                if "refresh_token" in refresh.keys():
-                    refresh["refresh_token"] = REDACTED
-                if "access_token" in refresh.keys():
-                    refresh["access_token"] = REDACTED
-                if "service" in refresh.keys():
-                    s = refresh["service"].split(".")
-                    s[0] = "fake_url"
-                    refresh["service"] = ".".join(s)
-                body["string"] = json.dumps(refresh)
-            except ValueError:
-                # Python 2.7 doesn't have the below error
-                pass
-            except json.decoder.JSONDecodeError:
-                pass
-
-            return response
-        except (KeyError, ValueError):
-            return response
-
-    def process_url(self, response):
-        try:
-            response["url"] = re.sub(self._regex, r"\1{}\2".format("fake_url"), response["url"])
-        except KeyError:
-            pass
-
-
-class FakeTokenCredential(object):
-    """Protocol for classes able to provide OAuth tokens.
-    :param str scopes: Lets you specify the type of access needed.
-    """
-
-    def __init__(self):
-        self.token = AccessToken("YOU SHALL NOT PASS", 0)
-
-    def get_token(self, *args):
-        return self.token
-
-
-class ContainerRegistryTestClass(AzureTestCase):
-    def __init__(self, method_name):
-        super(ContainerRegistryTestClass, self).__init__(method_name)
-        self.recording_processors.append(AcrBodyReplacer())
-        self.repository = "library/hello-world"
-
-    def sleep(self, t):
-        if self.is_live:
-            time.sleep(t)
-
-    def import_image(self, repository, tags):
-        # type: (str, List[str]) -> None
+class ContainerRegistryTestClass(AzureRecordedTestCase):
+    def import_image(self, endpoint, repository, tags):
         # repository must be a docker hub repository
         # tags is a List of repository/tag combos in the format <repository>:<tag>
         if not self.is_live:
             return
+        import_image(endpoint, repository, tags)
 
-        import_image(repository, tags)
-
-    def _clean_up(self, endpoint):
-        if not self.is_live:
-            return
-
-        reg_client = self.create_registry_client(endpoint)
-        for repo in reg_client.list_repositories():
-            if repo.startswith("repo"):
-                repo_client = self.create_repository_client(endpoint, repo)
-                for tag in repo_client.list_tags():
-
-                    try:
-                        p = tag.content_permissions
-                        p.can_delete = True
-                        repo_client.set_tag_properties(tag.digest, p)
-                    except:
-                        pass
-
-                for manifest in repo_client.list_registry_artifacts():
-                    try:
-                        p = manifest.content_permissions
-                        p.can_delete = True
-                        repo_client.set_manifest_properties(tag.digest, p)
-                    except:
-                        pass
-
-        for repo in reg_client.list_repositories():
-            try:
-                reg_client.delete_repository(repo)
-            except:
-                pass
-
-    def get_credential(self):
+    def get_credential(self, authority=None, **kwargs):
         if self.is_live:
-            return DefaultAzureCredential()
+            return get_credential(authority)
         return FakeTokenCredential()
 
     def create_registry_client(self, endpoint, **kwargs):
-        return ContainerRegistryClient(endpoint=endpoint, credential=self.get_credential(), **kwargs)
+        authority = get_authority(endpoint)
+        audience = kwargs.pop("audience", None)
+        if not audience:
+            audience = get_audience(authority)
+        credential = self.get_credential(authority=authority)
+        logger.warning(f"Authority: {authority} \nAuthorization scope: {audience}")
+        return ContainerRegistryClient(endpoint=endpoint, credential=credential, audience=audience, **kwargs)
 
-    def create_repository_client(self, endpoint, name, **kwargs):
-        return ContainerRepositoryClient(endpoint=endpoint, repository=name, credential=self.get_credential(), **kwargs)
+    def create_anon_client(self, endpoint, **kwargs):
+        authority = get_authority(endpoint)
+        audience = get_audience(authority)
+        return ContainerRegistryClient(endpoint=endpoint, audience=audience, **kwargs)
 
-    def assert_content_permission(self, content_perm, content_perm2):
-        assert isinstance(content_perm, ContentPermissions)
-        assert isinstance(content_perm2, ContentPermissions)
-        assert content_perm.can_delete == content_perm2.can_delete
-        assert content_perm.can_list == content_perm2.can_list
-        assert content_perm.can_read == content_perm2.can_read
-        assert content_perm.can_write == content_perm2.can_write
+    def set_all_properties(self, properties, value):
+        properties.can_delete = value
+        properties.can_read = value
+        properties.can_write = value
+        properties.can_list = value
+        return properties
 
-    def assert_tag(
-        self,
-        tag,
-        created_on=None,
-        digest=None,
-        last_updated_on=None,
-        content_permission=None,
-        name=None,
-        registry=None,
-        repository=None,
-    ):
-        assert isinstance(tag, TagProperties)
-        assert isinstance(tag.writeable_permissions, ContentPermissions)
-        assert isinstance(tag.created_on, datetime)
-        assert isinstance(tag.last_updated_on, datetime)
-        if content_permission:
-            self.assert_content_permission(tag.content_permission, content_permission)
-        if created_on:
-            assert tag.created_on == created_on
-        if last_updated_on:
-            assert tag.last_updated_on == last_updated_on
-        if name:
-            assert tag.name == name
-        if registry:
-            assert tag.registry == registry
-        if repository:
-            assert tag.repository == repository
+    def assert_all_properties(self, properties, value):
+        assert properties.can_delete == value
+        assert properties.can_read == value
+        assert properties.can_write == value
+        assert properties.can_list == value
 
-    def assert_registry_artifact(self, tag_or_digest, expected_tag_or_digest):
-        assert isinstance(tag_or_digest, RegistryArtifactProperties)
-        assert tag_or_digest == expected_tag_or_digest
+    def create_fully_qualified_reference(self, registry, repository, digest):
+        return f"{registry}/{repository}{':' if _is_tag(digest) else '@'}{digest.split(':')[-1]}"
+
+    def upload_oci_manifest_prerequisites(self, repo, client):
+        layer = "654b93f61054e4ce90ed203bb8d556a6200d5f906cf3eca0620738d6dc18cbed"
+        config = "config.json"
+        base_path = os.path.join(self.get_test_directory(), "data", "oci_artifact")
+        # upload config
+        client.upload_blob(repo, open(os.path.join(base_path, config), "rb"))
+        # upload layers
+        client.upload_blob(repo, open(os.path.join(base_path, layer), "rb"))
+
+    def upload_docker_manifest_prerequisites(self, repo, client):
+        layer = "2db29710123e3e53a794f2694094b9b4338aa9ee5c40b930cb8063a1be392c54"
+        config = "config.json"
+        base_path = os.path.join(self.get_test_directory(), "data", "docker_artifact")
+        # upload config
+        client.upload_blob(repo, open(os.path.join(base_path, config), "rb"))
+        # upload layers
+        client.upload_blob(repo, open(os.path.join(base_path, layer), "rb"))
+
+    def get_test_directory(self):
+        return os.path.join(os.getcwd(), "tests")
 
 
-# Moving this out of testcase so the fixture and individual tests can use it
-def import_image(repository, tags):
-    mgmt_client = ContainerRegistryManagementClient(
-        DefaultAzureCredential(), os.environ["CONTAINERREGISTRY_SUBSCRIPTION_ID"]
+def is_public_endpoint(endpoint):
+    return ".azurecr.io" in endpoint
+
+
+def is_china_endpoint(endpoint):
+    return ".azurecr.cn" in endpoint
+
+
+def get_authority(endpoint: str) -> str:
+    if ".azurecr.io" in endpoint:
+        logger.warning("Public cloud Authority")
+        return AzureAuthorityHosts.AZURE_PUBLIC_CLOUD
+    if ".azurecr.cn" in endpoint:
+        logger.warning("China Authority")
+        return AzureAuthorityHosts.AZURE_CHINA
+    if ".azurecr.us" in endpoint:
+        logger.warning("US Gov Authority")
+        return AzureAuthorityHosts.AZURE_GOVERNMENT
+    raise ValueError(f"Endpoint ({endpoint}) could not be understood")
+
+
+def get_audience(authority: str) -> str:
+    if authority == AzureAuthorityHosts.AZURE_PUBLIC_CLOUD:
+        logger.warning("Public cloud auth audience")
+        return "https://management.azure.com"
+    if authority == AzureAuthorityHosts.AZURE_CHINA:
+        logger.warning("China cloud auth audience")
+        return "https://management.chinacloudapi.cn"
+    if authority == AzureAuthorityHosts.AZURE_GOVERNMENT:
+        logger.warning("US Gov cloud auth audience")
+        return "https://management.usgovcloudapi.net"
+
+
+def get_credential(authority: str, **kwargs):
+    return ClientSecretCredential(
+        tenant_id=os.environ.get("CONTAINERREGISTRY_TENANT_ID"),
+        client_id=os.environ.get("CONTAINERREGISTRY_CLIENT_ID"),
+        client_secret=os.environ.get("CONTAINERREGISTRY_CLIENT_SECRET"),
+        authority=authority,
     )
-    registry_uri = "registry.hub.docker.com"
-    rg_name = os.environ["CONTAINERREGISTRY_RESOURCE_GROUP"]
-    registry_name = os.environ["CONTAINERREGISTRY_REGISTRY_NAME"]
-
-    import_source = ImportSource(source_image=repository, registry_uri=registry_uri)
-
-    import_params = ImportImageParameters(mode=ImportMode.Force, source=import_source, target_tags=tags)
-
-    result = mgmt_client.registries.begin_import_image(
-        rg_name,
-        registry_name,
-        parameters=import_params,
-    )
-
-    while not result.done():
-        pass
 
 
-@pytest.fixture(scope="session")
-def load_registry():
-    repos = [
-        "library/hello-world",
-        "library/alpine",
-        "library/busybox",
-    ]
-    tags = [
-        [
-            "library/hello-world:latest",
-            "library/hello-world:v1",
-            "library/hello-world:v2",
-            "library/hello-world:v3",
-            "library/hello-world:v4",
-        ],
-        ["library/alpine"],
-        ["library/busybox"],
-    ]
-    for repo, tag in zip(repos, tags):
-        try:
-            import_image(repo, tag)
-        except Exception as e:
-            print(e)
+def import_image(endpoint, repository, tags):
+    authority = get_authority(endpoint)
+    logger.warning(f"Import image authority: {authority}")
+    credential = get_credential(authority)
+
+    with ContainerRegistryClient(endpoint, credential) as client:
+        # Upload a layer
+        layer = BytesIO(b"Sample layer")
+        layer_digest, layer_size = client.upload_blob(repository, layer)
+        logger.info(f"Uploaded layer: digest - {layer_digest}, size - {layer_size}")
+        # Upload a config
+        config = BytesIO(json.dumps({"sample config": "content"}).encode())
+        config_digest, config_size = client.upload_blob(repository, config)
+        logger.info(f"Uploaded config: digest - {config_digest}, size - {config_size}")
+        # Upload images
+        oci_manifest = {
+            "config": {
+                "mediaType": "application/vnd.oci.image.config.v1+json",
+                "digest": config_digest,
+                "sizeInBytes": config_size,
+            },
+            "schemaVersion": 2,
+            "layers": [
+                {
+                    "mediaType": "application/vnd.oci.image.layer.v1.tar",
+                    "digest": layer_digest,
+                    "size": layer_size,
+                    "annotations": {
+                        "org.opencontainers.image.ref.name": "artifact.txt",
+                    },
+                },
+            ],
+        }
+        for tag in tags:
+            manifest_digest = client.set_manifest(repository, oci_manifest, tag=tag)
+            logger.info(f"Uploaded manifest: digest - {manifest_digest}")

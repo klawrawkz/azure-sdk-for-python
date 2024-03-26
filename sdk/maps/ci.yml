@@ -3,7 +3,6 @@
 trigger:
   branches:
     include:
-    - master
     - main
     - hotfix/*
     - release/*
@@ -15,7 +14,6 @@ trigger:
 pr:
   branches:
     include:
-    - master
     - main
     - feature/*
     - hotfix/*
@@ -29,6 +27,15 @@ extends:
   template: ../../eng/pipelines/templates/stages/archetype-sdk-client.yml
   parameters:
     ServiceDirectory: maps
+    TestProxy: true
     Artifacts:
     - name: azure-mgmt-maps
       safeName: azuremgmtmaps
+    - name: azure-maps-search
+      safeName: azuremapssearch
+    - name: azure-maps-geolocation
+      safeName: azuremapsgeolocation
+    - name: azure-maps-render
+      safeName: azuremapsrender
+    - name: azure-maps-route
+      safeName: azuremapsroute

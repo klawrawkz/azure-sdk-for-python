@@ -15,12 +15,12 @@ if TYPE_CHECKING:
 
 
 class CloudEventDistributedTracingPolicy(SansIOHTTPPolicy):
-    """CloudEventDistributedTracingPolicy is a policy which adds distributed tracing informatiom
+    """CloudEventDistributedTracingPolicy is a policy which adds distributed tracing information
     to a batch of cloud events. It does so by copying the `traceparent` and `tracestate` properties
     from the HTTP request into the individual events as extension properties.
     This will only happen in the case where an event does not have a `traceparent` defined already. This
     allows events to explicitly set a traceparent and tracestate which would be respected during "multi-hop
-    transmition".
+    transmission".
     See https://github.com/cloudevents/spec/blob/master/extensions/distributed-tracing.md
     for more information on distributed tracing and cloud events.
     """

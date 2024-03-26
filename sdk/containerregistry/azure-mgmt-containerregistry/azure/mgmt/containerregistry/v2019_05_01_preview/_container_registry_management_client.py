@@ -6,90 +6,100 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
-from typing import TYPE_CHECKING
+from copy import deepcopy
+from typing import Any, TYPE_CHECKING
 
+from azure.core.rest import HttpRequest, HttpResponse
 from azure.mgmt.core import ARMPipelineClient
-from msrest import Deserializer, Serializer
+
+from . import models as _models
+from .._serialization import Deserializer, Serializer
+from ._configuration import ContainerRegistryManagementClientConfiguration
+from .operations import RegistriesOperations, ScopeMapsOperations, TokensOperations
 
 if TYPE_CHECKING:
     # pylint: disable=unused-import,ungrouped-imports
-    from typing import Any, Optional
-
     from azure.core.credentials import TokenCredential
 
-from ._configuration import ContainerRegistryManagementClientConfiguration
-from .operations import RegistriesOperations
-from .operations import Operations
-from .operations import ReplicationsOperations
-from .operations import WebhooksOperations
-from .operations import ScopeMapsOperations
-from .operations import TokensOperations
-from . import models
 
-
-class ContainerRegistryManagementClient(object):
+class ContainerRegistryManagementClient:  # pylint: disable=client-accepts-api-version-keyword
     """ContainerRegistryManagementClient.
 
-    :ivar registries: RegistriesOperations operations
-    :vartype registries: azure.mgmt.containerregistry.v2019_05_01_preview.operations.RegistriesOperations
-    :ivar operations: Operations operations
-    :vartype operations: azure.mgmt.containerregistry.v2019_05_01_preview.operations.Operations
-    :ivar replications: ReplicationsOperations operations
-    :vartype replications: azure.mgmt.containerregistry.v2019_05_01_preview.operations.ReplicationsOperations
-    :ivar webhooks: WebhooksOperations operations
-    :vartype webhooks: azure.mgmt.containerregistry.v2019_05_01_preview.operations.WebhooksOperations
     :ivar scope_maps: ScopeMapsOperations operations
-    :vartype scope_maps: azure.mgmt.containerregistry.v2019_05_01_preview.operations.ScopeMapsOperations
+    :vartype scope_maps:
+     azure.mgmt.containerregistry.v2019_05_01_preview.operations.ScopeMapsOperations
     :ivar tokens: TokensOperations operations
     :vartype tokens: azure.mgmt.containerregistry.v2019_05_01_preview.operations.TokensOperations
-    :param credential: Credential needed for the client to connect to Azure.
+    :ivar registries: RegistriesOperations operations
+    :vartype registries:
+     azure.mgmt.containerregistry.v2019_05_01_preview.operations.RegistriesOperations
+    :param credential: Credential needed for the client to connect to Azure. Required.
     :type credential: ~azure.core.credentials.TokenCredential
-    :param subscription_id: The Microsoft Azure subscription ID.
+    :param subscription_id: The Microsoft Azure subscription ID. Required.
     :type subscription_id: str
-    :param str base_url: Service URL
-    :keyword int polling_interval: Default waiting time between two polls for LRO operations if no Retry-After header is present.
+    :param base_url: Service URL. Default value is "https://management.azure.com".
+    :type base_url: str
+    :keyword api_version: Api Version. Default value is "2019-05-01-preview". Note that overriding
+     this default value may result in unsupported behavior.
+    :paramtype api_version: str
+    :keyword int polling_interval: Default waiting time between two polls for LRO operations if no
+     Retry-After header is present.
     """
 
     def __init__(
         self,
-        credential,  # type: "TokenCredential"
-        subscription_id,  # type: str
-        base_url=None,  # type: Optional[str]
-        **kwargs  # type: Any
-    ):
-        # type: (...) -> None
-        if not base_url:
-            base_url = 'https://management.azure.com'
-        self._config = ContainerRegistryManagementClientConfiguration(credential, subscription_id, **kwargs)
-        self._client = ARMPipelineClient(base_url=base_url, config=self._config, **kwargs)
+        credential: "TokenCredential",
+        subscription_id: str,
+        base_url: str = "https://management.azure.com",
+        **kwargs: Any
+    ) -> None:
+        self._config = ContainerRegistryManagementClientConfiguration(
+            credential=credential, subscription_id=subscription_id, **kwargs
+        )
+        self._client: ARMPipelineClient = ARMPipelineClient(base_url=base_url, config=self._config, **kwargs)
 
-        client_models = {k: v for k, v in models.__dict__.items() if isinstance(v, type)}
+        client_models = {k: v for k, v in _models.__dict__.items() if isinstance(v, type)}
         self._serialize = Serializer(client_models)
-        self._serialize.client_side_validation = False
         self._deserialize = Deserializer(client_models)
-
-        self.registries = RegistriesOperations(
-            self._client, self._config, self._serialize, self._deserialize)
-        self.operations = Operations(
-            self._client, self._config, self._serialize, self._deserialize)
-        self.replications = ReplicationsOperations(
-            self._client, self._config, self._serialize, self._deserialize)
-        self.webhooks = WebhooksOperations(
-            self._client, self._config, self._serialize, self._deserialize)
+        self._serialize.client_side_validation = False
         self.scope_maps = ScopeMapsOperations(
-            self._client, self._config, self._serialize, self._deserialize)
+            self._client, self._config, self._serialize, self._deserialize, "2019-05-01-preview"
+        )
         self.tokens = TokensOperations(
-            self._client, self._config, self._serialize, self._deserialize)
+            self._client, self._config, self._serialize, self._deserialize, "2019-05-01-preview"
+        )
+        self.registries = RegistriesOperations(
+            self._client, self._config, self._serialize, self._deserialize, "2019-05-01-preview"
+        )
 
-    def close(self):
-        # type: () -> None
+    def _send_request(self, request: HttpRequest, **kwargs: Any) -> HttpResponse:
+        """Runs the network request through the client's chained policies.
+
+        >>> from azure.core.rest import HttpRequest
+        >>> request = HttpRequest("GET", "https://www.example.org/")
+        <HttpRequest [GET], url: 'https://www.example.org/'>
+        >>> response = client._send_request(request)
+        <HttpResponse: 200 OK>
+
+        For more information on this code flow, see https://aka.ms/azsdk/dpcodegen/python/send_request
+
+        :param request: The network request you want to make. Required.
+        :type request: ~azure.core.rest.HttpRequest
+        :keyword bool stream: Whether the response payload will be streamed. Defaults to False.
+        :return: The response of your network call. Does not do error handling on your response.
+        :rtype: ~azure.core.rest.HttpResponse
+        """
+
+        request_copy = deepcopy(request)
+        request_copy.url = self._client.format_url(request_copy.url)
+        return self._client.send_request(request_copy, **kwargs)
+
+    def close(self) -> None:
         self._client.close()
 
-    def __enter__(self):
-        # type: () -> ContainerRegistryManagementClient
+    def __enter__(self) -> "ContainerRegistryManagementClient":
         self._client.__enter__()
         return self
 
-    def __exit__(self, *exc_details):
-        # type: (Any) -> None
+    def __exit__(self, *exc_details: Any) -> None:
         self._client.__exit__(*exc_details)

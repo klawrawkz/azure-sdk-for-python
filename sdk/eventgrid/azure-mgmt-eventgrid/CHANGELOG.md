@@ -1,5 +1,206 @@
 # Release History
 
+## 10.3.0b3 (2023-12-04)
+
+### Features Added
+
+  - Added operation NamespaceTopicEventSubscriptionsOperations.get_delivery_attributes
+  - Added operation group NetworkSecurityPerimeterConfigurationsOperations
+  - Model DeliveryConfiguration has a new parameter push
+  - Model TopicTypeInfo has a new parameter additional_enforced_permissions
+
+### Breaking Changes
+
+  - Model Client no longer has parameter authentication
+  - Parameter value_type of model StaticRoutingEnrichment is now required
+
+## 10.3.0b2 (2023-05-19)
+
+### Features Added
+
+  - Added operation group CaCertificatesOperations
+  - Added operation group ClientGroupsOperations
+  - Added operation group ClientsOperations
+  - Added operation group NamespaceTopicEventSubscriptionsOperations
+  - Added operation group NamespaceTopicsOperations
+  - Added operation group NamespacesOperations
+  - Added operation group PartnerDestinationsOperations
+  - Added operation group PermissionBindingsOperations
+  - Added operation group TopicSpacesOperations
+  - Model Channel has a new parameter partner_destination_info
+  - Model ChannelUpdateParameters has a new parameter partner_destination_info
+  - Model Domain has a new parameter event_type_info
+  - Model Domain has a new parameter minimum_tls_version_allowed
+  - Model Domain has a new parameter sku
+  - Model DomainUpdateParameters has a new parameter event_type_info
+  - Model DomainUpdateParameters has a new parameter minimum_tls_version_allowed
+  - Model DomainUpdateParameters has a new parameter sku
+  - Model PartnerNamespace has a new parameter minimum_tls_version_allowed
+  - Model PartnerNamespaceUpdateParameters has a new parameter minimum_tls_version_allowed
+  - Model Topic has a new parameter event_type_info
+  - Model Topic has a new parameter extended_location
+  - Model Topic has a new parameter kind
+  - Model Topic has a new parameter minimum_tls_version_allowed
+  - Model Topic has a new parameter sku
+  - Model TopicTypeInfo has a new parameter are_regional_and_global_sources_supported
+  - Model TopicUpdateParameters has a new parameter event_type_info
+  - Model TopicUpdateParameters has a new parameter minimum_tls_version_allowed
+  - Model TopicUpdateParameters has a new parameter sku
+  - Model VerifiedPartner has a new parameter partner_destination_details
+  - Model WebHookEventSubscriptionDestination has a new parameter minimum_tls_version_allowed
+
+## 10.3.0b1 (2022-11-30)
+
+### Other Changes
+
+  - Added generated samples in github repo
+  - Drop support for python<3.7.0
+
+## 10.2.0 (2022-06-20)
+
+**Features**
+
+  - Added operation group ChannelsOperations
+  - Added operation group DomainEventSubscriptionsOperations
+  - Added operation group DomainTopicEventSubscriptionsOperations
+  - Added operation group PartnerConfigurationsOperations
+  - Added operation group PartnerNamespacesOperations
+  - Added operation group PartnerRegistrationsOperations
+  - Added operation group PartnerTopicEventSubscriptionsOperations
+  - Added operation group PartnerTopicsOperations
+  - Added operation group TopicEventSubscriptionsOperations
+  - Added operation group VerifiedPartnersOperations
+  - Model Domain has a new parameter data_residency_boundary
+  - Model DomainUpdateParameters has a new parameter data_residency_boundary
+  - Model Operation has a new parameter is_data_action
+  - Model Topic has a new parameter data_residency_boundary
+  - Model TopicUpdateParameters has a new parameter data_residency_boundary
+
+## 10.2.0b2 (2022-05-30)
+
+**Breaking changes**
+
+  - Operation DomainEventSubscriptionsOperations.list has a new parameter filter
+  - Operation DomainEventSubscriptionsOperations.list has a new parameter top
+  - Operation DomainTopicEventSubscriptionsOperations.list has a new parameter filter
+  - Operation DomainTopicEventSubscriptionsOperations.list has a new parameter top
+  - Operation TopicEventSubscriptionsOperations.list has a new parameter filter
+  - Operation TopicEventSubscriptionsOperations.list has a new parameter top
+
+## 10.2.0b1 (2022-04-07)
+
+**Features**
+
+  - Added operation group ChannelsOperations
+  - Added operation group DomainEventSubscriptionsOperations
+  - Added operation group DomainTopicEventSubscriptionsOperations
+  - Added operation group EventChannelsOperations
+  - Added operation group PartnerConfigurationsOperations
+  - Added operation group PartnerDestinationsOperations
+  - Added operation group PartnerNamespacesOperations
+  - Added operation group PartnerRegistrationsOperations
+  - Added operation group PartnerTopicEventSubscriptionsOperations
+  - Added operation group PartnerTopicsOperations
+  - Added operation group TopicEventSubscriptionsOperations
+  - Added operation group VerifiedPartnersOperations
+  - Model Domain has a new parameter data_residency_boundary
+  - Model Domain has a new parameter sku
+  - Model DomainUpdateParameters has a new parameter data_residency_boundary
+  - Model DomainUpdateParameters has a new parameter sku
+  - Model Operation has a new parameter is_data_action
+  - Model Topic has a new parameter data_residency_boundary
+  - Model Topic has a new parameter extended_location
+  - Model Topic has a new parameter kind
+  - Model Topic has a new parameter sku
+  - Model TopicUpdateParameters has a new parameter data_residency_boundary
+  - Model TopicUpdateParameters has a new parameter sku
+
+## 10.1.0 (2021-12-13)
+
+**Features**
+
+  - Added model NumberInRangeAdvancedFilter
+  - Added model StringNotContainsAdvancedFilter
+  - Added model NumberNotInRangeAdvancedFilter
+  - Added model IsNullOrUndefinedAdvancedFilter
+  - Added model IsNotNullAdvancedFilter
+  - Added model StringNotBeginsWithAdvancedFilter
+  - Added model StringNotEndsWithAdvancedFilter
+
+## 10.0.0 (2021-10-21)
+
+**Features**
+
+  - Model Domain has a new parameter disable_local_auth
+  - Model Domain has a new parameter auto_delete_topic_with_last_subscription
+  - Model Domain has a new parameter auto_create_topic_with_first_subscription
+  - Model Topic has a new parameter disable_local_auth
+  - Model DomainUpdateParameters has a new parameter disable_local_auth
+  - Model DomainUpdateParameters has a new parameter auto_delete_topic_with_last_subscription
+  - Model DomainUpdateParameters has a new parameter auto_create_topic_with_first_subscription
+  - Model ExtensionTopic has a new parameter system_data
+  - Model TopicUpdateParameters has a new parameter disable_local_auth
+
+**Breaking changes**
+
+  - Model Domain no longer has parameter sku
+  - Model Topic no longer has parameter sku
+  - Model Topic no longer has parameter extended_location
+  - Model Topic no longer has parameter kind
+  - Model DomainUpdateParameters no longer has parameter sku
+  - Model TopicUpdateParameters no longer has parameter sku
+  - Removed operation group EventChannelsOperations
+  - Removed operation group PartnerRegistrationsOperations
+  - Removed operation group PartnerTopicEventSubscriptionsOperations
+  - Removed operation group PartnerNamespacesOperations
+  - Removed operation group PartnerTopicsOperations
+
+## 9.0.0 (2021-05-24)
+
+**Features**
+
+  - Model EventHubEventSubscriptionDestination has a new parameter delivery_attribute_mappings
+  - Model StorageQueueEventSubscriptionDestination has a new parameter queue_message_time_to_live_in_seconds
+  - Model TopicTypeInfo has a new parameter supported_scopes_for_source
+  - Model Topic has a new parameter extended_location
+  - Model Topic has a new parameter kind
+  - Model Topic has a new parameter system_data
+  - Model Topic has a new parameter identity
+  - Model Topic has a new parameter sku
+  - Model EventSubscriptionFilter has a new parameter enable_advanced_filtering_on_arrays
+  - Model AzureFunctionEventSubscriptionDestination has a new parameter delivery_attribute_mappings
+  - Model EventSubscriptionUpdateParameters has a new parameter dead_letter_with_resource_identity
+  - Model EventSubscriptionUpdateParameters has a new parameter delivery_with_resource_identity
+  - Model ServiceBusQueueEventSubscriptionDestination has a new parameter delivery_attribute_mappings
+  - Model DomainTopic has a new parameter system_data
+  - Model DomainUpdateParameters has a new parameter sku
+  - Model DomainUpdateParameters has a new parameter identity
+  - Model HybridConnectionEventSubscriptionDestination has a new parameter delivery_attribute_mappings
+  - Model TopicUpdateParameters has a new parameter sku
+  - Model TopicUpdateParameters has a new parameter identity
+  - Model ServiceBusTopicEventSubscriptionDestination has a new parameter delivery_attribute_mappings
+  - Model Domain has a new parameter sku
+  - Model Domain has a new parameter system_data
+  - Model Domain has a new parameter identity
+  - Model EventSubscription has a new parameter dead_letter_with_resource_identity
+  - Model EventSubscription has a new parameter system_data
+  - Model EventSubscription has a new parameter delivery_with_resource_identity
+  - Model WebHookEventSubscriptionDestination has a new parameter delivery_attribute_mappings
+  - Added operation TopicsOperations.begin_regenerate_key
+  - Added operation EventSubscriptionsOperations.get_delivery_attributes
+  - Added operation group PartnerRegistrationsOperations
+  - Added operation group SystemTopicsOperations
+  - Added operation group EventChannelsOperations
+  - Added operation group PartnerNamespacesOperations
+  - Added operation group ExtensionTopicsOperations
+  - Added operation group PartnerTopicsOperations
+  - Added operation group PartnerTopicEventSubscriptionsOperations
+  - Added operation group SystemTopicEventSubscriptionsOperations
+
+**Breaking changes**
+
+  - Removed operation TopicsOperations.regenerate_key
+
 ## 8.0.0 (2020-12-21)
 
 **Breaking changes**
@@ -22,20 +223,20 @@ This version uses a next-generation code generator that introduces important bre
   - `credentials` parameter has been renamed `credential`
 
 - The `config` attribute no longer exists on a client, configuration should be passed as kwarg. Example: `MyClient(credential, subscription_id, enable_logging=True)`. For a complete set of
-  supported options, see the [parameters accept in init documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
+  supported options, see the [parameters accept in init documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
 - You can't import a `version` module anymore, use `__version__` instead
 - Operations that used to return a `msrest.polling.LROPoller` now returns a `azure.core.polling.LROPoller` and are prefixed with `begin_`.
 - Exceptions tree have been simplified and most exceptions are now `azure.core.exceptions.HttpResponseError` (`CloudError` has been removed).
 - Most of the operation kwarg have changed. Some of the most noticeable:
 
   - `raw` has been removed. Equivalent feature can be found using `cls`, a callback that will give access to internal HTTP response for advanced user
-  - For a complete set of supported options, see the [parameters accept in Request documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
+  - For a complete set of supported options, see the [parameters accept in Request documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
 
 **General new features**
 
 - Type annotations support using `typing`. SDKs are mypy ready.
 - This client has now stable and official support for async. Check the `aio` namespace of your package to find the async client.
-- This client now support natively tracing library like OpenCensus or OpenTelemetry. See this [tracing quickstart](https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/core/azure-core-tracing-opentelemetry) for an overview.
+- This client now support natively tracing library like OpenCensus or OpenTelemetry. See this [tracing quickstart](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/core/azure-core-tracing-opentelemetry) for an overview.
 
 ## 3.0.0rc8 (2020-06-05)
 

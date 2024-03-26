@@ -6,70 +6,50 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
-try:
-    from ._models_py3 import BatchRequest
-    from ._models_py3 import BatchStatusDetail
-    from ._models_py3 import BatchStatusResponse
-    from ._models_py3 import BatchSubmissionRequest
-    from ._models_py3 import DocumentFilter
-    from ._models_py3 import DocumentStatusDetail
-    from ._models_py3 import DocumentStatusResponse
-    from ._models_py3 import ErrorResponseV2
-    from ._models_py3 import ErrorV2
-    from ._models_py3 import FileFormat
-    from ._models_py3 import FileFormatListResult
-    from ._models_py3 import Glossary
-    from ._models_py3 import InnerErrorV2
-    from ._models_py3 import SourceInput
-    from ._models_py3 import StatusSummary
-    from ._models_py3 import StorageSourceListResult
-    from ._models_py3 import TargetInput
-except (SyntaxError, ImportError):
-    from ._models import BatchRequest  # type: ignore
-    from ._models import BatchStatusDetail  # type: ignore
-    from ._models import BatchStatusResponse  # type: ignore
-    from ._models import BatchSubmissionRequest  # type: ignore
-    from ._models import DocumentFilter  # type: ignore
-    from ._models import DocumentStatusDetail  # type: ignore
-    from ._models import DocumentStatusResponse  # type: ignore
-    from ._models import ErrorResponseV2  # type: ignore
-    from ._models import ErrorV2  # type: ignore
-    from ._models import FileFormat  # type: ignore
-    from ._models import FileFormatListResult  # type: ignore
-    from ._models import Glossary  # type: ignore
-    from ._models import InnerErrorV2  # type: ignore
-    from ._models import SourceInput  # type: ignore
-    from ._models import StatusSummary  # type: ignore
-    from ._models import StorageSourceListResult  # type: ignore
-    from ._models import TargetInput  # type: ignore
+from ._models import BatchRequest
+from ._models import DocumentFilter
+from ._models import DocumentStatus
+from ._models import FileFormat
+from ._models import Glossary
+from ._models import InnerTranslationError
+from ._models import SourceInput
+from ._models import StartTranslationDetails
+from ._models import StatusSummary
+from ._models import SupportedFileFormats
+from ._models import SupportedStorageSources
+from ._models import TargetInput
+from ._models import TranslationError
+from ._models import TranslationErrorResponse
+from ._models import TranslationStatus
 
-from ._batch_document_translation_client_enums import (
-    ErrorCodeV2,
-    Status,
-    StorageInputType,
-    StorageSource,
-)
+from ._enums import Status
+from ._enums import StorageInputType
+from ._enums import StorageSource
+from ._enums import TranslationErrorCode
+from ._patch import __all__ as _patch_all
+from ._patch import *  # pylint: disable=unused-wildcard-import
+from ._patch import patch_sdk as _patch_sdk
 
 __all__ = [
-    'BatchRequest',
-    'BatchStatusDetail',
-    'BatchStatusResponse',
-    'BatchSubmissionRequest',
-    'DocumentFilter',
-    'DocumentStatusDetail',
-    'DocumentStatusResponse',
-    'ErrorResponseV2',
-    'ErrorV2',
-    'FileFormat',
-    'FileFormatListResult',
-    'Glossary',
-    'InnerErrorV2',
-    'SourceInput',
-    'StatusSummary',
-    'StorageSourceListResult',
-    'TargetInput',
-    'ErrorCodeV2',
-    'Status',
-    'StorageInputType',
-    'StorageSource',
+    "BatchRequest",
+    "DocumentFilter",
+    "DocumentStatus",
+    "FileFormat",
+    "Glossary",
+    "InnerTranslationError",
+    "SourceInput",
+    "StartTranslationDetails",
+    "StatusSummary",
+    "SupportedFileFormats",
+    "SupportedStorageSources",
+    "TargetInput",
+    "TranslationError",
+    "TranslationErrorResponse",
+    "TranslationStatus",
+    "Status",
+    "StorageInputType",
+    "StorageSource",
+    "TranslationErrorCode",
 ]
+__all__.extend([p for p in _patch_all if p not in __all__])
+_patch_sdk()

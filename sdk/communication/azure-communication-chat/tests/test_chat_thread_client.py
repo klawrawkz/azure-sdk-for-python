@@ -6,8 +6,8 @@
 import unittest
 import time
 
-from datetime import datetime
-from msrest.serialization import TZ_UTC
+import calendar
+from datetime import datetime, timezone
 from azure.core.credentials import AccessToken
 from azure.core.exceptions import HttpResponseError
 from azure.communication.chat import (
@@ -20,22 +20,17 @@ from azure.communication.chat._shared.models import(
 )
 from unittest_helpers import mock_response
 
-try:
-    from unittest.mock import Mock, patch
-except ImportError:  # python < 3.3
-    from mock import Mock, patch  # type: ignore
+from unittest.mock import Mock, patch
 
 def _convert_datetime_to_utc_int(input):
-    epoch = time.mktime(datetime(1970, 1, 1).timetuple())
-    input_datetime_as_int = epoch - time.mktime(input.timetuple())
-    return input_datetime_as_int
+    return int(calendar.timegm(input.utctimetuple()))
 
 class TestChatThreadClient(unittest.TestCase):
     @classmethod
     @patch('azure.communication.identity._shared.user_credential.CommunicationTokenCredential')
     def setUpClass(cls, credential):
         credential.get_token = Mock(return_value=AccessToken(
-            "some_token", _convert_datetime_to_utc_int(datetime.now().replace(tzinfo=TZ_UTC))
+            "some_token", _convert_datetime_to_utc_int(datetime.now().replace(tzinfo=timezone.utc))
         ))
         TestChatThreadClient.credential = credential
 
@@ -68,9 +63,11 @@ class TestChatThreadClient(unittest.TestCase):
         try:
             content='hello world'
             sender_display_name='sender name'
+            metadata={ "tags": "tag" }
             create_message_result = chat_thread_client.send_message(
                 content=content,
-                sender_display_name=sender_display_name)
+                sender_display_name=sender_display_name,
+                metadata=metadata)
             create_message_result_id = create_message_result.id
         except:
             raised = True
@@ -186,14 +183,26 @@ class TestChatThreadClient(unittest.TestCase):
                                 }
                             ],
                             "initiatorCommunicationIdentifier": {"rawId": "string", "communicationUser": {
-                            "id": "8:acs:8540c0de-899f-5cce-acb5-3ec493af3800_0e59221d-0c1d-46ae-9544-c963ce56c10b"}}
+                            "id": "8:acs:8540c0de-899f-5cce-acb5-3ec493af3800_0e59221d-0c1d-46ae-9544-c963ce56c10b"}},
+                            "attachments": [
+                                {
+                                    "id": "id",
+                                    "attachmentType": "image",
+                                    "name": "name.png",
+                                    "url": "https://endpoint/threads/chatThreadId/images/imageId/views/original",
+                                    "previewUrl": "https://endpoint/threads/chatThreadId/images/imageId/views/preview",
+                                }
+                            ]
                         },
                         "senderDisplayName": "Bob",
                         "createdOn": "2021-01-27T01:37:33Z",
                         "senderCommunicationIdentifier": {"rawId": "string", "communicationUser": {
                             "id": "8:acs:8540c0de-899f-5cce-acb5-3ec493af3800_0e59221d-0c1d-46ae-9544-c963ce56c10b"}},
                         "deletedOn": "2021-01-27T01:37:33Z",
-                        "editedOn": "2021-01-27T01:37:33Z"
+                        "editedOn": "2021-01-27T01:37:33Z",
+                        "metadata": {
+                            "tags": "tag"
+                        }
                     })
         chat_thread_client = ChatThreadClient("https://endpoint", TestChatThreadClient.credential, thread_id, transport=Mock(send=mock_send))
 
@@ -207,7 +216,10 @@ class TestChatThreadClient(unittest.TestCase):
         assert message.id == message_id
         assert message.content.message == message_str
         assert message.type == ChatMessageType.TEXT
+        assert message.metadata["tags"] == "tag"
         assert len(message.content.participants) > 0
+        assert len(message.content.attachments) > 0
+        assert message.content.attachments[0].attachment_type == "image"
 
     def test_list_messages(self):
         thread_id = "19:bcaebfba0d314c2aa3e920d38fa3df08@thread.v2"
@@ -333,7 +345,7 @@ class TestChatThreadClient(unittest.TestCase):
             l = list(chat_message)
             assert len(l) == 2
 
-    def test_update_message(self):
+    def test_update_message_content(self):
         thread_id = "19:bcaebfba0d314c2aa3e920d38fa3df08@thread.v2"
         message_id='1596823919339'
         raised = False
@@ -345,6 +357,23 @@ class TestChatThreadClient(unittest.TestCase):
         try:
             content = "updated message content"
             chat_thread_client.update_message(message_id, content=content)
+        except:
+            raised = True
+
+        self.assertFalse(raised, 'Expected is no excpetion raised')
+
+    def test_update_message_metadata(self):
+        thread_id = "19:bcaebfba0d314c2aa3e920d38fa3df08@thread.v2"
+        message_id='1596823919339'
+        raised = False
+
+        def mock_send(*_, **__):
+            return mock_response(status_code=204)
+        chat_thread_client = ChatThreadClient("https://endpoint", TestChatThreadClient.credential, thread_id, transport=Mock(send=mock_send))
+
+        try:
+            metadata={ "tags": "tag" }
+            chat_thread_client.update_message(message_id, metadata=metadata)
         except:
             raised = True
 
@@ -535,6 +564,21 @@ class TestChatThreadClient(unittest.TestCase):
 
         try:
             chat_thread_client.send_typing_notification()
+        except:
+            raised = True
+
+        self.assertFalse(raised, 'Expected is no excpetion raised')
+
+    def test_send_typing_notification_with_sender_display_name(self):
+        thread_id = "19:bcaebfba0d314c2aa3e920d38fa3df08@thread.v2"
+        raised = False
+
+        def mock_send(*_, **__):
+            return mock_response(status_code=200)
+        chat_thread_client = ChatThreadClient("https://endpoint", TestChatThreadClient.credential, thread_id, transport=Mock(send=mock_send))
+
+        try:
+            chat_thread_client.send_typing_notification(sender_display_name="John")
         except:
             raised = True
 

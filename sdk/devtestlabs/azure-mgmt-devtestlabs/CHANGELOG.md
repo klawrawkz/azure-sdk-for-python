@@ -1,5 +1,155 @@
 # Release History
 
+## 10.0.0b1 (2022-10-28)
+
+### Features Added
+
+  - Model Disk has a new parameter storage_account_id
+
+### Breaking Changes
+
+  - Model ApplicableScheduleFragment no longer has parameter lab_vms_shutdown
+  - Model ApplicableScheduleFragment no longer has parameter lab_vms_startup
+  - Model ArtifactSourceFragment no longer has parameter arm_template_folder_path
+  - Model ArtifactSourceFragment no longer has parameter branch_ref
+  - Model ArtifactSourceFragment no longer has parameter display_name
+  - Model ArtifactSourceFragment no longer has parameter folder_path
+  - Model ArtifactSourceFragment no longer has parameter security_token
+  - Model ArtifactSourceFragment no longer has parameter source_type
+  - Model ArtifactSourceFragment no longer has parameter status
+  - Model ArtifactSourceFragment no longer has parameter uri
+  - Model CustomImageFragment no longer has parameter author
+  - Model CustomImageFragment no longer has parameter custom_image_plan
+  - Model CustomImageFragment no longer has parameter data_disk_storage_info
+  - Model CustomImageFragment no longer has parameter description
+  - Model CustomImageFragment no longer has parameter is_plan_authorized
+  - Model CustomImageFragment no longer has parameter managed_image_id
+  - Model CustomImageFragment no longer has parameter managed_snapshot_id
+  - Model CustomImageFragment no longer has parameter vhd
+  - Model CustomImageFragment no longer has parameter vm
+  - Model DiskFragment no longer has parameter disk_blob_name
+  - Model DiskFragment no longer has parameter disk_size_gi_b
+  - Model DiskFragment no longer has parameter disk_type
+  - Model DiskFragment no longer has parameter disk_uri
+  - Model DiskFragment no longer has parameter host_caching
+  - Model DiskFragment no longer has parameter leased_by_lab_vm_id
+  - Model DiskFragment no longer has parameter managed_disk_id
+  - Model DtlEnvironmentFragment no longer has parameter arm_template_display_name
+  - Model DtlEnvironmentFragment no longer has parameter deployment_properties
+  - Model FormulaFragment no longer has parameter author
+  - Model FormulaFragment no longer has parameter description
+  - Model FormulaFragment no longer has parameter formula_content
+  - Model FormulaFragment no longer has parameter os_type
+  - Model FormulaFragment no longer has parameter vm
+  - Model LabFragment no longer has parameter announcement
+  - Model LabFragment no longer has parameter environment_permission
+  - Model LabFragment no longer has parameter extended_properties
+  - Model LabFragment no longer has parameter lab_storage_type
+  - Model LabFragment no longer has parameter mandatory_artifacts_resource_ids_linux
+  - Model LabFragment no longer has parameter mandatory_artifacts_resource_ids_windows
+  - Model LabFragment no longer has parameter premium_data_disks
+  - Model LabFragment no longer has parameter support
+  - Model LabVirtualMachineCreationParameter no longer has parameter artifact_deployment_status
+  - Model LabVirtualMachineCreationParameter no longer has parameter compute_id
+  - Model LabVirtualMachineCreationParameter no longer has parameter created_by_user
+  - Model LabVirtualMachineCreationParameter no longer has parameter created_by_user_id
+  - Model LabVirtualMachineCreationParameter no longer has parameter fqdn
+  - Model LabVirtualMachineCreationParameter no longer has parameter last_known_power_state
+  - Model LabVirtualMachineCreationParameter no longer has parameter os_type
+  - Model LabVirtualMachineCreationParameter no longer has parameter virtual_machine_creation_source
+  - Model LabVirtualMachineFragment no longer has parameter allow_claim
+  - Model LabVirtualMachineFragment no longer has parameter artifact_deployment_status
+  - Model LabVirtualMachineFragment no longer has parameter artifacts
+  - Model LabVirtualMachineFragment no longer has parameter compute_id
+  - Model LabVirtualMachineFragment no longer has parameter created_by_user
+  - Model LabVirtualMachineFragment no longer has parameter created_by_user_id
+  - Model LabVirtualMachineFragment no longer has parameter created_date
+  - Model LabVirtualMachineFragment no longer has parameter custom_image_id
+  - Model LabVirtualMachineFragment no longer has parameter data_disk_parameters
+  - Model LabVirtualMachineFragment no longer has parameter disallow_public_ip_address
+  - Model LabVirtualMachineFragment no longer has parameter environment_id
+  - Model LabVirtualMachineFragment no longer has parameter expiration_date
+  - Model LabVirtualMachineFragment no longer has parameter fqdn
+  - Model LabVirtualMachineFragment no longer has parameter gallery_image_reference
+  - Model LabVirtualMachineFragment no longer has parameter is_authentication_with_ssh_key
+  - Model LabVirtualMachineFragment no longer has parameter lab_subnet_name
+  - Model LabVirtualMachineFragment no longer has parameter lab_virtual_network_id
+  - Model LabVirtualMachineFragment no longer has parameter last_known_power_state
+  - Model LabVirtualMachineFragment no longer has parameter network_interface
+  - Model LabVirtualMachineFragment no longer has parameter notes
+  - Model LabVirtualMachineFragment no longer has parameter os_type
+  - Model LabVirtualMachineFragment no longer has parameter owner_object_id
+  - Model LabVirtualMachineFragment no longer has parameter owner_user_principal_name
+  - Model LabVirtualMachineFragment no longer has parameter password
+  - Model LabVirtualMachineFragment no longer has parameter plan_id
+  - Model LabVirtualMachineFragment no longer has parameter schedule_parameters
+  - Model LabVirtualMachineFragment no longer has parameter size
+  - Model LabVirtualMachineFragment no longer has parameter ssh_key
+  - Model LabVirtualMachineFragment no longer has parameter storage_type
+  - Model LabVirtualMachineFragment no longer has parameter user_name
+  - Model LabVirtualMachineFragment no longer has parameter virtual_machine_creation_source
+  - Model NotificationChannelFragment no longer has parameter description
+  - Model NotificationChannelFragment no longer has parameter email_recipient
+  - Model NotificationChannelFragment no longer has parameter events
+  - Model NotificationChannelFragment no longer has parameter notification_locale
+  - Model NotificationChannelFragment no longer has parameter web_hook_url
+  - Model PolicyFragment no longer has parameter description
+  - Model PolicyFragment no longer has parameter evaluator_type
+  - Model PolicyFragment no longer has parameter fact_data
+  - Model PolicyFragment no longer has parameter fact_name
+  - Model PolicyFragment no longer has parameter status
+  - Model PolicyFragment no longer has parameter threshold
+  - Model ScheduleFragment no longer has parameter daily_recurrence
+  - Model ScheduleFragment no longer has parameter hourly_recurrence
+  - Model ScheduleFragment no longer has parameter notification_settings
+  - Model ScheduleFragment no longer has parameter status
+  - Model ScheduleFragment no longer has parameter target_resource_id
+  - Model ScheduleFragment no longer has parameter task_type
+  - Model ScheduleFragment no longer has parameter time_zone_id
+  - Model ScheduleFragment no longer has parameter weekly_recurrence
+  - Model SecretFragment no longer has parameter value
+  - Model ServiceFabricFragment no longer has parameter environment_id
+  - Model ServiceFabricFragment no longer has parameter external_service_fabric_id
+  - Model UserFragment no longer has parameter identity
+  - Model UserFragment no longer has parameter secret_store
+  - Model VirtualNetworkFragment no longer has parameter allowed_subnets
+  - Model VirtualNetworkFragment no longer has parameter description
+  - Model VirtualNetworkFragment no longer has parameter external_provider_resource_id
+  - Model VirtualNetworkFragment no longer has parameter subnet_overrides
+  - Operation ArtifactSourcesOperations.update has a new parameter tags
+  - Operation ArtifactSourcesOperations.update no longer has parameter artifact_source
+  - Operation CustomImagesOperations.update has a new parameter tags
+  - Operation CustomImagesOperations.update no longer has parameter custom_image
+  - Operation DisksOperations.update has a new parameter tags
+  - Operation DisksOperations.update no longer has parameter disk
+  - Operation EnvironmentsOperations.update has a new parameter tags
+  - Operation EnvironmentsOperations.update no longer has parameter dtl_environment
+  - Operation FormulasOperations.update has a new parameter tags
+  - Operation FormulasOperations.update no longer has parameter formula
+  - Operation GlobalSchedulesOperations.update has a new parameter tags
+  - Operation GlobalSchedulesOperations.update no longer has parameter schedule
+  - Operation LabsOperations.update has a new parameter tags
+  - Operation LabsOperations.update no longer has parameter lab
+  - Operation NotificationChannelsOperations.update has a new parameter tags
+  - Operation NotificationChannelsOperations.update no longer has parameter notification_channel
+  - Operation PoliciesOperations.update has a new parameter tags
+  - Operation PoliciesOperations.update no longer has parameter policy
+  - Operation SchedulesOperations.update has a new parameter tags
+  - Operation SchedulesOperations.update no longer has parameter schedule
+  - Operation SecretsOperations.update no longer has parameter value
+  - Operation ServiceFabricSchedulesOperations.update has a new parameter tags
+  - Operation ServiceFabricSchedulesOperations.update no longer has parameter schedule
+  - Operation ServiceFabricsOperations.update has a new parameter tags
+  - Operation ServiceFabricsOperations.update no longer has parameter service_fabric
+  - Operation UsersOperations.update has a new parameter tags
+  - Operation UsersOperations.update no longer has parameter user
+  - Operation VirtualMachineSchedulesOperations.update has a new parameter tags
+  - Operation VirtualMachineSchedulesOperations.update no longer has parameter schedule
+  - Operation VirtualMachinesOperations.update has a new parameter tags
+  - Operation VirtualMachinesOperations.update no longer has parameter lab_virtual_machine
+  - Operation VirtualNetworksOperations.update has a new parameter tags
+  - Operation VirtualNetworksOperations.update no longer has parameter virtual_network
+
 ## 9.0.0 (2020-12-21)
 
 - GA release
@@ -19,20 +169,20 @@ This version uses a next-generation code generator that introduces important bre
   - `credentials` parameter has been renamed `credential`
 
 - The `config` attribute no longer exists on a client, configuration should be passed as kwarg. Example: `MyClient(credential, subscription_id, enable_logging=True)`. For a complete set of
-  supported options, see the [parameters accept in init documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
+  supported options, see the [parameters accept in init documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
 - You can't import a `version` module anymore, use `__version__` instead
 - Operations that used to return a `msrest.polling.LROPoller` now returns a `azure.core.polling.LROPoller` and are prefixed with `begin_`.
 - Exceptions tree have been simplified and most exceptions are now `azure.core.exceptions.HttpResponseError` (`CloudError` has been removed).
 - Most of the operation kwarg have changed. Some of the most noticeable:
 
   - `raw` has been removed. Equivalent feature can be found using `cls`, a callback that will give access to internal HTTP response for advanced user
-  - For a complete set of supported options, see the [parameters accept in Request documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
+  - For a complete set of supported options, see the [parameters accept in Request documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
 
 **General new features**
 
 - Type annotations support using `typing`. SDKs are mypy ready.
 - This client has now stable and official support for async. Check the `aio` namespace of your package to find the async client.
-- This client now support natively tracing library like OpenCensus or OpenTelemetry. See this [tracing quickstart](https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/core/azure-core-tracing-opentelemetry) for an overview.
+- This client now support natively tracing library like OpenCensus or OpenTelemetry. See this [tracing quickstart](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/core/azure-core-tracing-opentelemetry) for an overview.
 
 ## 4.0.0 (2019-07-26)
 

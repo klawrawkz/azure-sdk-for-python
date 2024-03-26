@@ -9,15 +9,13 @@
 Example to show receiving batch messages from a Service Bus Subscription under specific Topic.
 """
 
-# pylint: disable=C0111
-
 import os
 from azure.servicebus import ServiceBusClient
 
 
-CONNECTION_STR = os.environ['SERVICE_BUS_CONNECTION_STR']
-TOPIC_NAME = os.environ["SERVICE_BUS_TOPIC_NAME"]
-SUBSCRIPTION_NAME = os.environ["SERVICE_BUS_SUBSCRIPTION_NAME"]
+CONNECTION_STR = os.environ['SERVICEBUS_CONNECTION_STR']
+TOPIC_NAME = os.environ["SERVICEBUS_TOPIC_NAME"]
+SUBSCRIPTION_NAME = os.environ["SERVICEBUS_SUBSCRIPTION_NAME"]
 
 servicebus_client = ServiceBusClient.from_connection_string(conn_str=CONNECTION_STR)
 with servicebus_client:

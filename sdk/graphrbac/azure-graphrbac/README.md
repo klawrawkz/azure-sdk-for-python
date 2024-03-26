@@ -1,22 +1,12 @@
-## Microsoft Azure SDK for Python
+# Microsoft Azure SDK for Python
 
 This is the Microsoft Azure Graph RBAC Client Library.
 
-This package has been tested with Python 2.7, 3.5, 3.6 and 3.7.
+`azure-graphrbac` is about Azure AD Graph API, which is now deprecated. We do not support SDK fixes to this product anymore. Please refer to this issue for additional way to get support to move to Microsoft Graph API:
+https://github.com/azure-deprecation/dashboard/issues/60
 
-For a more complete set of Azure libraries, see the
-[azure sdk python release](https://aka.ms/azsdk/python/all).
+The recommendation is to use MSGraph and its SDK instead to replace it:
+https://github.com/microsoftgraph/msgraph-sdk-python
 
-## Usage
 
-For code examples, see [Graph
-RBAC](https://docs.microsoft.com/python/api/overview/azure/activedirectory)
-on docs.microsoft.com.
-
-## Provide Feedback
-
-If you encounter any bugs or have suggestions, please file an issue in
-the [Issues](https://github.com/Azure/azure-sdk-for-python/issues)
-section of the project.
-
-![image](https://azure-sdk-impressions.azurewebsites.net/api/impressions/azure-sdk-for-python%2Fazure-graphrbac%2FREADME.png)
+![Impressions](https://azure-sdk-impressions.azurewebsites.net/api/impressions/azure-sdk-for-python%2Fazure-graphrbac%2FREADME.png)

@@ -4,8 +4,8 @@
 # --------------------------------------------------------------------------------------------
 import logging
 import datetime
-from typing import TYPE_CHECKING, Union, Optional, Any
-import six
+import warnings
+from typing import TYPE_CHECKING, Any, Union, Optional
 
 from ._common.utils import utc_from_timestamp, utc_now
 from ._common.constants import (
@@ -24,24 +24,27 @@ if TYPE_CHECKING:
     from .aio._servicebus_receiver_async import (
         ServiceBusReceiver as ServiceBusReceiverAsync,
     )
+    from .exceptions import AutoLockRenewFailed, AutoLockRenewTimeout
 
 _LOGGER = logging.getLogger(__name__)
 
 
 class BaseSession(object):
-    def __init__(self, session_id, receiver):
-        # type: (str, Union[ServiceBusReceiver, ServiceBusReceiverAsync]) -> None
+    def __init__(
+        self,
+        session_id: str,
+        receiver: Union["ServiceBusReceiver", "ServiceBusReceiverAsync"]
+    ) -> None:
         self._session_id = session_id
         self._receiver = receiver
         self._encoding = "UTF-8"
         self._session_start = None
-        self._locked_until_utc = None  # type: Optional[datetime.datetime]
+        self._locked_until_utc: Optional[datetime.datetime] = None
         self._lock_lost = False
-        self.auto_renew_error = None
+        self.auto_renew_error: Optional[Union[AutoLockRenewFailed, AutoLockRenewTimeout]] = None
 
     @property
-    def _lock_expired(self):
-        # type: () -> bool
+    def _lock_expired(self) -> bool:
         """Whether the receivers lock on a particular session has expired.
 
         :rtype: bool
@@ -49,8 +52,7 @@ class BaseSession(object):
         return bool(self._locked_until_utc and self._locked_until_utc <= utc_now())
 
     @property
-    def session_id(self):
-        # type: () -> str
+    def session_id(self) -> str:
         """
         Session id of the current session.
 
@@ -59,8 +61,7 @@ class BaseSession(object):
         return self._session_id
 
     @property
-    def locked_until_utc(self):
-        # type: () -> Optional[datetime.datetime]
+    def locked_until_utc(self) -> Optional[datetime.datetime]:
         """The time at which this session's lock will expire.
 
         :rtype: datetime.datetime
@@ -88,8 +89,7 @@ class ServiceBusSession(BaseSession):
             :caption: Get session from a receiver
     """
 
-    def get_state(self, **kwargs):
-        # type: (Any) -> bytes
+    def get_state(self, *, timeout: Optional[float] = None, **kwargs: Any) -> bytes:
         # pylint: disable=protected-access
         """Get the session state.
 
@@ -97,7 +97,8 @@ class ServiceBusSession(BaseSession):
 
         :keyword float timeout: The total operation timeout in seconds including all the retries. The value must be
          greater than 0 if specified. The default value is None, meaning no timeout.
-        :rtype: str
+        :rtype: bytes
+        :return: The session state.
 
         .. admonition:: Example:
 
@@ -108,8 +109,9 @@ class ServiceBusSession(BaseSession):
                 :dedent: 4
                 :caption: Get the session state
         """
+        if kwargs:
+            warnings.warn(f"Unsupported keyword args: {kwargs}")
         self._receiver._check_live()  # pylint: disable=protected-access
-        timeout = kwargs.pop("timeout", None)
         if timeout is not None and timeout <= 0:
             raise ValueError("The timeout must be greater than 0.")
         response = self._receiver._mgmt_request_response_with_retry(
@@ -121,15 +123,19 @@ class ServiceBusSession(BaseSession):
         session_state = response.get(MGMT_RESPONSE_SESSION_STATE)  # type: ignore
         return session_state
 
-    def set_state(self, state, **kwargs):
-        # type: (Union[str, bytes, bytearray], Any) -> None
+    def set_state(
+        self, state: Optional[Union[str, bytes, bytearray]], *, timeout: Optional[float] = None, **kwargs: Any
+    ) -> None:
         # pylint: disable=protected-access
         """Set the session state.
 
-        :param state: The state value.
-        :type state: Union[str, bytes, bytearray]
+        :param state: The state value. Setting state to None will clear the current session.
+        :type state: Union[str, bytes, bytearray, None]
         :keyword float timeout: The total operation timeout in seconds including all the retries. The value must be
          greater than 0 if specified. The default value is None, meaning no timeout.
+        :returns: None
+        :rtype: None
+
 
         .. admonition:: Example:
 
@@ -140,25 +146,25 @@ class ServiceBusSession(BaseSession):
                 :dedent: 4
                 :caption: Set the session state
         """
+        if kwargs:
+            warnings.warn(f"Unsupported keyword args: {kwargs}")
         self._receiver._check_live()  # pylint: disable=protected-access
-        timeout = kwargs.pop("timeout", None)
         if timeout is not None and timeout <= 0:
             raise ValueError("The timeout must be greater than 0.")
         state = (
-            state.encode(self._encoding) if isinstance(state, six.text_type) else state
+            state.encode(self._encoding) if isinstance(state, str) else state
         )
         return self._receiver._mgmt_request_response_with_retry(  # type: ignore
             REQUEST_RESPONSE_SET_SESSION_STATE_OPERATION,
             {
                 MGMT_REQUEST_SESSION_ID: self._session_id,
-                MGMT_REQUEST_SESSION_STATE: bytearray(state),
+                MGMT_REQUEST_SESSION_STATE: bytearray(state) if state is not None else None,
             },
             mgmt_handlers.default,
             timeout=timeout,
         )
 
-    def renew_lock(self, **kwargs):
-        # type: (Any) -> datetime.datetime
+    def renew_lock(self, *, timeout: Optional[float] = None, **kwargs: Any) -> datetime.datetime:
         # pylint: disable=protected-access
         """Renew the session lock.
 
@@ -184,8 +190,9 @@ class ServiceBusSession(BaseSession):
                 :dedent: 4
                 :caption: Renew the session lock before it expires
         """
+        if kwargs:
+            warnings.warn(f"Unsupported keyword args: {kwargs}")
         self._receiver._check_live()  # pylint: disable=protected-access
-        timeout = kwargs.pop("timeout", None)
         if timeout is not None and timeout <= 0:
             raise ValueError("The timeout must be greater than 0.")
         expiry = self._receiver._mgmt_request_response_with_retry(
@@ -195,8 +202,6 @@ class ServiceBusSession(BaseSession):
             timeout=timeout,
         )
         expiry_timestamp = expiry[MGMT_RESPONSE_RECEIVER_EXPIRATION] / 1000.0  # type: ignore
-        self._locked_until_utc = utc_from_timestamp(
-            expiry_timestamp
-        )  # type: datetime.datetime
+        self._locked_until_utc = utc_from_timestamp(expiry_timestamp)  # type: datetime.datetime
 
         return self._locked_until_utc

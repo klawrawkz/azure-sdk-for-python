@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from .._producer_client_async import EventHubProducerClient
 
 
-class OwnershipManager(object):  # pylint:disable=too-many-instance-attributes
+class OwnershipManager:  # pylint:disable=too-many-instance-attributes
     """Increases or decreases the number of partitions owned by an EventProcessor
     so the number of owned partitions are balanced among multiple EventProcessors
 
@@ -34,11 +34,11 @@ class OwnershipManager(object):  # pylint:disable=too-many-instance-attributes
         owner_id: str,
         checkpoint_store: Optional["CheckpointStore"],
         ownership_timeout: float,
-        load_balancing_strategy,  # type: LoadBalancingStrategy
+        load_balancing_strategy: LoadBalancingStrategy,
         partition_id: Optional[str],
     ):
-        self.cached_parition_ids = []  # type: List[str]
-        self.owned_partitions = []  # type: Iterable[Dict[str, Any]]
+        self.cached_parition_ids: List[str] = []
+        self.owned_partitions: Iterable[Dict[str, Any]] = []
         self.eventhub_client = eventhub_client
         self.fully_qualified_namespace = (
             eventhub_client._address.hostname  # pylint: disable=protected-access
@@ -53,6 +53,9 @@ class OwnershipManager(object):  # pylint:disable=too-many-instance-attributes
 
     async def claim_ownership(self) -> List[str]:
         """Claims ownership for this EventProcessor
+
+        :return: The list of partition ids claimed by this EventProcessor.
+        :rtype: list[str]
         """
         if not self.cached_parition_ids:
             await self._retrieve_partition_ids()
@@ -83,6 +86,9 @@ class OwnershipManager(object):  # pylint:disable=too-many-instance-attributes
 
         This is called when a consumer is shutdown, and is achieved by resetting the associated
         owner ID.
+
+        :param partition_id: The partition id to release ownership.
+        :type partition_id: str
         """
         if not self.checkpoint_store:
             return
@@ -100,14 +106,20 @@ class OwnershipManager(object):  # pylint:disable=too-many-instance-attributes
         await self.checkpoint_store.claim_ownership(partition_ownership)
 
     async def _retrieve_partition_ids(self) -> None:
-        """List all partition ids of the event hub that the EventProcessor is working on.
-        """
+        """List all partition ids of the event hub that the EventProcessor is working on."""
         self.cached_parition_ids = await self.eventhub_client.get_partition_ids()
 
     def _balance_ownership(  # pylint:disable=too-many-locals
         self, ownership_list: Iterable[Dict[str, Any]], all_partition_ids: List[str]
     ) -> List[Dict[str, Any]]:
         """Balances and claims ownership of partitions for this EventProcessor.
+
+        :param ownership_list: The list of current ownership.
+        :type ownership_list: iterable[dict[str, any]]
+        :param all_partition_ids: The list of all partition ids.
+        :type all_partition_ids: list[str]
+        :return: The list of partition ownership that this EventProcessor claims.
+        :rtype: list[dict[str, any]]
         """
         now = time.time()
         ownership_dict = {
@@ -128,9 +140,9 @@ class OwnershipManager(object):  # pylint:disable=too-many-instance-attributes
         claimable_partition_ids = unclaimed_partition_ids + released_partition_ids
 
         active_ownership = [o for o in ownership_list if o not in released_partitions]
-        active_ownership_by_owner = defaultdict(
+        active_ownership_by_owner: Dict[str, List[Dict[str, Any]]] = defaultdict(
             list
-        )  # type: Dict[str, List[Dict[str, Any]]]
+        )
         for ownership in active_ownership:
             active_ownership_by_owner[ownership["owner_id"]].append(ownership)
         active_ownership_self = active_ownership_by_owner[self.owner_id]
@@ -147,7 +159,7 @@ class OwnershipManager(object):  # pylint:disable=too-many-instance-attributes
         # Py2 math.ceil() returns float, a/b return int if not divisable.
         # Py3 math.ceil() returns int, a/b return float if not divisable.
         # Even though this is py3 code, make it the same as the py2-compatible sync code.
-        max_count_per_owner = int(math.ceil(all_partition_count*1.0 / owners_count))
+        max_count_per_owner = int(math.ceil(all_partition_count * 1.0 / owners_count))
         # end of calculating expected count per owner
 
         to_claim = active_ownership_self
@@ -156,9 +168,11 @@ class OwnershipManager(object):  # pylint:disable=too-many-instance-attributes
             if self.load_balancing_strategy is LoadBalancingStrategy.GREEDY:
                 # Greedily claim more partitions if there are claimable partitions
                 to_greedy_claim_ids = random.sample(
-                    claimable_partition_ids, k=min(
-                        max_count_per_owner - len(active_ownership_self), len(claimable_partition_ids)
-                    )
+                    claimable_partition_ids,
+                    k=min(
+                        max_count_per_owner - len(active_ownership_self),
+                        len(claimable_partition_ids),
+                    ),
                 )
                 if to_greedy_claim_ids:
                     for pid in to_greedy_claim_ids:
@@ -194,13 +208,9 @@ class OwnershipManager(object):  # pylint:disable=too-many-instance-attributes
                 active_ownership_count_group_by_owner = Counter(
                     dict((x, len(y)) for x, y in active_ownership_by_owner.items())
                 )
-                most_frequent_owner_id = active_ownership_count_group_by_owner.most_common(
-                    1
-                )[
-                    0
-                ][
-                    0
-                ]
+                most_frequent_owner_id = (
+                    active_ownership_count_group_by_owner.most_common(1)[0][0]
+                )
                 # randomly choose a partition to steal from the most_frequent_owner
                 to_steal_partition = random.choice(
                     active_ownership_by_owner[most_frequent_owner_id]

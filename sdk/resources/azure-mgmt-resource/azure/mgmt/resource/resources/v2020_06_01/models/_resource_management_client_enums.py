@@ -6,73 +6,84 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
-from enum import Enum, EnumMeta
-from six import with_metaclass
-
-class _CaseInsensitiveEnumMeta(EnumMeta):
-    def __getitem__(self, name):
-        return super().__getitem__(name.upper())
-
-    def __getattr__(cls, name):
-        """Return the enum member matching `name`
-        We use __getattr__ instead of descriptors or inserting into the enum
-        class' __dict__ in order to support `name` and `value` being both
-        properties for enum members (which live in the class' __dict__) and
-        enum members themselves.
-        """
-        try:
-            return cls._member_map_[name.upper()]
-        except KeyError:
-            raise AttributeError(name)
+from enum import Enum
+from azure.core import CaseInsensitiveEnumMeta
 
 
-class AliasPathAttributes(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The attributes of the token that the alias path is referring to.
-    """
+class AliasPathAttributes(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The attributes of the token that the alias path is referring to."""
 
-    NONE = "None"  #: The token that the alias path is referring to has no attributes.
-    MODIFIABLE = "Modifiable"  #: The token that the alias path is referring to is modifiable by policies with 'modify' effect.
+    NONE = "None"
+    """The token that the alias path is referring to has no attributes."""
+    MODIFIABLE = "Modifiable"
+    """The token that the alias path is referring to is modifiable by policies with 'modify' effect."""
 
-class AliasPathTokenType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The type of the token that the alias path is referring to.
-    """
 
-    NOT_SPECIFIED = "NotSpecified"  #: The token type is not specified.
-    ANY = "Any"  #: The token type can be anything.
-    STRING = "String"  #: The token type is string.
-    OBJECT = "Object"  #: The token type is object.
-    ARRAY = "Array"  #: The token type is array.
-    INTEGER = "Integer"  #: The token type is integer.
-    NUMBER = "Number"  #: The token type is number.
-    BOOLEAN = "Boolean"  #: The token type is boolean.
+class AliasPathTokenType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The type of the token that the alias path is referring to."""
 
-class AliasPatternType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The type of alias pattern
-    """
+    NOT_SPECIFIED = "NotSpecified"
+    """The token type is not specified."""
+    ANY = "Any"
+    """The token type can be anything."""
+    STRING = "String"
+    """The token type is string."""
+    OBJECT = "Object"
+    """The token type is object."""
+    ARRAY = "Array"
+    """The token type is array."""
+    INTEGER = "Integer"
+    """The token type is integer."""
+    NUMBER = "Number"
+    """The token type is number."""
+    BOOLEAN = "Boolean"
+    """The token type is boolean."""
 
-    NOT_SPECIFIED = "NotSpecified"  #: NotSpecified is not allowed.
-    EXTRACT = "Extract"  #: Extract is the only allowed value.
 
-class AliasType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The type of the alias.
-    """
+class AliasPatternType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The type of alias pattern."""
 
-    NOT_SPECIFIED = "NotSpecified"  #: Alias type is unknown (same as not providing alias type).
-    PLAIN_TEXT = "PlainText"  #: Alias value is not secret.
-    MASK = "Mask"  #: Alias value is secret.
+    NOT_SPECIFIED = "NotSpecified"
+    """NotSpecified is not allowed."""
+    EXTRACT = "Extract"
+    """Extract is the only allowed value."""
 
-class ChangeType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """Type of change that will be made to the resource when the deployment is executed.
-    """
 
-    CREATE = "Create"  #: The resource does not exist in the current state but is present in the desired state. The resource will be created when the deployment is executed.
-    DELETE = "Delete"  #: The resource exists in the current state and is missing from the desired state. The resource will be deleted when the deployment is executed.
-    IGNORE = "Ignore"  #: The resource exists in the current state and is missing from the desired state. The resource will not be deployed or modified when the deployment is executed.
-    DEPLOY = "Deploy"  #: The resource exists in the current state and the desired state and will be redeployed when the deployment is executed. The properties of the resource may or may not change.
-    NO_CHANGE = "NoChange"  #: The resource exists in the current state and the desired state and will be redeployed when the deployment is executed. The properties of the resource will not change.
-    MODIFY = "Modify"  #: The resource exists in the current state and the desired state and will be redeployed when the deployment is executed. The properties of the resource will change.
+class AliasType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The type of the alias."""
 
-class DeploymentMode(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
+    NOT_SPECIFIED = "NotSpecified"
+    """Alias type is unknown (same as not providing alias type)."""
+    PLAIN_TEXT = "PlainText"
+    """Alias value is not secret."""
+    MASK = "Mask"
+    """Alias value is secret."""
+
+
+class ChangeType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """Type of change that will be made to the resource when the deployment is executed."""
+
+    CREATE = "Create"
+    """The resource does not exist in the current state but is present in the desired state. The
+    #: resource will be created when the deployment is executed."""
+    DELETE = "Delete"
+    """The resource exists in the current state and is missing from the desired state. The resource
+    #: will be deleted when the deployment is executed."""
+    IGNORE = "Ignore"
+    """The resource exists in the current state and is missing from the desired state. The resource
+    #: will not be deployed or modified when the deployment is executed."""
+    DEPLOY = "Deploy"
+    """The resource exists in the current state and the desired state and will be redeployed when the
+    #: deployment is executed. The properties of the resource may or may not change."""
+    NO_CHANGE = "NoChange"
+    """The resource exists in the current state and the desired state and will be redeployed when the
+    #: deployment is executed. The properties of the resource will not change."""
+    MODIFY = "Modify"
+    """The resource exists in the current state and the desired state and will be redeployed when the
+    #: deployment is executed. The properties of the resource will change."""
+
+
+class DeploymentMode(str, Enum, metaclass=CaseInsensitiveEnumMeta):
     """The mode that is used to deploy resources. This value can be either Incremental or Complete. In
     Incremental mode, resources are deployed without deleting existing resources that are not
     included in the template. In Complete mode, resources are deployed and existing resources in
@@ -83,7 +94,8 @@ class DeploymentMode(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
     INCREMENTAL = "Incremental"
     COMPLETE = "Complete"
 
-class ExpressionEvaluationOptionsScopeType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
+
+class ExpressionEvaluationOptionsScopeType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
     """The scope to be used for evaluation of parameters, variables and functions in a nested
     template.
     """
@@ -92,7 +104,8 @@ class ExpressionEvaluationOptionsScopeType(with_metaclass(_CaseInsensitiveEnumMe
     OUTER = "Outer"
     INNER = "Inner"
 
-class OnErrorDeploymentType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
+
+class OnErrorDeploymentType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
     """The deployment on error behavior type. Possible values are LastSuccessful and
     SpecificDeployment.
     """
@@ -100,33 +113,51 @@ class OnErrorDeploymentType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum))
     LAST_SUCCESSFUL = "LastSuccessful"
     SPECIFIC_DEPLOYMENT = "SpecificDeployment"
 
-class PropertyChangeType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The type of property change.
-    """
 
-    CREATE = "Create"  #: The property does not exist in the current state but is present in the desired state. The property will be created when the deployment is executed.
-    DELETE = "Delete"  #: The property exists in the current state and is missing from the desired state. It will be deleted when the deployment is executed.
-    MODIFY = "Modify"  #: The property exists in both current and desired state and is different. The value of the property will change when the deployment is executed.
-    ARRAY = "Array"  #: The property is an array and contains nested changes.
+class PropertyChangeType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The type of property change."""
 
-class ProvisioningOperation(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The name of the current provisioning operation.
-    """
+    CREATE = "Create"
+    """The property does not exist in the current state but is present in the desired state. The
+    #: property will be created when the deployment is executed."""
+    DELETE = "Delete"
+    """The property exists in the current state and is missing from the desired state. It will be
+    #: deleted when the deployment is executed."""
+    MODIFY = "Modify"
+    """The property exists in both current and desired state and is different. The value of the
+    #: property will change when the deployment is executed."""
+    ARRAY = "Array"
+    """The property is an array and contains nested changes."""
 
-    NOT_SPECIFIED = "NotSpecified"  #: The provisioning operation is not specified.
-    CREATE = "Create"  #: The provisioning operation is create.
-    DELETE = "Delete"  #: The provisioning operation is delete.
-    WAITING = "Waiting"  #: The provisioning operation is waiting.
-    AZURE_ASYNC_OPERATION_WAITING = "AzureAsyncOperationWaiting"  #: The provisioning operation is waiting Azure async operation.
-    RESOURCE_CACHE_WAITING = "ResourceCacheWaiting"  #: The provisioning operation is waiting for resource cache.
-    ACTION = "Action"  #: The provisioning operation is action.
-    READ = "Read"  #: The provisioning operation is read.
-    EVALUATE_DEPLOYMENT_OUTPUT = "EvaluateDeploymentOutput"  #: The provisioning operation is evaluate output.
-    DEPLOYMENT_CLEANUP = "DeploymentCleanup"  #: The provisioning operation is cleanup. This operation is part of the 'complete' mode deployment.
 
-class ProvisioningState(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """Denotes the state of provisioning.
-    """
+class ProvisioningOperation(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The name of the current provisioning operation."""
+
+    NOT_SPECIFIED = "NotSpecified"
+    """The provisioning operation is not specified."""
+    CREATE = "Create"
+    """The provisioning operation is create."""
+    DELETE = "Delete"
+    """The provisioning operation is delete."""
+    WAITING = "Waiting"
+    """The provisioning operation is waiting."""
+    AZURE_ASYNC_OPERATION_WAITING = "AzureAsyncOperationWaiting"
+    """The provisioning operation is waiting Azure async operation."""
+    RESOURCE_CACHE_WAITING = "ResourceCacheWaiting"
+    """The provisioning operation is waiting for resource cache."""
+    ACTION = "Action"
+    """The provisioning operation is action."""
+    READ = "Read"
+    """The provisioning operation is read."""
+    EVALUATE_DEPLOYMENT_OUTPUT = "EvaluateDeploymentOutput"
+    """The provisioning operation is evaluate output."""
+    DEPLOYMENT_CLEANUP = "DeploymentCleanup"
+    """The provisioning operation is cleanup. This operation is part of the 'complete' mode
+    #: deployment."""
+
+
+class ProvisioningState(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """Denotes the state of provisioning."""
 
     NOT_SPECIFIED = "NotSpecified"
     ACCEPTED = "Accepted"
@@ -141,26 +172,30 @@ class ProvisioningState(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
     SUCCEEDED = "Succeeded"
     UPDATING = "Updating"
 
-class ResourceIdentityType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The identity type.
-    """
+
+class ResourceIdentityType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The identity type."""
 
     SYSTEM_ASSIGNED = "SystemAssigned"
     USER_ASSIGNED = "UserAssigned"
     SYSTEM_ASSIGNED_USER_ASSIGNED = "SystemAssigned, UserAssigned"
     NONE = "None"
 
-class TagsPatchOperation(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The operation type for the patch API.
-    """
 
-    REPLACE = "Replace"  #: The 'replace' option replaces the entire set of existing tags with a new set.
-    MERGE = "Merge"  #: The 'merge' option allows adding tags with new names and updating the values of tags with existing names.
-    DELETE = "Delete"  #: The 'delete' option allows selectively deleting tags based on given names or name/value pairs.
+class TagsPatchOperation(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The operation type for the patch API."""
 
-class WhatIfResultFormat(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The format of the What-If results
-    """
+    REPLACE = "Replace"
+    """The 'replace' option replaces the entire set of existing tags with a new set."""
+    MERGE = "Merge"
+    """The 'merge' option allows adding tags with new names and updating the values of tags with
+    #: existing names."""
+    DELETE = "Delete"
+    """The 'delete' option allows selectively deleting tags based on given names or name/value pairs."""
+
+
+class WhatIfResultFormat(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The format of the What-If results."""
 
     RESOURCE_ID_ONLY = "ResourceIdOnly"
     FULL_RESOURCE_PAYLOADS = "FullResourcePayloads"

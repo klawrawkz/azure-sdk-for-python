@@ -28,9 +28,9 @@ import asyncio
 
 class ChatClientSamplesAsync(object):
     from azure.communication.identity import CommunicationIdentityClient
-    connection_string = os.environ.get("AZURE_COMMUNICATION_SERVICE_CONNECTION_STRING", None)
+    connection_string = os.environ.get("COMMUNICATION_SAMPLES_CONNECTION_STRING", None)
     if not connection_string:
-        raise ValueError("Set AZURE_COMMUNICATION_SERVICE_CONNECTION_STRING env before run this sample.")
+        raise ValueError("Set COMMUNICATION_SAMPLES_CONNECTION_STRING env before run this sample.")
 
     identity_client = CommunicationIdentityClient.from_connection_string(connection_string)
     user = identity_client.create_user()
@@ -160,5 +160,4 @@ async def main():
     sample.clean_up()
 
 if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+    asyncio.run(main())

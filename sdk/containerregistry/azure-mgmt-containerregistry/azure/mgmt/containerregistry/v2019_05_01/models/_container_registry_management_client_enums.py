@@ -6,62 +6,24 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
-from enum import Enum, EnumMeta
-from six import with_metaclass
-
-class _CaseInsensitiveEnumMeta(EnumMeta):
-    def __getitem__(self, name):
-        return super().__getitem__(name.upper())
-
-    def __getattr__(cls, name):
-        """Return the enum member matching `name`
-        We use __getattr__ instead of descriptors or inserting into the enum
-        class' __dict__ in order to support `name` and `value` being both
-        properties for enum members (which live in the class' __dict__) and
-        enum members themselves.
-        """
-        try:
-            return cls._member_map_[name.upper()]
-        except KeyError:
-            raise AttributeError(name)
+from enum import Enum
+from azure.core import CaseInsensitiveEnumMeta
 
 
-class Action(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The action of virtual network rule.
-    """
+class Action(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The action of virtual network rule."""
 
     ALLOW = "Allow"
 
-class Architecture(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The OS architecture.
-    """
 
-    AMD64 = "amd64"
-    X86 = "x86"
-    ARM = "arm"
-
-class BaseImageDependencyType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The type of the base image dependency.
-    """
-
-    BUILD_TIME = "BuildTime"
-    RUN_TIME = "RunTime"
-
-class BaseImageTriggerType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The type of the auto trigger for base image dependency updates.
-    """
-
-    ALL = "All"
-    RUNTIME = "Runtime"
-
-class DefaultAction(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The default action of allow or deny when no other rules match.
-    """
+class DefaultAction(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The default action of allow or deny when no other rules match."""
 
     ALLOW = "Allow"
     DENY = "Deny"
 
-class ImportMode(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
+
+class ImportMode(str, Enum, metaclass=CaseInsensitiveEnumMeta):
     """When Force, any existing target tags will be overwritten. When NoForce, any existing target
     tags will fail the operation before any copying begins.
     """
@@ -69,30 +31,23 @@ class ImportMode(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
     NO_FORCE = "NoForce"
     FORCE = "Force"
 
-class OS(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The operating system type required for the run.
-    """
 
-    WINDOWS = "Windows"
-    LINUX = "Linux"
-
-class PasswordName(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The password name.
-    """
+class PasswordName(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The password name."""
 
     PASSWORD = "password"
     PASSWORD2 = "password2"
 
-class PolicyStatus(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The value that indicates whether the policy is enabled or not.
-    """
+
+class PolicyStatus(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The value that indicates whether the policy is enabled or not."""
 
     ENABLED = "enabled"
     DISABLED = "disabled"
 
-class ProvisioningState(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The provisioning state of a run.
-    """
+
+class ProvisioningState(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The provisioning state of the container registry at the time the operation was called."""
 
     CREATING = "Creating"
     UPDATING = "Updating"
@@ -101,136 +56,40 @@ class ProvisioningState(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
     FAILED = "Failed"
     CANCELED = "Canceled"
 
-class RegistryUsageUnit(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The unit of measurement.
-    """
+
+class RegistryUsageUnit(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The unit of measurement."""
 
     COUNT = "Count"
     BYTES = "Bytes"
 
-class ResourceIdentityType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The identity type.
-    """
 
-    SYSTEM_ASSIGNED = "SystemAssigned"
-    USER_ASSIGNED = "UserAssigned"
-    SYSTEM_ASSIGNED_USER_ASSIGNED = "SystemAssigned, UserAssigned"
-    NONE = "None"
-
-class RunStatus(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The current status of the run.
-    """
-
-    QUEUED = "Queued"
-    STARTED = "Started"
-    RUNNING = "Running"
-    SUCCEEDED = "Succeeded"
-    FAILED = "Failed"
-    CANCELED = "Canceled"
-    ERROR = "Error"
-    TIMEOUT = "Timeout"
-
-class RunType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The type of run.
-    """
-
-    QUICK_BUILD = "QuickBuild"
-    QUICK_RUN = "QuickRun"
-    AUTO_BUILD = "AutoBuild"
-    AUTO_RUN = "AutoRun"
-
-class SecretObjectType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The type of the secret object which determines how the value of the secret object has to be
-    interpreted.
-    """
-
-    OPAQUE = "Opaque"
-    VAULTSECRET = "Vaultsecret"
-
-class SkuName(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The SKU name of the container registry. Required for registry creation.
-    """
+class SkuName(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The SKU name of the container registry. Required for registry creation."""
 
     CLASSIC = "Classic"
     BASIC = "Basic"
     STANDARD = "Standard"
     PREMIUM = "Premium"
 
-class SkuTier(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The SKU tier based on the SKU name.
-    """
+
+class SkuTier(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The SKU tier based on the SKU name."""
 
     CLASSIC = "Classic"
     BASIC = "Basic"
     STANDARD = "Standard"
     PREMIUM = "Premium"
 
-class SourceControlType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The type of source control service.
-    """
 
-    GITHUB = "Github"
-    VISUAL_STUDIO_TEAM_SERVICE = "VisualStudioTeamService"
-
-class SourceRegistryLoginMode(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The authentication mode which determines the source registry login scope. The credentials for
-    the source registry
-    will be generated using the given scope. These credentials will be used to login to
-    the source registry during the run.
-    """
-
-    NONE = "None"
-    DEFAULT = "Default"
-
-class SourceTriggerEvent(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-
-    COMMIT = "commit"
-    PULLREQUEST = "pullrequest"
-
-class StepType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The type of the step.
-    """
-
-    DOCKER = "Docker"
-    FILE_TASK = "FileTask"
-    ENCODED_TASK = "EncodedTask"
-
-class TaskStatus(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The current status of task.
-    """
-
-    DISABLED = "Disabled"
-    ENABLED = "Enabled"
-
-class TokenType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The type of Auth token.
-    """
-
-    PAT = "PAT"
-    O_AUTH = "OAuth"
-
-class TriggerStatus(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The current status of trigger.
-    """
-
-    DISABLED = "Disabled"
-    ENABLED = "Enabled"
-
-class TrustPolicyType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The type of trust policy.
-    """
+class TrustPolicyType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The type of trust policy."""
 
     NOTARY = "Notary"
 
-class Variant(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """Variant of the CPU.
-    """
 
-    V6 = "v6"
-    V7 = "v7"
-    V8 = "v8"
-
-class WebhookAction(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
+class WebhookAction(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """WebhookAction."""
 
     PUSH = "push"
     DELETE = "delete"
@@ -238,9 +97,9 @@ class WebhookAction(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
     CHART_PUSH = "chart_push"
     CHART_DELETE = "chart_delete"
 
-class WebhookStatus(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The status of the webhook at the time the operation was called.
-    """
+
+class WebhookStatus(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The status of the webhook at the time the operation was called."""
 
     ENABLED = "enabled"
     DISABLED = "disabled"

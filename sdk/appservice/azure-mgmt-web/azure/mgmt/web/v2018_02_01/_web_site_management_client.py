@@ -6,49 +6,56 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
-from typing import TYPE_CHECKING
+from copy import deepcopy
+from typing import Any, TYPE_CHECKING
 
+from azure.core.rest import HttpRequest, HttpResponse
 from azure.mgmt.core import ARMPipelineClient
-from msrest import Deserializer, Serializer
+
+from . import models as _models
+from .._serialization import Deserializer, Serializer
+from ._configuration import WebSiteManagementClientConfiguration
+from .operations import (
+    AppServiceCertificateOrdersOperations,
+    AppServiceEnvironmentsOperations,
+    AppServicePlansOperations,
+    CertificateRegistrationProviderOperations,
+    CertificatesOperations,
+    DeletedWebAppsOperations,
+    DiagnosticsOperations,
+    DomainRegistrationProviderOperations,
+    DomainsOperations,
+    ProviderOperations,
+    RecommendationsOperations,
+    ResourceHealthMetadataOperations,
+    TopLevelDomainsOperations,
+    WebAppsOperations,
+    WebSiteManagementClientOperationsMixin,
+)
 
 if TYPE_CHECKING:
     # pylint: disable=unused-import,ungrouped-imports
-    from typing import Any, Optional
-
     from azure.core.credentials import TokenCredential
 
-from ._configuration import WebSiteManagementClientConfiguration
-from .operations import AppServiceCertificateOrdersOperations
-from .operations import CertificateRegistrationProviderOperations
-from .operations import DomainsOperations
-from .operations import TopLevelDomainsOperations
-from .operations import DomainRegistrationProviderOperations
-from .operations import CertificatesOperations
-from .operations import DeletedWebAppsOperations
-from .operations import DiagnosticsOperations
-from .operations import ProviderOperations
-from .operations import RecommendationsOperations
-from .operations import WebSiteManagementClientOperationsMixin
-from .operations import WebAppsOperations
-from .operations import AppServiceEnvironmentsOperations
-from .operations import AppServicePlansOperations
-from .operations import ResourceHealthMetadataOperations
-from . import models
 
-
-class WebSiteManagementClient(WebSiteManagementClientOperationsMixin):
+class WebSiteManagementClient(
+    WebSiteManagementClientOperationsMixin
+):  # pylint: disable=client-accepts-api-version-keyword,too-many-instance-attributes
     """WebSite Management Client.
 
     :ivar app_service_certificate_orders: AppServiceCertificateOrdersOperations operations
-    :vartype app_service_certificate_orders: azure.mgmt.web.v2018_02_01.operations.AppServiceCertificateOrdersOperations
+    :vartype app_service_certificate_orders:
+     azure.mgmt.web.v2018_02_01.operations.AppServiceCertificateOrdersOperations
     :ivar certificate_registration_provider: CertificateRegistrationProviderOperations operations
-    :vartype certificate_registration_provider: azure.mgmt.web.v2018_02_01.operations.CertificateRegistrationProviderOperations
+    :vartype certificate_registration_provider:
+     azure.mgmt.web.v2018_02_01.operations.CertificateRegistrationProviderOperations
     :ivar domains: DomainsOperations operations
     :vartype domains: azure.mgmt.web.v2018_02_01.operations.DomainsOperations
     :ivar top_level_domains: TopLevelDomainsOperations operations
     :vartype top_level_domains: azure.mgmt.web.v2018_02_01.operations.TopLevelDomainsOperations
     :ivar domain_registration_provider: DomainRegistrationProviderOperations operations
-    :vartype domain_registration_provider: azure.mgmt.web.v2018_02_01.operations.DomainRegistrationProviderOperations
+    :vartype domain_registration_provider:
+     azure.mgmt.web.v2018_02_01.operations.DomainRegistrationProviderOperations
     :ivar certificates: CertificatesOperations operations
     :vartype certificates: azure.mgmt.web.v2018_02_01.operations.CertificatesOperations
     :ivar deleted_web_apps: DeletedWebAppsOperations operations
@@ -62,75 +69,108 @@ class WebSiteManagementClient(WebSiteManagementClientOperationsMixin):
     :ivar web_apps: WebAppsOperations operations
     :vartype web_apps: azure.mgmt.web.v2018_02_01.operations.WebAppsOperations
     :ivar app_service_environments: AppServiceEnvironmentsOperations operations
-    :vartype app_service_environments: azure.mgmt.web.v2018_02_01.operations.AppServiceEnvironmentsOperations
+    :vartype app_service_environments:
+     azure.mgmt.web.v2018_02_01.operations.AppServiceEnvironmentsOperations
     :ivar app_service_plans: AppServicePlansOperations operations
     :vartype app_service_plans: azure.mgmt.web.v2018_02_01.operations.AppServicePlansOperations
     :ivar resource_health_metadata: ResourceHealthMetadataOperations operations
-    :vartype resource_health_metadata: azure.mgmt.web.v2018_02_01.operations.ResourceHealthMetadataOperations
-    :param credential: Credential needed for the client to connect to Azure.
+    :vartype resource_health_metadata:
+     azure.mgmt.web.v2018_02_01.operations.ResourceHealthMetadataOperations
+    :param credential: Credential needed for the client to connect to Azure. Required.
     :type credential: ~azure.core.credentials.TokenCredential
-    :param subscription_id: Your Azure subscription ID. This is a GUID-formatted string (e.g. 00000000-0000-0000-0000-000000000000).
+    :param subscription_id: Your Azure subscription ID. This is a GUID-formatted string (e.g.
+     00000000-0000-0000-0000-000000000000). Required.
     :type subscription_id: str
-    :param str base_url: Service URL
-    :keyword int polling_interval: Default waiting time between two polls for LRO operations if no Retry-After header is present.
+    :param base_url: Service URL. Default value is "https://management.azure.com".
+    :type base_url: str
+    :keyword api_version: Api Version. Default value is "2018-02-01". Note that overriding this
+     default value may result in unsupported behavior.
+    :paramtype api_version: str
+    :keyword int polling_interval: Default waiting time between two polls for LRO operations if no
+     Retry-After header is present.
     """
 
     def __init__(
         self,
-        credential,  # type: "TokenCredential"
-        subscription_id,  # type: str
-        base_url=None,  # type: Optional[str]
-        **kwargs  # type: Any
-    ):
-        # type: (...) -> None
-        if not base_url:
-            base_url = 'https://management.azure.com'
-        self._config = WebSiteManagementClientConfiguration(credential, subscription_id, **kwargs)
-        self._client = ARMPipelineClient(base_url=base_url, config=self._config, **kwargs)
+        credential: "TokenCredential",
+        subscription_id: str,
+        base_url: str = "https://management.azure.com",
+        **kwargs: Any
+    ) -> None:
+        self._config = WebSiteManagementClientConfiguration(
+            credential=credential, subscription_id=subscription_id, **kwargs
+        )
+        self._client: ARMPipelineClient = ARMPipelineClient(base_url=base_url, config=self._config, **kwargs)
 
-        client_models = {k: v for k, v in models.__dict__.items() if isinstance(v, type)}
+        client_models = {k: v for k, v in _models.__dict__.items() if isinstance(v, type)}
         self._serialize = Serializer(client_models)
-        self._serialize.client_side_validation = False
         self._deserialize = Deserializer(client_models)
-
+        self._serialize.client_side_validation = False
         self.app_service_certificate_orders = AppServiceCertificateOrdersOperations(
-            self._client, self._config, self._serialize, self._deserialize)
+            self._client, self._config, self._serialize, self._deserialize, "2018-02-01"
+        )
         self.certificate_registration_provider = CertificateRegistrationProviderOperations(
-            self._client, self._config, self._serialize, self._deserialize)
-        self.domains = DomainsOperations(
-            self._client, self._config, self._serialize, self._deserialize)
+            self._client, self._config, self._serialize, self._deserialize, "2018-02-01"
+        )
+        self.domains = DomainsOperations(self._client, self._config, self._serialize, self._deserialize, "2018-02-01")
         self.top_level_domains = TopLevelDomainsOperations(
-            self._client, self._config, self._serialize, self._deserialize)
+            self._client, self._config, self._serialize, self._deserialize, "2018-02-01"
+        )
         self.domain_registration_provider = DomainRegistrationProviderOperations(
-            self._client, self._config, self._serialize, self._deserialize)
+            self._client, self._config, self._serialize, self._deserialize, "2018-02-01"
+        )
         self.certificates = CertificatesOperations(
-            self._client, self._config, self._serialize, self._deserialize)
+            self._client, self._config, self._serialize, self._deserialize, "2018-02-01"
+        )
         self.deleted_web_apps = DeletedWebAppsOperations(
-            self._client, self._config, self._serialize, self._deserialize)
+            self._client, self._config, self._serialize, self._deserialize, "2018-02-01"
+        )
         self.diagnostics = DiagnosticsOperations(
-            self._client, self._config, self._serialize, self._deserialize)
-        self.provider = ProviderOperations(
-            self._client, self._config, self._serialize, self._deserialize)
+            self._client, self._config, self._serialize, self._deserialize, "2018-02-01"
+        )
+        self.provider = ProviderOperations(self._client, self._config, self._serialize, self._deserialize, "2018-02-01")
         self.recommendations = RecommendationsOperations(
-            self._client, self._config, self._serialize, self._deserialize)
-        self.web_apps = WebAppsOperations(
-            self._client, self._config, self._serialize, self._deserialize)
+            self._client, self._config, self._serialize, self._deserialize, "2018-02-01"
+        )
+        self.web_apps = WebAppsOperations(self._client, self._config, self._serialize, self._deserialize, "2018-02-01")
         self.app_service_environments = AppServiceEnvironmentsOperations(
-            self._client, self._config, self._serialize, self._deserialize)
+            self._client, self._config, self._serialize, self._deserialize, "2018-02-01"
+        )
         self.app_service_plans = AppServicePlansOperations(
-            self._client, self._config, self._serialize, self._deserialize)
+            self._client, self._config, self._serialize, self._deserialize, "2018-02-01"
+        )
         self.resource_health_metadata = ResourceHealthMetadataOperations(
-            self._client, self._config, self._serialize, self._deserialize)
+            self._client, self._config, self._serialize, self._deserialize, "2018-02-01"
+        )
 
-    def close(self):
-        # type: () -> None
+    def _send_request(self, request: HttpRequest, **kwargs: Any) -> HttpResponse:
+        """Runs the network request through the client's chained policies.
+
+        >>> from azure.core.rest import HttpRequest
+        >>> request = HttpRequest("GET", "https://www.example.org/")
+        <HttpRequest [GET], url: 'https://www.example.org/'>
+        >>> response = client._send_request(request)
+        <HttpResponse: 200 OK>
+
+        For more information on this code flow, see https://aka.ms/azsdk/dpcodegen/python/send_request
+
+        :param request: The network request you want to make. Required.
+        :type request: ~azure.core.rest.HttpRequest
+        :keyword bool stream: Whether the response payload will be streamed. Defaults to False.
+        :return: The response of your network call. Does not do error handling on your response.
+        :rtype: ~azure.core.rest.HttpResponse
+        """
+
+        request_copy = deepcopy(request)
+        request_copy.url = self._client.format_url(request_copy.url)
+        return self._client.send_request(request_copy, **kwargs)
+
+    def close(self) -> None:
         self._client.close()
 
-    def __enter__(self):
-        # type: () -> WebSiteManagementClient
+    def __enter__(self) -> "WebSiteManagementClient":
         self._client.__enter__()
         return self
 
-    def __exit__(self, *exc_details):
-        # type: (Any) -> None
+    def __exit__(self, *exc_details: Any) -> None:
         self._client.__exit__(*exc_details)

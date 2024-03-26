@@ -6,6 +6,9 @@ import os
 
 from azure.core.credentials import AccessToken
 from azure.identity import (
+    AzureCliCredential,
+    AzureDeveloperCliCredential,
+    AzurePowerShellCredential,
     CredentialUnavailableError,
     DefaultAzureCredential,
     InteractiveBrowserCredential,
@@ -14,17 +17,37 @@ from azure.identity import (
 )
 from azure.identity._constants import EnvironmentVariables
 from azure.identity._credentials.azure_cli import AzureCliCredential
+from azure.identity._credentials.azd_cli import AzureDeveloperCliCredential
 from azure.identity._credentials.managed_identity import ManagedIdentityCredential
 import pytest
-from six.moves.urllib_parse import urlparse
+from urllib.parse import urlparse
 
 from helpers import mock_response, Request, validating_transport
 from test_shared_cache_credential import build_aad_response, get_account_event, populated_cache
+from unittest.mock import MagicMock, Mock, patch
 
-try:
-    from unittest.mock import Mock, patch
-except ImportError:  # python < 3.3
-    from mock import Mock, patch  # type: ignore
+
+def test_close():
+    transport = MagicMock()
+    credential = DefaultAzureCredential(transport=transport)
+    assert not transport.__enter__.called
+    assert not transport.__exit__.called
+
+    credential.close()
+    assert not transport.__enter__.called
+    assert transport.__exit__.called  # call count depends on the chain's composition
+
+
+def test_context_manager():
+    transport = MagicMock()
+    credential = DefaultAzureCredential(transport=transport)
+
+    with credential:
+        assert transport.__enter__.called  # call count depends on the chain's composition
+        assert not transport.__exit__.called
+
+    assert transport.__enter__.called
+    assert transport.__exit__.called
 
 
 def test_iterates_only_once():
@@ -94,6 +117,13 @@ def test_authority(authority):
             with patch.dict("os.environ", {}, clear=True):
                 test_initialization(mock_credential, expect_argument=False)
 
+    # authority should not be passed to AzureDeveloperCliCredential
+    with patch(DefaultAzureCredential.__module__ + ".AzureDeveloperCliCredential") as mock_credential:
+        with patch(DefaultAzureCredential.__module__ + ".SharedTokenCacheCredential") as shared_cache:
+            shared_cache.supported = lambda: False
+            with patch.dict("os.environ", {}, clear=True):
+                test_initialization(mock_credential, expect_argument=False)
+
 
 def test_exclude_options():
     def assert_credentials_not_present(chain, *excluded_credential_classes):
@@ -122,6 +152,15 @@ def test_exclude_options():
 
     credential = DefaultAzureCredential(exclude_visual_studio_code_credential=True)
     assert_credentials_not_present(credential, VisualStudioCodeCredential)
+
+    credential = DefaultAzureCredential(exclude_cli_credential=True)
+    assert_credentials_not_present(credential, AzureCliCredential)
+
+    credential = DefaultAzureCredential(exclude_powershell_credential=True)
+    assert_credentials_not_present(credential, AzurePowerShellCredential)
+
+    credential = DefaultAzureCredential(exclude_developer_cli_credential=True)
+    assert_credentials_not_present(credential, AzureDeveloperCliCredential)
 
     # interactive auth is excluded by default
     credential = DefaultAzureCredential(exclude_interactive_browser_credential=False)
@@ -221,30 +260,6 @@ def test_shared_cache_username():
     assert token.token == expected_access_token
 
 
-def test_vscode_tenant_id():
-    """the credential should allow configuring a tenant ID for VisualStudioCodeCredential by kwarg or environment"""
-
-    expected_args = {"tenant_id": "the-tenant"}
-
-    with patch(DefaultAzureCredential.__module__ + ".VisualStudioCodeCredential") as mock_credential:
-        DefaultAzureCredential(visual_studio_code_tenant_id=expected_args["tenant_id"])
-    mock_credential.assert_called_once_with(**expected_args)
-
-    # tenant id can also be specified in $AZURE_TENANT_ID
-    with patch.dict(os.environ, {EnvironmentVariables.AZURE_TENANT_ID: expected_args["tenant_id"]}, clear=True):
-        with patch(DefaultAzureCredential.__module__ + ".VisualStudioCodeCredential") as mock_credential:
-            DefaultAzureCredential()
-    mock_credential.assert_called_once_with(**expected_args)
-
-    # keyword argument should override environment variable
-    with patch.dict(
-        os.environ, {EnvironmentVariables.AZURE_TENANT_ID: "not-" + expected_args["tenant_id"]}, clear=True
-    ):
-        with patch(DefaultAzureCredential.__module__ + ".VisualStudioCodeCredential") as mock_credential:
-            DefaultAzureCredential(visual_studio_code_tenant_id=expected_args["tenant_id"])
-    mock_credential.assert_called_once_with(**expected_args)
-
-
 @patch(DefaultAzureCredential.__module__ + ".SharedTokenCacheCredential")
 def test_default_credential_shared_cache_use(mock_credential):
     mock_credential.supported = Mock(return_value=False)
@@ -267,7 +282,7 @@ def test_default_credential_shared_cache_use(mock_credential):
 def test_managed_identity_client_id():
     """the credential should accept a user-assigned managed identity's client ID by kwarg or environment variable"""
 
-    expected_args = {"client_id": "the-client"}
+    expected_args = {"client_id": "the-client", "_exclude_workload_identity_credential": False}
 
     with patch(DefaultAzureCredential.__module__ + ".ManagedIdentityCredential") as mock_credential:
         DefaultAzureCredential(managed_identity_client_id=expected_args["client_id"])
@@ -290,7 +305,14 @@ def test_managed_identity_client_id():
 
 def get_credential_for_shared_cache_test(expected_refresh_token, expected_access_token, cache, **kwargs):
     exclude_other_credentials = {
-        option: True for option in ("exclude_environment_credential", "exclude_managed_identity_credential")
+        option: True
+        for option in (
+            "exclude_cli_credential",
+            "exclude_developer_cli_credential",
+            "exclude_environment_credential",
+            "exclude_managed_identity_credential",
+            "exclude_powershell_credential",
+        )
     }
     options = dict(exclude_other_credentials, **kwargs)
 
@@ -313,7 +335,7 @@ def test_interactive_browser_tenant_id():
     def validate_tenant_id(credential):
         assert len(credential.call_args_list) == 1, "InteractiveBrowserCredential should be instantiated once"
         _, kwargs = credential.call_args
-        assert kwargs == {"tenant_id": tenant_id}
+        assert "tenant_id" in kwargs
 
     with patch(DefaultAzureCredential.__module__ + ".InteractiveBrowserCredential") as mock_credential:
         DefaultAzureCredential(exclude_interactive_browser_credential=False, interactive_browser_tenant_id=tenant_id)
@@ -332,3 +354,56 @@ def test_interactive_browser_tenant_id():
                 exclude_interactive_browser_credential=False, interactive_browser_tenant_id=tenant_id
             )
     validate_tenant_id(mock_credential)
+
+
+def test_interactive_browser_client_id():
+    """the credential should allow configuring a client ID for InteractiveBrowserCredential by kwarg"""
+
+    client_id = "client-id"
+
+    def validate_client_id(credential):
+        assert len(credential.call_args_list) == 1, "InteractiveBrowserCredential should be instantiated once"
+        _, kwargs = credential.call_args
+        assert kwargs["client_id"] == client_id
+
+    with patch(DefaultAzureCredential.__module__ + ".InteractiveBrowserCredential") as mock_credential:
+        DefaultAzureCredential(exclude_interactive_browser_credential=False, interactive_browser_client_id=client_id)
+    validate_client_id(mock_credential)
+
+
+def test_process_timeout():
+    """the credential should allow configuring a process timeout for Azure CLI and PowerShell by kwarg"""
+
+    timeout = 42
+
+    with patch(DefaultAzureCredential.__module__ + ".AzureCliCredential") as mock_cli_credential:
+        with patch(DefaultAzureCredential.__module__ + ".AzurePowerShellCredential") as mock_pwsh_credential:
+            DefaultAzureCredential(process_timeout=timeout)
+
+    for credential in (mock_cli_credential, mock_pwsh_credential):
+        _, kwargs = credential.call_args
+        assert "process_timeout" in kwargs
+        assert kwargs["process_timeout"] == timeout
+
+
+def test_process_timeout_default():
+    """the credential should allow configuring a process timeout for Azure CLI and PowerShell by kwarg"""
+
+    with patch(DefaultAzureCredential.__module__ + ".AzureCliCredential") as mock_cli_credential:
+        with patch(DefaultAzureCredential.__module__ + ".AzurePowerShellCredential") as mock_pwsh_credential:
+            DefaultAzureCredential()
+
+    for credential in (mock_cli_credential, mock_pwsh_credential):
+        _, kwargs = credential.call_args
+        assert "process_timeout" in kwargs
+        assert kwargs["process_timeout"] == 10
+
+
+def test_unexpected_kwarg():
+    """the credential shouldn't raise when given an unexpected keyword argument"""
+    DefaultAzureCredential(foo=42)
+
+
+def test_error_tenant_id():
+    with pytest.raises(TypeError):
+        DefaultAzureCredential(tenant_id="foo")

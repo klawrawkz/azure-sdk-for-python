@@ -8,7 +8,7 @@ import re
 # your package.
 
 # this setup.py is set up in a specific way to keep the azure* and azure-mgmt-* namespaces WORKING all the way
-# up from python 2.7. Reference here: https://github.com/Azure/azure-sdk-for-python/wiki/Azure-packaging
+# up from python 3.7. Reference here: https://github.com/Azure/azure-sdk-for-python/wiki/Azure-packaging
 
 PACKAGE_NAME = "azure-communication-chat"
 PACKAGE_PPRINT_NAME = "Communication Chat"
@@ -38,15 +38,17 @@ setup(
     author='Microsoft Corporation',
     author_email='azpysdkhelp@microsoft.com',
     url='https://github.com/Azure/azure-sdk-for-python',
+    keywords="azure, azure sdk",
     classifiers=[
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
+        "Programming Language :: Python :: 3 :: Only",
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
         'License :: OSI Approved :: MIT License',
     ],
     zip_safe=False,
@@ -56,14 +58,14 @@ setup(
         'azure',
         'azure.communication'
     ]),
+    python_requires=">=3.8",
+    include_package_data=True,
+    package_data={
+        'pytyped': ['py.typed'],
+    },
     install_requires=[
-        'azure-core<2.0.0,>=1.11.0',
-        'msrest>=0.6.0',
-        'six>=1.11.0'
-    ],
-    extras_require={
-        ":python_version<'3.0'": ['azure-communication-nspkg'],
-        ":python_version<'3.5'": ["typing"],
-        ":python_version<'3.8'": ["typing-extensions"]
-    }
+        "isodate>=0.6.1",
+        "azure-core>=1.29.5",
+        "typing-extensions>=4.3.0",
+    ]
 )

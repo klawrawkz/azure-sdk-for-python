@@ -17,7 +17,7 @@ USAGE:
     python blob_samples_authentication.py
     Set the environment variables with your own values before running the sample:
     1) AZURE_STORAGE_CONNECTION_STRING - the connection string to your storage account
-    2) OAUTH_STORAGE_ACCOUNT_NAME - the oath storage account name
+    2) OAUTH_STORAGE_ACCOUNT_NAME - the oauth storage account name
     3) AZURE_STORAGE_ACCOUNT_NAME - the name of the storage account
     4) AZURE_STORAGE_ACCESS_KEY - the storage account access key
     5) ACTIVE_DIRECTORY_APPLICATION_ID - Azure Active Directory application ID
@@ -122,9 +122,9 @@ class AuthSamples(object):
         # [END create_sas_token]
 
     def auth_default_azure_credential(self):
-        # [START create_blob_service_client_oauth]
+        # [START create_blob_service_client_oauth_default_credential]
         # Get a credential for authentication
-        # Default Azure Credentials attempt a chained set of authentication methods, per documentation here: https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/identity/azure-identity
+        # Default Azure Credentials attempt a chained set of authentication methods, per documentation here: https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/identity/azure-identity
         # For example user (who must be an Azure Event Hubs Data Owner role) to be logged in can be specified by the environment variable AZURE_USERNAME
         # Alternately, one can specify the AZURE_TENANT_ID, AZURE_CLIENT_ID, and AZURE_CLIENT_SECRET to use the EnvironmentCredentialClass.
         # The docs above specify all mechanisms which the defaultCredential internally support.
@@ -137,8 +137,8 @@ class AuthSamples(object):
             account_url=self.oauth_url,
             credential=default_credential
         )
-        # [END create_blob_service_client_oauth]
- 
+        # [END create_blob_service_client_oauth_default_credential]
+
         # Get account information for the Blob Service
         account_info = blob_service_client.get_service_properties()
 

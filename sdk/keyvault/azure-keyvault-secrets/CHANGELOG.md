@@ -1,12 +1,137 @@
 # Release History
 
-## 4.3.0b1 (Unreleased)
+## 4.8.1 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
+## 4.8.0 (2024-02-22)
+
+### Features Added
+- Added support for service API version `7.5`
+
+### Bugs Fixed
+- (From 4.8.0b1) Token requests made during AD FS authentication no longer specify an erroneous "adfs" tenant ID
+  ([#29888](https://github.com/Azure/azure-sdk-for-python/issues/29888))
+
+### Other Changes
+- Python 3.7 is no longer supported. Please use Python version 3.8 or later.
+- `asyncio` is no longer directly referenced by the library
+  ([#33819](https://github.com/Azure/azure-sdk-for-python/pull/33819))
+- Updated minimum `azure-core` version to 1.29.5
+- Dropped `azure-common` requirement
+
+## 4.8.0b2 (2023-11-03)
+
+### Features Added
+- Added support for service API version `7.5-preview.1`
+
+### Other Changes
+- Key Vault API version `7.5-preview.1` is now the default
+
+## 4.8.0b1 (2023-05-16)
+
+### Bugs Fixed
+- Token requests made during AD FS authentication no longer specify an erroneous "adfs" tenant ID
+  ([#29888](https://github.com/Azure/azure-sdk-for-python/issues/29888))
+
+## 4.7.0 (2023-03-16)
+
+### Features Added
+- Added support for service API version `7.4`
+- Clients each have a `send_request` method that can be used to send custom requests using the
+  client's existing pipeline ([#25172](https://github.com/Azure/azure-sdk-for-python/issues/25172))
+
+### Other Changes
+- Python 3.6 is no longer supported. Please use Python version 3.7 or later.
+- Key Vault API version `7.4` is now the default
+- Updated minimum `azure-core` version to 1.24.0
+- Dropped `msrest` requirement
+- Added requirement for `isodate>=0.6.1` (`isodate` was required by `msrest`)
+- Added requirement for `typing-extensions>=4.0.1`
+
+## 4.6.0 (2022-09-19)
+
+### Breaking Changes
+- Clients verify the challenge resource matches the vault domain. This should affect few customers,
+  who can provide `verify_challenge_resource=False` to client constructors to disable.
+  See https://aka.ms/azsdk/blog/vault-uri for more information.
+
+## 4.5.1 (2022-08-11)
+
+### Other Changes
+- Documentation improvements 
+  ([#25039](https://github.com/Azure/azure-sdk-for-python/issues/25039))
+
+## 4.5.0b1 (2022-06-07)
+
+### Bugs Fixed
+- Port numbers are now preserved in the `vault_url` property of a `KeyVaultSecretIdentifier`
+  ([#24446](https://github.com/Azure/azure-sdk-for-python/issues/24446))
+
+## 4.4.0 (2022-03-28)
+
+### Features Added
+- Key Vault API version 7.3 is now the default
+- Added support for multi-tenant authentication when using `azure-identity`
+  1.8.0 or newer ([#20698](https://github.com/Azure/azure-sdk-for-python/issues/20698))
+- (From 4.4.0b3) Added `managed` property to SecretProperties
+
+### Other Changes
+- (From 4.4.0b3) Python 2.7 is no longer supported. Please use Python version 3.6 or later.
+- Updated minimum `azure-core` version to 1.20.0
+- (From 4.4.0b2) To support multi-tenant authentication, `get_token` calls during challenge
+  authentication requests now pass in a `tenant_id` keyword argument
+  ([#20698](https://github.com/Azure/azure-sdk-for-python/issues/20698)). See
+  https://aka.ms/azsdk/python/identity/tokencredential for more details on how to integrate
+  this parameter if `get_token` is implemented by a custom credential.
+
+## 4.4.0b3 (2022-02-08)
+
+### Features Added
+- Added `managed` property to SecretProperties
+
+### Other Changes
+- Python 2.7 is no longer supported. Please use Python version 3.6 or later.
+- (From 4.4.0b2) To support multi-tenant authentication, `get_token` calls during challenge
+  authentication requests now pass in a `tenant_id` keyword argument
+  ([#20698](https://github.com/Azure/azure-sdk-for-python/issues/20698))
+
+## 4.4.0b2 (2021-11-11)
+
+### Features Added
+- Added support for multi-tenant authentication when using `azure-identity` 1.7.1 or newer
+  ([#20698](https://github.com/Azure/azure-sdk-for-python/issues/20698))
+
+### Other Changes
+- Updated minimum `azure-core` version to 1.15.0
+
+## 4.4.0b1 (2021-09-09)
+
+### Features Added
+- Key Vault API version 7.3-preview is now the default
+
+### Other Changes
+- Updated type hints to fix mypy errors
+  ([#19158](https://github.com/Azure/azure-sdk-for-python/issues/19158))
+
+## 4.3.0 (2021-06-22)
+This is the last version to support Python 3.5. The next version will require Python 2.7 or 3.6+.
 ### Fixed
 - Correct typing for async paging methods
 
+### Changed
+- Key Vault API version 7.2 is now the default
+- Updated minimum `msrest` version to 0.6.21
+
 ### Added
-- Added method `parse_key_vault_secret_id` that parses out a full ID returned by Key Vault, so users can easily
-access the secret's `name`, `vault_url`, and `version`.
+- Added class `KeyVaultSecretIdentifier` that parses out a full ID returned by Key Vault,
+  so users can easily access the secret's `name`, `vault_url`, and `version`.
 
 ## 4.2.0 (2020-08-11)
 ### Fixed
@@ -107,9 +232,9 @@ https://aka.ms/azure-sdk-preview1-python.
 This library is not a direct replacement for `azure-keyvault`. Applications
 using that library would require code changes to use `azure-keyvault-secrets`.
 This package's
-[documentation](https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/keyvault/azure-keyvault-secrets/README.md)
+[documentation](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/keyvault/azure-keyvault-secrets/README.md)
 and
-[samples](https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/keyvault/azure-keyvault-secrets/samples)
+[samples](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/keyvault/azure-keyvault-secrets/samples)
 demonstrate the new API.
 
 ### Major changes from `azure-keyvault`
@@ -123,9 +248,9 @@ only)
     the synchronous client in `azure.keyvault.secrets`
 - Authentication using `azure-identity` credentials
   - see this package's
-  [documentation](https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/keyvault/azure-keyvault-secrets/README.md)
+  [documentation](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/keyvault/azure-keyvault-secrets/README.md)
   , and the
-  [Azure Identity documentation](https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/identity/azure-identity/README.md)
+  [Azure Identity documentation](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/identity/azure-identity/README.md)
   for more information
 
 ### `azure-keyvault` features not implemented in this library

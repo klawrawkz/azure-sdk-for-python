@@ -9,14 +9,12 @@
 Example to show scheduling messages to and cancelling messages from a Service Bus Queue.
 """
 
-# pylint: disable=C0111
-
 import os
 import datetime
 from azure.servicebus import ServiceBusClient, ServiceBusMessage
 
-CONNECTION_STR = os.environ['SERVICE_BUS_CONNECTION_STR']
-QUEUE_NAME = os.environ["SERVICE_BUS_QUEUE_NAME"]
+CONNECTION_STR = os.environ['SERVICEBUS_CONNECTION_STR']
+QUEUE_NAME = os.environ["SERVICEBUS_QUEUE_NAME"]
 
 
 def schedule_single_message(sender):

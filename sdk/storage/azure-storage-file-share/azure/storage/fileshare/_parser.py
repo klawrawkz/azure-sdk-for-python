@@ -5,6 +5,7 @@
 # --------------------------------------------------------------------------
 
 from datetime import datetime, timedelta
+from ._generated._serialization import Serializer
 
 _ERROR_TOO_MANY_FILE_PERMISSIONS = 'file_permission and file_permission_key should not be set at the same time'
 _FILE_PERMISSION_TOO_LONG = 'Size of file_permission is too large. file_permission should be <=8KB, else' \
@@ -39,4 +40,8 @@ def _parse_datetime_from_str(string_datetime):
 
 
 def _datetime_to_str(datetime_obj):
-    return datetime_obj if isinstance(datetime_obj, str) else datetime_obj.isoformat() + '0Z'
+    if not datetime_obj:
+        return None
+    if isinstance(datetime_obj, str):
+        return datetime_obj
+    return Serializer.serialize_iso(datetime_obj)[:-1].ljust(27, "0") + "Z"

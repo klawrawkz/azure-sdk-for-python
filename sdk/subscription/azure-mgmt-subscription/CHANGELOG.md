@@ -1,5 +1,67 @@
 # Release History
 
+## 3.2.0b1 (2022-12-27)
+
+### Features Added
+
+  - Model Subscription has a new parameter tags
+  - Model Subscription has a new parameter tenant_id
+  - Model TenantIdDescription has a new parameter country
+  - Model TenantIdDescription has a new parameter country_code
+  - Model TenantIdDescription has a new parameter default_domain
+  - Model TenantIdDescription has a new parameter display_name
+  - Model TenantIdDescription has a new parameter domains
+  - Model TenantIdDescription has a new parameter tenant_category
+  - Model TenantIdDescription has a new parameter tenant_type
+
+## 3.1.1 (2022-09-05)
+
+### Bugs Fixed
+
+  - Fix error about `api_version` in operation
+
+## 3.1.0 (2022-08-30)
+
+### Features Added
+
+  - Model AcceptOwnershipStatusResponse has a new parameter provisioning_state
+
+## 3.0.0 (2022-01-21)
+
+**Features**
+
+  - Added operation group SubscriptionsOperations
+  - Added operation group TenantsOperations
+  - Model CanceledSubscriptionId has a new parameter subscription_id
+  - Model EnabledSubscriptionId has a new parameter subscription_id
+  - Model RenamedSubscriptionId has a new parameter subscription_id
+  - Model SubscriptionAliasResponseProperties has a new parameter created_time
+
+**Breaking changes**
+
+  - Model CanceledSubscriptionId no longer has parameter value
+  - Model EnabledSubscriptionId no longer has parameter value
+  - Model RenamedSubscriptionId no longer has parameter value
+
+## 2.0.0 (2021-11-25)
+
+**Features**
+
+  - Model PutAliasRequestProperties has a new parameter additional_properties
+  - Model Operation has a new parameter is_data_action
+  - Model ErrorResponseBody has a new parameter code
+  - Model ErrorResponseBody has a new parameter message
+  - Model OperationDisplay has a new parameter description
+  - Added operation SubscriptionOperations.begin_accept_ownership
+  - Added operation SubscriptionOperations.accept_ownership_status
+  - Added operation group SubscriptionPolicyOperations
+  - Added operation group BillingAccountOperations
+
+**Breaking changes**
+
+  - Removed operation group TenantsOperations
+  - Removed operation group SubscriptionsOperations(SubscriptionsOperations can be used in [azure-mgmt-resource](https://pypi.org/project/azure-mgmt-resource/))
+
 ## 1.0.0 (2020-12-16)
 
 - GA release

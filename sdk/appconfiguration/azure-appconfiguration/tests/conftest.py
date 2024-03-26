@@ -23,9 +23,18 @@
 # IN THE SOFTWARE.
 #
 # --------------------------------------------------------------------------
-import sys
+import pytest
+import os
+from devtools_testutils import add_general_regex_sanitizer, test_proxy, set_bodiless_matcher
 
-# Ignore collection of async tests for Python 2
-collect_ignore_glob = []
-if sys.version_info < (3, 5):
-    collect_ignore_glob.append("*_async.py")
+
+@pytest.fixture(scope="session", autouse=True)
+def add_sanitizers(test_proxy):
+    set_bodiless_matcher()
+
+    client_id = os.environ.get("APPCONFIGURATION_CLIENT_ID", "client-id")
+    add_general_regex_sanitizer(regex=client_id, value="client-id")
+    client_secret = os.environ.get("APPCONFIGURATION_CLIENT_SECRET", "client-secret")
+    add_general_regex_sanitizer(regex=client_secret, value="client-secret")
+    tenant_id = os.environ.get("APPCONFIGURATION_TENANT_ID", "00000000-0000-0000-0000-000000000000")
+    add_general_regex_sanitizer(value="00000000-0000-0000-0000-000000000000", regex=tenant_id)

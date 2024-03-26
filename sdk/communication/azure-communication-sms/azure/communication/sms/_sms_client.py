@@ -4,8 +4,8 @@
 # license information.
 # --------------------------------------------------------------------------
 
+from typing import Union
 from uuid import uuid4
-from datetime import datetime
 from azure.core.tracing.decorator import distributed_trace
 from azure.communication.sms._generated.models import (
     SendMessageRequest,
@@ -13,24 +13,26 @@ from azure.communication.sms._generated.models import (
     SmsSendOptions,
 )
 from azure.communication.sms._models import SmsSendResult
+from azure.core.credentials import TokenCredential, AzureKeyCredential
 
 from ._generated._azure_communication_sms_service import AzureCommunicationSMSService
-from ._shared.utils import parse_connection_str, get_authentication_policy
+from ._shared.auth_policy_utils import get_authentication_policy
+from ._shared.utils import parse_connection_str, get_current_utc_time
 from ._version import SDK_MONIKER
 
-class SmsClient(object):
+class SmsClient(object): # pylint: disable=client-accepts-api-version-keyword
     """A client to interact with the AzureCommunicationService Sms gateway.
 
     This client provides operations to send an SMS via a phone number.
 
     :param str endpoint:
         The endpoint url for Azure Communication Service resource.
-    :param TokenCredential credential:
-        The TokenCredential we use to authenticate against the service.
+    :param Union[TokenCredential, AzureKeyCredential] credential:
+        The credential we use to authenticate against the service.
     """
     def __init__(
             self, endpoint, # type: str
-            credential, # type: TokenCredential
+            credential, # type: Union[TokenCredential, AzureKeyCredential]
             **kwargs # type: Any
         ):
         # type: (...) -> None
@@ -38,7 +40,7 @@ class SmsClient(object):
             if not endpoint.lower().startswith('http'):
                 endpoint = "https://" + endpoint
         except AttributeError:
-            raise ValueError("Account URL must be a string.")
+            raise ValueError("Account URL must be a string.") # pylint: disable=raise-missing-from
 
         if not credential:
             raise ValueError(
@@ -113,7 +115,7 @@ class SmsClient(object):
                 SmsRecipient(
                     to=p,
                     repeatability_request_id=str(uuid4()),
-                    repeatability_first_sent=datetime.utcnow()
+                    repeatability_first_sent=get_current_utc_time()
                 ) for p in to
             ],
             message=message,

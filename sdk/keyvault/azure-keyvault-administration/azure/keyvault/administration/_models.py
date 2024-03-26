@@ -2,119 +2,105 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 # ------------------------------------
-from typing import TYPE_CHECKING
+from typing import Any, Dict, Optional, Union
 
-if TYPE_CHECKING:
-    from typing import Any
+from azure.core.rest import HttpResponse
 
-
-# pylint:disable=protected-access
+from ._enums import KeyVaultSettingType
+from ._generated.models import (
+    FullBackupOperation,
+    Permission,
+    RoleAssignment,
+    RoleAssignmentProperties,
+    RoleAssignmentPropertiesWithScope,
+    RoleDefinition,
+    Setting,
+)
 
 
 class KeyVaultPermission(object):
     """Role definition permissions.
 
-    :ivar list[str] allowed_actions:
-    :ivar list[str] denied_actions:
-    :ivar list[str] allowed_data_actions:
-    :ivar list[str] denied_data_actions:
+    :ivar list[str] actions: Action permissions that are granted.
+    :ivar list[str] not_actions: Action permissions that are excluded but not denied. They may be granted by other role
+     definitions assigned to a principal.
+    :ivar list[str] data_actions: Data action permissions that are granted.
+    :ivar list[str] not_data_actions: Data action permissions that are excluded but not denied. They may be granted by
+     other role definitions assigned to a principal.
     """
 
-    def __init__(self, **kwargs):
-        # type: (**Any) -> None
-        self.allowed_actions = kwargs.get("allowed_actions")
-        self.denied_actions = kwargs.get("denied_actions")
-        self.allowed_data_actions = kwargs.get("allowed_data_actions")
-        self.denied_data_actions = kwargs.get("denied_data_actions")
+    def __init__(self, **kwargs: Any) -> None:
+        self.actions = kwargs.get("actions")
+        self.not_actions = kwargs.get("not_actions")
+        self.data_actions = kwargs.get("data_actions")
+        self.not_data_actions = kwargs.get("not_data_actions")
 
     @classmethod
-    def _from_generated(cls, permissions):
+    def _from_generated(cls, permissions: Permission) -> "KeyVaultPermission":
         return cls(
-            allowed_actions=permissions.actions,
-            denied_actions=permissions.not_actions,
-            allowed_data_actions=permissions.data_actions,
-            denied_data_actions=permissions.not_data_actions,
+            actions=permissions.actions,
+            not_actions=permissions.not_actions,
+            data_actions=permissions.data_actions,
+            not_data_actions=permissions.not_data_actions,
         )
 
 
 class KeyVaultRoleAssignment(object):
-    """Represents the assignment to a principal of a role over a scope"""
+    """Represents the assignment to a principal of a role over a scope
 
-    def __init__(self, **kwargs):
-        # type: (**Any) -> None
-        self._role_assignment_id = kwargs.get("role_assignment_id")
-        self._name = kwargs.get("name")
-        self._properties = kwargs.get("properties")
-        self._type = kwargs.get("assignment_type")
+    :ivar str name: the assignment's name
+    :ivar KeyVaultRoleAssignmentProperties properties: the assignment's properties
+    :ivar str role_assignment_id: unique identifier for the assignment
+    :ivar str type: type of the assignment
+    """
 
-    def __repr__(self):
-        # type: () -> str
-        return "KeyVaultRoleAssignment<{}>".format(self._role_assignment_id)
+    def __init__(self, **kwargs: Any) -> None:
+        self.name = kwargs.get("name")
+        self.properties = kwargs.get("properties")
+        self.role_assignment_id = kwargs.get("role_assignment_id")
+        self.type = kwargs.get("assignment_type")
 
-    @property
-    def role_assignment_id(self):
-        # type: () -> str
-        """unique identifier for this assignment"""
-        return self._role_assignment_id
-
-    @property
-    def name(self):
-        # type: () -> str
-        """name of the assignment"""
-        return self._name
-
-    @property
-    def principal_id(self):
-        # type: () -> str
-        """ID of the principal this assignment applies to.
-
-        This maps to the ID inside the Active Directory. It can point to a user, service principal, or security group.
-        """
-        return self._properties.principal_id
-
-    @property
-    def role_definition_id(self):
-        # type: () -> str
-        """ID of the role's definition"""
-        return self._properties.role_definition_id
-
-    @property
-    def scope(self):
-        # type: () -> str
-        """scope of the assignment"""
-        return self._properties.scope
-
-    @property
-    def type(self):
-        # type: () -> str
-        """the type of this assignment"""
-        return self._type
+    def __repr__(self) -> str:
+        return f"KeyVaultRoleAssignment<{self.role_assignment_id}>"
 
     @classmethod
-    def _from_generated(cls, role_assignment):
+    def _from_generated(cls, role_assignment: RoleAssignment) -> "KeyVaultRoleAssignment":
+        # pylint:disable=protected-access
         return cls(
             role_assignment_id=role_assignment.id,
             name=role_assignment.name,
             assignment_type=role_assignment.type,
-            properties=KeyVaultRoleAssignmentProperties._from_generated(role_assignment.properties),
+            properties=KeyVaultRoleAssignmentProperties._from_generated(role_assignment.properties)
+            if role_assignment.properties
+            else KeyVaultRoleAssignmentProperties(),
         )
 
 
 class KeyVaultRoleAssignmentProperties(object):
-    def __init__(self, **kwargs):
-        # type: (**Any) -> None
+    """Properties of a role assignment
+
+    :ivar str principal_id: ID of the principal the assignment applies to. This maps to an Active Directory user,
+        service principal, or security group.
+    :ivar str role_definition_id: ID of the scope's role definition
+    :ivar str scope: the scope of the assignment
+    """
+
+    def __init__(self, **kwargs: Any) -> None:
         self.principal_id = kwargs.get("principal_id")
         self.role_definition_id = kwargs.get("role_definition_id")
         self.scope = kwargs.get("scope")
 
-    def __repr__(self):
-        # type: () -> str
-        return "KeyVaultRoleAssignmentProperties(principal_id={}, role_definition_id={}, scope={})".format(
-            self.principal_id, self.role_definition_id, self.scope
-        )[:1024]
+    def __repr__(self) -> str:
+        string = (
+            f"KeyVaultRoleAssignmentProperties(principal_id={self.principal_id}, "
+            + f"role_definition_id={self.role_definition_id}, scope={self.scope})"
+        )
+        return string[:1024]
 
     @classmethod
-    def _from_generated(cls, role_assignment_properties):
+    def _from_generated(
+        cls, role_assignment_properties: Union[RoleAssignmentProperties, RoleAssignmentPropertiesWithScope]
+    ) -> "KeyVaultRoleAssignmentProperties":
         # the generated RoleAssignmentProperties and RoleAssignmentPropertiesWithScope
         # models differ only in that the latter has a "scope" attribute
         return cls(
@@ -125,138 +111,122 @@ class KeyVaultRoleAssignmentProperties(object):
 
 
 class KeyVaultRoleDefinition(object):
-    """Represents the definition of a role over a scope."""
+    """The definition of a role over one or more scopes
 
-    def __init__(self, **kwargs):
-        # type: (**Any) -> None
-        self._id = kwargs.get("id")
-        self._name = kwargs.get("name")
-        self._role_name = kwargs.get("role_name")
-        self._description = kwargs.get("description")
-        self._role_type = kwargs.get("role_type")
-        self._type = kwargs.get("type")
-        self._permissions = kwargs.get("permissions")
-        self._assignable_scopes = kwargs.get("assignable_scopes")
+    :ivar list[str] assignable_scopes: scopes the role can be assigned over
+    :ivar str description: description of the role definition
+    :ivar str id: unique identifier for this role definition
+    :ivar str name: the role definition's name
+    :ivar list[KeyVaultPermission] permissions: permissions defined for the role
+    :ivar str role_name: the role's name
+    :ivar str role_type: type of the role
+    :ivar str type: type of the role definition
+    """
 
-    def __repr__(self):
-        # type: () -> str
-        return "KeyVaultRoleDefinition<{}>".format(self._id)
+    def __init__(self, **kwargs: Any) -> None:
+        self.assignable_scopes = kwargs.get("assignable_scopes")
+        self.description = kwargs.get("description")
+        self.id = kwargs.get("id")
+        self.name = kwargs.get("name")
+        self.permissions = kwargs.get("permissions")
+        self.role_name = kwargs.get("role_name")
+        self.role_type = kwargs.get("role_type")
+        self.type = kwargs.get("type")
 
-    @property
-    def id(self):
-        # type: () -> str
-        """unique identifier for this role definition"""
-        return self._id
-
-    @property
-    def name(self):
-        # type: () -> str
-        """name of the role definition"""
-        return self._name
-
-    @property
-    def role_name(self):
-        # type: () -> str
-        """name of the role"""
-        return self._role_name
-
-    @property
-    def description(self):
-        # type: () -> str
-        """description of the role definition"""
-        return self._description
-
-    @property
-    def role_type(self):
-        # type: () -> str
-        """type of the role"""
-        return self._role_type
-
-    @property
-    def type(self):
-        # type: () -> str
-        """type of the role definition"""
-        return self._type
-
-    @property
-    def permissions(self):
-        # type: () -> list[KeyVaultPermission]
-        """permissions defined for the role"""
-        return self._permissions
-
-    @property
-    def assignable_scopes(self):
-        # type: () -> list[str]
-        """scopes that can be assigned to the role"""
-        return self._assignable_scopes
+    def __repr__(self) -> str:
+        return f"KeyVaultRoleDefinition<{self.id}>"
 
     @classmethod
-    def _from_generated(cls, definition):
+    def _from_generated(cls, definition: RoleDefinition) -> "KeyVaultRoleDefinition":
+        # pylint:disable=protected-access
         return cls(
-            assignable_scopes=definition.assignable_scopes,
-            description=definition.description,
+            assignable_scopes=definition.properties.assignable_scopes if definition.properties else None,
+            description=definition.properties.description if definition.properties else None,
             id=definition.id,
             name=definition.name,
-            permissions=[KeyVaultPermission._from_generated(p) for p in definition.permissions],
-            role_name=definition.role_name,
-            role_type=definition.role_type,
+            permissions=[KeyVaultPermission._from_generated(p) for p in definition.properties.permissions or []]
+            if definition.properties
+            else None,
+            role_name=definition.properties.role_name if definition.properties else None,
+            role_type=definition.properties.role_type if definition.properties else None,
             type=definition.type,
         )
 
 
-class _Operation(object):
-    def __init__(self, **kwargs):
-        self.status = kwargs.get("status", None)
-        self.status_details = kwargs.get("status_details", None)
-        self.error = kwargs.get("error", None)
-        self.start_time = kwargs.get("start_time", None)
-        self.end_time = kwargs.get("end_time", None)
-        self.job_id = kwargs.get("job_id", None)
+class KeyVaultBackupResult(object):
+    """A Key Vault full backup operation result
+
+    :ivar str folder_url: URL of the Azure Blob Storage container containing the backup
+    """
+
+    # pylint:disable=unused-argument
+
+    def __init__(self, **kwargs: Any) -> None:
+        self.folder_url: Optional[str] = kwargs.get("folder_url")
 
     @classmethod
-    def _wrap_generated(cls, response, deserialized_operation, response_headers):  # pylint:disable=unused-argument
-        return cls(**deserialized_operation.__dict__)
+    def _from_generated(
+        cls, response: HttpResponse, deserialized_operation: FullBackupOperation, response_headers: Dict
+    ) -> "KeyVaultBackupResult":
+        return cls(folder_url=deserialized_operation.azure_storage_blob_container_uri)
 
 
-class BackupOperation(_Operation):
-    """A Key Vault full backup operation.
+class KeyVaultSetting(object):
+    """A Key Vault setting.
 
-    :ivar str status: status of the backup operation
-    :ivar str status_details: more details of the operation's status
-    :ivar error: Error encountered, if any, during the operation
-    :type error: ~key_vault_client.models.Error
-    :ivar datetime.datetime start_time: UTC start time of the operation
-    :ivar datetime.datetime end_time: UTC end time of the operation
-    :ivar str job_id: identifier for the operation
-    :ivar str folder_url: URL of the Azure blob storage container which contains the backup
+    :ivar str name: The name of the account setting.
+    :ivar str value: The value of the account setting.
+    :ivar setting_type: The type specifier of the value.
+    :vartype setting_type: str or KeyVaultSettingType or None
+
+    :param str name: The name of the account setting.
+    :param str value: The value of the account setting.
+    :param setting_type: The type specifier of the value.
+    :type setting_type: str or KeyVaultSettingType or None
     """
 
-    def __init__(self, **kwargs):
-        self.folder_url = kwargs.pop("azure_storage_blob_container_uri", None)
-        super(BackupOperation, self).__init__(**kwargs)
+    def __init__(
+        self,
+        name: str,
+        value: Union[str, bool],
+        setting_type: Optional[Union[str, KeyVaultSettingType]] = None,
+        **kwargs,  # pylint:disable=unused-argument
+    ) -> None:
+        self.name = name
+        self.value = value if isinstance(value, str) else str(value)  # `value` is stored as a string
+        if setting_type == KeyVaultSettingType.BOOLEAN:
+            self.setting_type: Optional[Union[str, KeyVaultSettingType]] = KeyVaultSettingType.BOOLEAN
+        else:
+            self.setting_type = setting_type.lower() if isinstance(setting_type, str) else setting_type
 
+        # If a setting type isn't provided, set it based on `value`'s type (without inferring from the value itself)
+        if self.setting_type is None:
+            if isinstance(value, bool):
+                self.setting_type = KeyVaultSettingType.BOOLEAN
 
-class RestoreOperation(_Operation):
-    """A Key Vault restore operation.
+        # If the setting is a boolean, lower-case the string for serialization
+        if self.setting_type == KeyVaultSettingType.BOOLEAN:
+            self.value = self.value.lower()
 
-    :ivar str status: status of the operation
-    :ivar str status_details: more details of the operation's status
-    :ivar error: Error encountered, if any, during the operation
-    :type error: ~key_vault_client.models.Error
-    :ivar datetime.datetime start_time: UTC start time of the operation
-    :ivar datetime.datetime end_time: UTC end time of the operation
-    :ivar str job_id: identifier for the operation
-    """
+    def getboolean(self) -> bool:
+        """Gets the account setting value as a boolean if the ``setting_type`` is ``KeyVaultSettingType.BOOLEAN``.
 
+        :returns: The account setting value as a boolean.
+        :rtype: bool
 
-class SelectiveKeyRestoreOperation(_Operation):
-    """A Key Vault operation restoring a single key.
+        :raises ValueError: if the ``setting_type`` is not boolean or the value cannot be represented as a boolean.
+        """
+        if self.setting_type == KeyVaultSettingType.BOOLEAN:
+            if self.value == "true":
+                return True
+            if self.value == "false":
+                return False
+        raise ValueError(
+            'The `setting_type` of the setting must be `KeyVaultSettingType.BOOLEAN` and the `value` must be "true" '
+            'or "false" in order to use `getboolean`.'
+        )
 
-    :ivar str status: status of the operation
-    :ivar str status_details: more details of the operation's status
-    :ivar error: Error encountered, if any, during the operation
-    :type error: ~key_vault_client.models.Error
-    :ivar datetime.datetime start_time: UTC start time of the operation
-    :ivar datetime.datetime end_time: UTC end time of the operation
-    :ivar str job_id: identifier for the operation
-    """
+    @classmethod
+    def _from_generated(cls, setting: Setting) -> "KeyVaultSetting":
+        setting_type = KeyVaultSettingType.BOOLEAN if setting.type == "boolean" else setting.type
+        return cls(name=setting.name, value=setting.value, setting_type=setting_type)

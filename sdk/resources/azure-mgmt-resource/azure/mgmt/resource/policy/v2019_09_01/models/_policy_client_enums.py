@@ -6,36 +6,21 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
-from enum import Enum, EnumMeta
-from six import with_metaclass
-
-class _CaseInsensitiveEnumMeta(EnumMeta):
-    def __getitem__(self, name):
-        return super().__getitem__(name.upper())
-
-    def __getattr__(cls, name):
-        """Return the enum member matching `name`
-        We use __getattr__ instead of descriptors or inserting into the enum
-        class' __dict__ in order to support `name` and `value` being both
-        properties for enum members (which live in the class' __dict__) and
-        enum members themselves.
-        """
-        try:
-            return cls._member_map_[name.upper()]
-        except KeyError:
-            raise AttributeError(name)
+from enum import Enum
+from azure.core import CaseInsensitiveEnumMeta
 
 
-class EnforcementMode(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The policy assignment enforcement mode. Possible values are Default and DoNotEnforce.
-    """
+class EnforcementMode(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The policy assignment enforcement mode. Possible values are Default and DoNotEnforce."""
 
-    DEFAULT = "Default"  #: The policy effect is enforced during resource creation or update.
-    DO_NOT_ENFORCE = "DoNotEnforce"  #: The policy effect is not enforced during resource creation or update.
+    DEFAULT = "Default"
+    """The policy effect is enforced during resource creation or update."""
+    DO_NOT_ENFORCE = "DoNotEnforce"
+    """The policy effect is not enforced during resource creation or update."""
 
-class ParameterType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The data type of the parameter.
-    """
+
+class ParameterType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The data type of the parameter."""
 
     STRING = "String"
     ARRAY = "Array"
@@ -45,19 +30,23 @@ class ParameterType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
     FLOAT = "Float"
     DATE_TIME = "DateTime"
 
-class PolicyType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The type of policy definition. Possible values are NotSpecified, BuiltIn, Custom, and Static.
-    """
+
+class PolicyType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The type of policy definition. Possible values are NotSpecified, BuiltIn, Custom, and Static."""
 
     NOT_SPECIFIED = "NotSpecified"
     BUILT_IN = "BuiltIn"
     CUSTOM = "Custom"
     STATIC = "Static"
 
-class ResourceIdentityType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
+
+class ResourceIdentityType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
     """The identity type. This is the only required field when adding a system assigned identity to a
     resource.
     """
 
-    SYSTEM_ASSIGNED = "SystemAssigned"  #: Indicates that a system assigned identity is associated with the resource.
-    NONE = "None"  #: Indicates that no identity is associated with the resource or that the existing identity should be removed.
+    SYSTEM_ASSIGNED = "SystemAssigned"
+    """Indicates that a system assigned identity is associated with the resource."""
+    NONE = "None"
+    """Indicates that no identity is associated with the resource or that the existing identity should
+    #: be removed."""

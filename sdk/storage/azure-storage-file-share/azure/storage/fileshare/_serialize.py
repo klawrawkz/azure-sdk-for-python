@@ -3,25 +3,48 @@
 # Licensed under the MIT License. See License.txt in the project root for
 # license information.
 # --------------------------------------------------------------------------
-# pylint: disable=no-self-use
+
+from typing import Any, Dict, TypeVar, TYPE_CHECKING
 
 from azure.core import MatchConditions
 
 from ._parser import _datetime_to_str, _get_file_permission
-from ._generated.models import SourceModifiedAccessConditions, LeaseAccessConditions, CopyFileSmbInfo
+from ._generated.models import (
+    SourceModifiedAccessConditions,
+    LeaseAccessConditions,
+    SourceLeaseAccessConditions,
+    DestinationLeaseAccessConditions,
+    CopyFileSmbInfo)
+
+if TYPE_CHECKING:
+    ShareLeaseClient = TypeVar("ShareLeaseClient")
 
 
 _SUPPORTED_API_VERSIONS = [
     '2019-02-02',
     '2019-07-07',
+    '2019-10-10',
     '2019-12-12',
     '2020-02-10',
-    '2020-04-08'
+    '2020-04-08',
+    '2020-06-12',
+    '2020-08-04',
+    '2020-10-02',
+    '2021-02-12',
+    '2021-04-10',
+    '2021-06-08',
+    '2021-08-06',
+    '2021-12-02',
+    '2022-11-02',
+    '2023-01-03',
+    '2023-05-03',
+    '2023-08-03',
+    '2023-11-03',
 ]
 
 
 def _get_match_headers(kwargs, match_param, etag_param):
-    # type: (str) -> Tuple(Dict[str, Any], Optional[str], Optional[str])
+    # type: (Dict[str, Any], str, str) -> Tuple(Optional[str], Optional[str])
     # TODO: extract this method to shared folder also add some comments, so that share, datalake and blob can use it.
     if_match = None
     if_none_match = None
@@ -29,20 +52,20 @@ def _get_match_headers(kwargs, match_param, etag_param):
     if match_condition == MatchConditions.IfNotModified:
         if_match = kwargs.pop(etag_param, None)
         if not if_match:
-            raise ValueError("'{}' specified without '{}'.".format(match_param, etag_param))
+            raise ValueError(f"'{match_param}' specified without '{etag_param}'.")
     elif match_condition == MatchConditions.IfPresent:
         if_match = '*'
     elif match_condition == MatchConditions.IfModified:
         if_none_match = kwargs.pop(etag_param, None)
         if not if_none_match:
-            raise ValueError("'{}' specified without '{}'.".format(match_param, etag_param))
+            raise ValueError(f"'{match_param}' specified without '{etag_param}'.")
     elif match_condition == MatchConditions.IfMissing:
         if_none_match = '*'
     elif match_condition is None:
         if etag_param in kwargs:
-            raise ValueError("'{}' specified without '{}'.".format(etag_param, match_param))
+            raise ValueError(f"'{etag_param}' specified without '{match_param}'.")
     else:
-        raise TypeError("Invalid match condition: {}".format(match_condition))
+        raise TypeError(f"Invalid match condition: {match_condition}")
     return if_match, if_none_match
 
 
@@ -58,12 +81,30 @@ def get_source_conditions(kwargs):
 
 
 def get_access_conditions(lease):
-    # type: (Optional[Union[ShareLeaseClient, str]]) -> Union[LeaseAccessConditions, None]
+    # type: (ShareLeaseClient or str) -> LeaseAccessConditions or None
     try:
         lease_id = lease.id # type: ignore
     except AttributeError:
         lease_id = lease # type: ignore
     return LeaseAccessConditions(lease_id=lease_id) if lease_id else None
+
+
+def get_source_access_conditions(lease):
+    # type: (ShareLeaseClient or str) -> SourceLeaseAccessConditions or None
+    try:
+        lease_id = lease.id # type: ignore
+    except AttributeError:
+        lease_id = lease # type: ignore
+    return SourceLeaseAccessConditions(source_lease_id=lease_id) if lease_id else None
+
+
+def get_dest_access_conditions(lease):
+    # type: (ShareLeaseClient or str) -> DestinationLeaseAccessConditions or None
+    try:
+        lease_id = lease.id # type: ignore
+    except AttributeError:
+        lease_id = lease # type: ignore
+    return DestinationLeaseAccessConditions(destination_lease_id=lease_id) if lease_id else None
 
 
 def get_smb_properties(kwargs):
@@ -73,8 +114,9 @@ def get_smb_properties(kwargs):
     file_permission = kwargs.pop('file_permission', None)
     file_permission_key = kwargs.pop('permission_key', None)
     file_attributes = kwargs.pop('file_attributes', None)
-    file_creation_time = kwargs.pop('file_creation_time', None) or ""
-    file_last_write_time = kwargs.pop('file_last_write_time', None) or ""
+    file_creation_time = kwargs.pop('file_creation_time', None)
+    file_last_write_time = kwargs.pop('file_last_write_time', None)
+    file_change_time = kwargs.pop('file_change_time', None)
 
     file_permission_copy_mode = None
     file_permission = _get_file_permission(file_permission, file_permission_key, None)
@@ -100,15 +142,39 @@ def get_smb_properties(kwargs):
             file_attributes=file_attributes,
             file_creation_time=_datetime_to_str(file_creation_time),
             file_last_write_time=_datetime_to_str(file_last_write_time),
+            file_change_time=_datetime_to_str(file_change_time),
             set_archive_attribute=set_archive_attribute
         )
 
     }
 
-def get_api_version(kwargs, default):
+
+def get_rename_smb_properties(kwargs):
+    # type: (dict[str, Any]) -> dict[str, Any]
+    file_permission = kwargs.pop('file_permission', None)
+    file_permission_key = kwargs.pop('permission_key', None)
+    file_attributes = kwargs.pop('file_attributes', None)
+    file_creation_time = kwargs.pop('file_creation_time', None)
+    file_last_write_time = kwargs.pop('file_last_write_time', None)
+    file_change_time = kwargs.pop('file_change_time', None)
+
+    file_permission = _get_file_permission(file_permission, file_permission_key, None)
+
+    return {
+        'file_permission': file_permission,
+        'file_permission_key': file_permission_key,
+        'copy_file_smb_info': CopyFileSmbInfo(
+            file_attributes=file_attributes,
+            file_creation_time=_datetime_to_str(file_creation_time),
+            file_last_write_time=_datetime_to_str(file_last_write_time),
+            file_change_time=_datetime_to_str(file_change_time)
+        )}
+
+
+def get_api_version(kwargs):
     # type: (Dict[str, Any]) -> str
-    api_version = kwargs.pop('api_version', None)
+    api_version = kwargs.get('api_version', None)
     if api_version and api_version not in _SUPPORTED_API_VERSIONS:
         versions = '\n'.join(_SUPPORTED_API_VERSIONS)
-        raise ValueError("Unsupported API version '{}'. Please select from:\n{}".format(api_version, versions))
-    return api_version or default
+        raise ValueError(f"Unsupported API version '{api_version}'. Please select from:\n{versions}")
+    return api_version or _SUPPORTED_API_VERSIONS[-1]

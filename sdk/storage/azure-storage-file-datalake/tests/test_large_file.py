@@ -1,25 +1,21 @@
-# coding: utf-8
-
 # -------------------------------------------------------------------------
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for
 # license information.
 # --------------------------------------------------------------------------
+import platform
+import re
 import unittest
 from os import urandom
 
 import pytest
-import re
-from azure.core.pipeline.policies import HTTPPolicy
-
 from azure.core.exceptions import ResourceExistsError
+from azure.core.pipeline.policies import HTTPPolicy
 from azure.storage.blob._shared.base_client import _format_shared_key_credential
 from azure.storage.filedatalake import DataLakeServiceClient
-from testcase import (
-    StorageTestCase,
-    record,
-    TestMode
-)
+
+from devtools_testutils.storage import StorageRecordedTestCase
+from settings.testcase import DataLakePreparer
 
 # ------------------------------------------------------------------------------
 TEST_DIRECTORY_PREFIX = 'directory'
@@ -29,15 +25,14 @@ LARGEST_BLOCK_SIZE = 4000 * 1024 * 1024
 # ------------------------------------------------------------------------------
 
 
-class LargeFileTest(StorageTestCase):
-    def setUp(self):
-        super(LargeFileTest, self).setUp()
-        url = self._get_account_url()
+class TestLargeFile(StorageRecordedTestCase):
+    def _setUp(self, account_name, account_key):
+        url = self.account_url(account_name, 'dfs')
         self.payload_dropping_policy = PayloadDroppingPolicy()
-        credential_policy = _format_shared_key_credential(self.settings.STORAGE_DATA_LAKE_ACCOUNT_NAME,
-                                                         self.settings.STORAGE_DATA_LAKE_ACCOUNT_KEY)
+        credential_policy = _format_shared_key_credential(account_name,
+                                                          account_key)
         self.dsc = DataLakeServiceClient(url,
-                                         credential=self.settings.STORAGE_DATA_LAKE_ACCOUNT_KEY,
+                                         credential=account_key,
                                          logging_enable=True,
                                          _additional_pipeline_policies=[self.payload_dropping_policy, credential_policy])
         self.config = self.dsc._config
@@ -58,10 +53,15 @@ class LargeFileTest(StorageTestCase):
             except:
                 pass
 
-        return super(LargeFileTest, self).tearDown()
+        return super(TestLargeFile, self).tearDown()
 
     @pytest.mark.live_test_only
-    def test_append_large_stream_without_network(self):
+    @DataLakePreparer()
+    def test_append_large_stream_without_network(self, **kwargs):
+        datalake_storage_account_name = kwargs.pop("datalake_storage_account_name")
+        datalake_storage_account_key = kwargs.pop("datalake_storage_account_key")
+
+        self._setUp(datalake_storage_account_name, datalake_storage_account_key)
         directory_name = self.get_resource_name(TEST_DIRECTORY_PREFIX)
 
         # Create a directory to put the file under that
@@ -76,13 +76,18 @@ class LargeFileTest(StorageTestCase):
         # Act
         response = file_client.append_data(data, 0, LARGEST_BLOCK_SIZE)
 
-        self.assertIsNotNone(response)
-        self.assertEqual(self.payload_dropping_policy.append_counter, 1)
-        self.assertEqual(self.payload_dropping_policy.append_sizes[0], LARGEST_BLOCK_SIZE)
+        assert response is not None
+        assert self.payload_dropping_policy.append_counter == 1
+        assert self.payload_dropping_policy.append_sizes[0] == LARGEST_BLOCK_SIZE
 
+    @pytest.mark.skipif(platform.python_implementation() == "PyPy", reason="Test failing on Pypy3 Linux, skip to investigate")
     @pytest.mark.live_test_only
-    def test_upload_large_stream_without_network(self):
-        pytest.skip("Pypy3 on Linux failed somehow, skip for now to investigate")
+    @DataLakePreparer()
+    def test_upload_large_stream_without_network(self, **kwargs):
+        datalake_storage_account_name = kwargs.pop("datalake_storage_account_name")
+        datalake_storage_account_key = kwargs.pop("datalake_storage_account_key")
+
+        self._setUp(datalake_storage_account_name, datalake_storage_account_key)
 
         directory_name = self.get_resource_name(TEST_DIRECTORY_PREFIX)
 
@@ -99,10 +104,10 @@ class LargeFileTest(StorageTestCase):
         # Act
         response = file_client.upload_data(data, length, overwrite=True, chunk_size=LARGEST_BLOCK_SIZE)
 
-        self.assertIsNotNone(response)
-        self.assertEqual(self.payload_dropping_policy.append_counter, 2)
-        self.assertEqual(self.payload_dropping_policy.append_sizes[0], LARGEST_BLOCK_SIZE)
-        self.assertEqual(self.payload_dropping_policy.append_sizes[1], LARGEST_BLOCK_SIZE)
+        assert response is not None
+        assert self.payload_dropping_policy.append_counter == 2
+        assert self.payload_dropping_policy.append_sizes[0] == LARGEST_BLOCK_SIZE
+        assert self.payload_dropping_policy.append_sizes[1] == LARGEST_BLOCK_SIZE
 
 
 class LargeStream:

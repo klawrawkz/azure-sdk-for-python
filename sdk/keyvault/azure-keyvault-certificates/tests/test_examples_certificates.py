@@ -3,27 +3,18 @@
 # Licensed under the MIT License.
 # ------------------------------------
 from __future__ import print_function
-import functools
+
 import time
 
-from azure.keyvault.certificates import (
-    ApiVersion,
-    CertificatePolicy,
-    CertificateContentType,
-    WellKnownIssuerNames,
-)
-from devtools_testutils import PowerShellPreparer
-from parameterized import parameterized, param
 import pytest
+from azure.keyvault.certificates import ApiVersion, CertificateContentType, CertificatePolicy, WellKnownIssuerNames
+from devtools_testutils import recorded_by_proxy
 
 from _shared.test_case import KeyVaultTestCase
-from _test_case import CertificatesTestCase, suffixed_test_name
+from _test_case import CertificatesClientPreparer, get_decorator
 
-KeyVaultPreparer = functools.partial(
-    PowerShellPreparer,
-    "keyvault",
-    azure_keyvault_url="https://vaultname.vault.azure.net"
-)
+all_api_versions = get_decorator()
+exclude_2016_10_01 = get_decorator(api_versions=[v for v in ApiVersion if v != ApiVersion.V2016_10_01])
 
 
 def print(*args):
@@ -43,17 +34,17 @@ def test_create_certificate_client():
     # [END create_certificate_client]
 
 
-class TestExamplesKeyVault(CertificatesTestCase, KeyVaultTestCase):
-    @parameterized.expand([param(api_version=api_version) for api_version in ApiVersion], name_func=suffixed_test_name)
-    @KeyVaultPreparer()
-    def test_example_certificate_crud_operations(self, azure_keyvault_url, **kwargs):
-        self._skip_if_not_configured(**kwargs)
-        client = self.create_client(azure_keyvault_url, **kwargs)
-        certificate_client = client
+class TestExamplesKeyVault(KeyVaultTestCase):
+    @pytest.mark.parametrize("api_version", all_api_versions)
+    @CertificatesClientPreparer()
+    @recorded_by_proxy
+    def test_example_certificate_crud_operations(self, certificate_client, **kwargs):
         cert_name = self.get_resource_name("cert-name")
 
         # [START create_certificate]
-        from azure.keyvault.certificates import CertificatePolicy, CertificateContentType, WellKnownIssuerNames
+        from azure.keyvault.certificates import (CertificateContentType,
+                                                 CertificatePolicy,
+                                                 WellKnownIssuerNames)
 
         # specify the certificate policy
         cert_policy = CertificatePolicy(
@@ -127,13 +118,10 @@ class TestExamplesKeyVault(CertificatesTestCase, KeyVaultTestCase):
         print(deleted_certificate.recovery_id)
         # [END delete_certificate]
 
-    @parameterized.expand([param(api_version=api_version) for api_version in ApiVersion], name_func=suffixed_test_name)
-    @KeyVaultPreparer()
-    def test_example_certificate_list_operations(self, azure_keyvault_url, **kwargs):
-        self._skip_if_not_configured(**kwargs)
-        client = self.create_client(azure_keyvault_url, **kwargs)
-        certificate_client = client
-
+    @pytest.mark.parametrize("api_version", all_api_versions)
+    @CertificatesClientPreparer()
+    @recorded_by_proxy
+    def test_example_certificate_list_operations(self, certificate_client, **kwargs):
         # specify the certificate policy
         cert_policy = CertificatePolicy(
             issuer_name=WellKnownIssuerNames.self,
@@ -189,16 +177,10 @@ class TestExamplesKeyVault(CertificatesTestCase, KeyVaultTestCase):
             print(certificate.deleted_on)
         # [END list_deleted_certificates]
 
-    @parameterized.expand(
-        [param(api_version=api_version) for api_version in ApiVersion if api_version != ApiVersion.V2016_10_01],
-        name_func=suffixed_test_name
-    )
-    @KeyVaultPreparer()
-    def test_example_certificate_backup_restore(self, azure_keyvault_url, **kwargs):
-        self._skip_if_not_configured(**kwargs)
-        client = self.create_client(azure_keyvault_url, **kwargs)
-        certificate_client = client
-
+    @pytest.mark.parametrize("api_version", exclude_2016_10_01)
+    @CertificatesClientPreparer()
+    @recorded_by_proxy
+    def test_example_certificate_backup_restore(self, certificate_client, **kwargs):
         # specify the certificate policy
         cert_policy = CertificatePolicy(
             issuer_name=WellKnownIssuerNames.self,
@@ -238,13 +220,10 @@ class TestExamplesKeyVault(CertificatesTestCase, KeyVaultTestCase):
         print(restored_certificate.properties.version)
         # [END restore_certificate]
 
-    @parameterized.expand([param(api_version=api_version) for api_version in ApiVersion], name_func=suffixed_test_name)
-    @KeyVaultPreparer()
-    def test_example_certificate_recover(self, azure_keyvault_url, **kwargs):
-        self._skip_if_not_configured(**kwargs)
-        client = self.create_client(azure_keyvault_url, **kwargs)
-        certificate_client = client
-
+    @pytest.mark.parametrize("api_version", all_api_versions)
+    @CertificatesClientPreparer()
+    @recorded_by_proxy
+    def test_example_certificate_recover(self, certificate_client, **kwargs):
         # specify the certificate policy
         cert_policy = CertificatePolicy(
             issuer_name=WellKnownIssuerNames.self,
@@ -284,13 +263,10 @@ class TestExamplesKeyVault(CertificatesTestCase, KeyVaultTestCase):
         print(recovered_certificate.name)
         # [END recover_deleted_certificate]
 
-    @parameterized.expand([param(api_version=api_version) for api_version in ApiVersion], name_func=suffixed_test_name)
-    @KeyVaultPreparer()
-    def test_example_contacts(self, azure_keyvault_url, **kwargs):
-        self._skip_if_not_configured(**kwargs)
-        client = self.create_client(azure_keyvault_url, **kwargs)
-        certificate_client = client
-
+    @pytest.mark.parametrize("api_version", all_api_versions)
+    @CertificatesClientPreparer()
+    @recorded_by_proxy
+    def test_example_contacts(self, certificate_client, **kwargs):
         # [START set_contacts]
         from azure.keyvault.certificates import CertificateContact
 
@@ -326,13 +302,10 @@ class TestExamplesKeyVault(CertificatesTestCase, KeyVaultTestCase):
             print(deleted_contact.phone)
         # [END delete_contacts]
 
-    @parameterized.expand([param(api_version=api_version) for api_version in ApiVersion], name_func=suffixed_test_name)
-    @KeyVaultPreparer()
-    def test_example_issuers(self, azure_keyvault_url, **kwargs):
-        self._skip_if_not_configured(**kwargs)
-        client = self.create_client(azure_keyvault_url, **kwargs)
-        certificate_client = client
-
+    @pytest.mark.parametrize("api_version", all_api_versions)
+    @CertificatesClientPreparer()
+    @recorded_by_proxy
+    def test_example_issuers(self, certificate_client, **kwargs):
         # [START create_issuer]
         from azure.keyvault.certificates import AdministratorContact
 

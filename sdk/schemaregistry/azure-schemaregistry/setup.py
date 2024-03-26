@@ -44,6 +44,7 @@ exclude_packages = [
 setup(
     name=PACKAGE_NAME,
     version=version,
+    include_package_data=True,
     description='Microsoft Azure {} Client Library for Python'.format(PACKAGE_PPRINT_NAME),
     long_description=readme + '\n\n' + changelog,
     long_description_content_type='text/markdown',
@@ -51,25 +52,29 @@ setup(
     author='Microsoft Corporation',
     author_email='azpysdkhelp@microsoft.com',
     url='https://github.com/Azure/azure-sdk-for-python',
+    keywords="azure, azure sdk",
     classifiers=[
         "Development Status :: 4 - Beta",
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3 :: Only',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
         'License :: OSI Approved :: MIT License',
     ],
+    python_requires=">=3.8",
     zip_safe=False,
     packages=find_packages(exclude=exclude_packages),
     install_requires=[
-        'msrest>=0.5.0',
-        'azure-core<2.0.0,>=1.2.2'
+        'msrest>=0.6.21',
+        'azure-core>=1.24.0'
     ],
     extras_require={
-        ":python_version<'3.0'": ['azure-nspkg']
-    }
+        "jsonencoder": [
+            "jsonschema>=4.10.3",
+        ],
+    },
 )

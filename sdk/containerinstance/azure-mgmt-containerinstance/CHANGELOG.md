@@ -1,6 +1,100 @@
 # Release History
 
+## 10.1.0 (2023-04-21)
+
+### Features Added
+
+  - Model Container has a new parameter security_context
+  - Model ContainerGroup has a new parameter confidential_compute_properties
+  - Model ContainerGroup has a new parameter extensions
+  - Model ContainerGroup has a new parameter priority
+  - Model ContainerGroupProperties has a new parameter confidential_compute_properties
+  - Model ContainerGroupProperties has a new parameter extensions
+  - Model ContainerGroupProperties has a new parameter priority
+  - Model EncryptionProperties has a new parameter identity
+  - Model InitContainerDefinition has a new parameter security_context
+
+## 10.1.0b2 (2023-04-20)
+
+### Features Added
+
+  - Model ContainerGroup has a new parameter is_custom_provisioning_timeout
+  - Model ContainerGroup has a new parameter provisioning_timeout_in_seconds
+  - Model ContainerGroupProperties has a new parameter is_custom_provisioning_timeout
+  - Model ContainerGroupProperties has a new parameter provisioning_timeout_in_seconds
+
+### Breaking Changes
+
+  - Model ContainerGroup no longer has parameter confidential_compute_properties
+  - Model ContainerGroup no longer has parameter priority
+  - Model ContainerGroupProperties no longer has parameter confidential_compute_properties
+  - Model ContainerGroupProperties no longer has parameter priority
+
+## 10.1.0b1 (2022-12-26)
+
+### Features Added
+
+  - Model ContainerGroup has a new parameter confidential_compute_properties
+  - Model ContainerGroup has a new parameter extensions
+  - Model ContainerGroup has a new parameter priority
+  - Model ContainerGroupProperties has a new parameter confidential_compute_properties
+  - Model ContainerGroupProperties has a new parameter extensions
+  - Model ContainerGroupProperties has a new parameter priority
+  - Model EncryptionProperties has a new parameter identity
+
+## 10.0.0 (2022-08-29)
+
+### Features Added
+
+  - Added operation group SubnetServiceAssociationLinkOperations
+  - Model IpAddress has a new parameter auto_generated_domain_name_label_scope
+  - Model Usage has a new parameter id
+
+### Breaking Changes
+
+  - Model IpAddress no longer has parameter dns_name_label_reuse_policy
+
+## 9.2.0 (2022-04-15)
+
+**Features**
+
+  - Model IpAddress has a new parameter dns_name_label_reuse_policy
+
+## 9.1.0 (2021-10-13)
+
+**Features**
+
+  - Model ContainerGroup has a new parameter zones
+  - Model Resource has a new parameter zones
+
+## 9.0.0 (2021-09-17)
+
+**Features**
+
+  - Model ImageRegistryCredential has a new parameter identity_url
+  - Model ImageRegistryCredential has a new parameter identity
+  - Model ContainerGroup has a new parameter subnet_ids
+  - Added operation ContainerGroupsOperations.get_outbound_network_dependencies_endpoints
+
+**Breaking changes**
+
+  - Model ContainerGroup no longer has parameter network_profile
+
+## 8.0.0 (2021-07-20)
+
+**Features**
+
+  - Model LogAnalytics has a new parameter workspace_resource_id
+  - Model ContainerHttpGet has a new parameter http_headers
+  - Added operation ContainersOperations.attach
+
+**Breaking changes**
+
+  - Operation ContainersOperations.list_logs has a new signature
+
 ## 7.0.0 (2020-11-25)
+
+  - GA release
 
 ## 7.0.0b1 (2020-10-12)
 
@@ -16,7 +110,7 @@ This version uses a next-generation code generator that introduces important bre
   - `credentials` parameter has been renamed `credential`
 
 - The `config` attribute no longer exists on a client, configuration should be passed as kwarg. Example: `MyClient(credential, subscription_id, enable_logging=True)`. For a complete set of
-  supported options, see the [parameters accept in init documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
+  supported options, see the [parameters accept in init documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
 - You can't import a `version` module anymore, use `__version__` instead
 - Operations that used to return a `msrest.polling.LROPoller` now returns a `azure.core.polling.LROPoller` and are prefixed with `begin_`.
 - Exceptions tree have been simplified and most exceptions are now `azure.core.exceptions.HttpResponseError` (`CloudError` has been removed).
@@ -24,13 +118,13 @@ This version uses a next-generation code generator that introduces important bre
 
   - `raw` has been removed. Equivalent feature can be found using `cls`, a callback that will give access to internal HTTP response for advanced user
   - For a complete set of
-  supported options, see the [parameters accept in Request documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
+  supported options, see the [parameters accept in Request documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
 
 **General new features**
 
 - Type annotations support using `typing`. SDKs are mypy ready.
 - This client has now stable and official support for async. Check the `aio` namespace of your package to find the async client.
-- This client now support natively tracing library like OpenCensus or OpenTelemetry. See this [tracing quickstart](https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/core/azure-core-tracing-opentelemetry) for an overview.
+- This client now support natively tracing library like OpenCensus or OpenTelemetry. See this [tracing quickstart](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/core/azure-core-tracing-opentelemetry) for an overview.
 
 ## 2.0.0 (2020-06-24)
 

@@ -2,7 +2,7 @@
 
 Azure Service Bus is a high performance cloud-managed messaging service for providing real-time and fault-tolerant communication between distributed senders and receivers.
 
-Service Bus provides multiple mechanisms for asynchronous highly reliable communication, such as structured first-in-first-out messaging, 
+Service Bus provides multiple mechanisms for asynchronous highly reliable communication, such as structured first-in-first-out messaging,
 publish/subscribe capabilities, and the ability to easily scale as your needs grow.
 
 Use the Service Bus client library for Python to communicate between applications and services and implement asynchronous messaging patterns.
@@ -11,7 +11,13 @@ Use the Service Bus client library for Python to communicate between application
 * Send and receive messages within your Service Bus channels.
 * Utilize message locks, sessions, and dead letter functionality to implement complex messaging patterns.
 
-[Source code](https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/servicebus/azure-servicebus/) | [Package (PyPi)][pypi] | [API reference documentation][api_docs] | [Product documentation][product_docs] | [Samples](https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/servicebus/azure-servicebus/samples) | [Changelog](https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/servicebus/azure-servicebus/CHANGELOG.md)
+[Source code](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/servicebus/azure-servicebus/)
+| [Package (PyPi)][pypi]
+| [Package (Conda)](https://anaconda.org/microsoft/azure-servicebus)
+| [API reference documentation][api_docs]
+| [Product documentation][product_docs]
+| [Samples](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/servicebus/azure-servicebus/samples)
+| [Changelog](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/servicebus/azure-servicebus/CHANGELOG.md)
 
 **NOTE**: If you are using version 0.50 or lower and want to migrate to the latest version
 of this package please look at our [migration guide to move from Service Bus V0.50 to Service Bus V7][migration_guide].
@@ -26,11 +32,11 @@ Install the Azure Service Bus client library for Python with [pip][pip]:
 pip install azure-servicebus
 ```
 
-### Prerequisites: 
+### Prerequisites:
 To use this package, you must have:
 * Azure subscription - [Create a free account][azure_sub]
 * Azure Service Bus - [Namespace and management credentials][service_bus_namespace]
-* Python 2.7, 3.6 or later - [Install Python][python]
+* Python 3.8 or later - [Install Python][python]
 
 
 If you need an Azure service bus namespace, you can create it via the [Azure Portal][azure_namespace_creation].
@@ -57,7 +63,7 @@ protocol. There are implementations of the `TokenCredential` protocol available 
 [azure-identity package][pypi_azure_identity]. The fully qualified namespace is of the format `<yournamespace.servicebus.windows.net>`.
 - To use the credential types provided by `azure-identity`, please install the package:
 ```pip install azure-identity```
-- Additionally, to use the async API supported on Python 3.6+, you must first install an async transport, such as [`aiohttp`](https://pypi.org/project/aiohttp/):
+- Additionally, to use the async API, you must first install an async transport, such as [`aiohttp`](https://pypi.org/project/aiohttp/):
 ```pip install aiohttp```
 - When using Azure Active Directory, your principal must be assigned a role which allows access to Service Bus, such as the
 Azure Service Bus Data Owner role. For more information about using Azure Active Directory authorization with Service Bus,
@@ -81,11 +87,15 @@ To interact with these resources, one should be familiar with the following SDK 
 
 * [ServiceBusClient][client_reference]: This is the object a user should first initialize to connect to a Service Bus Namespace.  To interact with a queue, topic, or subscription, one would spawn a sender or receiver off of this client.
 
-* [ServiceBusSender][sender_reference]: To send messages to a Queue or Topic, one would use the corresponding `get_queue_sender` or `get_topic_sender` method off of a `ServiceBusClient` instance as seen [here](https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/servicebus/azure-servicebus/samples/sync_samples/send_queue.py).
+* [ServiceBusSender][sender_reference]: To send messages to a Queue or Topic, one would use the corresponding `get_queue_sender` or `get_topic_sender` method off of a `ServiceBusClient` instance as seen [here](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/servicebus/azure-servicebus/samples/sync_samples/send_queue.py).
 
-* [ServiceBusReceiver][receiver_reference]: To receive messages from a Queue or Subscription, one would use the corresponding `get_queue_receiver` or `get_subscription_receiver` method off of a `ServiceBusClient` instance as seen [here](https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/servicebus/azure-servicebus/samples/sync_samples/receive_queue.py).
+* [ServiceBusReceiver][receiver_reference]: To receive messages from a Queue or Subscription, one would use the corresponding `get_queue_receiver` or `get_subscription_receiver` method off of a `ServiceBusClient` instance as seen [here](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/servicebus/azure-servicebus/samples/sync_samples/receive_queue.py).
 
 * [ServiceBusMessage][message_reference]: When sending, this is the type you will construct to contain your payload.  When receiving, this is where you will access the payload.
+
+### Thread safety
+
+We do not guarantee that the ServiceBusClient, ServiceBusSender, and ServiceBusReceiver are thread-safe. We do not recommend reusing these instances across threads. It is up to the running application to use these classes in a thread-safe manner.
 
 ## Examples
 
@@ -100,14 +110,14 @@ The following sections provide several code snippets covering some of the most c
 
 To perform management tasks such as creating and deleting queues/topics/subscriptions, please utilize the azure-mgmt-servicebus library, available [here][servicebus_management_repository].
 
-Please find further examples in the [samples](https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/servicebus/azure-servicebus/samples) directory demonstrating common Service Bus scenarios such as sending, receiving, session management and message handling.
+Please find further examples in the [samples](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/servicebus/azure-servicebus/samples) directory demonstrating common Service Bus scenarios such as sending, receiving, session management and message handling.
 
-### Send messages to a queue 
+### Send messages to a queue
 > **NOTE:** see reference documentation [here][send_reference].
 
 This example sends single message and array of messages to a queue that is assumed to already exist, created via the Azure portal or az commands.
 
-```Python
+```python
 from azure.servicebus import ServiceBusClient, ServiceBusMessage
 
 import os
@@ -127,7 +137,7 @@ with ServiceBusClient.from_connection_string(connstr) as client:
 
 > **NOTE:** A message may be scheduled for delayed delivery using the `ServiceBusSender.schedule_messages()` method, or by specifying `ServiceBusMessage.scheduled_enqueue_time_utc` before calling `ServiceBusSender.send_messages()`
 
-> For more detail on scheduling and schedule cancellation please see a sample [here](https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/servicebus/azure-servicebus/samples/sync_samples/schedule_messages_and_cancellation.py).
+> For more detail on scheduling and schedule cancellation please see a sample [here](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/servicebus/azure-servicebus/samples/sync_samples/schedule_messages_and_cancellation.py).
 
 ### Receive messages from a queue
 
@@ -135,7 +145,7 @@ To receive from a queue, you can either perform an ad-hoc receive via `receiver.
 
 #### [Receive messages from a queue through iterating over ServiceBusReceiver][streaming_receive_reference]
 
-```Python
+```python
 from azure.servicebus import ServiceBusClient
 
 import os
@@ -143,7 +153,7 @@ connstr = os.environ['SERVICE_BUS_CONNECTION_STR']
 queue_name = os.environ['SERVICE_BUS_QUEUE_NAME']
 
 with ServiceBusClient.from_connection_string(connstr) as client:
-    # max_wait_time specifies how long the receiver should wait with no incoming messages before stopping receipt.  
+    # max_wait_time specifies how long the receiver should wait with no incoming messages before stopping receipt.
     # Default is None; to receive forever.
     with client.get_queue_receiver(queue_name, max_wait_time=30) as receiver:
         for msg in receiver:  # ServiceBusReceiver instance is a generator.
@@ -160,7 +170,7 @@ with ServiceBusClient.from_connection_string(connstr) as client:
 
 > **NOTE:** `ServiceBusReceiver.receive_messages()` receives a single or constrained list of messages through an ad-hoc method call, as opposed to receiving perpetually from the generator. It always returns a list.
 
-```Python
+```python
 from azure.servicebus import ServiceBusClient
 
 import os
@@ -189,12 +199,12 @@ In this example, max_message_count declares the maximum number of messages to at
 
 Sessions provide first-in-first-out and single-receiver semantics on top of a queue or subscription.  While the actual receive syntax is the same, initialization differs slightly.
 
-```Python
+```python
 from azure.servicebus import ServiceBusClient, ServiceBusMessage
 
 import os
 connstr = os.environ['SERVICE_BUS_CONNECTION_STR']
-queue_name = os.environ['SERVICE_BUS_QUEUE_NAME']
+queue_name = os.environ['SERVICE_BUS_SESSION_QUEUE_NAME']
 session_id = os.environ['SERVICE_BUS_SESSION_ID']
 
 with ServiceBusClient.from_connection_string(connstr) as client:
@@ -217,7 +227,7 @@ with ServiceBusClient.from_connection_string(connstr) as client:
 Topics and subscriptions give an alternative to queues for sending and receiving messages.  See documents [here][topic_concept] for more overarching detail,
 and of how these differ from queues.
 
-```Python
+```python
 from azure.servicebus import ServiceBusClient, ServiceBusMessage
 
 import os
@@ -243,7 +253,7 @@ When receiving from a queue, you have multiple actions you can take on the messa
 > `ServiceBusReceiveMode.RECEIVE_AND_DELETE` mode removes the message from the queue on receipt.  `ServiceBusReceivedMessage` messages
 > returned from `peek_messages()` cannot be settled, as the message lock is not taken like it is in the aforementioned receive methods.
 
-If the message has a lock as mentioned above, settlement will fail if the message lock has expired.  
+If the message has a lock as mentioned above, settlement will fail if the message lock has expired.
 If processing would take longer than the lock duration, it must be maintained via `receiver.renew_message_lock` before it expires.
 Lock duration is set in Azure on the queue or topic itself.
 See [AutoLockRenewer](#automatically-renew-message-or-session-locks "Automatically renew Message or Session locks") for a helper to perform this in the background automatically.
@@ -252,7 +262,7 @@ See [AutoLockRenewer](#automatically-renew-message-or-session-locks "Automatical
 
 Declares the message processing to be successfully completed, removing the message from the queue.
 
-```Python
+```python
 from azure.servicebus import ServiceBusClient
 
 import os
@@ -270,7 +280,7 @@ with ServiceBusClient.from_connection_string(connstr) as client:
 
 Abandon processing of the message for the time being, returning the message immediately back to the queue to be picked up by another (or the same) receiver.
 
-```Python
+```python
 from azure.servicebus import ServiceBusClient
 
 import os
@@ -286,9 +296,9 @@ with ServiceBusClient.from_connection_string(connstr) as client:
 
 #### [DeadLetter][deadletter_reference]
 
-Transfer the message from the primary queue into a special "dead-letter sub-queue" where it can be accessed using the `ServiceBusClient.get_<queue|subscription>_receiver` function with parameter `sub_queue=ServiceBusSubQueue.DEAD_LETTER` and consumed from like any other receiver. (see sample [here](https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/servicebus/azure-servicebus/samples/sync_samples/receive_deadlettered_messages.py))
+Transfer the message from the primary queue into a special "dead-letter sub-queue" where it can be accessed using the `ServiceBusClient.get_<queue|subscription>_receiver` function with parameter `sub_queue=ServiceBusSubQueue.DEAD_LETTER` and consumed from like any other receiver. (see sample [here](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/servicebus/azure-servicebus/samples/sync_samples/receive_deadlettered_messages.py))
 
-```Python
+```python
 from azure.servicebus import ServiceBusClient
 
 import os
@@ -305,9 +315,9 @@ with ServiceBusClient.from_connection_string(connstr) as client:
 #### [Defer][defer_reference]
 
 Defer is subtly different from the prior settlement methods.  It prevents the message from being directly received from the queue
-by setting it aside such that it must be received by sequence number in a call to `ServiceBusReceiver.receive_deferred_messages` (see sample [here](https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/servicebus/azure-servicebus/samples/sync_samples/receive_deferred_message_queue.py))
+by setting it aside such that it must be received by sequence number in a call to `ServiceBusReceiver.receive_deferred_messages` (see sample [here](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/servicebus/azure-servicebus/samples/sync_samples/receive_deferred_message_queue.py))
 
-```Python
+```python
 from azure.servicebus import ServiceBusClient
 
 import os
@@ -378,8 +388,23 @@ It would also manifest when trying to take action (such as completing a message)
 ### Logging
 
 - Enable `azure.servicebus` logger to collect traces from the library.
-- Enable `uamqp` logger to collect traces from the underlying uAMQP library.
 - Enable AMQP frame level trace by setting `logging_enable=True` when creating the client.
+
+```python
+import logging
+import sys
+
+handler = logging.StreamHandler(stream=sys.stdout)
+logger = logging.getLogger('azure.servicebus')
+logger.setLevel(logging.DEBUG)
+logger.addHandler(handler)
+
+...
+
+from azure.servicebus import ServiceBusClient
+
+client = ServiceBusClient(..., logging_enable=True)
+```
 
 ### Timeouts
 
@@ -409,7 +434,7 @@ This may have been caused by a transient network issue or service problem. The s
 It is recommended to attempt to verify the current state and retry if necessary.
 - **MessageSizeExceededError:** This indicate that the message content is larger than the service bus frame size.
 This could happen when too many service bus messages are sent in a batch or the content passed into
-the body of a `Message` is too large. It is recommended to reduce the count of messages being sent in a batch or the size of content being passed into a single `ServiceBusMessage`. 
+the body of a `Message` is too large. It is recommended to reduce the count of messages being sent in a batch or the size of content being passed into a single `ServiceBusMessage`.
 - **MessageAlreadySettled:** This indicates failure to settle the message.
 This could happen when trying to settle an already-settled message.
 - **MessageLockLostError:** The lock on the message has expired and it has been released back to the queue.
@@ -435,7 +460,7 @@ If your code runs in an environment with a firewall/proxy, ensure that the traff
 - **SessionCannotBeLockedError:** Attempt to connect to a session with a specific session ID, but the session is currently locked by another client.
 Make sure the session is unlocked by other clients.
 - **AutoLockRenewFailed:** An attempt to renew a lock on a message or session in the background has failed.
-This could happen when the receiver used by `AutoLockRenerer` is closed or the lock of the renewable has expired.
+This could happen when the receiver used by `AutoLockRenewer` is closed or the lock of the renewable has expired.
 It is recommended to re-register the renewable message or session by receiving the message or connect to the sessionful entity again.
 - **AutoLockRenewTimeout:** The time allocated to renew the message or session lock has elapsed. You could re-register the object that wants be auto lock renewed or extend the timeout in advance.
 - **ServiceBusError:** All other Service Bus related errors. It is the root error class of all the errors described above.
@@ -446,7 +471,7 @@ Please view the [exceptions reference docs][exception_reference] for detailed de
 
 ### More sample code
 
-Please find further examples in the [samples](https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/servicebus/azure-servicebus/samples) directory demonstrating common Service Bus scenarios such as sending, receiving, session management and message handling.
+Please find further examples in the [samples](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/servicebus/azure-servicebus/samples) directory demonstrating common Service Bus scenarios such as sending, receiving, session management and message handling.
 
 ### Additional documentation
 
@@ -456,14 +481,71 @@ For more extensive documentation on the Service Bus service, see the [Service Bu
 
 For users seeking to perform management operations against ServiceBus (Creating a queue/topic/etc, altering filter rules, enumerating entities)
 please see the [azure-mgmt-servicebus documentation][service_bus_mgmt_docs] for API documentation.  Terse usage examples can be found
-[here](https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/servicebus/azure-mgmt-servicebus/tests) as well.
+[here](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/servicebus/azure-mgmt-servicebus/tests) as well.
+
+### Pure Python AMQP Transport and Backward Compatibility Support
+
+The Azure Service Bus client library is now based on a pure Python AMQP implementation. `uAMQP` has been removed as required dependency.
+
+To use `uAMQP` as the underlying transport:
+
+1. Install `uamqp` with pip.
+
+```
+$ pip install uamqp
+```
+
+2. Pass `uamqp_transport=True` during client construction.
+
+```python
+from azure.servicebus import ServiceBusClient
+connection_str = '<< CONNECTION STRING FOR THE SERVICE BUS NAMESPACE >>'
+queue_name = '<< NAME OF THE QUEUE >>'
+client = ServiceBusClient.from_connection_string(
+    connection_str, uamqp_transport=True
+)
+```
+
+Note: The `message` attribute on `ServiceBusMessage`/`ServiceBusMessageBatch`/`ServiceBusReceivedMessage`, which previously exposed the `uamqp.Message`, has been deprecated.
+ The "Legacy" objects returned by `message` attribute have been introduced to help facilitate the transition.
+
+To enable the `uamqp` logger to collect traces from the underlying uAMQP library:
+```python
+import logging
+
+uamqp_logger = logging.getLogger('uamqp')
+uamqp_logger.setLevel(logging.DEBUG)
+uamqp_logger.addHandler(handler)
+
+...
+
+from azure.servicebus import ServiceBusClient
+
+client = ServiceBusClient(..., logging_enable=True)
+```
+
+There may be cases where you consider the `uamqp` logging to be too verbose. To suppress unnecessary logging, add the following snippet to the top of your code:
+```python
+import logging
+
+# The logging levels below may need to be changed based on the logging that you want to suppress.
+uamqp_logger = logging.getLogger('uamqp')
+uamqp_logger.setLevel(logging.ERROR)
+
+# or even further fine-grained control, suppressing the warnings in uamqp.connection module
+uamqp_connection_logger = logging.getLogger('uamqp.connection')
+uamqp_connection_logger.setLevel(logging.ERROR)
+```
 
 ### Building uAMQP wheel from source
 
 `azure-servicebus` depends on the [uAMQP](https://pypi.org/project/uamqp/) for the AMQP protocol implementation.
 uAMQP wheels are provided for most major operating systems and will be installed automatically when installing `azure-servicebus`.
+If [uAMQP](https://pypi.org/project/uamqp/) is intended to be used as the underlying AMQP protocol implementation for `azure-servicebus`,
+uAMQP wheels can be found for most major operating systems.
 
 If you're running on a platform for which uAMQP wheels are not provided, please follow
+If you intend to use `uAMQP` and you're running on a platform for which uAMQP wheels are not provided, please follow
  the [uAMQP Installation](https://github.com/Azure/azure-uamqp-python#installation) guidance to install from source.
 
 ## Contributing
@@ -482,7 +564,7 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 
 <!-- LINKS -->
 [azure_cli]: https://docs.microsoft.com/cli/azure
-[api_docs]: https://azuresdkdocs.blob.core.windows.net/$web/python/azure-servicebus/latest/index.html
+[api_docs]: https://docs.microsoft.com/python/api/overview/azure/servicebus-readme
 [product_docs]: https://docs.microsoft.com/azure/service-bus-messaging/
 [azure_portal]: https://portal.azure.com
 [azure_sub]: https://azure.microsoft.com/free/
@@ -497,15 +579,15 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 [service_bus_overview]: https://docs.microsoft.com/azure/service-bus-messaging/service-bus-messaging-overview
 [queue_status_codes]: https://docs.microsoft.com/rest/api/servicebus/create-queue#response-codes
 [service_bus_docs]: https://docs.microsoft.com/azure/service-bus/
-[service_bus_mgmt_docs]: https://docs.microsoft.com/python/api/overview/azure/servicebus/management?view=azure-python
+[service_bus_mgmt_docs]: https://docs.microsoft.com/python/api/azure-mgmt-servicebus/?view=azure-python
 [queue_concept]: https://docs.microsoft.com/azure/service-bus-messaging/service-bus-messaging-overview#queues
 [topic_concept]: https://docs.microsoft.com/azure/service-bus-messaging/service-bus-messaging-overview#topics
 [subscription_concept]: https://docs.microsoft.com/azure/service-bus-messaging/service-bus-queues-topics-subscriptions#topics-and-subscriptions
 [azure_namespace_creation]: https://docs.microsoft.com/azure/service-bus-messaging/service-bus-create-namespace-portal
-[servicebus_management_repository]: https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/servicebus/azure-mgmt-servicebus
+[servicebus_management_repository]: https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/servicebus/azure-mgmt-servicebus
 [get_servicebus_conn_str]: https://docs.microsoft.com/azure/service-bus-messaging/service-bus-create-namespace-portal#get-the-connection-string
 [servicebus_aad_authentication]: https://docs.microsoft.com/azure/service-bus-messaging/service-bus-authentication-and-authorization
-[token_credential_interface]: https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/core/azure-core/azure/core/credentials.py
+[token_credential_interface]: https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/core/azure-core/azure/core/credentials.py
 [pypi_azure_identity]: https://pypi.org/project/azure-identity/
 [message_reference]: https://azuresdkdocs.blob.core.windows.net/$web/python/azure-servicebus/latest/azure.servicebus.html#azure.servicebus.ServiceBusMessage
 [receiver_reference]: https://azuresdkdocs.blob.core.windows.net/$web/python/azure-servicebus/latest/azure.servicebus.html#azure.servicebus.ServiceBusReceiver
@@ -524,6 +606,6 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 [exception_reference]: https://azuresdkdocs.blob.core.windows.net/$web/python/azure-servicebus/latest/azure.servicebus.html#module-azure.servicebus.exceptions
 [subscription_reference]: https://azuresdkdocs.blob.core.windows.net/$web/python/azure-servicebus/latest/azure.servicebus.aio.html?highlight=subscription#azure.servicebus.aio.ServiceBusClient.get_subscription_receiver
 [topic_reference]: https://azuresdkdocs.blob.core.windows.net/$web/python/azure-servicebus/latest/azure.servicebus.html?highlight=topic#azure.servicebus.ServiceBusClient.get_topic_sender
-[sample_authenticate_client_connstr]: https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/servicebus/azure-servicebus/samples/sync_samples/authenticate_client_connstr.py
-[sample_authenticate_client_aad]: https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/servicebus/azure-servicebus/samples/sync_samples/client_identity_authentication.py
-[migration_guide]: https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/servicebus/azure-servicebus/migration_guide.md
+[sample_authenticate_client_connstr]: https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/servicebus/azure-servicebus/samples/sync_samples/authenticate_client_connstr.py
+[sample_authenticate_client_aad]: https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/servicebus/azure-servicebus/samples/sync_samples/client_identity_authentication.py
+[migration_guide]: https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/servicebus/azure-servicebus/migration_guide.md

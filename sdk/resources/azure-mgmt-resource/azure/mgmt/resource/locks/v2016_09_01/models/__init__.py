@@ -6,31 +6,26 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
-try:
-    from ._models_py3 import ManagementLockListResult
-    from ._models_py3 import ManagementLockObject
-    from ._models_py3 import ManagementLockOwner
-    from ._models_py3 import Operation
-    from ._models_py3 import OperationDisplay
-    from ._models_py3 import OperationListResult
-except (SyntaxError, ImportError):
-    from ._models import ManagementLockListResult  # type: ignore
-    from ._models import ManagementLockObject  # type: ignore
-    from ._models import ManagementLockOwner  # type: ignore
-    from ._models import Operation  # type: ignore
-    from ._models import OperationDisplay  # type: ignore
-    from ._models import OperationListResult  # type: ignore
+from ._models_py3 import ManagementLockListResult
+from ._models_py3 import ManagementLockObject
+from ._models_py3 import ManagementLockOwner
+from ._models_py3 import Operation
+from ._models_py3 import OperationDisplay
+from ._models_py3 import OperationListResult
 
-from ._management_lock_client_enums import (
-    LockLevel,
-)
+from ._management_lock_client_enums import LockLevel
+from ._patch import __all__ as _patch_all
+from ._patch import *  # pylint: disable=unused-wildcard-import
+from ._patch import patch_sdk as _patch_sdk
 
 __all__ = [
-    'ManagementLockListResult',
-    'ManagementLockObject',
-    'ManagementLockOwner',
-    'Operation',
-    'OperationDisplay',
-    'OperationListResult',
-    'LockLevel',
+    "ManagementLockListResult",
+    "ManagementLockObject",
+    "ManagementLockOwner",
+    "Operation",
+    "OperationDisplay",
+    "OperationListResult",
+    "LockLevel",
 ]
+__all__.extend([p for p in _patch_all if p not in __all__])
+_patch_sdk()

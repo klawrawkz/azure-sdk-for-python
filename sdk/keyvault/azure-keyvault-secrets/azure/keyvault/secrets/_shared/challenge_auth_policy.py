@@ -14,55 +14,39 @@ requirements can change. For example, a vault may move to a new tenant. In such 
 protocol again.
 """
 
-import copy
+from copy import deepcopy
 import time
+from typing import Any, Optional
+from urllib.parse import urlparse
 
+from azure.core.credentials import AccessToken, TokenCredential
 from azure.core.exceptions import ServiceRequestError
-from azure.core.pipeline import PipelineContext, PipelineRequest
-from azure.core.pipeline.policies import HTTPPolicy
-from azure.core.pipeline.transport import HttpRequest
+from azure.core.pipeline import PipelineRequest, PipelineResponse
+from azure.core.pipeline.policies import BearerTokenCredentialPolicy
+from azure.core.rest import HttpRequest
 
 from .http_challenge import HttpChallenge
 from . import http_challenge_cache as ChallengeCache
 
-try:
-    from typing import TYPE_CHECKING
-except ImportError:
-    TYPE_CHECKING = False
 
-if TYPE_CHECKING:
-    from typing import Any, Dict, Optional
-    from azure.core.credentials import AccessToken, TokenCredential
-    from azure.core.pipeline.transport import HttpResponse
-
-
-def _enforce_tls(request):
-    # type: (PipelineRequest) -> None
+def _enforce_tls(request: PipelineRequest) -> None:
     if not request.http_request.url.lower().startswith("https"):
         raise ServiceRequestError(
             "Bearer token authentication is not permitted for non-TLS protected (non-https) URLs."
         )
 
 
-def _get_challenge_request(request):
-    # type: (PipelineRequest) -> PipelineRequest
+def _update_challenge(request: PipelineRequest, challenger: PipelineResponse) -> HttpChallenge:
+    """Parse challenge from a challenge response, cache it, and return it.
 
-    # The challenge request is intended to provoke an authentication challenge from Key Vault, to learn how the
-    # service request should be authenticated. It should be identical to the service request but with no body.
-    challenge_request = HttpRequest(
-        request.http_request.method, request.http_request.url, headers=request.http_request.headers
-    )
-    challenge_request.headers["Content-Length"] = "0"
+    :param request: The pipeline request that prompted the challenge response.
+    :type request: ~azure.core.pipeline.PipelineRequest
+    :param challenger: The pipeline response containing the authentication challenge.
+    :type challenger: ~azure.core.pipeline.PipelineResponse
 
-    options = copy.deepcopy(request.context.options)
-    context = PipelineContext(request.context.transport, **options)
-
-    return PipelineRequest(http_request=challenge_request, context=context)
-
-
-def _update_challenge(request, challenger):
-    # type: (HttpRequest, HttpResponse) -> HttpChallenge
-    """parse challenge from challenger, cache it, return it"""
+    :returns: An HttpChallenge object representing the authentication challenge.
+    :rtype: HttpChallenge
+    """
 
     challenge = HttpChallenge(
         request.http_request.url,
@@ -73,68 +57,87 @@ def _update_challenge(request, challenger):
     return challenge
 
 
-class ChallengeAuthPolicyBase(object):
-    """Sans I/O base for challenge authentication policies"""
+class ChallengeAuthPolicy(BearerTokenCredentialPolicy):
+    """Policy for handling HTTP authentication challenges.
 
-    def __init__(self, **kwargs):
-        self._token = None  # type: Optional[AccessToken]
-        super(ChallengeAuthPolicyBase, self).__init__(**kwargs)
+    :param credential: An object which can provide an access token for the vault, such as a credential from
+        :mod:`azure.identity`
+    :type credential: ~azure.core.credentials.TokenCredential
+    """
 
-    @property
-    def _need_new_token(self):
-        # type: () -> bool
-        return not self._token or self._token.expires_on - time.time() < 300
-
-
-class ChallengeAuthPolicy(ChallengeAuthPolicyBase, HTTPPolicy):
-    """policy for handling HTTP authentication challenges"""
-
-    def __init__(self, credential, **kwargs):
-        # type: (TokenCredential, **Any) -> None
+    def __init__(self, credential: TokenCredential, *scopes: str, **kwargs: Any) -> None:
+        super(ChallengeAuthPolicy, self).__init__(credential, *scopes, **kwargs)
         self._credential = credential
-        super(ChallengeAuthPolicy, self).__init__(**kwargs)
+        self._token: Optional[AccessToken] = None
+        self._verify_challenge_resource = kwargs.pop("verify_challenge_resource", True)
+        self._request_copy: Optional[HttpRequest] = None
 
-    def send(self, request):
-        # type: (PipelineRequest) -> HttpResponse
+    def on_request(self, request: PipelineRequest) -> None:
         _enforce_tls(request)
-
         challenge = ChallengeCache.get_challenge_for_url(request.http_request.url)
-        if not challenge:
-            challenge_request = _get_challenge_request(request)
-            challenger = self.next.send(challenge_request)
-            try:
-                challenge = _update_challenge(request, challenger)
-            except ValueError:
-                # didn't receive the expected challenge -> nothing more this policy can do
-                return challenger
+        if challenge:
+            # Note that if the vault has moved to a new tenant since our last request for it, this request will fail.
+            if self._need_new_token:
+                # azure-identity credentials require an AADv2 scope but the challenge may specify an AADv1 resource
+                scope = challenge.get_scope() or challenge.get_resource() + "/.default"
+                # Exclude tenant for AD FS authentication
+                if challenge.tenant_id and challenge.tenant_id.lower().endswith("adfs"):
+                    self._token = self._credential.get_token(scope)
+                else:
+                    self._token = self._credential.get_token(scope, tenant_id=challenge.tenant_id)
 
-        self._handle_challenge(request, challenge)
-        response = self.next.send(request)
+            # ignore mypy's warning -- although self._token is Optional, get_token raises when it fails to get a token
+            request.http_request.headers["Authorization"] = f"Bearer {self._token.token}"  # type: ignore
+            return
 
-        if response.http_response.status_code == 401:
-            # any cached token must be invalid
-            self._token = None
+        # else: discover authentication information by eliciting a challenge from Key Vault. Remove any request data,
+        # saving it for later. Key Vault will reject the request as unauthorized and respond with a challenge.
+        # on_challenge will parse that challenge, use the original request including the body, authorize the
+        # request, and tell super to send it again.
+        if request.http_request.content:
+            self._request_copy = request.http_request
+            bodiless_request = HttpRequest(
+                method=request.http_request.method,
+                url=request.http_request.url,
+                headers=deepcopy(request.http_request.headers),
+            )
+            bodiless_request.headers["Content-Length"] = "0"
+            request.http_request = bodiless_request
 
-            # cached challenge could be outdated; maybe this response has a new one?
-            try:
-                challenge = _update_challenge(request, response)
-            except ValueError:
-                # 401 with no legible challenge -> nothing more this policy can do
-                return response
-
-            self._handle_challenge(request, challenge)
-            response = self.next.send(request)
-
-        return response
-
-    def _handle_challenge(self, request, challenge):
-        # type: (PipelineRequest, HttpChallenge) -> None
-        """authenticate according to challenge, add Authorization header to request"""
-
-        if self._need_new_token:
+    def on_challenge(self, request: PipelineRequest, response: PipelineResponse) -> bool:
+        try:
+            challenge = _update_challenge(request, response)
             # azure-identity credentials require an AADv2 scope but the challenge may specify an AADv1 resource
             scope = challenge.get_scope() or challenge.get_resource() + "/.default"
-            self._token = self._credential.get_token(scope)
+        except ValueError:
+            return False
 
-        # ignore mypy's warning because although self._token is Optional, get_token raises when it fails to get a token
-        request.http_request.headers["Authorization"] = "Bearer {}".format(self._token.token)  # type: ignore
+        if self._verify_challenge_resource:
+            resource_domain = urlparse(scope).netloc
+            if not resource_domain:
+                raise ValueError(f"The challenge contains invalid scope '{scope}'.")
+
+            request_domain = urlparse(request.http_request.url).netloc
+            if not request_domain.lower().endswith(f".{resource_domain.lower()}"):
+                raise ValueError(
+                    f"The challenge resource '{resource_domain}' does not match the requested domain. Pass "
+                    "`verify_challenge_resource=False` to your client's constructor to disable this verification. "
+                    "See https://aka.ms/azsdk/blog/vault-uri for more information."
+                )
+
+        # If we had created a request copy in on_request, use it now to send along the original body content
+        if self._request_copy:
+            request.http_request = self._request_copy
+
+        # The tenant parsed from AD FS challenges is "adfs"; we don't actually need a tenant for AD FS authentication
+        # For AD FS we skip cross-tenant authentication per https://github.com/Azure/azure-sdk-for-python/issues/28648
+        if challenge.tenant_id and challenge.tenant_id.lower().endswith("adfs"):
+            self.authorize_request(request, scope)
+        else:
+            self.authorize_request(request, scope, tenant_id=challenge.tenant_id)
+
+        return True
+
+    @property
+    def _need_new_token(self) -> bool:
+        return not self._token or self._token.expires_on - time.time() < 300

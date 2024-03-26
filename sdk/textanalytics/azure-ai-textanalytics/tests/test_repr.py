@@ -1,4 +1,3 @@
-# coding=utf-8
 # --------------------------------------------------------------------------
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for
@@ -8,7 +7,7 @@
 import pytest
 import datetime
 from azure.ai.textanalytics import _models
-from azure.ai.textanalytics._generated.v3_1_preview_4 import models as _generated_models
+from azure.ai.textanalytics._generated.v3_1 import models as _generated_models
 
 # All features return a tuple of the object and the repr of the obejct
 
@@ -26,28 +25,13 @@ def text_document_statistics():
     return model, model_repr
 
 @pytest.fixture
-def request_statistics():
-    model = _models.RequestStatistics(
-        documents_count=1,
-        valid_documents_count=1,
-        erroneous_documents_count=0,
-        transactions_count=1
-    )
-
-    model_repr = "RequestStatistics(documents_count=1, valid_documents_count=1, erroneous_documents_count=0, transactions_count=1)"
-
-    assert repr(model) == model_repr
-    return model, model_repr
-
-@pytest.fixture
 def text_analytics_warning():
     model = _models.TextAnalyticsWarning(
         code="LongWordsInDocument",
-        message="The document contains very long words (longer than 64 characters). These words will be truncated and may result in unreliable model predictions."
+        message="warning"
     )
     model_repr = (
-        "TextAnalyticsWarning(code=LongWordsInDocument, message=The document contains very long words (longer than 64 characters). "
-        "These words will be truncated and may result in unreliable model predictions.)"
+        "TextAnalyticsWarning(code=LongWordsInDocument, message=warning)"
     )
     assert repr(model) == model_repr
     return model, model_repr
@@ -71,7 +55,7 @@ def detected_language():
     model = _models.DetectedLanguage(
         name="English",
         iso6391_name="en",
-        confidence_score=1.0
+        confidence_score=1.0,
     )
     model_repr = "DetectedLanguage(name=English, iso6391_name=en, confidence_score=1.0)"
     assert repr(model) == model_repr
@@ -86,11 +70,12 @@ def categorized_entity():
         subcategory="Age",
         length=10,
         offset=0,
-        confidence_score=0.899
+        confidence_score=0.899,
+        resolutions=[]
     )
     model_repr = (
         "CategorizedEntity(text=Bill Gates, category=Person, subcategory=Age, "
-        "length=10, offset=0, confidence_score=0.899)"
+        "length=10, offset=0, confidence_score=0.899, resolutions=[])"
     )
     assert repr(model) == model_repr
     return model, model_repr
@@ -161,7 +146,8 @@ def sentiment_confidence_scores():
 def target_assessment_confidence_score():
     model = _models.SentimentConfidenceScores(
         positive=0.5,
-        negative=0.5
+        negative=0.5,
+        neutral=0.0
     )
     model_repr = "SentimentConfidenceScores(positive=0.5, neutral=0.0, negative=0.5)"
     assert repr(model) == model_repr
@@ -204,14 +190,14 @@ def mined_opinion(target_sentiment, assessment_sentiment):
         target=target_sentiment[0],
         assessments=[assessment_sentiment[0]]
     )
-    model_repr = "MinedOpinion(target={}, assessments=[{}])".format(target_sentiment[1], assessment_sentiment[1])
+    model_repr = f"MinedOpinion(target={target_sentiment[1]}, assessments=[{assessment_sentiment[1]}])"
     assert repr(model) == model_repr
     return model, model_repr
 
 @pytest.fixture
 def sentence_sentiment(sentiment_confidence_scores, mined_opinion):
     model = _models.SentenceSentiment(
-        text="This is a sentence.",
+        text="sentence.",
         sentiment="neutral",
         confidence_scores=sentiment_confidence_scores[0],
         length=19,
@@ -219,7 +205,7 @@ def sentence_sentiment(sentiment_confidence_scores, mined_opinion):
         mined_opinions=[mined_opinion[0]]
     )
     model_repr = (
-        "SentenceSentiment(text=This is a sentence., sentiment=neutral, confidence_scores={}, "\
+        "SentenceSentiment(text=sentence., sentiment=neutral, confidence_scores={}, "
         "length=19, offset=0, mined_opinions=[{}])".format(
             sentiment_confidence_scores[1], mined_opinion[1]
         )
@@ -235,10 +221,9 @@ def recognize_pii_entities_result(pii_entity, text_analytics_warning, text_docum
         redacted_text="***********",
         warnings=[text_analytics_warning[0]],
         statistics=text_document_statistics[0],
-        is_error=False
     )
     model_repr = "RecognizePiiEntitiesResult(id=1, entities=[{}], redacted_text=***********, warnings=[{}], " \
-    "statistics={}, is_error=False)".format(
+    "statistics={}, is_error=False, kind=PiiEntityRecognition)".format(
         pii_entity[1], text_analytics_warning[1], text_document_statistics[1]
     )
 
@@ -252,9 +237,8 @@ def recognize_entities_result(categorized_entity, text_analytics_warning, text_d
         entities=[categorized_entity[0]],
         warnings=[text_analytics_warning[0]],
         statistics=text_document_statistics[0],
-        is_error=False
     )
-    model_repr = "RecognizeEntitiesResult(id=1, entities=[{}], warnings=[{}], statistics={}, is_error=False)".format(
+    model_repr = "RecognizeEntitiesResult(id=1, entities=[{}], warnings=[{}], statistics={}, is_error=False, kind=EntityRecognition)".format(
         categorized_entity[1], text_analytics_warning[1], text_document_statistics[1]
     )
 
@@ -268,9 +252,8 @@ def extract_key_phrases_result(text_analytics_warning, text_document_statistics)
         key_phrases=["dog", "cat", "bird"],
         warnings=[text_analytics_warning[0]],
         statistics=text_document_statistics[0],
-        is_error=False
     )
-    model_repr = "ExtractKeyPhrasesResult(id=1, key_phrases=['dog', 'cat', 'bird'], warnings=[{}], statistics={}, is_error=False)".format(
+    model_repr = "ExtractKeyPhrasesResult(id=1, key_phrases=['dog', 'cat', 'bird'], warnings=[{}], statistics={}, is_error=False, kind=KeyPhraseExtraction)".format(
         text_analytics_warning[1], text_document_statistics[1]
     )
 
@@ -328,7 +311,7 @@ def healthcare_relation_role(healthcare_entity):
         entity=healthcare_entity[0]
     )
 
-    model_repr = "HealthcareRelationRole(name=ROLE, entity={})".format(healthcare_entity[1])
+    model_repr = f"HealthcareRelationRole(name=ROLE, entity={healthcare_entity[1]})"
 
     assert repr(model) == model_repr
     return model, model_repr
@@ -337,10 +320,11 @@ def healthcare_relation_role(healthcare_entity):
 def healthcare_relation(healthcare_relation_role):
     model = _models.HealthcareRelation(
         relation_type="DOSAGE",
-        roles=[healthcare_relation_role[0]]
+        roles=[healthcare_relation_role[0]],
+        confidence_score=1.0
     )
 
-    model_repr = "HealthcareRelation(relation_type=DOSAGE, roles=[{}])".format(healthcare_relation_role[1])
+    model_repr = f"HealthcareRelation(relation_type=DOSAGE, roles=[{healthcare_relation_role[1]}], confidence_score=1.0)"
 
     assert repr(model) == model_repr
     return model, model_repr
@@ -370,9 +354,8 @@ class TestRepr():
         model = _models.DocumentError(
             id="1",
             error=text_analytics_error[0],
-            is_error=True
         )
-        model_repr = "DocumentError(id=1, error={}, is_error=True)".format(text_analytics_error[1])
+        model_repr = f"DocumentError(id=1, error={text_analytics_error[1]}, is_error=True, kind=DocumentError)"
 
         assert repr(model) == model_repr
 
@@ -396,30 +379,28 @@ class TestRepr():
             primary_language=detected_language[0],
             warnings=[text_analytics_warning[0]],
             statistics=text_document_statistics[0],
-            is_error=False
         )
-        model_repr = "DetectLanguageResult(id=1, primary_language={}, warnings=[{}], statistics={}, is_error=False)".format(
+        model_repr = "DetectLanguageResult(id=1, primary_language={}, warnings=[{}], statistics={}, is_error=False, kind=LanguageDetection)".format(
             detected_language[1], text_analytics_warning[1], text_document_statistics[1]
         )
 
         assert repr(model) == model_repr
 
-    def test_recognized_linked_entites_result(self, linked_entity, text_analytics_warning, text_document_statistics):
+    def test_recognized_linked_entities_result(self, linked_entity, text_analytics_warning, text_document_statistics, detected_language):
         model = _models.RecognizeLinkedEntitiesResult(
             id="1",
             entities=[linked_entity[0]],
             warnings=[text_analytics_warning[0]],
             statistics=text_document_statistics[0],
-            is_error=False
         )
-        model_repr = "RecognizeLinkedEntitiesResult(id=1, entities=[{}], warnings=[{}], statistics={}, is_error=False)".format(
-            linked_entity[1], text_analytics_warning[1], text_document_statistics[1]
+        model_repr = "RecognizeLinkedEntitiesResult(id=1, entities=[{}], warnings=[{}], statistics={}, is_error=False, kind=EntityLinking)".format(
+            linked_entity[1], text_analytics_warning[1], text_document_statistics[1],
         )
 
         assert repr(model) == model_repr
 
     def test_analyze_sentiment_result(
-        self, text_analytics_warning, text_document_statistics, sentiment_confidence_scores, sentence_sentiment
+        self, text_analytics_warning, text_document_statistics, sentiment_confidence_scores, sentence_sentiment, detected_language
     ):
         model = _models.AnalyzeSentimentResult(
             id="1",
@@ -428,11 +409,10 @@ class TestRepr():
             statistics=text_document_statistics[0],
             confidence_scores=sentiment_confidence_scores[0],
             sentences=[sentence_sentiment[0]],
-            is_error=False
         )
         model_repr = (
-            "AnalyzeSentimentResult(id=1, sentiment=positive, warnings=[{}], statistics={}, confidence_scores={}, "\
-            "sentences=[{}], is_error=False)".format(
+            "AnalyzeSentimentResult(id=1, sentiment=positive, warnings=[{}], statistics={}, confidence_scores={}, "
+            "sentences=[{}], is_error=False, kind=SentimentAnalysis)".format(
                 text_analytics_warning[1], text_document_statistics[1], sentiment_confidence_scores[1], sentence_sentiment[1]
             )
         )
@@ -455,73 +435,21 @@ class TestRepr():
         assert error.code == "UnsupportedLanguageCode"
         assert error.message == "Supplied language not supported. Pass in one of: de,en,es,fr,it,ja,ko,nl,pt-PT,zh-Hans,zh-Hant"
 
-    def test_analyze_batch_actions_result_recognize_entities(self, recognize_entities_result, request_statistics):
-        model = _models.AnalyzeBatchActionsResult(
-            document_results=[recognize_entities_result[0]],
-            statistics=request_statistics[0],
-            is_error=False,
-            action_type=_models.AnalyzeBatchActionsType.RECOGNIZE_ENTITIES,
-            completed_on=datetime.datetime(1, 1, 1)
-        )
-
-        model_repr = (
-            "AnalyzeBatchActionsResult(document_results=[{}], is_error={}, action_type={}, completed_on={}, statistics={})".format(
-                recognize_entities_result[1], False, "recognize_entities", datetime.datetime(1, 1, 1), request_statistics[1]
-            )
-        )
-
-        assert repr(model) == model_repr
-
-    def test_analyze_batch_actions_result_recognize_pii_entities(self, recognize_pii_entities_result, request_statistics):
-        model = _models.AnalyzeBatchActionsResult(
-            document_results=[recognize_pii_entities_result[0]],
-            statistics=request_statistics[0],
-            is_error=False,
-            action_type=_models.AnalyzeBatchActionsType.RECOGNIZE_PII_ENTITIES,
-            completed_on=datetime.datetime(1, 1, 1)
-        )
-
-        model_repr = (
-            "AnalyzeBatchActionsResult(document_results=[{}], is_error={}, action_type={}, completed_on={}, statistics={})".format(
-                recognize_pii_entities_result[1], False, "recognize_pii_entities", datetime.datetime(1, 1, 1), request_statistics[1]
-            )
-        )
-
-        assert repr(model) == model_repr
-
-    def test_analyze_batch_actions_result_extract_key_phrases(self, extract_key_phrases_result, request_statistics):
-        model = _models.AnalyzeBatchActionsResult(
-            document_results=[extract_key_phrases_result[0]],
-            statistics=request_statistics[0],
-            is_error=False,
-            action_type=_models.AnalyzeBatchActionsType.EXTRACT_KEY_PHRASES,
-            completed_on=datetime.datetime(1, 1, 1)
-        )
-
-        model_repr = (
-            "AnalyzeBatchActionsResult(document_results=[{}], is_error={}, action_type={}, completed_on={}, statistics={})".format(
-                extract_key_phrases_result[1], False, "extract_key_phrases", datetime.datetime(1, 1, 1), request_statistics[1]
-            )
-        )
-
-        assert repr(model) == model_repr
-
     def test_analyze_healthcare_entities_result_item(
         self, healthcare_entity, healthcare_relation, text_analytics_warning, text_document_statistics
     ):
-        model = _models.AnalyzeHealthcareEntitiesResultItem(
-            id=1,
+        model = _models.AnalyzeHealthcareEntitiesResult(
+            id="1",
             entities=[healthcare_entity[0]],
             entity_relations=[healthcare_relation[0]],
             warnings=[text_analytics_warning[0]],
             statistics=text_document_statistics[0],
-            is_error=False
         )
 
         model_repr = (
-            "AnalyzeHealthcareEntitiesResultItem(id=1, entities=[{}], entity_relations=[{}], warnings=[{}], statistics={}, is_error=False)".format(
-                healthcare_entity[1], healthcare_relation[1], text_analytics_warning[1], text_document_statistics[1]
+            "AnalyzeHealthcareEntitiesResult(id=1, entities=[{}], entity_relations=[{}], warnings=[{}], statistics={}, is_error=False, kind=Healthcare)".format(
+                healthcare_entity[1], healthcare_relation[1], text_analytics_warning[1], text_document_statistics[1], "{}"
             )
         )
 
-        assert repr(model) == model_repr[:1024]
+        assert repr(model)[:1024] == model_repr[:1024]

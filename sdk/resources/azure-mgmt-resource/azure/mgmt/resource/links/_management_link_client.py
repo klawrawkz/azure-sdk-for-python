@@ -9,12 +9,18 @@
 # regenerated.
 # --------------------------------------------------------------------------
 
-from azure.mgmt.core import ARMPipelineClient
-from msrest import Serializer, Deserializer
+from typing import Any, Optional, TYPE_CHECKING
 
+from azure.mgmt.core import ARMPipelineClient
 from azure.profiles import KnownProfiles, ProfileDefinition
 from azure.profiles.multiapiclient import MultiApiClientMixin
+
 from ._configuration import ManagementLinkClientConfiguration
+from ._serialization import Deserializer, Serializer
+
+if TYPE_CHECKING:
+    # pylint: disable=unused-import,ungrouped-imports
+    from azure.core.credentials import TokenCredential
 
 class _SDKClient(object):
     def __init__(self, *args, **kwargs):
@@ -34,19 +40,20 @@ class ManagementLinkClient(MultiApiClientMixin, _SDKClient):
     The api-version parameter sets the default API version if the operation
     group is not described in the profile.
 
-    :param credential: Credential needed for the client to connect to Azure.
+    :param credential: Credential needed for the client to connect to Azure. Required.
     :type credential: ~azure.core.credentials.TokenCredential
-    :param subscription_id: The ID of the target subscription.
+    :param subscription_id: The ID of the target subscription. Required.
     :type subscription_id: str
-    :param str api_version: API version to use if no profile is provided, or if
-     missing in profile.
-    :param str base_url: Service URL
+    :param api_version: API version to use if no profile is provided, or if missing in profile.
+    :type api_version: str
+    :param base_url: Service URL
+    :type base_url: str
     :param profile: A profile definition, from KnownProfiles to dict.
     :type profile: azure.profiles.KnownProfiles
     """
 
     DEFAULT_API_VERSION = '2016-09-01'
-    _PROFILE_TAG = "azure.mgmt.resource.ManagementLinkClient"
+    _PROFILE_TAG = "azure.mgmt.resource.links.ManagementLinkClient"
     LATEST_PROFILE = ProfileDefinition({
         _PROFILE_TAG: {
             None: DEFAULT_API_VERSION,
@@ -56,15 +63,13 @@ class ManagementLinkClient(MultiApiClientMixin, _SDKClient):
 
     def __init__(
         self,
-        credential,  # type: "TokenCredential"
-        subscription_id,  # type: str
-        api_version=None,
-        base_url=None,
-        profile=KnownProfiles.default,
-        **kwargs  # type: Any
+        credential: "TokenCredential",
+        subscription_id: str,
+        api_version: Optional[str]=None,
+        base_url: str = "https://management.azure.com",
+        profile: KnownProfiles=KnownProfiles.default,
+        **kwargs: Any
     ):
-        if not base_url:
-            base_url = 'https://management.azure.com'
         self._config = ManagementLinkClientConfiguration(credential, subscription_id, **kwargs)
         self._client = ARMPipelineClient(base_url=base_url, config=self._config, **kwargs)
         super(ManagementLinkClient, self).__init__(
@@ -80,7 +85,7 @@ class ManagementLinkClient(MultiApiClientMixin, _SDKClient):
     def models(cls, api_version=DEFAULT_API_VERSION):
         """Module depends on the API version:
 
-           * 2016-09-01: :mod:`v2016_09_01.models<azure.mgmt.resource.v2016_09_01.models>`
+           * 2016-09-01: :mod:`v2016_09_01.models<azure.mgmt.resource.links.v2016_09_01.models>`
         """
         if api_version == '2016-09-01':
             from .v2016_09_01 import models
@@ -91,26 +96,28 @@ class ManagementLinkClient(MultiApiClientMixin, _SDKClient):
     def operations(self):
         """Instance depends on the API version:
 
-           * 2016-09-01: :class:`Operations<azure.mgmt.resource.v2016_09_01.operations.Operations>`
+           * 2016-09-01: :class:`Operations<azure.mgmt.resource.links.v2016_09_01.operations.Operations>`
         """
         api_version = self._get_api_version('operations')
         if api_version == '2016-09-01':
             from .v2016_09_01.operations import Operations as OperationClass
         else:
             raise ValueError("API version {} does not have operation group 'operations'".format(api_version))
+        self._config.api_version = api_version
         return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
 
     @property
     def resource_links(self):
         """Instance depends on the API version:
 
-           * 2016-09-01: :class:`ResourceLinksOperations<azure.mgmt.resource.v2016_09_01.operations.ResourceLinksOperations>`
+           * 2016-09-01: :class:`ResourceLinksOperations<azure.mgmt.resource.links.v2016_09_01.operations.ResourceLinksOperations>`
         """
         api_version = self._get_api_version('resource_links')
         if api_version == '2016-09-01':
             from .v2016_09_01.operations import ResourceLinksOperations as OperationClass
         else:
             raise ValueError("API version {} does not have operation group 'resource_links'".format(api_version))
+        self._config.api_version = api_version
         return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
 
     def close(self):

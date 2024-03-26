@@ -1,5 +1,110 @@
 # Release History
 
+## 10.1.0b1 (2022-11-18)
+
+### Features Added
+
+  - Added operation group DatabaseMigrationsSqlDbOperations
+  - Added operation group DatabaseMigrationsSqlMiOperations
+  - Added operation group DatabaseMigrationsSqlVmOperations
+  - Added operation group SqlMigrationServicesOperations
+  - Model AzureActiveDirectoryApp has a new parameter ignore_azure_permissions
+  - Model ConnectToSourceSqlServerTaskInput has a new parameter encrypted_key_for_secure_fields
+  - Model ConnectToSourceSqlServerTaskProperties has a new parameter task_id
+  - Model ConnectToTargetSqlDbTaskInput has a new parameter query_object_counts
+  - Model ConnectToTargetSqlDbTaskProperties has a new parameter created_on
+  - Model DataMigrationService has a new parameter auto_stop_delay
+  - Model DataMigrationService has a new parameter delete_resources_on_stop
+  - Model DataMigrationServiceStatusResponse has a new parameter agent_configuration
+  - Model GetUserTablesSqlTaskInput has a new parameter encrypted_key_for_secure_fields
+  - Model GetUserTablesSqlTaskProperties has a new parameter task_id
+  - Model MigrateMySqlAzureDbForMySqlOfflineTaskInput has a new parameter encrypted_key_for_secure_fields
+  - Model MigrateMySqlAzureDbForMySqlOfflineTaskProperties has a new parameter is_cloneable
+  - Model MigrateMySqlAzureDbForMySqlOfflineTaskProperties has a new parameter task_id
+  - Model MigratePostgreSqlAzureDbForPostgreSqlSyncDatabaseInput has a new parameter id
+  - Model MigratePostgreSqlAzureDbForPostgreSqlSyncTaskInput has a new parameter encrypted_key_for_secure_fields
+  - Model MigratePostgreSqlAzureDbForPostgreSqlSyncTaskInput has a new parameter started_on
+  - Model MigratePostgreSqlAzureDbForPostgreSqlSyncTaskOutputError has a new parameter events
+  - Model MigratePostgreSqlAzureDbForPostgreSqlSyncTaskOutputMigrationLevel has a new parameter database_count
+  - Model MigratePostgreSqlAzureDbForPostgreSqlSyncTaskProperties has a new parameter created_on
+  - Model MigratePostgreSqlAzureDbForPostgreSqlSyncTaskProperties has a new parameter is_cloneable
+  - Model MigratePostgreSqlAzureDbForPostgreSqlSyncTaskProperties has a new parameter task_id
+  - Model MigrateSchemaSqlServerSqlDbDatabaseInput has a new parameter id
+  - Model MigrateSchemaSqlServerSqlDbTaskInput has a new parameter encrypted_key_for_secure_fields
+  - Model MigrateSchemaSqlServerSqlDbTaskInput has a new parameter started_on
+  - Model MigrateSchemaSqlServerSqlDbTaskProperties has a new parameter created_on
+  - Model MigrateSchemaSqlServerSqlDbTaskProperties has a new parameter is_cloneable
+  - Model MigrateSchemaSqlServerSqlDbTaskProperties has a new parameter task_id
+  - Model MigrateSqlServerSqlDbDatabaseInput has a new parameter id
+  - Model MigrateSqlServerSqlDbDatabaseInput has a new parameter schema_setting
+  - Model MigrateSqlServerSqlDbTaskInput has a new parameter encrypted_key_for_secure_fields
+  - Model MigrateSqlServerSqlDbTaskInput has a new parameter started_on
+  - Model MigrateSqlServerSqlDbTaskProperties has a new parameter created_on
+  - Model MigrateSqlServerSqlDbTaskProperties has a new parameter is_cloneable
+  - Model MigrateSqlServerSqlDbTaskProperties has a new parameter task_id
+  - Model MigrateSqlServerSqlMIDatabaseInput has a new parameter id
+  - Model MigrateSqlServerSqlMISyncTaskInput has a new parameter number_of_parallel_database_migrations
+  - Model MigrateSqlServerSqlMISyncTaskProperties has a new parameter created_on
+  - Model MigrateSqlServerSqlMITaskInput has a new parameter encrypted_key_for_secure_fields
+  - Model MigrateSqlServerSqlMITaskInput has a new parameter started_on
+  - Model MigrateSqlServerSqlMITaskProperties has a new parameter created_on
+  - Model MigrateSqlServerSqlMITaskProperties has a new parameter is_cloneable
+  - Model MigrateSqlServerSqlMITaskProperties has a new parameter parent_task_id
+  - Model MigrateSqlServerSqlMITaskProperties has a new parameter task_id
+  - Model MigrateSyncCompleteCommandProperties has a new parameter command_id
+  - Model MongoDbConnectionInfo has a new parameter additional_settings
+  - Model MongoDbConnectionInfo has a new parameter authentication
+  - Model MongoDbConnectionInfo has a new parameter data_source
+  - Model MongoDbConnectionInfo has a new parameter encrypt_connection
+  - Model MongoDbConnectionInfo has a new parameter enforce_ssl
+  - Model MongoDbConnectionInfo has a new parameter port
+  - Model MongoDbConnectionInfo has a new parameter server_brand_version
+  - Model MongoDbConnectionInfo has a new parameter server_name
+  - Model MongoDbConnectionInfo has a new parameter server_version
+  - Model MongoDbConnectionInfo has a new parameter trust_server_certificate
+  - Model MySqlConnectionInfo has a new parameter additional_settings
+  - Model MySqlConnectionInfo has a new parameter authentication
+  - Model MySqlConnectionInfo has a new parameter data_source
+  - Model OracleConnectionInfo has a new parameter authentication
+  - Model OracleConnectionInfo has a new parameter port
+  - Model OracleConnectionInfo has a new parameter server_name
+  - Model OracleConnectionInfo has a new parameter server_version
+  - Model PostgreSqlConnectionInfo has a new parameter additional_settings
+  - Model PostgreSqlConnectionInfo has a new parameter authentication
+  - Model PostgreSqlConnectionInfo has a new parameter data_source
+  - Model PostgreSqlConnectionInfo has a new parameter server_brand_version
+  - Model PostgreSqlConnectionInfo has a new parameter server_version
+  - Model Project has a new parameter azure_authentication_info
+  - Model Project has a new parameter etag
+  - Model SchemaMigrationSetting has a new parameter file_name
+  - Model SqlConnectionInfo has a new parameter port
+  - Model SqlConnectionInfo has a new parameter resource_id
+  - Model SqlConnectionInfo has a new parameter server_brand_version
+  - Model SqlConnectionInfo has a new parameter server_name
+  - Model SqlConnectionInfo has a new parameter server_version
+
+## 10.0.0 (2021-08-19)
+
+**Features**
+
+  - Model ConnectToTargetAzureDbForMySqlTaskInput has a new parameter is_offline_migration
+  - Model MySqlConnectionInfo has a new parameter encrypt_connection
+  - Model TrackedResource has a new parameter system_data
+  - Model Project has a new parameter system_data
+  - Model ApiError has a new parameter system_data
+  - Model ProjectFile has a new parameter system_data
+  - Model DataMigrationService has a new parameter system_data
+  - Model ConnectToSourceMySqlTaskInput has a new parameter is_offline_migration
+  - Model ProjectTask has a new parameter system_data
+
+**Breaking changes**
+
+  - Parameter result_type of model MigrateSchemaSqlServerSqlDbTaskOutputError is now required
+  - Parameter result_type of model MigrateSchemaSqlServerSqlDbTaskOutput is now required
+  - Parameter result_type of model MigrateSchemaSqlServerSqlDbTaskOutputMigrationLevel is now required
+  - Parameter result_type of model MigrateSchemaSqlServerSqlDbTaskOutputDatabaseLevel is now required
+  - Parameter result_type of model MigrateSchemaSqlTaskOutputError is now required
+
 ## 9.0.0 (2021-04-07)
 
 **Features**
@@ -37,7 +142,7 @@ This version uses a next-generation code generator that introduces important bre
   - `credentials` parameter has been renamed `credential`
 
 - The `config` attribute no longer exists on a client, configuration should be passed as kwarg. Example: `MyClient(credential, subscription_id, enable_logging=True)`. For a complete set of
-  supported options, see the [parameters accept in init documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
+  supported options, see the [parameters accept in init documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
 - You can't import a `version` module anymore, use `__version__` instead
 - Operations that used to return a `msrest.polling.LROPoller` now returns a `azure.core.polling.LROPoller` and are prefixed with `begin_`.
 - Exceptions tree have been simplified and most exceptions are now `azure.core.exceptions.HttpResponseError` (`CloudError` has been removed).
@@ -45,13 +150,13 @@ This version uses a next-generation code generator that introduces important bre
 
   - `raw` has been removed. Equivalent feature can be found using `cls`, a callback that will give access to internal HTTP response for advanced user
   - For a complete set of
-  supported options, see the [parameters accept in Request documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
+  supported options, see the [parameters accept in Request documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
 
 **General new features**
 
 - Type annotations support using `typing`. SDKs are mypy ready.
 - This client has now stable and official support for async. Check the `aio` namespace of your package to find the async client.
-- This client now support natively tracing library like OpenCensus or OpenTelemetry. See this [tracing quickstart](https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/core/azure-core-tracing-opentelemetry) for an overview.
+- This client now support natively tracing library like OpenCensus or OpenTelemetry. See this [tracing quickstart](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/core/azure-core-tracing-opentelemetry) for an overview.
 
 ## 4.0.0 (2019-10-24)
 

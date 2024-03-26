@@ -4,64 +4,58 @@
 # ------------------------------------
 import abc
 import time
-from typing import TYPE_CHECKING
+from typing import Any, Callable, Dict, Optional
 
 from msal import TokenCache
 
-from azure.core.configuration import Configuration
 from azure.core.credentials import AccessToken
-from azure.core.exceptions import ClientAuthenticationError
-from azure.core.pipeline import Pipeline
-from azure.core.pipeline.policies import (
-    ContentDecodePolicy,
-    DistributedTracingPolicy,
-    HeadersPolicy,
-    HttpLoggingPolicy,
-    UserAgentPolicy,
-    RetryPolicy,
-    NetworkTraceLoggingPolicy,
-)
-from azure.identity._internal import _scopes_to_resource
-
-from .user_agent import USER_AGENT
-
-try:
-    ABC = abc.ABC
-except AttributeError:  # Python 2.7, abc exists, but not ABC
-    ABC = abc.ABCMeta("ABC", (object,), {"__slots__": ()})  # type: ignore
-
-if TYPE_CHECKING:
-    # pylint:disable=ungrouped-imports
-    from typing import Any, Callable, List, Optional, Union
-    from azure.core.pipeline import PipelineResponse
-    from azure.core.pipeline.policies import HTTPPolicy, SansIOHTTPPolicy
-    from azure.core.pipeline.transport import HttpTransport, HttpRequest
-
-    PolicyType = Union[HTTPPolicy, SansIOHTTPPolicy]
+from azure.core.exceptions import ClientAuthenticationError, DecodeError
+from azure.core.pipeline.policies import ContentDecodePolicy
+from azure.core.pipeline import PipelineResponse
+from azure.core.pipeline.transport import HttpRequest
+from .._internal import _scopes_to_resource
+from .._internal.pipeline import build_pipeline
 
 
-class ManagedIdentityClientBase(ABC):
+class ManagedIdentityClientBase(abc.ABC):
     # pylint:disable=missing-client-constructor-parameter-credential
-    def __init__(self, request_factory, client_id=None, **kwargs):
-        # type: (Callable[[str, dict], HttpRequest], Optional[str], **Any) -> None
-        self._cache = kwargs.pop("_cache", None) or TokenCache()
+    def __init__(
+        self,
+        request_factory: Callable[[str, dict], HttpRequest],
+        client_id: Optional[str] = None,
+        identity_config: Optional[Dict] = None,
+        **kwargs: Any
+    ) -> None:
+        self._custom_cache = False
+        self._cache = kwargs.pop("_cache", None)
+        if self._cache:
+            self._custom_cache = True
+        else:
+            self._cache = TokenCache()
         self._content_callback = kwargs.pop("_content_callback", None)
-        self._identity_config = kwargs.pop("_identity_config", None) or {}
+        self._identity_config = identity_config or {}
         if client_id:
             self._identity_config["client_id"] = client_id
-
-        config = kwargs.pop("_config", None) or _get_configuration(**kwargs)
-        self._pipeline = self._build_pipeline(config, **kwargs)
-
+        self._pipeline = self._build_pipeline(**kwargs)
         self._request_factory = request_factory
 
-    def _process_response(self, response, request_time):
-        # type: (PipelineResponse, int) -> AccessToken
+    def _process_response(self, response: PipelineResponse, request_time: int) -> AccessToken:
+        content = response.context.get(ContentDecodePolicy.CONTEXT_NAME)
+        if not content:
+            try:
+                content = ContentDecodePolicy.deserialize_from_text(
+                    response.http_response.text(), mime_type="application/json"
+                )
+            except DecodeError as ex:
+                if response.http_response.content_type.startswith("application/json"):
+                    message = "Failed to deserialize JSON from response"
+                else:
+                    message = 'Unexpected content type "{}"'.format(response.http_response.content_type)
+                raise ClientAuthenticationError(message=message, response=response.http_response) from ex
 
-        # ContentDecodePolicy sets this, and should have raised if it couldn't deserialize the response
-        content = ContentDecodePolicy.deserialize_from_http_generics(response.http_response)  # type: dict
         if not content:
             raise ClientAuthenticationError(message="No token received.", response=response.http_response)
+
         if "access_token" not in content or not ("expires_in" in content or "expires_on" in content):
             if content and "access_token" in content:
                 content["access_token"] = "****"
@@ -79,13 +73,13 @@ class ManagedIdentityClientBase(ABC):
 
         # caching is the final step because TokenCache.add mutates its "event"
         self._cache.add(
-            event={"response": content, "scope": [content["resource"]]}, now=request_time,
+            event={"response": content, "scope": [content["resource"]]},
+            now=request_time,
         )
 
         return token
 
-    def get_cached_token(self, *scopes):
-        # type: (*str) -> Optional[AccessToken]
+    def get_cached_token(self, *scopes: str) -> Optional[AccessToken]:
         resource = _scopes_to_resource(*scopes)
         tokens = self._cache.find(TokenCache.CredentialType.ACCESS_TOKEN, target=[resource])
         for token in tokens:
@@ -99,46 +93,43 @@ class ManagedIdentityClientBase(ABC):
         pass
 
     @abc.abstractmethod
-    def _build_pipeline(self, config, policies=None, transport=None, **kwargs):
+    def _build_pipeline(self, **kwargs):
         pass
+
+    def __getstate__(self) -> Dict[str, Any]:
+        state = self.__dict__.copy()
+        # Remove the non-picklable entries
+        if not self._custom_cache:
+            del state["_cache"]
+        return state
+
+    def __setstate__(self, state: Dict[str, Any]) -> None:
+        self.__dict__.update(state)
+        # Re-create the unpickable entries
+        if not self._custom_cache:
+            self._cache = TokenCache()
 
 
 class ManagedIdentityClient(ManagedIdentityClientBase):
-    def request_token(self, *scopes, **kwargs):  # pylint:disable=unused-argument
-        # type: (*str, **Any) -> AccessToken
+    def __enter__(self) -> "ManagedIdentityClient":
+        self._pipeline.__enter__()
+        return self
+
+    def __exit__(self, *args: Any) -> None:
+        self._pipeline.__exit__(*args)
+
+    def close(self) -> None:
+        self.__exit__()
+
+    def request_token(self, *scopes: str, **kwargs: Any) -> AccessToken:
         resource = _scopes_to_resource(*scopes)
         request = self._request_factory(resource, self._identity_config)
+        kwargs.pop("tenant_id", None)
+        kwargs.pop("claims", None)
         request_time = int(time.time())
-        response = self._pipeline.run(request, retry_on_methods=[request.method])
+        response = self._pipeline.run(request, retry_on_methods=[request.method], **kwargs)
         token = self._process_response(response, request_time)
         return token
 
-    def _build_pipeline(self, config, policies=None, transport=None, **kwargs):  # pylint:disable=no-self-use
-        # type: (Configuration, Optional[List[PolicyType]], Optional[HttpTransport], **Any) -> Pipeline
-        if policies is None:  # [] is a valid policy list
-            policies = _get_policies(config, **kwargs)
-        if not transport:
-            from azure.core.pipeline.transport import RequestsTransport
-
-            transport = RequestsTransport(**kwargs)
-
-        return Pipeline(transport=transport, policies=policies)
-
-
-def _get_policies(config, **kwargs):
-    return [
-        HeadersPolicy(**kwargs),
-        UserAgentPolicy(base_user_agent=USER_AGENT, **kwargs),
-        config.proxy_policy,
-        config.retry_policy,
-        NetworkTraceLoggingPolicy(**kwargs),
-        DistributedTracingPolicy(**kwargs),
-        HttpLoggingPolicy(**kwargs),
-    ]
-
-
-def _get_configuration(**kwargs):
-    # type: (**Any) -> Configuration
-    config = Configuration()
-    config.retry_policy = RetryPolicy(**kwargs)
-    return config
+    def _build_pipeline(self, **kwargs):
+        return build_pipeline(**kwargs)

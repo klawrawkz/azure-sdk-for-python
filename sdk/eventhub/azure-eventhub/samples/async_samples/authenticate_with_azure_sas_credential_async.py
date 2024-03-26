@@ -9,18 +9,13 @@
 Example to demonstrate utilizing azure.core.credentials.AzureSasCredential to authenticate with Event Hubs.
 """
 
-# pylint: disable=C0111
-
 import asyncio
 import os
 import time
 import hmac
 import hashlib
 import base64
-try:
-    from urllib.parse import quote as url_parse_quote
-except ImportError:
-    from urllib import pathname2url as url_parse_quote
+from urllib.parse import quote as url_parse_quote
 
 from azure.core.credentials import AzureSasCredential
 from azure.eventhub.aio import EventHubProducerClient
@@ -66,7 +61,6 @@ async def create_with_sas_token():
         await producer_client.send_batch(event_data_batch)
 
 
-loop = asyncio.get_event_loop()
 start_time = time.time()
-loop.run_until_complete(create_with_sas_token())
+asyncio.run(create_with_sas_token())
 print("Send messages in {} seconds.".format(time.time() - start_time))

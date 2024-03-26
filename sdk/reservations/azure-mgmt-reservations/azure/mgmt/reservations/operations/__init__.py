@@ -6,24 +6,32 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
-from ._quota_operations import QuotaOperations
-from ._quota_request_status_operations import QuotaRequestStatusOperations
-from ._auto_quota_increase_operations import AutoQuotaIncreaseOperations
 from ._reservation_operations import ReservationOperations
 from ._azure_reservation_api_operations import AzureReservationAPIOperationsMixin
 from ._reservation_order_operations import ReservationOrderOperations
 from ._operation_operations import OperationOperations
+from ._calculate_refund_operations import CalculateRefundOperations
+from ._return_operations_operations import ReturnOperations
 from ._calculate_exchange_operations import CalculateExchangeOperations
 from ._exchange_operations import ExchangeOperations
+from ._quota_operations import QuotaOperations
+from ._quota_request_status_operations import QuotaRequestStatusOperations
+
+from ._patch import __all__ as _patch_all
+from ._patch import *  # pylint: disable=unused-wildcard-import
+from ._patch import patch_sdk as _patch_sdk
 
 __all__ = [
-    'QuotaOperations',
-    'QuotaRequestStatusOperations',
-    'AutoQuotaIncreaseOperations',
-    'ReservationOperations',
-    'AzureReservationAPIOperationsMixin',
-    'ReservationOrderOperations',
-    'OperationOperations',
-    'CalculateExchangeOperations',
-    'ExchangeOperations',
+    "ReservationOperations",
+    "AzureReservationAPIOperationsMixin",
+    "ReservationOrderOperations",
+    "OperationOperations",
+    "CalculateRefundOperations",
+    "ReturnOperations",
+    "CalculateExchangeOperations",
+    "ExchangeOperations",
+    "QuotaOperations",
+    "QuotaRequestStatusOperations",
 ]
+__all__.extend([p for p in _patch_all if p not in __all__])
+_patch_sdk()

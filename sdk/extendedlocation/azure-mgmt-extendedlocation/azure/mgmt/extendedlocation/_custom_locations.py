@@ -9,12 +9,18 @@
 # regenerated.
 # --------------------------------------------------------------------------
 
-from azure.mgmt.core import ARMPipelineClient
-from msrest import Serializer, Deserializer
+from typing import Any, Optional, TYPE_CHECKING
 
+from azure.mgmt.core import ARMPipelineClient
 from azure.profiles import KnownProfiles, ProfileDefinition
 from azure.profiles.multiapiclient import MultiApiClientMixin
+
 from ._configuration import CustomLocationsConfiguration
+from ._serialization import Deserializer, Serializer
+
+if TYPE_CHECKING:
+    # pylint: disable=unused-import,ungrouped-imports
+    from azure.core.credentials import TokenCredential
 
 class _SDKClient(object):
     def __init__(self, *args, **kwargs):
@@ -34,19 +40,20 @@ class CustomLocations(MultiApiClientMixin, _SDKClient):
     The api-version parameter sets the default API version if the operation
     group is not described in the profile.
 
-    :param credential: Credential needed for the client to connect to Azure.
+    :param credential: Credential needed for the client to connect to Azure. Required.
     :type credential: ~azure.core.credentials.TokenCredential
-    :param subscription_id: The ID of the target subscription.
+    :param subscription_id: The ID of the target subscription. Required.
     :type subscription_id: str
-    :param str api_version: API version to use if no profile is provided, or if
-     missing in profile.
-    :param str base_url: Service URL
+    :param api_version: API version to use if no profile is provided, or if missing in profile.
+    :type api_version: str
+    :param base_url: Service URL
+    :type base_url: str
     :param profile: A profile definition, from KnownProfiles to dict.
     :type profile: azure.profiles.KnownProfiles
     :keyword int polling_interval: Default waiting time between two polls for LRO operations if no Retry-After header is present.
     """
 
-    DEFAULT_API_VERSION = '2021-03-15-preview'
+    DEFAULT_API_VERSION = '2021-08-15'
     _PROFILE_TAG = "azure.mgmt.extendedlocation.CustomLocations"
     LATEST_PROFILE = ProfileDefinition({
         _PROFILE_TAG: {
@@ -57,15 +64,13 @@ class CustomLocations(MultiApiClientMixin, _SDKClient):
 
     def __init__(
         self,
-        credential,  # type: "TokenCredential"
-        subscription_id,  # type: str
-        api_version=None,
-        base_url=None,
-        profile=KnownProfiles.default,
-        **kwargs  # type: Any
+        credential: "TokenCredential",
+        subscription_id: str,
+        api_version: Optional[str]=None,
+        base_url: str = "https://management.azure.com",
+        profile: KnownProfiles=KnownProfiles.default,
+        **kwargs: Any
     ):
-        if not base_url:
-            base_url = 'https://management.azure.com'
         self._config = CustomLocationsConfiguration(credential, subscription_id, **kwargs)
         self._client = ARMPipelineClient(base_url=base_url, config=self._config, **kwargs)
         super(CustomLocations, self).__init__(
@@ -81,14 +86,18 @@ class CustomLocations(MultiApiClientMixin, _SDKClient):
     def models(cls, api_version=DEFAULT_API_VERSION):
         """Module depends on the API version:
 
-           * 2020-07-15-privatepreview: :mod:`v2020_07_15_privatepreview.models<azure.mgmt.extendedlocation.v2020_07_15_privatepreview.models>`
            * 2021-03-15-preview: :mod:`v2021_03_15_preview.models<azure.mgmt.extendedlocation.v2021_03_15_preview.models>`
+           * 2021-08-15: :mod:`v2021_08_15.models<azure.mgmt.extendedlocation.v2021_08_15.models>`
+           * 2021-08-31-preview: :mod:`v2021_08_31_preview.models<azure.mgmt.extendedlocation.v2021_08_31_preview.models>`
         """
-        if api_version == '2020-07-15-privatepreview':
-            from .v2020_07_15_privatepreview import models
-            return models
-        elif api_version == '2021-03-15-preview':
+        if api_version == '2021-03-15-preview':
             from .v2021_03_15_preview import models
+            return models
+        elif api_version == '2021-08-15':
+            from .v2021_08_15 import models
+            return models
+        elif api_version == '2021-08-31-preview':
+            from .v2021_08_31_preview import models
             return models
         raise ValueError("API version {} is not available".format(api_version))
 
@@ -96,16 +105,34 @@ class CustomLocations(MultiApiClientMixin, _SDKClient):
     def custom_locations(self):
         """Instance depends on the API version:
 
-           * 2020-07-15-privatepreview: :class:`CustomLocationsOperations<azure.mgmt.extendedlocation.v2020_07_15_privatepreview.operations.CustomLocationsOperations>`
            * 2021-03-15-preview: :class:`CustomLocationsOperations<azure.mgmt.extendedlocation.v2021_03_15_preview.operations.CustomLocationsOperations>`
+           * 2021-08-15: :class:`CustomLocationsOperations<azure.mgmt.extendedlocation.v2021_08_15.operations.CustomLocationsOperations>`
+           * 2021-08-31-preview: :class:`CustomLocationsOperations<azure.mgmt.extendedlocation.v2021_08_31_preview.operations.CustomLocationsOperations>`
         """
         api_version = self._get_api_version('custom_locations')
-        if api_version == '2020-07-15-privatepreview':
-            from .v2020_07_15_privatepreview.operations import CustomLocationsOperations as OperationClass
-        elif api_version == '2021-03-15-preview':
+        if api_version == '2021-03-15-preview':
             from .v2021_03_15_preview.operations import CustomLocationsOperations as OperationClass
+        elif api_version == '2021-08-15':
+            from .v2021_08_15.operations import CustomLocationsOperations as OperationClass
+        elif api_version == '2021-08-31-preview':
+            from .v2021_08_31_preview.operations import CustomLocationsOperations as OperationClass
         else:
             raise ValueError("API version {} does not have operation group 'custom_locations'".format(api_version))
+        self._config.api_version = api_version
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+
+    @property
+    def resource_sync_rules(self):
+        """Instance depends on the API version:
+
+           * 2021-08-31-preview: :class:`ResourceSyncRulesOperations<azure.mgmt.extendedlocation.v2021_08_31_preview.operations.ResourceSyncRulesOperations>`
+        """
+        api_version = self._get_api_version('resource_sync_rules')
+        if api_version == '2021-08-31-preview':
+            from .v2021_08_31_preview.operations import ResourceSyncRulesOperations as OperationClass
+        else:
+            raise ValueError("API version {} does not have operation group 'resource_sync_rules'".format(api_version))
+        self._config.api_version = api_version
         return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
 
     def close(self):

@@ -26,6 +26,7 @@ try:
     from ._models_py3 import AzureFileShareConfiguration
     from ._models_py3 import BatchError, BatchErrorException
     from ._models_py3 import BatchErrorDetail
+    from ._models_py3 import BatchPoolIdentity
     from ._models_py3 import Certificate
     from ._models_py3 import CertificateAddOptions
     from ._models_py3 import CertificateAddParameter
@@ -48,10 +49,13 @@ try:
     from ._models_py3 import ComputeNodeEnableSchedulingOptions
     from ._models_py3 import ComputeNodeEndpointConfiguration
     from ._models_py3 import ComputeNodeError
+    from ._models_py3 import ComputeNodeExtensionGetOptions
+    from ._models_py3 import ComputeNodeExtensionListOptions
     from ._models_py3 import ComputeNodeGetOptions
     from ._models_py3 import ComputeNodeGetRemoteDesktopOptions
     from ._models_py3 import ComputeNodeGetRemoteLoginSettingsOptions
     from ._models_py3 import ComputeNodeGetRemoteLoginSettingsResult
+    from ._models_py3 import ComputeNodeIdentityReference
     from ._models_py3 import ComputeNodeInformation
     from ._models_py3 import ComputeNodeListOptions
     from ._models_py3 import ComputeNodeRebootOptions
@@ -63,6 +67,7 @@ try:
     from ._models_py3 import ContainerRegistry
     from ._models_py3 import DataDisk
     from ._models_py3 import DeleteCertificateError
+    from ._models_py3 import DiffDiskSettings
     from ._models_py3 import DiskEncryptionConfiguration
     from ._models_py3 import EnvironmentSetting
     from ._models_py3 import ErrorMessage
@@ -79,10 +84,12 @@ try:
     from ._models_py3 import FileListFromComputeNodeOptions
     from ._models_py3 import FileListFromTaskOptions
     from ._models_py3 import FileProperties
+    from ._models_py3 import HttpHeader
     from ._models_py3 import ImageInformation
     from ._models_py3 import ImageReference
     from ._models_py3 import InboundEndpoint
     from ._models_py3 import InboundNATPool
+    from ._models_py3 import InstanceViewStatus
     from ._models_py3 import JobAddOptions
     from ._models_py3 import JobAddParameter
     from ._models_py3 import JobConstraints
@@ -91,7 +98,6 @@ try:
     from ._models_py3 import JobDisableParameter
     from ._models_py3 import JobEnableOptions
     from ._models_py3 import JobExecutionInformation
-    from ._models_py3 import JobGetAllLifetimeStatisticsOptions
     from ._models_py3 import JobGetOptions
     from ._models_py3 import JobGetTaskCountsOptions
     from ._models_py3 import JobListFromJobScheduleOptions
@@ -129,6 +135,7 @@ try:
     from ._models_py3 import JobUpdateOptions
     from ._models_py3 import JobUpdateParameter
     from ._models_py3 import LinuxUserConfiguration
+    from ._models_py3 import ManagedDisk
     from ._models_py3 import MetadataItem
     from ._models_py3 import MountConfiguration
     from ._models_py3 import MultiInstanceSettings
@@ -140,10 +147,13 @@ try:
     from ._models_py3 import NodeCounts
     from ._models_py3 import NodeDisableSchedulingParameter
     from ._models_py3 import NodeFile
+    from ._models_py3 import NodePlacementConfiguration
     from ._models_py3 import NodeRebootParameter
     from ._models_py3 import NodeReimageParameter
     from ._models_py3 import NodeRemoveParameter
     from ._models_py3 import NodeUpdateUserParameter
+    from ._models_py3 import NodeVMExtension
+    from ._models_py3 import OSDisk
     from ._models_py3 import OutputFile
     from ._models_py3 import OutputFileBlobContainerDestination
     from ._models_py3 import OutputFileDestination
@@ -158,7 +168,6 @@ try:
     from ._models_py3 import PoolEvaluateAutoScaleOptions
     from ._models_py3 import PoolEvaluateAutoScaleParameter
     from ._models_py3 import PoolExistsOptions
-    from ._models_py3 import PoolGetAllLifetimeStatisticsOptions
     from ._models_py3 import PoolGetOptions
     from ._models_py3 import PoolInformation
     from ._models_py3 import PoolListOptions
@@ -181,6 +190,8 @@ try:
     from ._models_py3 import ResourceFile
     from ._models_py3 import ResourceStatistics
     from ._models_py3 import Schedule
+    from ._models_py3 import SecurityProfile
+    from ._models_py3 import ServiceArtifactReference
     from ._models_py3 import StartTask
     from ._models_py3 import StartTaskInformation
     from ._models_py3 import SubtaskInformation
@@ -211,12 +222,17 @@ try:
     from ._models_py3 import TaskTerminateOptions
     from ._models_py3 import TaskUpdateOptions
     from ._models_py3 import TaskUpdateParameter
+    from ._models_py3 import UefiSettings
     from ._models_py3 import UploadBatchServiceLogsConfiguration
     from ._models_py3 import UploadBatchServiceLogsResult
     from ._models_py3 import UsageStatistics
     from ._models_py3 import UserAccount
+    from ._models_py3 import UserAssignedIdentity
     from ._models_py3 import UserIdentity
     from ._models_py3 import VirtualMachineConfiguration
+    from ._models_py3 import VirtualMachineInfo
+    from ._models_py3 import VMExtension
+    from ._models_py3 import VMExtensionInstanceView
     from ._models_py3 import WindowsConfiguration
     from ._models_py3 import WindowsUserConfiguration
 except (SyntaxError, ImportError):
@@ -236,6 +252,7 @@ except (SyntaxError, ImportError):
     from ._models import AzureFileShareConfiguration
     from ._models import BatchError, BatchErrorException
     from ._models import BatchErrorDetail
+    from ._models import BatchPoolIdentity
     from ._models import Certificate
     from ._models import CertificateAddOptions
     from ._models import CertificateAddParameter
@@ -258,10 +275,13 @@ except (SyntaxError, ImportError):
     from ._models import ComputeNodeEnableSchedulingOptions
     from ._models import ComputeNodeEndpointConfiguration
     from ._models import ComputeNodeError
+    from ._models import ComputeNodeExtensionGetOptions
+    from ._models import ComputeNodeExtensionListOptions
     from ._models import ComputeNodeGetOptions
     from ._models import ComputeNodeGetRemoteDesktopOptions
     from ._models import ComputeNodeGetRemoteLoginSettingsOptions
     from ._models import ComputeNodeGetRemoteLoginSettingsResult
+    from ._models import ComputeNodeIdentityReference
     from ._models import ComputeNodeInformation
     from ._models import ComputeNodeListOptions
     from ._models import ComputeNodeRebootOptions
@@ -273,6 +293,7 @@ except (SyntaxError, ImportError):
     from ._models import ContainerRegistry
     from ._models import DataDisk
     from ._models import DeleteCertificateError
+    from ._models import DiffDiskSettings
     from ._models import DiskEncryptionConfiguration
     from ._models import EnvironmentSetting
     from ._models import ErrorMessage
@@ -289,10 +310,12 @@ except (SyntaxError, ImportError):
     from ._models import FileListFromComputeNodeOptions
     from ._models import FileListFromTaskOptions
     from ._models import FileProperties
+    from ._models import HttpHeader
     from ._models import ImageInformation
     from ._models import ImageReference
     from ._models import InboundEndpoint
     from ._models import InboundNATPool
+    from ._models import InstanceViewStatus
     from ._models import JobAddOptions
     from ._models import JobAddParameter
     from ._models import JobConstraints
@@ -301,7 +324,6 @@ except (SyntaxError, ImportError):
     from ._models import JobDisableParameter
     from ._models import JobEnableOptions
     from ._models import JobExecutionInformation
-    from ._models import JobGetAllLifetimeStatisticsOptions
     from ._models import JobGetOptions
     from ._models import JobGetTaskCountsOptions
     from ._models import JobListFromJobScheduleOptions
@@ -339,6 +361,7 @@ except (SyntaxError, ImportError):
     from ._models import JobUpdateOptions
     from ._models import JobUpdateParameter
     from ._models import LinuxUserConfiguration
+    from ._models import ManagedDisk
     from ._models import MetadataItem
     from ._models import MountConfiguration
     from ._models import MultiInstanceSettings
@@ -350,10 +373,13 @@ except (SyntaxError, ImportError):
     from ._models import NodeCounts
     from ._models import NodeDisableSchedulingParameter
     from ._models import NodeFile
+    from ._models import NodePlacementConfiguration
     from ._models import NodeRebootParameter
     from ._models import NodeReimageParameter
     from ._models import NodeRemoveParameter
     from ._models import NodeUpdateUserParameter
+    from ._models import NodeVMExtension
+    from ._models import OSDisk
     from ._models import OutputFile
     from ._models import OutputFileBlobContainerDestination
     from ._models import OutputFileDestination
@@ -368,7 +394,6 @@ except (SyntaxError, ImportError):
     from ._models import PoolEvaluateAutoScaleOptions
     from ._models import PoolEvaluateAutoScaleParameter
     from ._models import PoolExistsOptions
-    from ._models import PoolGetAllLifetimeStatisticsOptions
     from ._models import PoolGetOptions
     from ._models import PoolInformation
     from ._models import PoolListOptions
@@ -391,6 +416,8 @@ except (SyntaxError, ImportError):
     from ._models import ResourceFile
     from ._models import ResourceStatistics
     from ._models import Schedule
+    from ._models import SecurityProfile
+    from ._models import ServiceArtifactReference
     from ._models import StartTask
     from ._models import StartTaskInformation
     from ._models import SubtaskInformation
@@ -421,12 +448,17 @@ except (SyntaxError, ImportError):
     from ._models import TaskTerminateOptions
     from ._models import TaskUpdateOptions
     from ._models import TaskUpdateParameter
+    from ._models import UefiSettings
     from ._models import UploadBatchServiceLogsConfiguration
     from ._models import UploadBatchServiceLogsResult
     from ._models import UsageStatistics
     from ._models import UserAccount
+    from ._models import UserAssignedIdentity
     from ._models import UserIdentity
     from ._models import VirtualMachineConfiguration
+    from ._models import VirtualMachineInfo
+    from ._models import VMExtension
+    from ._models import VMExtensionInstanceView
     from ._models import WindowsConfiguration
     from ._models import WindowsUserConfiguration
 from ._paged_models import ApplicationSummaryPaged
@@ -439,6 +471,7 @@ from ._paged_models import ComputeNodePaged
 from ._paged_models import ImageInformationPaged
 from ._paged_models import JobPreparationAndReleaseTaskExecutionInformationPaged
 from ._paged_models import NodeFilePaged
+from ._paged_models import NodeVMExtensionPaged
 from ._paged_models import PoolNodeCountsPaged
 from ._paged_models import PoolUsageMetricsPaged
 from ._batch_service_client_enums import (
@@ -459,11 +492,16 @@ from ._batch_service_client_enums import (
     CertificateVisibility,
     CachingType,
     StorageAccountType,
+    ContainerType,
     DiskEncryptionTarget,
+    NodePlacementPolicyType,
+    DiffDiskPlacement,
+    SecurityTypes,
     DynamicVNetAssignmentScope,
     InboundEndpointProtocol,
     NetworkSecurityGroupRuleAccess,
     IPAddressProvisioningType,
+    NodeCommunicationMode,
     PoolLifetimeOption,
     OnAllTasksComplete,
     OnTaskFailure,
@@ -473,8 +511,10 @@ from ._batch_service_client_enums import (
     JobPreparationTaskState,
     TaskExecutionResult,
     JobReleaseTaskState,
+    StatusLevelTypes,
     PoolState,
     AllocationState,
+    PoolIdentityType,
     TaskState,
     TaskAddStatus,
     SubtaskState,
@@ -505,6 +545,7 @@ __all__ = [
     'AzureFileShareConfiguration',
     'BatchError', 'BatchErrorException',
     'BatchErrorDetail',
+    'BatchPoolIdentity',
     'Certificate',
     'CertificateAddOptions',
     'CertificateAddParameter',
@@ -527,10 +568,13 @@ __all__ = [
     'ComputeNodeEnableSchedulingOptions',
     'ComputeNodeEndpointConfiguration',
     'ComputeNodeError',
+    'ComputeNodeExtensionGetOptions',
+    'ComputeNodeExtensionListOptions',
     'ComputeNodeGetOptions',
     'ComputeNodeGetRemoteDesktopOptions',
     'ComputeNodeGetRemoteLoginSettingsOptions',
     'ComputeNodeGetRemoteLoginSettingsResult',
+    'ComputeNodeIdentityReference',
     'ComputeNodeInformation',
     'ComputeNodeListOptions',
     'ComputeNodeRebootOptions',
@@ -542,6 +586,7 @@ __all__ = [
     'ContainerRegistry',
     'DataDisk',
     'DeleteCertificateError',
+    'DiffDiskSettings',
     'DiskEncryptionConfiguration',
     'EnvironmentSetting',
     'ErrorMessage',
@@ -558,10 +603,12 @@ __all__ = [
     'FileListFromComputeNodeOptions',
     'FileListFromTaskOptions',
     'FileProperties',
+    'HttpHeader',
     'ImageInformation',
     'ImageReference',
     'InboundEndpoint',
     'InboundNATPool',
+    'InstanceViewStatus',
     'JobAddOptions',
     'JobAddParameter',
     'JobConstraints',
@@ -570,7 +617,6 @@ __all__ = [
     'JobDisableParameter',
     'JobEnableOptions',
     'JobExecutionInformation',
-    'JobGetAllLifetimeStatisticsOptions',
     'JobGetOptions',
     'JobGetTaskCountsOptions',
     'JobListFromJobScheduleOptions',
@@ -608,6 +654,7 @@ __all__ = [
     'JobUpdateOptions',
     'JobUpdateParameter',
     'LinuxUserConfiguration',
+    'ManagedDisk',
     'MetadataItem',
     'MountConfiguration',
     'MultiInstanceSettings',
@@ -619,10 +666,13 @@ __all__ = [
     'NodeCounts',
     'NodeDisableSchedulingParameter',
     'NodeFile',
+    'NodePlacementConfiguration',
     'NodeRebootParameter',
     'NodeReimageParameter',
     'NodeRemoveParameter',
     'NodeUpdateUserParameter',
+    'NodeVMExtension',
+    'OSDisk',
     'OutputFile',
     'OutputFileBlobContainerDestination',
     'OutputFileDestination',
@@ -637,7 +687,6 @@ __all__ = [
     'PoolEvaluateAutoScaleOptions',
     'PoolEvaluateAutoScaleParameter',
     'PoolExistsOptions',
-    'PoolGetAllLifetimeStatisticsOptions',
     'PoolGetOptions',
     'PoolInformation',
     'PoolListOptions',
@@ -660,6 +709,8 @@ __all__ = [
     'ResourceFile',
     'ResourceStatistics',
     'Schedule',
+    'SecurityProfile',
+    'ServiceArtifactReference',
     'StartTask',
     'StartTaskInformation',
     'SubtaskInformation',
@@ -690,12 +741,17 @@ __all__ = [
     'TaskTerminateOptions',
     'TaskUpdateOptions',
     'TaskUpdateParameter',
+    'UefiSettings',
     'UploadBatchServiceLogsConfiguration',
     'UploadBatchServiceLogsResult',
     'UsageStatistics',
     'UserAccount',
+    'UserAssignedIdentity',
     'UserIdentity',
     'VirtualMachineConfiguration',
+    'VirtualMachineInfo',
+    'VMExtension',
+    'VMExtensionInstanceView',
     'WindowsConfiguration',
     'WindowsUserConfiguration',
     'ApplicationSummaryPaged',
@@ -703,13 +759,14 @@ __all__ = [
     'CloudPoolPaged',
     'ImageInformationPaged',
     'PoolNodeCountsPaged',
-    'CloudJobPaged',
-    'JobPreparationAndReleaseTaskExecutionInformationPaged',
     'CertificatePaged',
     'NodeFilePaged',
     'CloudJobSchedulePaged',
+    'CloudJobPaged',
+    'JobPreparationAndReleaseTaskExecutionInformationPaged',
     'CloudTaskPaged',
     'ComputeNodePaged',
+    'NodeVMExtensionPaged',
     'OSType',
     'VerificationType',
     'AccessScope',
@@ -727,11 +784,16 @@ __all__ = [
     'CertificateVisibility',
     'CachingType',
     'StorageAccountType',
+    'ContainerType',
     'DiskEncryptionTarget',
+    'NodePlacementPolicyType',
+    'DiffDiskPlacement',
+    'SecurityTypes',
     'DynamicVNetAssignmentScope',
     'InboundEndpointProtocol',
     'NetworkSecurityGroupRuleAccess',
     'IPAddressProvisioningType',
+    'NodeCommunicationMode',
     'PoolLifetimeOption',
     'OnAllTasksComplete',
     'OnTaskFailure',
@@ -741,8 +803,10 @@ __all__ = [
     'JobPreparationTaskState',
     'TaskExecutionResult',
     'JobReleaseTaskState',
+    'StatusLevelTypes',
     'PoolState',
     'AllocationState',
+    'PoolIdentityType',
     'TaskState',
     'TaskAddStatus',
     'SubtaskState',

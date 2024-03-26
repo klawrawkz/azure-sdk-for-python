@@ -6,59 +6,46 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
-try:
-    from ._models_py3 import AzureResourceBase
-    from ._models_py3 import ErrorAdditionalInfo
-    from ._models_py3 import ErrorResponse
-    from ._models_py3 import SystemData
-    from ._models_py3 import TemplateSpec
-    from ._models_py3 import TemplateSpecArtifact
-    from ._models_py3 import TemplateSpecTemplateArtifact
-    from ._models_py3 import TemplateSpecUpdateModel
-    from ._models_py3 import TemplateSpecVersion
-    from ._models_py3 import TemplateSpecVersionInfo
-    from ._models_py3 import TemplateSpecVersionUpdateModel
-    from ._models_py3 import TemplateSpecVersionsListResult
-    from ._models_py3 import TemplateSpecsError
-    from ._models_py3 import TemplateSpecsListResult
-except (SyntaxError, ImportError):
-    from ._models import AzureResourceBase  # type: ignore
-    from ._models import ErrorAdditionalInfo  # type: ignore
-    from ._models import ErrorResponse  # type: ignore
-    from ._models import SystemData  # type: ignore
-    from ._models import TemplateSpec  # type: ignore
-    from ._models import TemplateSpecArtifact  # type: ignore
-    from ._models import TemplateSpecTemplateArtifact  # type: ignore
-    from ._models import TemplateSpecUpdateModel  # type: ignore
-    from ._models import TemplateSpecVersion  # type: ignore
-    from ._models import TemplateSpecVersionInfo  # type: ignore
-    from ._models import TemplateSpecVersionUpdateModel  # type: ignore
-    from ._models import TemplateSpecVersionsListResult  # type: ignore
-    from ._models import TemplateSpecsError  # type: ignore
-    from ._models import TemplateSpecsListResult  # type: ignore
+from ._models_py3 import AzureResourceBase
+from ._models_py3 import ErrorAdditionalInfo
+from ._models_py3 import ErrorResponse
+from ._models_py3 import SystemData
+from ._models_py3 import TemplateSpec
+from ._models_py3 import TemplateSpecArtifact
+from ._models_py3 import TemplateSpecTemplateArtifact
+from ._models_py3 import TemplateSpecUpdateModel
+from ._models_py3 import TemplateSpecVersion
+from ._models_py3 import TemplateSpecVersionInfo
+from ._models_py3 import TemplateSpecVersionUpdateModel
+from ._models_py3 import TemplateSpecVersionsListResult
+from ._models_py3 import TemplateSpecsError
+from ._models_py3 import TemplateSpecsListResult
 
-from ._template_specs_client_enums import (
-    CreatedByType,
-    TemplateSpecArtifactKind,
-    TemplateSpecExpandKind,
-)
+from ._template_specs_client_enums import CreatedByType
+from ._template_specs_client_enums import TemplateSpecArtifactKind
+from ._template_specs_client_enums import TemplateSpecExpandKind
+from ._patch import __all__ as _patch_all
+from ._patch import *  # pylint: disable=unused-wildcard-import
+from ._patch import patch_sdk as _patch_sdk
 
 __all__ = [
-    'AzureResourceBase',
-    'ErrorAdditionalInfo',
-    'ErrorResponse',
-    'SystemData',
-    'TemplateSpec',
-    'TemplateSpecArtifact',
-    'TemplateSpecTemplateArtifact',
-    'TemplateSpecUpdateModel',
-    'TemplateSpecVersion',
-    'TemplateSpecVersionInfo',
-    'TemplateSpecVersionUpdateModel',
-    'TemplateSpecVersionsListResult',
-    'TemplateSpecsError',
-    'TemplateSpecsListResult',
-    'CreatedByType',
-    'TemplateSpecArtifactKind',
-    'TemplateSpecExpandKind',
+    "AzureResourceBase",
+    "ErrorAdditionalInfo",
+    "ErrorResponse",
+    "SystemData",
+    "TemplateSpec",
+    "TemplateSpecArtifact",
+    "TemplateSpecTemplateArtifact",
+    "TemplateSpecUpdateModel",
+    "TemplateSpecVersion",
+    "TemplateSpecVersionInfo",
+    "TemplateSpecVersionUpdateModel",
+    "TemplateSpecVersionsListResult",
+    "TemplateSpecsError",
+    "TemplateSpecsListResult",
+    "CreatedByType",
+    "TemplateSpecArtifactKind",
+    "TemplateSpecExpandKind",
 ]
+__all__.extend([p for p in _patch_all if p not in __all__])
+_patch_sdk()

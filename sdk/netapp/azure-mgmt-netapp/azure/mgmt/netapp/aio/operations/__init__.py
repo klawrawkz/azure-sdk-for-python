@@ -8,28 +8,36 @@
 
 from ._operations import Operations
 from ._net_app_resource_operations import NetAppResourceOperations
+from ._net_app_resource_quota_limits_operations import NetAppResourceQuotaLimitsOperations
 from ._accounts_operations import AccountsOperations
 from ._pools_operations import PoolsOperations
 from ._volumes_operations import VolumesOperations
 from ._snapshots_operations import SnapshotsOperations
 from ._snapshot_policies_operations import SnapshotPoliciesOperations
-from ._volume_backup_status_operations import VolumeBackupStatusOperations
-from ._account_backups_operations import AccountBackupsOperations
 from ._backups_operations import BackupsOperations
 from ._backup_policies_operations import BackupPoliciesOperations
-from ._vaults_operations import VaultsOperations
+from ._volume_quota_rules_operations import VolumeQuotaRulesOperations
+from ._volume_groups_operations import VolumeGroupsOperations
+from ._subvolumes_operations import SubvolumesOperations
+
+from ._patch import __all__ as _patch_all
+from ._patch import *  # pylint: disable=unused-wildcard-import
+from ._patch import patch_sdk as _patch_sdk
 
 __all__ = [
-    'Operations',
-    'NetAppResourceOperations',
-    'AccountsOperations',
-    'PoolsOperations',
-    'VolumesOperations',
-    'SnapshotsOperations',
-    'SnapshotPoliciesOperations',
-    'VolumeBackupStatusOperations',
-    'AccountBackupsOperations',
-    'BackupsOperations',
-    'BackupPoliciesOperations',
-    'VaultsOperations',
+    "Operations",
+    "NetAppResourceOperations",
+    "NetAppResourceQuotaLimitsOperations",
+    "AccountsOperations",
+    "PoolsOperations",
+    "VolumesOperations",
+    "SnapshotsOperations",
+    "SnapshotPoliciesOperations",
+    "BackupsOperations",
+    "BackupPoliciesOperations",
+    "VolumeQuotaRulesOperations",
+    "VolumeGroupsOperations",
+    "SubvolumesOperations",
 ]
+__all__.extend([p for p in _patch_all if p not in __all__])
+_patch_sdk()

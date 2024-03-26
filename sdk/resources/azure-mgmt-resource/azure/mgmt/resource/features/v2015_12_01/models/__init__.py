@@ -6,26 +6,23 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
-try:
-    from ._models_py3 import FeatureOperationsListResult
-    from ._models_py3 import FeatureProperties
-    from ._models_py3 import FeatureResult
-    from ._models_py3 import Operation
-    from ._models_py3 import OperationDisplay
-    from ._models_py3 import OperationListResult
-except (SyntaxError, ImportError):
-    from ._models import FeatureOperationsListResult  # type: ignore
-    from ._models import FeatureProperties  # type: ignore
-    from ._models import FeatureResult  # type: ignore
-    from ._models import Operation  # type: ignore
-    from ._models import OperationDisplay  # type: ignore
-    from ._models import OperationListResult  # type: ignore
+from ._models_py3 import FeatureOperationsListResult
+from ._models_py3 import FeatureProperties
+from ._models_py3 import FeatureResult
+from ._models_py3 import Operation
+from ._models_py3 import OperationDisplay
+from ._models_py3 import OperationListResult
+from ._patch import __all__ as _patch_all
+from ._patch import *  # pylint: disable=unused-wildcard-import
+from ._patch import patch_sdk as _patch_sdk
 
 __all__ = [
-    'FeatureOperationsListResult',
-    'FeatureProperties',
-    'FeatureResult',
-    'Operation',
-    'OperationDisplay',
-    'OperationListResult',
+    "FeatureOperationsListResult",
+    "FeatureProperties",
+    "FeatureResult",
+    "Operation",
+    "OperationDisplay",
+    "OperationListResult",
 ]
+__all__.extend([p for p in _patch_all if p not in __all__])
+_patch_sdk()

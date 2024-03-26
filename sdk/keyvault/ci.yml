@@ -3,7 +3,6 @@
 trigger:
   branches:
     include:
-    - master
     - main
     - hotfix/*
     - release/*
@@ -12,13 +11,10 @@ trigger:
     include:
     - sdk/keyvault/
     - sdk/core/
-    - tools/
-    - eng/
 
 pr:
   branches:
     include:
-    - master
     - main
     - feature/*
     - hotfix/*
@@ -28,17 +24,17 @@ pr:
     include:
     - sdk/keyvault/
     - sdk/core/
-    - tools/
-    - eng/
+    - eng/common/testproxy/
 
 extends:
   template: ../../eng/pipelines/templates/stages/archetype-sdk-client.yml
   parameters:
     ServiceDirectory: keyvault
+    TestProxy: true
     # Override the base matrix due to https://github.com/Azure/azure-sdk-for-python/issues/17837
     MatrixConfigs:
       - Name: keyvault_ci_matrix
-        Path: eng/pipelines/templates/stages/platform-matrix-cryptography-dependency.json
+        Path: eng/pipelines/templates/stages/platform-matrix.json
         Selection: sparse
         GenerateVMJobs: true
     Artifacts:
@@ -52,5 +48,3 @@ extends:
       safeName: azurekeyvaultsecrets
     - name: azure-mgmt-keyvault
       safeName: azuremgmtkeyvault
-    - name: azure-keyvault
-      safeName: azurekeyvault

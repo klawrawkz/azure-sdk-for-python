@@ -20,8 +20,8 @@ USAGE:
 
 import os
 
-service_endpoint = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT")
-key = os.getenv("AZURE_SEARCH_API_KEY")
+service_endpoint = os.environ["AZURE_SEARCH_SERVICE_ENDPOINT"]
+key = os.environ["AZURE_SEARCH_API_KEY"]
 
 from azure.core.credentials import AzureKeyCredential
 from azure.search.documents.indexes import SearchIndexClient
@@ -29,16 +29,33 @@ from azure.search.documents.indexes.models import SynonymMap
 
 client = SearchIndexClient(service_endpoint, AzureKeyCredential(key))
 
+
 def create_synonym_map():
     # [START create_synonym_map]
-    solr_format_synonyms = "\n".join([
+    synonyms = [
         "USA, United States, United States of America",
         "Washington, Wash. => WA",
-    ])
-    synonym_map = SynonymMap(name="test-syn-map", synonyms=solr_format_synonyms)
+    ]
+    synonym_map = SynonymMap(name="test-syn-map", synonyms=synonyms)
     result = client.create_synonym_map(synonym_map)
     print("Create new Synonym Map 'test-syn-map succeeded")
     # [END create_synonym_map]
+
+
+def create_synonym_map_from_file():
+    # [START create_synonym_map_from_file]
+    from os.path import dirname, join, realpath
+
+    CWD = dirname(realpath(__file__))
+    file_path = join(CWD, "synonym_map.txt")
+    with open(file_path, "r") as f:
+        solr_format_synonyms = f.read()
+        synonyms = solr_format_synonyms.split("\n")
+        synonym_map = SynonymMap(name="test-syn-map", synonyms=synonyms)
+        result = client.create_synonym_map(synonym_map)
+        print("Create new Synonym Map 'test-syn-map succeeded")
+    # [END create_synonym_map_from_file]
+
 
 def get_synonym_maps():
     # [START get_synonym_maps]
@@ -46,6 +63,7 @@ def get_synonym_maps():
     names = [x.name for x in result]
     print("Found {} Synonym Maps in the service: {}".format(len(result), ", ".join(names)))
     # [END get_synonym_maps]
+
 
 def get_synonym_map():
     # [START get_synonym_map]
@@ -55,13 +73,15 @@ def get_synonym_map():
         print("    {}".format(syn))
     # [END get_synonym_map]
 
+
 def delete_synonym_map():
     # [START delete_synonym_map]
     client.delete_synonym_map("test-syn-map")
     print("Synonym Map 'test-syn-map' deleted")
     # [END delete_synonym_map]
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     create_synonym_map()
     get_synonym_maps()
     get_synonym_map()

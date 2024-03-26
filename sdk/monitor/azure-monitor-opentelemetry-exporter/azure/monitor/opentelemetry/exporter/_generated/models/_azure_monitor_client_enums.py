@@ -6,27 +6,11 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
-from enum import Enum, EnumMeta
-from six import with_metaclass
-
-class _CaseInsensitiveEnumMeta(EnumMeta):
-    def __getitem__(self, name):
-        return super().__getitem__(name.upper())
-
-    def __getattr__(cls, name):
-        """Return the enum member matching `name`
-        We use __getattr__ instead of descriptors or inserting into the enum
-        class' __dict__ in order to support `name` and `value` being both
-        properties for enum members (which live in the class' __dict__) and
-        enum members themselves.
-        """
-        try:
-            return cls._member_map_[name.upper()]
-        except KeyError:
-            raise AttributeError(name)
+from enum import Enum
+from azure.core import CaseInsensitiveEnumMeta
 
 
-class ContextTagKeys(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
+class ContextTagKeys(str, Enum, metaclass=CaseInsensitiveEnumMeta):
     """The context tag keys.
     """
 
@@ -59,14 +43,14 @@ class ContextTagKeys(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
     AI_INTERNAL_AGENT_VERSION = "ai.internal.agentVersion"
     AI_INTERNAL_NODE_NAME = "ai.internal.nodeName"
 
-class DataPointType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
+class DataPointType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
     """Type of the metric data measurement.
     """
 
     MEASUREMENT = "Measurement"
     AGGREGATION = "Aggregation"
 
-class SeverityLevel(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
+class SeverityLevel(str, Enum, metaclass=CaseInsensitiveEnumMeta):
     """Defines the level of severity for the event.
     """
 

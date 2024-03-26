@@ -6,41 +6,28 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
-from enum import Enum, EnumMeta
-from six import with_metaclass
-
-class _CaseInsensitiveEnumMeta(EnumMeta):
-    def __getitem__(self, name):
-        return super().__getitem__(name.upper())
-
-    def __getattr__(cls, name):
-        """Return the enum member matching `name`
-        We use __getattr__ instead of descriptors or inserting into the enum
-        class' __dict__ in order to support `name` and `value` being both
-        properties for enum members (which live in the class' __dict__) and
-        enum members themselves.
-        """
-        try:
-            return cls._member_map_[name.upper()]
-        except KeyError:
-            raise AttributeError(name)
+from enum import Enum
+from azure.core import CaseInsensitiveEnumMeta
 
 
-class ApplicationType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """Type of application being monitored.
-    """
+class ApplicationType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """Type of application being monitored."""
 
     WEB = "web"
     OTHER = "other"
 
-class CategoryType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
+
+class CategoryType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """CategoryType."""
 
     WORKBOOK = "workbook"
     TSG = "TSG"
     PERFORMANCE = "performance"
     RETENTION = "retention"
 
-class FavoriteSourceType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
+
+class FavoriteSourceType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """FavoriteSourceType."""
 
     RETENTION = "retention"
     NOTEBOOK = "notebook"
@@ -51,7 +38,8 @@ class FavoriteSourceType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
     IMPACT = "impact"
     SEGMENTATION = "segmentation"
 
-class FavoriteType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
+
+class FavoriteType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
     """Enum indicating if this favorite definition is owned by a specific user or is shared between
     all users with access to the Application Insights component.
     """
@@ -59,7 +47,8 @@ class FavoriteType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
     SHARED = "shared"
     USER = "user"
 
-class FlowType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
+
+class FlowType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
     """Used by the Application Insights system to determine what kind of flow this component was
     created by. This is to be set to 'Bluefield' when creating/updating a component via the REST
     API.
@@ -67,15 +56,16 @@ class FlowType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
 
     BLUEFIELD = "Bluefield"
 
-class IngestionMode(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """Indicates the flow of the ingestion.
-    """
+
+class IngestionMode(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """Indicates the flow of the ingestion."""
 
     APPLICATION_INSIGHTS = "ApplicationInsights"
     APPLICATION_INSIGHTS_WITH_DIAGNOSTIC_SETTINGS = "ApplicationInsightsWithDiagnosticSettings"
     LOG_ANALYTICS = "LogAnalytics"
 
-class ItemScope(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
+
+class ItemScope(str, Enum, metaclass=CaseInsensitiveEnumMeta):
     """Enum indicating if this item definition is owned by a specific user or is shared between all
     users with access to the Application Insights component.
     """
@@ -83,21 +73,25 @@ class ItemScope(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
     SHARED = "shared"
     USER = "user"
 
-class ItemScopePath(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
+
+class ItemScopePath(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """ItemScopePath."""
 
     ANALYTICS_ITEMS = "analyticsItems"
     MYANALYTICS_ITEMS = "myanalyticsItems"
 
-class ItemType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """Enum indicating the type of the Analytics item.
-    """
 
+class ItemType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """Enum indicating the type of the Analytics item."""
+
+    NONE = "none"
     QUERY = "query"
-    FUNCTION = "function"
-    FOLDER = "folder"
     RECENT = "recent"
+    FUNCTION = "function"
 
-class ItemTypeParameter(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
+
+class ItemTypeParameter(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """ItemTypeParameter."""
 
     NONE = "none"
     QUERY = "query"
@@ -105,30 +99,31 @@ class ItemTypeParameter(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
     FOLDER = "folder"
     RECENT = "recent"
 
-class PurgeState(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """Status of the operation represented by the requested Id.
-    """
+
+class PurgeState(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """Status of the operation represented by the requested Id."""
 
     PENDING = "pending"
     COMPLETED = "completed"
 
-class RequestSource(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
+
+class RequestSource(str, Enum, metaclass=CaseInsensitiveEnumMeta):
     """Describes what tool created this Application Insights component. Customers using this API
     should set this to the default 'rest'.
     """
 
     REST = "rest"
 
-class SharedTypeKind(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The kind of workbook. Choices are user and shared.
-    """
+
+class SharedTypeKind(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The kind of workbook. Choices are user and shared."""
 
     USER = "user"
     SHARED = "shared"
 
-class WebTestKind(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The kind of web test that this web test watches. Choices are ping and multistep.
-    """
+
+class WebTestKind(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The kind of web test that this web test watches. Choices are ping and multistep."""
 
     PING = "ping"
     MULTISTEP = "multistep"

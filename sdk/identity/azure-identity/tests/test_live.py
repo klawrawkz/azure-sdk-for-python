@@ -9,43 +9,48 @@ from azure.identity import (
     CertificateCredential,
     ClientSecretCredential,
     DeviceCodeCredential,
-    InteractiveBrowserCredential,
     UsernamePasswordCredential,
+    AzureCliCredential,
+    AzurePowerShellCredential,
+    AzureDeveloperCliCredential,
 )
 from azure.identity._constants import DEVELOPER_SIGN_ON_CLIENT_ID
+
+from helpers import get_token_payload_contents
 
 ARM_SCOPE = "https://management.azure.com/.default"
 
 
-def get_token(credential):
-    token = credential.get_token(ARM_SCOPE)
+def get_token(credential, **kwargs):
+    token = credential.get_token(ARM_SCOPE, **kwargs)
     assert token
     assert token.token
     assert token.expires_on
+    return token
 
 
-def test_certificate_credential(live_certificate):
-    tenant_id = live_certificate["tenant_id"]
-    client_id = live_certificate["client_id"]
+@pytest.mark.parametrize("certificate_fixture", ("live_pem_certificate", "live_pfx_certificate"))
+def test_certificate_credential(certificate_fixture, request):
+    cert = request.getfixturevalue(certificate_fixture)
 
-    credential = CertificateCredential(tenant_id, client_id, live_certificate["cert_path"])
+    tenant_id = cert["tenant_id"]
+    client_id = cert["client_id"]
+
+    credential = CertificateCredential(tenant_id, client_id, cert["cert_path"])
+    get_token(credential)
+
+    credential = CertificateCredential(tenant_id, client_id, cert["cert_with_password_path"], password=cert["password"])
+    get_token(credential)
+
+    credential = CertificateCredential(tenant_id, client_id, certificate_data=cert["cert_bytes"])
     get_token(credential)
 
     credential = CertificateCredential(
-        tenant_id, client_id, live_certificate["cert_with_password_path"], password=live_certificate["password"]
+        tenant_id, client_id, certificate_data=cert["cert_with_password_bytes"], password=cert["password"]
     )
-    get_token(credential)
-
-    credential = CertificateCredential(tenant_id, client_id, certificate_data=live_certificate["cert_bytes"])
-    get_token(credential)
-
-    credential = CertificateCredential(
-        tenant_id,
-        client_id,
-        certificate_data=live_certificate["cert_with_password_bytes"],
-        password=live_certificate["password"],
-    )
-    get_token(credential)
+    token = get_token(credential, enable_cae=True)
+    parsed_payload = get_token_payload_contents(token.token)
+    assert "xms_cc" in parsed_payload and "CP1" in parsed_payload["xms_cc"]
 
 
 def test_client_secret_credential(live_service_principal):
@@ -54,7 +59,9 @@ def test_client_secret_credential(live_service_principal):
         live_service_principal["client_id"],
         live_service_principal["client_secret"],
     )
-    get_token(credential)
+    token = get_token(credential, enable_cae=True)
+    parsed_payload = get_token_payload_contents(token.token)
+    assert "xms_cc" in parsed_payload and "CP1" in parsed_payload["xms_cc"]
 
 
 def test_default_credential(live_service_principal):
@@ -69,6 +76,24 @@ def test_username_password_auth(live_user_details):
         password=live_user_details["password"],
         tenant_id=live_user_details["tenant"],
     )
+    get_token(credential)
+
+
+@pytest.mark.manual
+def test_cli_credential():
+    credential = AzureCliCredential()
+    get_token(credential)
+
+
+@pytest.mark.manual
+def test_dev_cli_credential():
+    credential = AzureDeveloperCliCredential()
+    get_token(credential)
+
+
+@pytest.mark.manual
+def test_powershell_credential():
+    credential = AzurePowerShellCredential()
     get_token(credential)
 
 

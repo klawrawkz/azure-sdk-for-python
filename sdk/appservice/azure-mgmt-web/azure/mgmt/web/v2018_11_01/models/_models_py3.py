@@ -1,4 +1,5 @@
 # coding=utf-8
+# pylint: disable=too-many-lines
 # --------------------------------------------------------------------------
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
@@ -6,13 +7,16 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
-from azure.core.exceptions import HttpResponseError
-import msrest.serialization
+from ... import _serialization
+
+if TYPE_CHECKING:
+    # pylint: disable=unused-import,ungrouped-imports
+    from .. import models as _models
 
 
-class Resource(msrest.serialization.Model):
+class Resource(_serialization.Model):
     """Azure resource. This resource is tracked in Azure Resource Manager.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -23,41 +27,44 @@ class Resource(msrest.serialization.Model):
     :vartype id: str
     :ivar name: Resource Name.
     :vartype name: str
-    :param kind: Kind of resource.
-    :type kind: str
-    :param location: Required. Resource Location.
-    :type location: str
+    :ivar kind: Kind of resource.
+    :vartype kind: str
+    :ivar location: Resource Location. Required.
+    :vartype location: str
     :ivar type: Resource type.
     :vartype type: str
-    :param tags: A set of tags. Resource tags.
-    :type tags: dict[str, str]
+    :ivar tags: Resource tags.
+    :vartype tags: dict[str, str]
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'location': {'required': True},
-        'type': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "location": {"required": True},
+        "type": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'kind': {'key': 'kind', 'type': 'str'},
-        'location': {'key': 'location', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'tags': {'key': 'tags', 'type': '{str}'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "kind": {"key": "kind", "type": "str"},
+        "location": {"key": "location", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "tags": {"key": "tags", "type": "{str}"},
     }
 
     def __init__(
-        self,
-        *,
-        location: str,
-        kind: Optional[str] = None,
-        tags: Optional[Dict[str, str]] = None,
-        **kwargs
-    ):
-        super(Resource, self).__init__(**kwargs)
+        self, *, location: str, kind: Optional[str] = None, tags: Optional[Dict[str, str]] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword kind: Kind of resource.
+        :paramtype kind: str
+        :keyword location: Resource Location. Required.
+        :paramtype location: str
+        :keyword tags: Resource tags.
+        :paramtype tags: dict[str, str]
+        """
+        super().__init__(**kwargs)
         self.id = None
         self.name = None
         self.kind = kind
@@ -66,7 +73,7 @@ class Resource(msrest.serialization.Model):
         self.tags = tags
 
 
-class Certificate(Resource):
+class Certificate(Resource):  # pylint: disable=too-many-instance-attributes
     """SSL certificate for an app.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -77,22 +84,22 @@ class Certificate(Resource):
     :vartype id: str
     :ivar name: Resource Name.
     :vartype name: str
-    :param kind: Kind of resource.
-    :type kind: str
-    :param location: Required. Resource Location.
-    :type location: str
+    :ivar kind: Kind of resource.
+    :vartype kind: str
+    :ivar location: Resource Location. Required.
+    :vartype location: str
     :ivar type: Resource type.
     :vartype type: str
-    :param tags: A set of tags. Resource tags.
-    :type tags: dict[str, str]
+    :ivar tags: Resource tags.
+    :vartype tags: dict[str, str]
     :ivar friendly_name: Friendly name of the certificate.
     :vartype friendly_name: str
     :ivar subject_name: Subject name of the certificate.
     :vartype subject_name: str
-    :param host_names: Host names the certificate applies to.
-    :type host_names: list[str]
-    :param pfx_blob: Pfx blob.
-    :type pfx_blob: bytearray
+    :ivar host_names: Host names the certificate applies to.
+    :vartype host_names: list[str]
+    :ivar pfx_blob: Pfx blob.
+    :vartype pfx_blob: bytes
     :ivar site_name: App name.
     :vartype site_name: str
     :ivar self_link: Self link.
@@ -103,99 +110,123 @@ class Certificate(Resource):
     :vartype issue_date: ~datetime.datetime
     :ivar expiration_date: Certificate expiration date.
     :vartype expiration_date: ~datetime.datetime
-    :param password: Certificate password.
-    :type password: str
+    :ivar password: Certificate password.
+    :vartype password: str
     :ivar thumbprint: Certificate thumbprint.
     :vartype thumbprint: str
     :ivar valid: Is the certificate valid?.
     :vartype valid: bool
     :ivar cer_blob: Raw bytes of .cer file.
-    :vartype cer_blob: bytearray
+    :vartype cer_blob: bytes
     :ivar public_key_hash: Public key hash.
     :vartype public_key_hash: str
     :ivar hosting_environment_profile: Specification for the App Service Environment to use for the
      certificate.
     :vartype hosting_environment_profile:
      ~azure.mgmt.web.v2018_11_01.models.HostingEnvironmentProfile
-    :param key_vault_id: Key Vault Csm resource Id.
-    :type key_vault_id: str
-    :param key_vault_secret_name: Key Vault secret name.
-    :type key_vault_secret_name: str
-    :ivar key_vault_secret_status: Status of the Key Vault secret. Possible values include:
-     "Initialized", "WaitingOnCertificateOrder", "Succeeded", "CertificateOrderFailed",
+    :ivar key_vault_id: Key Vault Csm resource Id.
+    :vartype key_vault_id: str
+    :ivar key_vault_secret_name: Key Vault secret name.
+    :vartype key_vault_secret_name: str
+    :ivar key_vault_secret_status: Status of the Key Vault secret. Known values are: "Initialized",
+     "WaitingOnCertificateOrder", "Succeeded", "CertificateOrderFailed",
      "OperationNotPermittedOnKeyVault", "AzureServiceUnauthorizedToAccessKeyVault",
-     "KeyVaultDoesNotExist", "KeyVaultSecretDoesNotExist", "UnknownError", "ExternalPrivateKey",
+     "KeyVaultDoesNotExist", "KeyVaultSecretDoesNotExist", "UnknownError", "ExternalPrivateKey", and
      "Unknown".
     :vartype key_vault_secret_status: str or
      ~azure.mgmt.web.v2018_11_01.models.KeyVaultSecretStatus
-    :param server_farm_id: Resource ID of the associated App Service plan, formatted as:
+    :ivar server_farm_id: Resource ID of the associated App Service plan, formatted as:
      "/subscriptions/{subscriptionID}/resourceGroups/{groupName}/providers/Microsoft.Web/serverfarms/{appServicePlanName}".
-    :type server_farm_id: str
+    :vartype server_farm_id: str
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'location': {'required': True},
-        'type': {'readonly': True},
-        'friendly_name': {'readonly': True},
-        'subject_name': {'readonly': True},
-        'site_name': {'readonly': True},
-        'self_link': {'readonly': True},
-        'issuer': {'readonly': True},
-        'issue_date': {'readonly': True},
-        'expiration_date': {'readonly': True},
-        'thumbprint': {'readonly': True},
-        'valid': {'readonly': True},
-        'cer_blob': {'readonly': True},
-        'public_key_hash': {'readonly': True},
-        'hosting_environment_profile': {'readonly': True},
-        'key_vault_secret_status': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "location": {"required": True},
+        "type": {"readonly": True},
+        "friendly_name": {"readonly": True},
+        "subject_name": {"readonly": True},
+        "site_name": {"readonly": True},
+        "self_link": {"readonly": True},
+        "issuer": {"readonly": True},
+        "issue_date": {"readonly": True},
+        "expiration_date": {"readonly": True},
+        "thumbprint": {"readonly": True},
+        "valid": {"readonly": True},
+        "cer_blob": {"readonly": True},
+        "public_key_hash": {"readonly": True},
+        "hosting_environment_profile": {"readonly": True},
+        "key_vault_secret_status": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'kind': {'key': 'kind', 'type': 'str'},
-        'location': {'key': 'location', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'tags': {'key': 'tags', 'type': '{str}'},
-        'friendly_name': {'key': 'properties.friendlyName', 'type': 'str'},
-        'subject_name': {'key': 'properties.subjectName', 'type': 'str'},
-        'host_names': {'key': 'properties.hostNames', 'type': '[str]'},
-        'pfx_blob': {'key': 'properties.pfxBlob', 'type': 'bytearray'},
-        'site_name': {'key': 'properties.siteName', 'type': 'str'},
-        'self_link': {'key': 'properties.selfLink', 'type': 'str'},
-        'issuer': {'key': 'properties.issuer', 'type': 'str'},
-        'issue_date': {'key': 'properties.issueDate', 'type': 'iso-8601'},
-        'expiration_date': {'key': 'properties.expirationDate', 'type': 'iso-8601'},
-        'password': {'key': 'properties.password', 'type': 'str'},
-        'thumbprint': {'key': 'properties.thumbprint', 'type': 'str'},
-        'valid': {'key': 'properties.valid', 'type': 'bool'},
-        'cer_blob': {'key': 'properties.cerBlob', 'type': 'bytearray'},
-        'public_key_hash': {'key': 'properties.publicKeyHash', 'type': 'str'},
-        'hosting_environment_profile': {'key': 'properties.hostingEnvironmentProfile', 'type': 'HostingEnvironmentProfile'},
-        'key_vault_id': {'key': 'properties.keyVaultId', 'type': 'str'},
-        'key_vault_secret_name': {'key': 'properties.keyVaultSecretName', 'type': 'str'},
-        'key_vault_secret_status': {'key': 'properties.keyVaultSecretStatus', 'type': 'str'},
-        'server_farm_id': {'key': 'properties.serverFarmId', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "kind": {"key": "kind", "type": "str"},
+        "location": {"key": "location", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "tags": {"key": "tags", "type": "{str}"},
+        "friendly_name": {"key": "properties.friendlyName", "type": "str"},
+        "subject_name": {"key": "properties.subjectName", "type": "str"},
+        "host_names": {"key": "properties.hostNames", "type": "[str]"},
+        "pfx_blob": {"key": "properties.pfxBlob", "type": "bytearray"},
+        "site_name": {"key": "properties.siteName", "type": "str"},
+        "self_link": {"key": "properties.selfLink", "type": "str"},
+        "issuer": {"key": "properties.issuer", "type": "str"},
+        "issue_date": {"key": "properties.issueDate", "type": "iso-8601"},
+        "expiration_date": {"key": "properties.expirationDate", "type": "iso-8601"},
+        "password": {"key": "properties.password", "type": "str"},
+        "thumbprint": {"key": "properties.thumbprint", "type": "str"},
+        "valid": {"key": "properties.valid", "type": "bool"},
+        "cer_blob": {"key": "properties.cerBlob", "type": "bytearray"},
+        "public_key_hash": {"key": "properties.publicKeyHash", "type": "str"},
+        "hosting_environment_profile": {
+            "key": "properties.hostingEnvironmentProfile",
+            "type": "HostingEnvironmentProfile",
+        },
+        "key_vault_id": {"key": "properties.keyVaultId", "type": "str"},
+        "key_vault_secret_name": {"key": "properties.keyVaultSecretName", "type": "str"},
+        "key_vault_secret_status": {"key": "properties.keyVaultSecretStatus", "type": "str"},
+        "server_farm_id": {"key": "properties.serverFarmId", "type": "str"},
     }
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-locals
         self,
         *,
         location: str,
         kind: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None,
         host_names: Optional[List[str]] = None,
-        pfx_blob: Optional[bytearray] = None,
+        pfx_blob: Optional[bytes] = None,
         password: Optional[str] = None,
         key_vault_id: Optional[str] = None,
         key_vault_secret_name: Optional[str] = None,
         server_farm_id: Optional[str] = None,
-        **kwargs
-    ):
-        super(Certificate, self).__init__(kind=kind, location=location, tags=tags, **kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword kind: Kind of resource.
+        :paramtype kind: str
+        :keyword location: Resource Location. Required.
+        :paramtype location: str
+        :keyword tags: Resource tags.
+        :paramtype tags: dict[str, str]
+        :keyword host_names: Host names the certificate applies to.
+        :paramtype host_names: list[str]
+        :keyword pfx_blob: Pfx blob.
+        :paramtype pfx_blob: bytes
+        :keyword password: Certificate password.
+        :paramtype password: str
+        :keyword key_vault_id: Key Vault Csm resource Id.
+        :paramtype key_vault_id: str
+        :keyword key_vault_secret_name: Key Vault secret name.
+        :paramtype key_vault_secret_name: str
+        :keyword server_farm_id: Resource ID of the associated App Service plan, formatted as:
+         "/subscriptions/{subscriptionID}/resourceGroups/{groupName}/providers/Microsoft.Web/serverfarms/{appServicePlanName}".
+        :paramtype server_farm_id: str
+        """
+        super().__init__(kind=kind, location=location, tags=tags, **kwargs)
         self.friendly_name = None
         self.subject_name = None
         self.host_names = host_names
@@ -217,41 +248,40 @@ class Certificate(Resource):
         self.server_farm_id = server_farm_id
 
 
-class CertificateCollection(msrest.serialization.Model):
+class CertificateCollection(_serialization.Model):
     """Collection of certificates.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param value: Required. Collection of resources.
-    :type value: list[~azure.mgmt.web.v2018_11_01.models.Certificate]
+    :ivar value: Collection of resources. Required.
+    :vartype value: list[~azure.mgmt.web.v2018_11_01.models.Certificate]
     :ivar next_link: Link to next page of resources.
     :vartype next_link: str
     """
 
     _validation = {
-        'value': {'required': True},
-        'next_link': {'readonly': True},
+        "value": {"required": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[Certificate]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[Certificate]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        value: List["Certificate"],
-        **kwargs
-    ):
-        super(CertificateCollection, self).__init__(**kwargs)
+    def __init__(self, *, value: List["_models.Certificate"], **kwargs: Any) -> None:
+        """
+        :keyword value: Collection of resources. Required.
+        :paramtype value: list[~azure.mgmt.web.v2018_11_01.models.Certificate]
+        """
+        super().__init__(**kwargs)
         self.value = value
         self.next_link = None
 
 
-class ProxyOnlyResource(msrest.serialization.Model):
+class ProxyOnlyResource(_serialization.Model):
     """Azure proxy only resource. This resource is not tracked by Azure Resource Manager.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -260,39 +290,38 @@ class ProxyOnlyResource(msrest.serialization.Model):
     :vartype id: str
     :ivar name: Resource Name.
     :vartype name: str
-    :param kind: Kind of resource.
-    :type kind: str
+    :ivar kind: Kind of resource.
+    :vartype kind: str
     :ivar type: Resource type.
     :vartype type: str
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'kind': {'key': 'kind', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "kind": {"key": "kind", "type": "str"},
+        "type": {"key": "type", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        kind: Optional[str] = None,
-        **kwargs
-    ):
-        super(ProxyOnlyResource, self).__init__(**kwargs)
+    def __init__(self, *, kind: Optional[str] = None, **kwargs: Any) -> None:
+        """
+        :keyword kind: Kind of resource.
+        :paramtype kind: str
+        """
+        super().__init__(**kwargs)
         self.id = None
         self.name = None
         self.kind = kind
         self.type = None
 
 
-class CertificatePatchResource(ProxyOnlyResource):
+class CertificatePatchResource(ProxyOnlyResource):  # pylint: disable=too-many-instance-attributes
     """ARM resource for a certificate.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -301,18 +330,18 @@ class CertificatePatchResource(ProxyOnlyResource):
     :vartype id: str
     :ivar name: Resource Name.
     :vartype name: str
-    :param kind: Kind of resource.
-    :type kind: str
+    :ivar kind: Kind of resource.
+    :vartype kind: str
     :ivar type: Resource type.
     :vartype type: str
     :ivar friendly_name: Friendly name of the certificate.
     :vartype friendly_name: str
     :ivar subject_name: Subject name of the certificate.
     :vartype subject_name: str
-    :param host_names: Host names the certificate applies to.
-    :type host_names: list[str]
-    :param pfx_blob: Pfx blob.
-    :type pfx_blob: bytearray
+    :ivar host_names: Host names the certificate applies to.
+    :vartype host_names: list[str]
+    :ivar pfx_blob: Pfx blob.
+    :vartype pfx_blob: bytes
     :ivar site_name: App name.
     :vartype site_name: str
     :ivar self_link: Self link.
@@ -323,79 +352,82 @@ class CertificatePatchResource(ProxyOnlyResource):
     :vartype issue_date: ~datetime.datetime
     :ivar expiration_date: Certificate expiration date.
     :vartype expiration_date: ~datetime.datetime
-    :param password: Certificate password.
-    :type password: str
+    :ivar password: Certificate password.
+    :vartype password: str
     :ivar thumbprint: Certificate thumbprint.
     :vartype thumbprint: str
     :ivar valid: Is the certificate valid?.
     :vartype valid: bool
     :ivar cer_blob: Raw bytes of .cer file.
-    :vartype cer_blob: bytearray
+    :vartype cer_blob: bytes
     :ivar public_key_hash: Public key hash.
     :vartype public_key_hash: str
     :ivar hosting_environment_profile: Specification for the App Service Environment to use for the
      certificate.
     :vartype hosting_environment_profile:
      ~azure.mgmt.web.v2018_11_01.models.HostingEnvironmentProfile
-    :param key_vault_id: Key Vault Csm resource Id.
-    :type key_vault_id: str
-    :param key_vault_secret_name: Key Vault secret name.
-    :type key_vault_secret_name: str
-    :ivar key_vault_secret_status: Status of the Key Vault secret. Possible values include:
-     "Initialized", "WaitingOnCertificateOrder", "Succeeded", "CertificateOrderFailed",
+    :ivar key_vault_id: Key Vault Csm resource Id.
+    :vartype key_vault_id: str
+    :ivar key_vault_secret_name: Key Vault secret name.
+    :vartype key_vault_secret_name: str
+    :ivar key_vault_secret_status: Status of the Key Vault secret. Known values are: "Initialized",
+     "WaitingOnCertificateOrder", "Succeeded", "CertificateOrderFailed",
      "OperationNotPermittedOnKeyVault", "AzureServiceUnauthorizedToAccessKeyVault",
-     "KeyVaultDoesNotExist", "KeyVaultSecretDoesNotExist", "UnknownError", "ExternalPrivateKey",
+     "KeyVaultDoesNotExist", "KeyVaultSecretDoesNotExist", "UnknownError", "ExternalPrivateKey", and
      "Unknown".
     :vartype key_vault_secret_status: str or
      ~azure.mgmt.web.v2018_11_01.models.KeyVaultSecretStatus
-    :param server_farm_id: Resource ID of the associated App Service plan, formatted as:
+    :ivar server_farm_id: Resource ID of the associated App Service plan, formatted as:
      "/subscriptions/{subscriptionID}/resourceGroups/{groupName}/providers/Microsoft.Web/serverfarms/{appServicePlanName}".
-    :type server_farm_id: str
+    :vartype server_farm_id: str
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'friendly_name': {'readonly': True},
-        'subject_name': {'readonly': True},
-        'site_name': {'readonly': True},
-        'self_link': {'readonly': True},
-        'issuer': {'readonly': True},
-        'issue_date': {'readonly': True},
-        'expiration_date': {'readonly': True},
-        'thumbprint': {'readonly': True},
-        'valid': {'readonly': True},
-        'cer_blob': {'readonly': True},
-        'public_key_hash': {'readonly': True},
-        'hosting_environment_profile': {'readonly': True},
-        'key_vault_secret_status': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "friendly_name": {"readonly": True},
+        "subject_name": {"readonly": True},
+        "site_name": {"readonly": True},
+        "self_link": {"readonly": True},
+        "issuer": {"readonly": True},
+        "issue_date": {"readonly": True},
+        "expiration_date": {"readonly": True},
+        "thumbprint": {"readonly": True},
+        "valid": {"readonly": True},
+        "cer_blob": {"readonly": True},
+        "public_key_hash": {"readonly": True},
+        "hosting_environment_profile": {"readonly": True},
+        "key_vault_secret_status": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'kind': {'key': 'kind', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'friendly_name': {'key': 'properties.friendlyName', 'type': 'str'},
-        'subject_name': {'key': 'properties.subjectName', 'type': 'str'},
-        'host_names': {'key': 'properties.hostNames', 'type': '[str]'},
-        'pfx_blob': {'key': 'properties.pfxBlob', 'type': 'bytearray'},
-        'site_name': {'key': 'properties.siteName', 'type': 'str'},
-        'self_link': {'key': 'properties.selfLink', 'type': 'str'},
-        'issuer': {'key': 'properties.issuer', 'type': 'str'},
-        'issue_date': {'key': 'properties.issueDate', 'type': 'iso-8601'},
-        'expiration_date': {'key': 'properties.expirationDate', 'type': 'iso-8601'},
-        'password': {'key': 'properties.password', 'type': 'str'},
-        'thumbprint': {'key': 'properties.thumbprint', 'type': 'str'},
-        'valid': {'key': 'properties.valid', 'type': 'bool'},
-        'cer_blob': {'key': 'properties.cerBlob', 'type': 'bytearray'},
-        'public_key_hash': {'key': 'properties.publicKeyHash', 'type': 'str'},
-        'hosting_environment_profile': {'key': 'properties.hostingEnvironmentProfile', 'type': 'HostingEnvironmentProfile'},
-        'key_vault_id': {'key': 'properties.keyVaultId', 'type': 'str'},
-        'key_vault_secret_name': {'key': 'properties.keyVaultSecretName', 'type': 'str'},
-        'key_vault_secret_status': {'key': 'properties.keyVaultSecretStatus', 'type': 'str'},
-        'server_farm_id': {'key': 'properties.serverFarmId', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "kind": {"key": "kind", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "friendly_name": {"key": "properties.friendlyName", "type": "str"},
+        "subject_name": {"key": "properties.subjectName", "type": "str"},
+        "host_names": {"key": "properties.hostNames", "type": "[str]"},
+        "pfx_blob": {"key": "properties.pfxBlob", "type": "bytearray"},
+        "site_name": {"key": "properties.siteName", "type": "str"},
+        "self_link": {"key": "properties.selfLink", "type": "str"},
+        "issuer": {"key": "properties.issuer", "type": "str"},
+        "issue_date": {"key": "properties.issueDate", "type": "iso-8601"},
+        "expiration_date": {"key": "properties.expirationDate", "type": "iso-8601"},
+        "password": {"key": "properties.password", "type": "str"},
+        "thumbprint": {"key": "properties.thumbprint", "type": "str"},
+        "valid": {"key": "properties.valid", "type": "bool"},
+        "cer_blob": {"key": "properties.cerBlob", "type": "bytearray"},
+        "public_key_hash": {"key": "properties.publicKeyHash", "type": "str"},
+        "hosting_environment_profile": {
+            "key": "properties.hostingEnvironmentProfile",
+            "type": "HostingEnvironmentProfile",
+        },
+        "key_vault_id": {"key": "properties.keyVaultId", "type": "str"},
+        "key_vault_secret_name": {"key": "properties.keyVaultSecretName", "type": "str"},
+        "key_vault_secret_status": {"key": "properties.keyVaultSecretStatus", "type": "str"},
+        "server_farm_id": {"key": "properties.serverFarmId", "type": "str"},
     }
 
     def __init__(
@@ -403,14 +435,31 @@ class CertificatePatchResource(ProxyOnlyResource):
         *,
         kind: Optional[str] = None,
         host_names: Optional[List[str]] = None,
-        pfx_blob: Optional[bytearray] = None,
+        pfx_blob: Optional[bytes] = None,
         password: Optional[str] = None,
         key_vault_id: Optional[str] = None,
         key_vault_secret_name: Optional[str] = None,
         server_farm_id: Optional[str] = None,
-        **kwargs
-    ):
-        super(CertificatePatchResource, self).__init__(kind=kind, **kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword kind: Kind of resource.
+        :paramtype kind: str
+        :keyword host_names: Host names the certificate applies to.
+        :paramtype host_names: list[str]
+        :keyword pfx_blob: Pfx blob.
+        :paramtype pfx_blob: bytes
+        :keyword password: Certificate password.
+        :paramtype password: str
+        :keyword key_vault_id: Key Vault Csm resource Id.
+        :paramtype key_vault_id: str
+        :keyword key_vault_secret_name: Key Vault secret name.
+        :paramtype key_vault_secret_name: str
+        :keyword server_farm_id: Resource ID of the associated App Service plan, formatted as:
+         "/subscriptions/{subscriptionID}/resourceGroups/{groupName}/providers/Microsoft.Web/serverfarms/{appServicePlanName}".
+        :paramtype server_farm_id: str
+        """
+        super().__init__(kind=kind, **kwargs)
         self.friendly_name = None
         self.subject_name = None
         self.host_names = host_names
@@ -432,7 +481,7 @@ class CertificatePatchResource(ProxyOnlyResource):
         self.server_farm_id = server_farm_id
 
 
-class DefaultErrorResponse(msrest.serialization.Model):
+class DefaultErrorResponse(_serialization.Model):
     """App Service error response.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -442,22 +491,20 @@ class DefaultErrorResponse(msrest.serialization.Model):
     """
 
     _validation = {
-        'error': {'readonly': True},
+        "error": {"readonly": True},
     }
 
     _attribute_map = {
-        'error': {'key': 'error', 'type': 'DefaultErrorResponseError'},
+        "error": {"key": "error", "type": "DefaultErrorResponseError"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(DefaultErrorResponse, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.error = None
 
 
-class DefaultErrorResponseError(msrest.serialization.Model):
+class DefaultErrorResponseError(_serialization.Model):
     """Error model.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -468,34 +515,36 @@ class DefaultErrorResponseError(msrest.serialization.Model):
     :vartype message: str
     :ivar target: Detailed error description and debugging information.
     :vartype target: str
-    :param details:
-    :type details: list[~azure.mgmt.web.v2018_11_01.models.DefaultErrorResponseErrorDetailsItem]
+    :ivar details:
+    :vartype details: list[~azure.mgmt.web.v2018_11_01.models.DefaultErrorResponseErrorDetailsItem]
     :ivar innererror: More information to debug error.
     :vartype innererror: str
     """
 
     _validation = {
-        'code': {'readonly': True},
-        'message': {'readonly': True},
-        'target': {'readonly': True},
-        'innererror': {'readonly': True},
+        "code": {"readonly": True},
+        "message": {"readonly": True},
+        "target": {"readonly": True},
+        "innererror": {"readonly": True},
     }
 
     _attribute_map = {
-        'code': {'key': 'code', 'type': 'str'},
-        'message': {'key': 'message', 'type': 'str'},
-        'target': {'key': 'target', 'type': 'str'},
-        'details': {'key': 'details', 'type': '[DefaultErrorResponseErrorDetailsItem]'},
-        'innererror': {'key': 'innererror', 'type': 'str'},
+        "code": {"key": "code", "type": "str"},
+        "message": {"key": "message", "type": "str"},
+        "target": {"key": "target", "type": "str"},
+        "details": {"key": "details", "type": "[DefaultErrorResponseErrorDetailsItem]"},
+        "innererror": {"key": "innererror", "type": "str"},
     }
 
     def __init__(
-        self,
-        *,
-        details: Optional[List["DefaultErrorResponseErrorDetailsItem"]] = None,
-        **kwargs
-    ):
-        super(DefaultErrorResponseError, self).__init__(**kwargs)
+        self, *, details: Optional[List["_models.DefaultErrorResponseErrorDetailsItem"]] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword details:
+        :paramtype details:
+         list[~azure.mgmt.web.v2018_11_01.models.DefaultErrorResponseErrorDetailsItem]
+        """
+        super().__init__(**kwargs)
         self.code = None
         self.message = None
         self.target = None
@@ -503,7 +552,7 @@ class DefaultErrorResponseError(msrest.serialization.Model):
         self.innererror = None
 
 
-class DefaultErrorResponseErrorDetailsItem(msrest.serialization.Model):
+class DefaultErrorResponseErrorDetailsItem(_serialization.Model):
     """Detailed errors.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -517,34 +566,32 @@ class DefaultErrorResponseErrorDetailsItem(msrest.serialization.Model):
     """
 
     _validation = {
-        'code': {'readonly': True},
-        'message': {'readonly': True},
-        'target': {'readonly': True},
+        "code": {"readonly": True},
+        "message": {"readonly": True},
+        "target": {"readonly": True},
     }
 
     _attribute_map = {
-        'code': {'key': 'code', 'type': 'str'},
-        'message': {'key': 'message', 'type': 'str'},
-        'target': {'key': 'target', 'type': 'str'},
+        "code": {"key": "code", "type": "str"},
+        "message": {"key": "message", "type": "str"},
+        "target": {"key": "target", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(DefaultErrorResponseErrorDetailsItem, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.code = None
         self.message = None
         self.target = None
 
 
-class HostingEnvironmentProfile(msrest.serialization.Model):
+class HostingEnvironmentProfile(_serialization.Model):
     """Specification for an App Service Environment to use for this resource.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
-    :param id: Resource ID of the App Service Environment.
-    :type id: str
+    :ivar id: Resource ID of the App Service Environment.
+    :vartype id: str
     :ivar name: Name of the App Service Environment.
     :vartype name: str
     :ivar type: Resource type of the App Service Environment.
@@ -552,23 +599,22 @@ class HostingEnvironmentProfile(msrest.serialization.Model):
     """
 
     _validation = {
-        'name': {'readonly': True},
-        'type': {'readonly': True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        id: Optional[str] = None,
-        **kwargs
-    ):
-        super(HostingEnvironmentProfile, self).__init__(**kwargs)
+    def __init__(self, *, id: Optional[str] = None, **kwargs: Any) -> None:  # pylint: disable=redefined-builtin
+        """
+        :keyword id: Resource ID of the App Service Environment.
+        :paramtype id: str
+        """
+        super().__init__(**kwargs)
         self.id = id
         self.name = None
         self.type = None

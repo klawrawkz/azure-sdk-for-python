@@ -1,20 +1,334 @@
 # Release History
 
-## 11.2.0b3 (Unreleased)
+## 11.6.0b3 (Unreleased)
 
+### Features Added
 
-## 11.2.0b2 (2021-04-13)
+### Breaking Changes
 
-### New features
+### Bugs Fixed
 
-- Added support for semantic search    #17638
+### Other Changes
 
-## 11.2.0b1 (2021-04-06)
+## 11.6.0b2 (2024-03-05)
 
-### New features
+### Breaking Changes
 
+- `SearchIndexerSkillset`, `SearchField`, `SearchIndex`, `AnalyzeTextOptions`, `SearchResourceEncryptionKey`, `SynonymMap`, `SearchIndexerDataSourceConnection` are no longer subclasses of `_serialization.Model`.
+
+### Bugs Fixed
+
+- Fixed the issue that `SearchIndexerSkillset`, `SearchField`, `SearchIndex`, `AnalyzeTextOptions`, `SearchResourceEncryptionKey`, `SynonymMap`, `SearchIndexerDataSourceConnection` could not be serialized and `as_dict` did not work.
+- Fixed the issue that `context` was missing for `EntityRecognitionSkill` and `SentimentSkill`. #34623
+
+### Other Changes
+
+- Default to API version `V2024_03_01_PREVIEW`
+
+## 11.6.0b1 (2024-01-31)
+
+### Features Added
+
+- Added back `semantic_query` for `Search` method.
+- Added back alias operations to `SearchIndexClient`.
+- Added back `AzureOpenAIEmbeddingSkill`, `AzureOpenAIParameters` and `AzureOpenAIVectorizer`.
+- Added back `query_language`, `query_speller`, `semantic_fields` and `debug` for `Search` method.
+- Added `send_request` method for `SearchClient` & `SearchIndexClient` to run a network request using the client's existing pipeline.
+
+### Bugs Fixed
+
+- Fixed the issue that we added unexpected `retrievable` property for `SearchField`.
+
+### Other Changes
+
+- Python 3.7 is no longer supported. Please use Python version 3.8 or later.
+
+## 11.4.0 (2023-10-13)
+
+### Features Added
+
+- Added new models:
+  - `VectorSearchAlgorithmMetric`
+  - `IndexProjectionMode`
+  - `SearchIndexerIndexProjections`
+  - `SearchIndexerIndexProjectionSelector`
+  - `SearchIndexerIndexProjectionsParameters`
+  - `BlobIndexerDataToExtract`
+  - `BlobIndexerImageAction`
+  - `BlobIndexerParsingMode`
+  - `CharFilterName`
+  - `CustomEntity`
+  - `CustomEntityAlias`
+  - `DataChangeDetectionPolicy`
+  - `DataDeletionDetectionPolicy`
+  - `DefaultCognitiveServicesAccount`
+  - `HighWaterMarkChangeDetectionPolicy`
+  - `HnswAlgorithmConfiguration`
+  - `IndexerExecutionResult`
+  - `IndexingParameters`
+  - `IndexingParametersConfiguration`
+  - `IndexingSchedule`
+  - `LexicalAnalyzerName`
+  - `LexicalTokenizerName`
+  - `PIIDetectionSkill`
+  - `PIIDetectionSkillMaskingMode`
+  - `ScoringProfile`
+  - `SemanticSearch`
+- Added `index_projections` support for `SearchIndexerSkillset`
+
+### Breaking Changes
+
+> These changes do not impact the API of stable versions such as 11.3.0.
+> Only code written against a beta version such as 11.4.0b11 may be affected.
+
+- Renamed `AnswerResult` to `QueryAnswerResult` and `CaptionResult` to `QueryCaptionResult`.
+- Renamed `SemanticErrorHandling` to `SemanticErrorMode`.
+- Renamed `RawVectorQuery` to `VectorizedQuery`.
+- Renamed `ExhaustiveKnnVectorSearchAlgorithmConfiguration` to `ExhaustiveKnnAlgorithmConfiguration`.
+- Renamed `PrioritizedFields` to `SemanticPrioritizedFields`.
+- Renamed `query_caption_highlight` to `query_caption_highlight_enabled`.
+- `query_language` and `query_speller` are not available for `Search` method in this stable release.
+- `alias` operations are not available in this stable release.
+- `AzureOpenAIEmbeddingSkill`, `AzureOpenAIParameters` and `AzureOpenAIVectorizer` are not available in 11.4.0.
+- Renamed `vector_search_profile` to `vector_search_profile_name` in `SearchField`.
+- Renamed `SemanticSettings` to `SemanticSearch`.
+
+### Other Changes
+
+- Used API version "2023-11-01".
+
+## 11.4.0b11 (2023-10-11)
+
+### Features Added
+
+- Added `vector_filter_mode` support for `Search` method.
+- Exposed `VectorizableTextQuery` in `azure.search.document.models`.
+
+## 11.4.0b10 (2023-10-10)
+
+### Breaking Changes
+
+> These changes do not impact the API of stable versions such as 11.3.0.
+> Only code written against a beta version such as 11.4.0b6 may be affected.
+- Renamed `vector_search_configuration` to `vector_search_profile` in `SearchField`.
+- Renamed `vectors` to `vector_queries` in `Search` method.
+- Renamed `azure.search.documents.models.Vector` to `azure.search.documents.models.VectorQuery`.
+- Stopped supporting api version `V2023_07_01_PREVIEW` anymore.
+
+### Other Changes
+
+- Default to use API version `V2023_10_01_PREVIEW`
+
+## 11.4.0b9 (2023-09-12)
+
+### Bugs Fixed
+
+- Fixed the bug that list type of `order_by` was not correctly handled. #31837
+
+## 11.4.0b8 (2023-08-08)
+
+### Features Added
+
+- Exposed `HnswVectorSearchAlgorithmConfiguration`
+
+### Breaking Changes
+
+> These changes do not impact the API of stable versions such as 11.3.0.
+> Only code written against a beta version such as 11.4.0b6 may be affected.
+- Instead of using `VectorSearchAlgorithmConfiguration`, now you need to use concrete types like `HnswVectorSearchAlgorithmConfiguration`.
+
+## 11.4.0b7 (2023-08-08)
+
+### Features Added
+
+- Added multi-vector search support. Now instead of passing in `vector`, `top_k` and `vector_fields`, search method accepts `vectors` which is a list of `Vector` object.
+
+### Breaking Changes
+
+> These changes do not impact the API of stable versions such as 11.3.0.
+> Only code written against a beta version such as 11.4.0b6 may be affected.
+- Stopped supporting `vector`, `top_k` and `vector_fields` in `SearchClient.search` method.
+
+## 11.4.0b6 (2023-07-11)
+
+### Features Added
+
+- Added `top_k` support for `VectorSearch`.
+
+## 11.4.0b5 (2023-07-11)
+
+### Features Added
+
+- Exposed `azure.search.documents.models.Vector`.
+
+## 11.4.0b4 (2023-07-11)
+
+### Features Added
+
+- Added `VectorSearch` support.
+
+### Breaking Changes
+
+- Deprecated `SentimentSkillV1` and `EntityRecognitionSkillV1`.
+
+## 11.4.0b3 (2023-02-07)
+
+### Features Added
+
+- Added the semantic reranker score and captions on `SearchResult`.(thanks to @LucasVascovici for the contribution)
+
+## 11.4.0b2 (2022-11-08)
+
+### Features Added
+
+- Enabled `OcrSkill` and `ImageAnalysisSkill`
+
+### Other Changes
+
+- Added Python 3.11 support.
+
+## 11.4.0b1 (2022-09-08)
+
+### Features Added
+
+- Added support to create, update and delete aliases via the `SearchIndexClient`.
+
+## 11.3.0 (2022-09-06)
+
+### Note
+
+- Some of the features that were available in the `11.3.0b8` version are not available in this GA. They would be available in the upcoming beta release.
+
+### Features Added
+
+- Added support for other national clouds.
+- Added support for TokenCredential
+
+### Bugs Fixed
+
+- Fixed issue where async `search` call would fail with a 403 error when retrieving large number of documents.
+
+### Other Changes
+
+- Python 3.6 is no longer supported. Please use Python version 3.7 or later.
+
+## 11.2.2 (2022-04-14)
+
+### Bugs Fixed
+
+- Fixes a bug allowing users to set keys for cognitive service skills using the API. Exposes `DefaultCognitiveServicesAccount` and `CognitiveServicesAccountKey`
+
+## 11.3.0b8 (2022-03-08)
+
+### Features Added
+
+- Added support to create, update and delete aliases via the `SearchIndexClient`.
+
+## 11.3.0b7 (2022-02-08)
+
+### Features Added
+
+- Support for [`AzureMachineLearningSkill`](https://docs.microsoft.com/azure/search/cognitive-search-aml-skill). The AML skill allows you to extend AI enrichment with a custom [Azure Machine Learning](https://docs.microsoft.com/azure/machine-learning/overview-what-is-azure-machine-learning) (AML) model. Once an AML model is [trained and deployed](https://docs.microsoft.com/azure/machine-learning/concept-azure-machine-learning-architecture#workspace), an AML skill integrates it into AI enrichment.
+
+### Other Changes
+
+- Python 2.7 is no longer supported. Please use Python version 3.6 or later.
+
+## 11.2.1 (2022-01-10)
+
+Minor updates.
+
+## 11.3.0b6 (2021-11-19)
+
+### Features Added
+
+- Added properties to `SearchClient.search`: `semantic_configuration_name`
+- Added properties to `SearchIndex`: `semantic_settings`
+- Added models: `PrioritizedFields`, `SemanticConfiguration`, `SemanticField`, `SemanticSettings`
+- Added new values to model `QueryLanguage`
+
+## 11.3.0b5 (2021-11-09)
+
+### Features Added
+
+- Added properties to `SearchClient.search`: `session_id`, `scoring_statistics`.
+- Added properties to `SearchIndexerDataSourceConnection`: `identity`, `encryption_key`.
+- Added `select` property to the following `SearchIndexClient` operations: `get_synonym_maps`, `list_indexes`.
+- Added `select` property to the following `SearchIndexersClient` operations: `get_data_source_connections`, `get_indexers`, `get_skillsets`.
+- Added operations to `SearchIndexerClient`: `reset_skills`, `reset_documents`.
+- Added model: `DocumentKeysOrIds`
+
+## 11.3.0b4 (2021-10-05)
+
+### Features Added
+
+- Added properties to `SearchClient`: `query_answer`, `query_answer_count`,
+  `query_caption`, `query_caption_highlight` and `semantic_fields`.
+
+### Breaking Changes
+
+- Renamed `SearchClient.speller` to `SearchClient.query_speller`.
+- Renamed model `Speller` to `QuerySpellerType`.
+- Renamed model `Answers` to `QueryAnswerType`. 
+- Removed keyword arguments from `SearchClient`: `answers` and `captions`.
+- `SentimentSkill`, `EntityRecognitionSkill`: added client-side validation to prevent sending unsupported parameters.
+- Renamed property `ignore_reset_requirements` to `skip_indexer_reset_requirement_for_cache`.
+
+## 11.3.0b3 (2021-09-08)
+
+### Features Added
+
+- Added new models: 
+  - `azure.search.documents.models.QueryCaptionType`
+  - `azure.search.documents.models.CaptionResult`
+  - `azure.search.documents.indexes.models.CustomEntityLookupSkillLanguage`
+  - `azure.search.documents.indexes.models.EntityRecognitionSkillVersion`
+  - `azure.search.documents.indexes.models.LexicalNormalizerName`
+  - `azure.search.documents.indexes.models.PIIDetectionSkill`
+  - `azure.search.documents.indexes.models.PIIDetectionSkillMaskingMode`
+  - `azure.search.documents.indexes.models.SearchIndexerCache`
+  - `azure.search.documents.indexes.models.SearchIndexerDataIdentity`
+  - `azure.search.documents.indexes.models.SearchIndexerDataNoneIdentity`
+  - `azure.search.documents.indexes.models.SearchIndexerDataUserAssignedIdentity`
+  - `azure.search.documents.indexes.models.SentimentSkillVersion`
+- Added `normalizer_name` property to `AnalyzeTextOptions` model.
+
+### Breaking Changes
+
+- Removed:
+  - `azure.search.documents.indexes.models.SentimentSkillV3`
+  - `azure.search.documents.indexes.models.EntityRecognitionSkillV3`
+- Renamed:
+  - `SearchField.normalizer` renamed to `SearchField.normalizer_name`.
+
+### Other Changes
+- `SentimentSkill` and `EntityRecognitionSkill` can now be created by specifying
+  the `skill_version` keyword argument with a `SentimentSkillVersion` or
+  `EntityRecognitionSkillVersion`, respectively. The default behavior if `skill_version`
+  is not specified is to create a version 1 skill.
+
+## 11.3.0b2 (2021-08-10)
+
+### Features Added
+
+- Added new skills: `SentimentSkillV3`, `EntityLinkingSkill`, `EntityRecognitionSkillV3`
+
+## 11.3.0b1 (2021-07-07)
+
+### Features Added
+
+- Added AAD support
+- Added support for semantic search
+- Added normalizer support
+
+## 11.2.0 (2021-06-08)
+
+This version will be the last version to officially support Python 3.5, future versions will require Python 2.7 or Python 3.6+.
+
+**New features**
+
+- Added support for knowledge store    #18461
 - Added new data source type ADLS gen2  #16852
-- Added normalizer support  #17579
 
 ## 11.1.0 (2021-02-10)
 

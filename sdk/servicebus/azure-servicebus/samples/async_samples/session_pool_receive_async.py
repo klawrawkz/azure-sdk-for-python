@@ -13,14 +13,15 @@ from azure.servicebus import ServiceBusMessage, NEXT_AVAILABLE_SESSION
 from azure.servicebus.exceptions import OperationTimeoutError
 
 
-CONNECTION_STR = os.environ['SERVICE_BUS_CONNECTION_STR']
+CONNECTION_STR = os.environ['SERVICEBUS_CONNECTION_STR']
 # Note: This must be a session-enabled queue.
-SESSION_QUEUE_NAME = os.environ["SERVICE_BUS_SESSION_QUEUE_NAME"]
+SESSION_QUEUE_NAME = os.environ["SERVICEBUS_SESSION_QUEUE_NAME"]
 
 
 async def message_processing(servicebus_client, queue_name):
     while True:
         try:
+            # max_wait_time below is the maximum time the receiver will wait to connect to a session and to receive messages from the service
             async with servicebus_client.get_queue_receiver(queue_name, max_wait_time=1, session_id=NEXT_AVAILABLE_SESSION) as receiver:
                 renewer = AutoLockRenewer()
                 renewer.register(receiver, receiver.session)
@@ -62,5 +63,4 @@ async def sample_session_send_receive_with_pool_async(connection_string, queue_n
 
 
 if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(sample_session_send_receive_with_pool_async(CONNECTION_STR, SESSION_QUEUE_NAME))
+    asyncio.run(sample_session_send_receive_with_pool_async(CONNECTION_STR, SESSION_QUEUE_NAME))

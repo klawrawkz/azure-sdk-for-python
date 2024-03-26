@@ -3,6 +3,38 @@ $ReleaseDevOpsOrgParameters =  @("--organization", "https://dev.azure.com/azure-
 $ReleaseDevOpsCommonParameters =  $ReleaseDevOpsOrgParameters + @("--output", "json")
 $ReleaseDevOpsCommonParametersWithProject = $ReleaseDevOpsCommonParameters + @("--project", "Release")
 
+function Get-DevOpsRestHeaders()
+{
+  $headers = $null
+  if (Get-Variable -Name "devops_pat" -ValueOnly -ErrorAction "Ignore")
+  {
+    $encodedToken = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes([string]::Format("{0}:{1}", "", $devops_pat)))
+    $headers = @{ Authorization = "Basic $encodedToken" }
+  }
+  else
+  {
+    # Get a temp access token from the logged in az cli user for azure devops resource
+    $jwt_accessToken = (az account get-access-token --resource "499b84ac-1321-427f-aa17-267ca6975798" --query "accessToken" --output tsv)
+    $headers = @{ Authorization = "Bearer $jwt_accessToken" }
+  }
+
+  return $headers
+}
+
+function CheckDevOpsAccess()
+{
+  # Dummy test query to validate permissions
+  $query = "SELECT [System.ID] FROM WorkItems WHERE [Work Item Type] = 'Package' AND [Package] = 'azure-sdk-template'"
+
+  $response = Invoke-RestMethod -Method POST `
+    -Uri "https://dev.azure.com/azure-sdk/Release/_apis/wit/wiql/?api-version=6.0" `
+    -Headers (Get-DevOpsRestHeaders) -Body "{ ""query"": ""$query"" }" -ContentType "application/json" | ConvertTo-Json -Depth 10 | ConvertFrom-Json -AsHashTable
+
+  if ($response -isnot [HashTable] -or !$response.ContainsKey("workItems")) {
+    throw "Failed to run test query against Azure DevOps. Please ensure you are logged into the public azure cloud. Consider running 'az logout' and then 'az login'."
+  }
+}
+
 function Invoke-AzBoardsCmd($subCmd, $parameters, $output = $true)
 {
   $azCmdStr = "az boards ${subCmd} $($parameters -join ' ')"
@@ -12,13 +44,72 @@ function Invoke-AzBoardsCmd($subCmd, $parameters, $output = $true)
   return Invoke-Expression "$azCmdStr" | ConvertFrom-Json -AsHashTable
 }
 
+function Invoke-Query($fields, $wiql, $output = $true)
+{
+  #POST https://dev.azure.com/{organization}/{project}/{team}/_apis/wit/wiql?timePrecision={timePrecision}&$top={$top}&api-version=6.1-preview.2
+
+  $body = @"
+{
+  "query": "$wiql"
+}
+"@
+
+  if ($output) {
+    Write-Host "Executing query $wiql"
+  }
+
+  $response = Invoke-RestMethod -Method POST `
+    -Uri "https://dev.azure.com/azure-sdk/Release/_apis/wit/wiql/?`$top=10000&api-version=6.0" `
+    -Headers (Get-DevOpsRestHeaders) -Body $body -ContentType "application/json" | ConvertTo-Json -Depth 10 | ConvertFrom-Json -AsHashTable
+
+  if ($response -isnot [HashTable] -or !$response.ContainsKey("workItems") -or $response.workItems.Count -eq 0) {
+    Write-Verbose "Query returned no items. $wiql"
+    return ,@()
+  }
+
+  $workItems = @()
+  $i = 0
+  do
+  {
+    $idBatch = @()
+    while ($idBatch.Count -lt 200 -and $i -lt $response.workItems.Count)
+    {
+      $idBatch += $response.workItems[$i].id
+      $i++
+    }
+
+    $uri = "https://dev.azure.com/azure-sdk/Release/_apis/wit/workitems?ids=$($idBatch -join ',')&fields=$($fields -join ',')&api-version=6.0"
+
+    Write-Verbose "Pulling work items $uri "
+
+    $batchResponse = Invoke-RestMethod -Method GET -Uri $uri `
+      -Headers (Get-DevOpsRestHeaders) -ContentType "application/json" -MaximumRetryCount 3 | ConvertTo-Json -Depth 10 | ConvertFrom-Json -AsHashTable
+
+      if ($batchResponse.value)
+      {
+        $batchResponse.value | ForEach-Object { $workItems += $_ }
+      }
+      else
+      {
+        Write-Warning "Batch return no items from $uri"
+      }
+  }
+  while ($i -lt $response.workItems.Count)
+
+  if ($output) {
+    Write-Host "Query return $($workItems.Count) items"
+  }
+
+  return $workItems
+}
+
 function LoginToAzureDevops([string]$devops_pat)
 {
   if (!$devops_pat) {
     return
   }
-  $azCmdStr = "'$devops_pat' | az devops login $($ReleaseDevOpsOrgParameters -join ' ')"
-  Invoke-Expression $azCmdStr
+  # based on the docs at https://aka.ms/azure-devops-cli-auth the recommendation is to set this env variable to login
+  $env:AZURE_DEVOPS_EXT_PAT = $devops_pat
 }
 
 function BuildHashKeyNoNull()
@@ -44,7 +135,7 @@ function BuildHashKey()
 }
 
 $parentWorkItems = @{}
-function FindParentWorkItem($serviceName, $packageDisplayName, $outputCommand = $false)
+function FindParentWorkItem($serviceName, $packageDisplayName, $outputCommand = $false, $ignoreReleasePlannerTests = $true, $tag = $null)
 {
   $key = BuildHashKey $serviceName $packageDisplayName
   if ($key -and $parentWorkItems.ContainsKey($key)) {
@@ -63,14 +154,20 @@ function FindParentWorkItem($serviceName, $packageDisplayName, $outputCommand = 
   else {
     $serviceCondition = "[ServiceName] <> ''"
   }
+  if ($tag) {
+    $serviceCondition += " AND [Tags] CONTAINS '${tag}'"
+  }
+  if($ignoreReleasePlannerTests){
+    $serviceCondition += " AND [Tags] NOT CONTAINS 'Release Planner App Test'"
+  }
+  $query = "SELECT [ID], [ServiceName], [PackageDisplayName], [Parent] FROM WorkItems WHERE [Work Item Type] = 'Epic' AND ${serviceCondition}"
 
-  $parameters = $ReleaseDevOpsCommonParametersWithProject
-  $parameters += "--wiql"
-  $parameters += "`"SELECT [ID], [ServiceName], [PackageDisplayName], [Parent] FROM WorkItems WHERE [Work Item Type] = 'Epic' AND ${serviceCondition}`""
+  $fields = @("System.Id", "Custom.ServiceName", "Custom.PackageDisplayName", "System.Parent", "System.Tags")
 
-  $workItems = Invoke-AzBoardsCmd "query" $parameters $outputCommand
+  $workItems = Invoke-Query $fields $query $outputCommand
 
-  foreach ($wi in $workItems) {
+  foreach ($wi in $workItems)
+  {
     $localKey = BuildHashKey $wi.fields["Custom.ServiceName"] $wi.fields["Custom.PackageDisplayName"]
     if (!$localKey) { continue }
     if ($parentWorkItems.ContainsKey($localKey) -and $parentWorkItems[$localKey].id -ne $wi.id) {
@@ -91,10 +188,10 @@ function FindParentWorkItem($serviceName, $packageDisplayName, $outputCommand = 
 $packageWorkItems = @{}
 $packageWorkItemWithoutKeyFields = @{}
 
-function FindLatestPackageWorkItem($lang, $packageName, $outputCommand = $true)
+function FindLatestPackageWorkItem($lang, $packageName, $outputCommand = $true, $ignoreReleasePlannerTests = $true, $tag = $null)
 {
   # Cache all the versions of this package and language work items
-  $null = FindPackageWorkItem $lang $packageName -includeClosed $true -outputCommand $outputCommand
+  $null = FindPackageWorkItem $lang $packageName -includeClosed $true -outputCommand $outputCommand -ignoreReleasePlannerTests $ignoreReleasePlannerTests -tag $tag
 
   $latestWI = $null
   foreach ($wi in $packageWorkItems.Values)
@@ -107,16 +204,14 @@ function FindLatestPackageWorkItem($lang, $packageName, $outputCommand = $true)
       continue
     }
 
-    # Note this only does string sorting which is enough for our current usages
-    # if we need absolute sorting at some point we would need to parse these versions
-    if ($wi.fields["Custom.PackageVersionMajorMinor"] -gt $latestWI.fields["Custom.PackageVersionMajorMinor"]) {
+    if (($wi.fields["Custom.PackageVersionMajorMinor"] -as [Version]) -gt ($latestWI.fields["Custom.PackageVersionMajorMinor"] -as [Version])) {
       $latestWI = $wi
     }
   }
   return $latestWI
 }
 
-function FindPackageWorkItem($lang, $packageName, $version, $outputCommand = $true, $includeClosed = $false)
+function FindPackageWorkItem($lang, $packageName, $version, $outputCommand = $true, $includeClosed = $false, $ignoreReleasePlannerTests = $true, $tag = $null)
 {
   $key = BuildHashKeyNoNull $lang $packageName $version
   if ($key -and $packageWorkItems.ContainsKey($key)) {
@@ -124,24 +219,28 @@ function FindPackageWorkItem($lang, $packageName, $version, $outputCommand = $tr
   }
 
   $fields = @()
-  $fields += "ID"
-  $fields += "State"
+  $fields += "System.ID"
+  $fields += "System.State"
   $fields += "System.AssignedTo"
-  $fields += "Parent"
-  $fields += "Language"
-  $fields += "Package"
-  $fields += "PackageDisplayName"
-  $fields += "Title"
-  $fields += "PackageType"
-  $fields += "PackageTypeNewLibrary"
-  $fields += "PackageVersionMajorMinor"
-  $fields += "PackageRepoPath"
-  $fields += "ServiceName"
-  $fields += "Planned Packages"
-  $fields += "Shipped Packages"
-  $fields += "PackageBetaVersions"
-  $fields += "PackageGAVersion"
-  $fields += "PackagePatchVersions"
+  $fields += "System.Parent"
+  $fields += "System.Tags"
+  $fields += "Custom.Language"
+  $fields += "Custom.Package"
+  $fields += "Custom.PackageDisplayName"
+  $fields += "System.Title"
+  $fields += "Custom.PackageType"
+  $fields += "Custom.PackageTypeNewLibrary"
+  $fields += "Custom.PackageVersionMajorMinor"
+  $fields += "Custom.PackageRepoPath"
+  $fields += "Custom.ServiceName"
+  $fields += "Custom.PlannedPackages"
+  $fields += "Custom.ShippedPackages"
+  $fields += "Custom.PackageBetaVersions"
+  $fields += "Custom.PackageGAVersion"
+  $fields += "Custom.PackagePatchVersions"
+  $fields += "Custom.Generated"
+  $fields += "Custom.RoadmapState"
+  $fields += "Microsoft.VSTS.Common.StateChangeDate"
 
   $fieldList = ($fields | ForEach-Object { "[$_]"}) -join ", "
   $query = "SELECT ${fieldList} FROM WorkItems WHERE [Work Item Type] = 'Package'"
@@ -158,14 +257,13 @@ function FindPackageWorkItem($lang, $packageName, $version, $outputCommand = $tr
   if ($version) {
     $query += " AND [PackageVersionMajorMinor] = '${version}'"
   }
-  $parameters = $ReleaseDevOpsCommonParametersWithProject
-  $parameters += "--wiql", "`"${query}`""
-
-  $workItems = Invoke-AzBoardsCmd "query" $parameters $outputCommand
-
-  if ($workItems -and $workItems.Count -eq 1000) {
-    Write-Warning "Retrieved the max of 1000 items so item list might not be complete."
+  if ($tag) {
+    $query += " AND [Tags]  CONTAINS '${tag}'"
   }
+  if($ignoreReleasePlannerTests){
+    $query += " AND [Tags] NOT CONTAINS 'Release Planner App Test'"
+  }
+  $workItems = Invoke-Query $fields $query $outputCommand
 
   foreach ($wi in $workItems)
   {
@@ -190,13 +288,13 @@ function FindPackageWorkItem($lang, $packageName, $version, $outputCommand = $tr
   return $null
 }
 
-function InitializeWorkItemCache($outputCommand = $true, $includeClosed = $false)
+function InitializeWorkItemCache($outputCommand = $true, $includeClosed = $false, $ignoreReleasePlannerTests = $true)
 {
   # Pass null to cache all service parents
-  $null = FindParentWorkItem -serviceName $null -packageDisplayName $null -outputCommand $outputCommand
+  $null = FindParentWorkItem -serviceName $null -packageDisplayName $null -outputCommand $outputCommand -ignoreReleasePlannerTests $ignoreReleasePlannerTests
 
   # Pass null to cache all the package items
-  $null = FindPackageWorkItem -lang $null -packageName $null -version $null -outputCommand $outputCommand -includeClosed $includeClosed
+  $null = FindPackageWorkItem -lang $null -packageName $null -version $null -outputCommand $outputCommand -includeClosed $includeClosed -ignoreReleasePlannerTests $ignoreReleasePlannerTests
 }
 
 function GetCachedPackageWorkItems()
@@ -239,7 +337,8 @@ function CreateWorkItemParent($id, $parentId, $oldParentId, $outputCommand = $tr
 
   Invoke-AzBoardsCmd "work-item relation add" $parameters $outputCommand | Out-Null
 }
-function CreateWorkItem($title, $type, $iteration, $area, $fields, $assignedTo, $parentId, $outputCommand = $true)
+
+function CreateWorkItem($title, $type, $iteration, $area, $fields, $assignedTo, $parentId, $relatedId = $null, $outputCommand = $true, $tag = $null)
 {
   $parameters = $ReleaseDevOpsCommonParametersWithProject
   $parameters += "--title", "`"${title}`""
@@ -249,23 +348,49 @@ function CreateWorkItem($title, $type, $iteration, $area, $fields, $assignedTo, 
   if ($assignedTo) {
     $parameters += "--assigned-to", "`"${assignedTo}`""
   }
+  if ($tag)
+  {
+    if ($fields)
+    {
+      $fields += "`"System.Tags=${tag}`""
+    }
+    else
+    {
+      $parameters += "--fields"
+      $parameters += "`"System.Tags=${tag}`""
+    }
+  }
   if ($fields) {
     $parameters += "--fields"
     $parameters += $fields
   }
 
+  Write-Host "Creating work item"
   $workItem = Invoke-AzBoardsCmd "work-item create" $parameters $outputCommand
-
-  if ($parentId) {
-    $parameters = $ReleaseDevOpsCommonParameters
-    $parameters += "--id", $workItem.id
-    $parameters += "--relation-type", "parent"
-    $parameters += "--target-id", $parentId
-
-    Invoke-AzBoardsCmd "work-item relation add" $parameters $outputCommand | Out-Null
+  Write-Host $workItem
+  $workItemId = $workItem.id
+  Write-Host "Created work item [$workItemId]."
+  if ($parentId)
+  {
+    CreateWorkItemRelation $workItemId $parentId "parent" $outputCommand
   }
-
+  
+  # Add a work item as related if given.
+  if ($relatedId)
+  {
+    CreateWorkItemRelation $workItemId $relatedId "Related" $outputCommand
+  }
   return $workItem
+}
+
+function CreateWorkItemRelation($id, $relatedId, $relationType, $outputCommand = $true)
+{
+  $parameters = $ReleaseDevOpsCommonParameters
+  $parameters += "--id", $id
+  $parameters += "--relation-type", $relationType
+  $parameters += "--target-id", $relatedId
+  Write-Host "Updating work item [$relatedId] as [$relationType] of [$id]."
+  Invoke-AzBoardsCmd "work-item relation add" $parameters $outputCommand | Out-Null
 }
 
 function UpdateWorkItem($id, $fields, $title, $state, $assignedTo, $outputCommand = $true)
@@ -295,13 +420,14 @@ function UpdatePackageWorkItemReleaseState($id, $state, $releaseType, $outputCom
   return UpdateWorkItem -id $id -state $state -fields $fields -outputCommand $outputCommand
 }
 
-function FindOrCreateClonePackageWorkItem($lang, $pkg, $verMajorMinor, $outputCommand = $false)
+function FindOrCreateClonePackageWorkItem($lang, $pkg, $verMajorMinor, $allowPrompt = $false, $outputCommand = $false, $relatedId = $null, $tag= $null, $ignoreReleasePlannerTests = $true)
 {
-  $workItem = FindPackageWorkItem -lang $lang -packageName $pkg.Package -version $verMajorMinor -includeClosed $true -outputCommand $outputCommand
+  $workItem = FindPackageWorkItem -lang $lang -packageName $pkg.Package -version $verMajorMinor -includeClosed $true -outputCommand $outputCommand -tag $tag -ignoreReleasePlannerTests $ignoreReleasePlannerTests
 
   if (!$workItem) {
-    $latestVersionItem = FindLatestPackageWorkItem -lang $lang -packageName $pkg.Package -outputCommand $outputCommand
+    $latestVersionItem = FindLatestPackageWorkItem -lang $lang -packageName $pkg.Package -outputCommand $outputCommand -tag $tag -ignoreReleasePlannerTests $ignoreReleasePlannerTests
     $assignedTo = "me"
+    $extraFields = @()
     if ($latestVersionItem) {
       Write-Verbose "Copying data from latest matching [$($latestVersionItem.id)] with version $($latestVersionItem.fields["Custom.PackageVersionMajorMinor"])"
       if ($latestVersionItem.fields["System.AssignedTo"]) {
@@ -312,14 +438,36 @@ function FindOrCreateClonePackageWorkItem($lang, $pkg, $verMajorMinor, $outputCo
       if (!$pkg.RepoPath -and $pkg.RepoPath -ne "NA" -and $pkg.fields["Custom.PackageRepoPath"]) {
         $pkg.RepoPath = $pkg.fields["Custom.PackageRepoPath"]
       }
+
+      if ($latestVersionItem.fields["Custom.Generated"]) {
+        $extraFields += "`"Generated=" + $latestVersionItem.fields["Custom.Generated"] + "`""
+      }
+
+      if ($latestVersionItem.fields["Custom.RoadmapState"]) {
+        $extraFields += "`"RoadmapState=" +  $latestVersionItem.fields["Custom.RoadmapState"] + "`""
+      }
     }
-    $workItem = CreateOrUpdatePackageWorkItem $lang $pkg $verMajorMinor -existingItem $null -assignedTo $assignedTo -outputCommand $outputCommand
+
+    if ($allowPrompt) {
+      if (!$pkg.DisplayName) {
+        Write-Host "Display name is used to identify this package across languages and is usually the friendly name (i.e. For 'Azure Anomaly Detector' it would be 'Anomaly Detector'. For 'Azure Cognitive Search' it would be 'Search'.). See https://aka.ms/azsdk/mark-release-status for more info."
+        while (($readInput = Read-Host -Prompt "Input the display name") -eq "") { }
+        $packageInfo.DisplayName = $readInput
+      }
+
+      if (!$pkg.ServiceName) {
+        Write-Host "This is the friendly service name for this package that is used to align it with other packages and languages (i.e., no need to include 'Azure' or 'Microsoft' in the title). The service name is sometimes the same as the `Package Display Name` if there is only one package for a service. (i.e. For 'Azure Anomaly Detector' it would be 'Anomaly Detector'). For services that ship multiple packages be sure to list the service only. (i.e. For 'Schema Registry Avro', the service name is just 'Schema Registry'; For 'Key Vault Certificates', the service name is simply Key Vault.). See https://aka.ms/azsdk/mark-release-status for more info."
+        while (($readInput = Read-Host -Prompt "Input the service name") -eq "") { }
+        $packageInfo.ServiceName = $readInput
+      }
+    }
+    $workItem = CreateOrUpdatePackageWorkItem $lang $pkg $verMajorMinor -existingItem $null -assignedTo $assignedTo -extraFields $extraFields -outputCommand $outputCommand -relatedId $relatedId -tag $tag -ignoreReleasePlannerTests $ignoreReleasePlannerTests
   }
 
   return $workItem
 }
 
-function CreateOrUpdatePackageWorkItem($lang, $pkg, $verMajorMinor, $existingItem, $assignedTo = $null, $outputCommand = $true)
+function CreateOrUpdatePackageWorkItem($lang, $pkg, $verMajorMinor, $existingItem, $assignedTo = $null, $extraFields = $null, $outputCommand = $true, $relatedId = $null, $tag = $null, $ignoreReleasePlannerTests = $true)
 {
   if (!$lang -or !$pkg -or !$verMajorMinor) {
     Write-Host "Cannot create or update because one of lang, pkg or verMajorMinor aren't set. [$lang|$($pkg.Package)|$verMajorMinor]"
@@ -343,6 +491,10 @@ function CreateOrUpdatePackageWorkItem($lang, $pkg, $verMajorMinor, $existingIte
   $fields += "`"ServiceName=${serviceName}`""
   $fields += "`"PackageRepoPath=${pkgRepoPath}`""
 
+  if ($extraFields) {
+    $fields += $extraFields
+  }
+
   if ($existingItem)
   {
     $changedField = $null
@@ -351,7 +503,7 @@ function CreateOrUpdatePackageWorkItem($lang, $pkg, $verMajorMinor, $existingIte
     if ($pkgName -ne $existingItem.fields["Custom.Package"]) { $changedField = "Custom.Package" }
     if ($verMajorMinor -ne $existingItem.fields["Custom.PackageVersionMajorMinor"]) { $changedField = "Custom.PackageVersionMajorMinor" }
     if ($pkgDisplayName -ne $existingItem.fields["Custom.PackageDisplayName"]) { $changedField = "Custom.PackageDisplayName" }
-    if ($pkgType -ne $existingItem.fields["Custom.PackageType"]) { $changedField = "Custom.PackageType" }
+    if ($pkgType -ne [string]$existingItem.fields["Custom.PackageType"]) { $changedField = "Custom.PackageType" }
     if ($pkgNewLibrary -ne $existingItem.fields["Custom.PackageTypeNewLibrary"]) { $changedField = "Custom.PackageTypeNewLibrary" }
     if ($pkgRepoPath -ne $existingItem.fields["Custom.PackageRepoPath"]) { $changedField = "Custom.PackageRepoPath" }
     if ($serviceName -ne $existingItem.fields["Custom.ServiceName"]) { $changedField = "Custom.ServiceName" }
@@ -374,22 +526,24 @@ function CreateOrUpdatePackageWorkItem($lang, $pkg, $verMajorMinor, $existingIte
       }
     }
 
-    $newparentItem = FindOrCreatePackageGroupParent $serviceName $pkgDisplayName -outputCommand $false
+    $newparentItem = FindOrCreatePackageGroupParent $serviceName $pkgDisplayName -outputCommand $false -tag $tag -ignoreReleasePlannerTests $ignoreReleasePlannerTests
     UpdateWorkItemParent $existingItem $newParentItem -outputCommand $outputCommand
     return $existingItem
   }
 
-  $parentItem = FindOrCreatePackageGroupParent $serviceName $pkgDisplayName -outputCommand $false
-  $workItem = CreateWorkItem $title "Package" "Release" "Release" $fields $assignedTo $parentItem.id -outputCommand $outputCommand
+  $parentItem = FindOrCreatePackageGroupParent $serviceName $pkgDisplayName -outputCommand $false -tag $tag -ignoreReleasePlannerTests $ignoreReleasePlannerTests
+  Write-Host "Found product work item [$($parentItem.id)]. Creating package work item."
+  $workItem = CreateWorkItem $title "Package" "Release" "Release" $fields $assignedTo $parentItem.id -outputCommand $outputCommand -relatedId $relatedId -tag $tag
   Write-Host "[$($workItem.id)]$lang - $pkgName($verMajorMinor) - Created"
   return $workItem
 }
 
-function FindOrCreatePackageGroupParent($serviceName, $packageDisplayName, $outputCommand = $true)
+function FindOrCreatePackageGroupParent($serviceName, $packageDisplayName, $outputCommand = $true, $ignoreReleasePlannerTests = $true, $tag = $null)
 {
-  $existingItem = FindParentWorkItem $serviceName $packageDisplayName -outputCommand $outputCommand
+  $existingItem = FindParentWorkItem $serviceName $packageDisplayName -outputCommand $outputCommand -ignoreReleasePlannerTests $ignoreReleasePlannerTests -tag $tag
   if ($existingItem) {
-    $newparentItem = FindOrCreateServiceParent $serviceName -outputCommand $outputCommand
+    Write-Host "Found existing product work item [$($existingItem.id)]"
+    $newparentItem = FindOrCreateServiceParent $serviceName -outputCommand $outputCommand -ignoreReleasePlannerTests $ignoreReleasePlannerTests -tag $tag
     UpdateWorkItemParent $existingItem $newParentItem
     return $existingItem
   }
@@ -397,8 +551,9 @@ function FindOrCreatePackageGroupParent($serviceName, $packageDisplayName, $outp
   $fields = @()
   $fields += "`"PackageDisplayName=${packageDisplayName}`""
   $fields += "`"ServiceName=${serviceName}`""
-  $serviceParentItem = FindOrCreateServiceParent $serviceName -outputCommand $outputCommand
-  $workItem = CreateWorkItem $packageDisplayName "Epic" "Release" "Release" $fields $null $serviceParentItem.id
+  $fields += "`"Custom.EpicType=Product`""
+  $serviceParentItem = FindOrCreateServiceParent $serviceName -outputCommand $outputCommand -ignoreReleasePlannerTests $ignoreReleasePlannerTests -tag $tag
+  $workItem = CreateWorkItem $packageDisplayName "Epic" "Release" "Release" $fields $null $serviceParentItem.id -tag $tag
 
   $localKey = BuildHashKey $serviceName $packageDisplayName
   Write-Host "[$($workItem.id)]$localKey - Created Parent"
@@ -406,21 +561,23 @@ function FindOrCreatePackageGroupParent($serviceName, $packageDisplayName, $outp
   return $workItem
 }
 
-function FindOrCreateServiceParent($serviceName, $outputCommand = $true)
+function FindOrCreateServiceParent($serviceName, $outputCommand = $true, $ignoreReleasePlannerTests = $true, $tag = $null)
 {
-  $serviceParent = FindParentWorkItem $serviceName -outputCommand $outputCommand
+  $serviceParent = FindParentWorkItem $serviceName -packageDisplayName $null -outputCommand $outputCommand -ignoreReleasePlannerTests $ignoreReleasePlannerTests -tag $tag
   if ($serviceParent) {
+    Write-Host "Found existing service work item [$($serviceParent.id)]"
     return $serviceParent
   }
 
   $fields = @()
   $fields += "`"PackageDisplayName=`""
   $fields += "`"ServiceName=${serviceName}`""
+  $fields += "`"Custom.EpicType=Service`""
   $parentId = $null
-  $workItem = CreateWorkItem $serviceName "Epic" "Release" "Release" $fields $null $parentId -outputCommand $outputCommand
+  $workItem = CreateWorkItem $serviceName "Epic" "Release" "Release" $fields $null $parentId -outputCommand $outputCommand -tag $tag
 
   $localKey = BuildHashKey $serviceName
-  Write-Host "[$($workItem.id)]$localKey - Created"
+  Write-Host "[$($workItem.id)]$localKey - Created service work item"
   $parentWorkItems[$localKey] = $workItem
   return $workItem
 }
@@ -720,6 +877,15 @@ function UpdatePackageVersions($pkgWorkItem, $plannedVersions, $shippedVersions)
       $shippedVersionSet[$version.Version] = $version
       $updateShipped = $true
     }
+    else
+    {
+      # Check for any date update, general case would from be previous Unknown to date
+      if ($shippedVersionSet[$version.Version].Date -ne $version.Date)
+      {
+        $shippedVersionSet[$version.Version] = $version
+        $updateShipped = $true
+      }
+    }
   }
 
   $versionSet = @{}
@@ -769,6 +935,25 @@ function UpdatePackageVersions($pkgWorkItem, $plannedVersions, $shippedVersions)
   "value": "$shippedPackages"
 }
 "@
+
+    # If we shipped a version after we set "In Release" state then reset the state to "Next Release Unknown"
+    if ($pkgWorkItem.fields["System.State"] -eq "In Release")
+    {
+      $lastShippedDate = $newShippedVersions[0].Date -as [DateTime]
+      $markedInReleaseDate = ([DateTime]$pkgWorkItem.fields["Microsoft.VSTS.Common.StateChangeDate"])
+
+      # We just shipped so lets set the state to "Next Release Unknown"
+      if ($lastShippedDate -and $markedInReleaseDate -le $lastShippedDate)
+      {
+        $fieldUpdates += @'
+{
+  "op": "replace",
+  "path": "/fields/State",
+  "value": "Next Release Unknown"
+}
+'@
+      }
+    }
   }
 
   # Full merged version set
@@ -796,20 +981,8 @@ function UpdatePackageVersions($pkgWorkItem, $plannedVersions, $shippedVersions)
 
   $body = "[" + ($fieldUpdates -join ',') + "]"
 
-  $headers = $null
-  if (Get-Variable -Name "devops_pat" -ValueOnly -ErrorAction "Ignore")
-  {
-    $encodedToken = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes([string]::Format("{0}:{1}", "", $devops_pat)))
-    $headers = @{ Authorization = "Basic $encodedToken" }
-  }
-  else
-  {
-    # Get a temp access token from the logged in az cli user for azure devops resource
-    $jwt_accessToken = (az account get-access-token --resource "499b84ac-1321-427f-aa17-267ca6975798" --query "accessToken" --output tsv)
-    $headers = @{ Authorization = "Bearer $jwt_accessToken" }
-  }
   $response = Invoke-RestMethod -Method PATCH `
     -Uri "https://dev.azure.com/azure-sdk/_apis/wit/workitems/${id}?api-version=6.0" `
-    -Headers $headers -Body $body -ContentType "application/json-patch+json" | ConvertTo-Json -Depth 10 | ConvertFrom-Json -AsHashTable
+    -Headers (Get-DevOpsRestHeaders) -Body $body -ContentType "application/json-patch+json" | ConvertTo-Json -Depth 10 | ConvertFrom-Json -AsHashTable
   return $response
 }

@@ -5,37 +5,51 @@
 # --------------------------------------------------------------------------
 # pylint: disable=too-many-lines, invalid-overridden-method, too-many-public-methods
 import functools
+import sys
 import time
+import warnings
+from datetime import datetime
 from io import BytesIO
-from typing import Optional, Union, IO, List, Tuple, Dict, Any, Iterable, TYPE_CHECKING  # pylint: disable=unused-import
+from typing import (
+    Any, AnyStr, AsyncIterable, Dict, IO, Iterable, List, Optional, Tuple, Union,
+    TYPE_CHECKING
+)
 
-import six
 from azure.core.async_paging import AsyncItemPaged
-from azure.core.exceptions import HttpResponseError
-
+from azure.core.exceptions import HttpResponseError, ResourceNotFoundError
 from azure.core.tracing.decorator import distributed_trace
 from azure.core.tracing.decorator_async import distributed_trace_async
 from .._parser import _datetime_to_str, _get_file_permission
 from .._shared.parser import _str
-
 from .._generated.aio import AzureFileStorage
 from .._generated.models import FileHTTPHeaders
 from .._shared.policies_async import ExponentialRetry
-from .._shared.uploads_async import upload_data_chunks, FileChunkUploader, IterStreamer
+from .._shared.uploads_async import AsyncIterStreamer, FileChunkUploader, IterStreamer, upload_data_chunks
 from .._shared.base_client_async import AsyncStorageAccountHostsMixin
 from .._shared.request_handlers import add_metadata_headers, get_length
 from .._shared.response_handlers import return_response_headers, process_storage_error
 from .._deserialize import deserialize_file_properties, deserialize_file_stream, get_file_ranges_result
-from .._serialize import get_access_conditions, get_smb_properties, get_api_version
+from .._serialize import (
+    get_access_conditions,
+    get_api_version,
+    get_dest_access_conditions,
+    get_rename_smb_properties,
+    get_smb_properties,
+    get_source_access_conditions)
 from .._file_client import ShareFileClient as ShareFileClientBase
 from ._models import HandlesPaged
 from ._lease_async import ShareLeaseClient
 from ._download_async import StorageStreamDownloader
 
+if sys.version_info >= (3, 8):
+    from typing import Literal  # pylint: disable=no-name-in-module, ungrouped-imports
+else:
+    from typing_extensions import Literal  # pylint: disable=ungrouped-imports
+
 if TYPE_CHECKING:
-    from datetime import datetime
-    from .._models import ShareProperties, ContentSettings, FileProperties, NTFSAttributes
-    from .._generated.models import HandleItem
+    from azure.core.credentials import AzureNamedKeyCredential, AzureSasCredential
+    from azure.core.credentials_async import AsyncTokenCredential
+    from .._models import ContentSettings, FileProperties, Handle, NTFSAttributes
 
 
 async def _upload_file_helper(
@@ -53,6 +67,7 @@ async def _upload_file_helper(
     file_last_write_time="now",
     file_permission=None,
     file_permission_key=None,
+    progress_hook=None,
     **kwargs
 ):
     try:
@@ -79,6 +94,7 @@ async def _upload_file_helper(
             stream=stream,
             max_concurrency=max_concurrency,
             validate_content=validate_content,
+            progress_hook=progress_hook,
             timeout=timeout,
             **kwargs
         )
@@ -103,43 +119,61 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
         An optional file snapshot on which to operate. This can be the snapshot ID string
         or the response returned from :func:`ShareClient.create_snapshot`.
     :param credential:
-        The credential with which to authenticate. This is optional if the
+        The credentials with which to authenticate. This is optional if the
         account URL already has a SAS token. The value can be a SAS token string,
-        an instance of a AzureSasCredential from azure.core.credentials or an account
-        shared access key.
+        an instance of a AzureSasCredential or AzureNamedKeyCredential from azure.core.credentials,
+        an account shared access key, or an instance of a TokenCredentials class from azure.identity.
+        If the resource URI already contains a SAS token, this will be ignored in favor of an explicit credential
+        - except in the case of AzureSasCredential, where the conflicting SAS tokens will raise a ValueError.
+        If using an instance of AzureNamedKeyCredential, "name" should be the storage account name, and "key"
+        should be the storage account key.
+    :keyword token_intent:
+        Required when using `TokenCredential` for authentication and ignored for other forms of authentication.
+        Specifies the intent for all requests when using `TokenCredential` authentication. Possible values are:
+
+        backup - Specifies requests are intended for backup/admin type operations, meaning that all file/directory
+                 ACLs are bypassed and full permissions are granted. User must also have required RBAC permission.
+
+    :paramtype token_intent: Literal['backup']
+    :keyword bool allow_trailing_dot: If true, the trailing dot will not be trimmed from the target URI.
+    :keyword bool allow_source_trailing_dot: If true, the trailing dot will not be trimmed from the source URI.
     :keyword str api_version:
-        The Storage API version to use for requests. Default value is '2019-07-07'.
-        Setting to an older version may result in reduced feature compatibility.
+        The Storage API version to use for requests. Default value is the most recent service version that is
+        compatible with the current SDK. Setting to an older version may result in reduced feature compatibility.
 
         .. versionadded:: 12.1.0
 
     :keyword str secondary_hostname:
         The hostname of the secondary endpoint.
-    :keyword loop:
-        The event loop to run the asynchronous tasks.
     :keyword int max_range_size: The maximum range size used for a file upload. Defaults to 4*1024*1024.
+    :keyword str audience: The audience to use when requesting tokens for Azure Active Directory
+        authentication. Only has an effect when credential is of type TokenCredential. The value could be
+        https://storage.azure.com/ (default) or https://<account>.blob.core.windows.net.
     """
-
-    def __init__(  # type: ignore
-        self,
-        account_url,  # type: str
-        share_name,  # type: str
-        file_path,  # type: str
-        snapshot=None,  # type: Optional[Union[str, Dict[str, Any]]]
-        credential=None,  # type: Optional[Any]
-        **kwargs  # type: Any
-    ):
-        # type: (...) -> None
+    def __init__(
+            self, account_url: str,
+            share_name: str,
+            file_path: str,
+            snapshot: Optional[Union[str, Dict[str, Any]]] = None,
+            credential: Optional[Union[str, Dict[str, str], "AzureNamedKeyCredential", "AzureSasCredential", "AsyncTokenCredential"]] = None,  # pylint: disable=line-too-long
+            *,
+            token_intent: Optional[Literal['backup']] = None,
+            **kwargs: Any
+        ) -> None:
         kwargs["retry_policy"] = kwargs.get("retry_policy") or ExponentialRetry(**kwargs)
         loop = kwargs.pop('loop', None)
+        if loop and sys.version_info >= (3, 8):
+            warnings.warn("The 'loop' parameter was deprecated from asyncio's high-level"
+            "APIs in Python 3.8 and is no longer supported.", DeprecationWarning)
         super(ShareFileClient, self).__init__(
             account_url, share_name=share_name, file_path=file_path, snapshot=snapshot,
-            credential=credential, loop=loop, **kwargs
+            credential=credential, token_intent=token_intent, **kwargs
         )
-        self._client = AzureFileStorage(url=self.url, pipeline=self._pipeline, loop=loop)
-        default_api_version = self._client._config.version  # pylint: disable=protected-access
-        self._client._config.version = get_api_version(kwargs, default_api_version) # pylint: disable=protected-access
-        self._loop = loop
+        self._client = AzureFileStorage(url=self.url, base_url=self.url, pipeline=self._pipeline,
+                                        allow_trailing_dot=self.allow_trailing_dot,
+                                        allow_source_trailing_dot=self.allow_source_trailing_dot,
+                                        file_request_intent=self.file_request_intent)
+        self._client._config.version = get_api_version(kwargs) # pylint: disable=protected-access
 
     @distributed_trace_async
     async def acquire_lease(self, lease_id=None, **kwargs):
@@ -154,7 +188,11 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
             returns 400 (Invalid request) if the proposed lease ID is not
             in the correct format.
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
         :returns: A ShareLeaseClient object.
         :rtype: ~azure.storage.fileshare.aio.ShareLeaseClient
 
@@ -173,12 +211,35 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
         return lease
 
     @distributed_trace_async
+    async def exists(self, **kwargs: Any) -> bool:
+        """
+        Returns True if the file exists and returns False otherwise.
+
+        :keyword int timeout:
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
+        :returns: True if the file exists, False otherwise.
+        :rtype: bool
+        """
+        try:
+            await self._client.file.get_properties(**kwargs)
+            return True
+        except HttpResponseError as error:
+            try:
+                process_storage_error(error)
+            except ResourceNotFoundError:
+                return False
+
+    @distributed_trace_async
     async def create_file(  # type: ignore
         self,
         size,  # type: int
         file_attributes="none",  # type: Union[str, NTFSAttributes]
-        file_creation_time="now",  # type: Union[str, datetime]
-        file_last_write_time="now",  # type: Union[str, datetime]
+        file_creation_time="now",  # type: Optional[Union[str, datetime]]
+        file_last_write_time="now",  # type: Optional[Union[str, datetime]]
         file_permission=None,  # type: Optional[str]
         permission_key=None,  # type: Optional[str]
         **kwargs  # type: Any
@@ -213,6 +274,13 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
             directory/file. Note: Only one of the x-ms-file-permission or
             x-ms-file-permission-key should be specified.
         :type permission_key: str
+        :keyword file_change_time:
+            Change time for the file. If not specified, change time will be set to the current date/time.
+
+            .. versionadded:: 12.8.0
+                This parameter was introduced in API version '2021-06-08'.
+
+        :paramtype file_change_time: str or ~datetime.datetime
         :keyword ~azure.storage.fileshare.ContentSettings content_settings:
             ContentSettings object used to set file properties. Used to set content type, encoding,
             language, disposition, md5, and cache control.
@@ -226,7 +294,11 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
 
         :paramtype lease: ~azure.storage.fileshare.aio.ShareLeaseClient or str
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
         :returns: File-updated property dict (Etag and last modified).
         :rtype: dict(str, Any)
 
@@ -243,9 +315,6 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
         content_settings = kwargs.pop('content_settings', None)
         metadata = kwargs.pop('metadata', None)
         timeout = kwargs.pop('timeout', None)
-        if self.require_encryption and not self.key_encryption_key:
-            raise ValueError("Encryption required but no key was provided.")
-
         headers = kwargs.pop("headers", {})
         headers.update(add_metadata_headers(metadata))
         file_http_headers = None
@@ -259,6 +328,7 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
                 file_content_disposition=content_settings.content_disposition,
             )
         file_permission = _get_file_permission(file_permission, permission_key, 'Inherit')
+        file_change_time = kwargs.pop('file_change_time', None)
         try:
             return await self._client.file.create(  # type: ignore
                 file_content_length=size,
@@ -266,6 +336,7 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
                 file_attributes=_str(file_attributes),
                 file_creation_time=_datetime_to_str(file_creation_time),
                 file_last_write_time=_datetime_to_str(file_last_write_time),
+                file_change_time=_datetime_to_str(file_change_time),
                 file_permission=file_permission,
                 file_permission_key=permission_key,
                 file_http_headers=file_http_headers,
@@ -280,19 +351,18 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
 
     @distributed_trace_async
     async def upload_file(
-        self, data,  # type: Any
-        length=None,  # type: Optional[int]
-        file_attributes="none",  # type: Union[str, NTFSAttributes]
-        file_creation_time="now",  # type: Union[str, datetime]
-        file_last_write_time="now",  # type: Union[str, datetime]
-        file_permission=None,  # type: Optional[str]
-        permission_key=None,  # type: Optional[str]
-        **kwargs  # type: Any
-    ):
-        # type: (...) -> Dict[str, Any]
+        self, data: Union[bytes, str, Iterable[AnyStr], AsyncIterable[AnyStr], IO[AnyStr]],
+            length: Optional[int] = None,
+            file_attributes: Union[str, "NTFSAttributes"] = "none",
+            file_creation_time: Optional[Union[str, datetime]] = "now",
+            file_last_write_time: Optional[Union[str, datetime]] = "now",
+            file_permission: Optional[str] = None,
+            permission_key: Optional[str] = None,
+            **kwargs
+        ) -> Dict[str, Any]:
         """Uploads a new file.
 
-        :param Any data:
+        :param data:
             Content of the file.
         :param int length:
             Length of the file in bytes. Specify its maximum size, up to 1 TiB.
@@ -319,6 +389,13 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
             directory/file. Note: Only one of the x-ms-file-permission or
             x-ms-file-permission-key should be specified.
         :type permission_key: str
+        :keyword file_change_time:
+            Change time for the file. If not specified, change time will be set to the current date/time.
+
+            .. versionadded:: 12.8.0
+                This parameter was introduced in API version '2021-06-08'.
+
+        :paramtype file_change_time: str or ~datetime.datetime
         :keyword dict(str,str) metadata:
             Name-value pairs associated with the file as metadata.
         :keyword ~azure.storage.fileshare.ContentSettings content_settings:
@@ -342,8 +419,17 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
             .. versionadded:: 12.1.0
 
         :paramtype lease: ~azure.storage.fileshare.aio.ShareLeaseClient or str
+        :keyword progress_hook:
+            An async callback to track the progress of a long running upload. The signature is
+            function(current: int, total: Optional[int]) where current is the number of bytes transferred
+            so far, and total is the size of the blob or None if the size is unknown.
+        :paramtype progress_hook: Callable[[int, Optional[int]], Awaitable[None]]
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
         :returns: File-updated property dict (Etag and last modified).
         :rtype: dict(str, Any)
 
@@ -360,12 +446,11 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
         content_settings = kwargs.pop('content_settings', None)
         max_concurrency = kwargs.pop('max_concurrency', 1)
         validate_content = kwargs.pop('validate_content', False)
+        progress_hook = kwargs.pop('progress_hook', None)
         timeout = kwargs.pop('timeout', None)
         encoding = kwargs.pop('encoding', 'UTF-8')
-        if self.require_encryption or (self.key_encryption_key is not None):
-            raise ValueError("Encryption not supported.")
 
-        if isinstance(data, six.text_type):
+        if isinstance(data, str):
             data = data.encode(encoding)
         if length is None:
             length = get_length(data)
@@ -377,10 +462,12 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
         elif hasattr(data, "read"):
             stream = data
         elif hasattr(data, "__iter__"):
-            stream = IterStreamer(data, encoding=encoding)  # type: ignore
+            stream = IterStreamer(data, encoding=encoding)
+        elif hasattr(data, '__aiter__'):
+            stream = AsyncIterStreamer(data, encoding=encoding)
         else:
-            raise TypeError("Unsupported data type: {}".format(type(data)))
-        return await _upload_file_helper(  # type: ignore
+            raise TypeError(f"Unsupported data type: {type(data)}")
+        return await _upload_file_helper(
             self,
             stream,
             length,
@@ -395,6 +482,7 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
             file_last_write_time=file_last_write_time,
             file_permission=file_permission,
             file_permission_key=permission_key,
+            progress_hook=progress_hook,
             **kwargs
         )
 
@@ -459,6 +547,13 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
                 This parameter was introduced in API version '2019-07-07'.
 
         :paramtype file_last_write_time: str or ~datetime.datetime
+        :keyword file_change_time:
+            Change time for the file. If not specified, change time will be set to the current date/time.
+
+            .. versionadded:: 12.9.0
+                This parameter was introduced in API version '2021-06-08'.
+
+        :paramtype file_change_time: str or ~datetime.datetime
         :keyword bool ignore_read_only:
             Specifies the option to overwrite the target file if it already exists and has read-only attribute set.
 
@@ -484,7 +579,11 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
 
         :paramtype lease: ~azure.storage.fileshare.aio.ShareLeaseClient or str
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
         :rtype: dict(str, Any)
 
         .. admonition:: Example:
@@ -535,7 +634,11 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
 
         :paramtype lease: ~azure.storage.fileshare.aio.ShareLeaseClient or str
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
         :rtype: None
         """
         access_conditions = get_access_conditions(kwargs.pop('lease', None))
@@ -559,10 +662,12 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
         self,
         offset=None,  # type: Optional[int]
         length=None,  # type: Optional[int]
-        **kwargs
+        **kwargs  # type: Any
     ):
-        # type: (...) -> Iterable[bytes]
-        """Downloads a file to a stream with automatic chunking.
+        # type: (...) -> StorageStreamDownloader
+        """Downloads a file to the StorageStreamDownloader. The readall() method must
+        be used to read all the content or readinto() must be used to download the file into
+        a stream. Using chunks() returns an async iterator which allows the user to iterate over the content in chunks.
 
         :param int offset:
             Start of byte range to use for downloading a section of the file.
@@ -588,9 +693,19 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
             .. versionadded:: 12.1.0
 
         :paramtype lease: ~azure.storage.fileshare.aio.ShareLeaseClient or str
+        :keyword progress_hook:
+            An async callback to track the progress of a long running download. The signature is
+            function(current: int, total: int) where current is the number of bytes transferred
+            so far, and total is the size of the blob or None if the size is unknown.
+        :paramtype progress_hook: Callable[[int, int], Awaitable[None]]
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
-        :returns: A iterable data generator (stream)
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
+        :returns: A streaming object (StorageStreamDownloader)
+        :rtype: ~azure.storage.fileshare.aio.StorageStreamDownloader
 
         .. admonition:: Example:
 
@@ -601,8 +716,6 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
                 :dedent: 16
                 :caption: Download a file.
         """
-        if self.require_encryption or (self.key_encryption_key is not None):
-            raise ValueError("Encryption not supported.")
         if length is not None and offset is None:
             raise ValueError("Offset value must not be None if length is set.")
 
@@ -617,7 +730,6 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
             config=self._config,
             start_range=offset,
             end_range=range_end,
-            encryption_options=None,
             name=self.file_name,
             path='/'.join(self.file_path),
             share=self.share_name,
@@ -642,7 +754,11 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
 
         :paramtype lease: ~azure.storage.fileshare.aio.ShareLeaseClient or str
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
         :rtype: None
 
         .. admonition:: Example:
@@ -662,6 +778,129 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
             process_storage_error(error)
 
     @distributed_trace_async
+    async def rename_file(
+            self, new_name, # type: str
+            **kwargs # type: Any
+        ):
+        # type: (...) -> ShareFileClient
+        """
+        Rename the source file.
+
+        :param str new_name:
+            The new file name.
+        :keyword int timeout:
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
+        :keyword bool overwrite:
+            A boolean value for if the destination file already exists, whether this request will
+            overwrite the file or not. If true, the rename will succeed and will overwrite the
+            destination file. If not provided or if false and the destination file does exist, the
+            request will not overwrite the destination file. If provided and the destination file
+            doesn't exist, the rename will succeed.
+        :keyword bool ignore_read_only:
+            A boolean value that specifies whether the ReadOnly attribute on a preexisting destination
+            file should be respected. If true, the rename will succeed, otherwise, a previous file at the
+            destination with the ReadOnly attribute set will cause the rename to fail.
+        :keyword str file_permission:
+            If specified the permission (security descriptor) shall be set for the file. This header
+            can be used if Permission size is <= 8KB, else file_permission_key shall be used.
+            If SDDL is specified as input, it must have owner, group and dacl.
+            A value of 'preserve' can be passed to preserve source permissions.
+            Note: Only one of the file_permission or file_permission_key should be specified.
+        :keyword str file_permission_key:
+            Key of the permission to be set for the file.
+            Note: Only one of the file-permission or file-permission-key should be specified.
+        :keyword file_attributes:
+            The file system attributes for the file.
+        :paramtype file_attributes:~azure.storage.fileshare.NTFSAttributes or str
+        :keyword file_creation_time:
+            Creation time for the file.
+        :paramtype file_creation_time:~datetime.datetime or str
+        :keyword file_last_write_time:
+            Last write time for the file.
+        :paramtype file_last_write_time:~datetime.datetime or str
+        :keyword file_change_time:
+            Change time for the file. If not specified, change time will be set to the current date/time.
+
+            .. versionadded:: 12.8.0
+                This parameter was introduced in API version '2021-06-08'.
+
+        :paramtype file_change_time: str or ~datetime.datetime
+        :keyword str content_type:
+            The Content Type of the new file.
+
+            .. versionadded:: 12.8.0
+                This parameter was introduced in API version '2021-06-08'.
+
+        :keyword Dict[str,str] metadata:
+            A name-value pair to associate with a file storage object.
+        :keyword source_lease:
+            Required if the source file has an active lease. Value can be a ShareLeaseClient object
+            or the lease ID as a string.
+        :paramtype source_lease: ~azure.storage.fileshare.ShareLeaseClient or str
+        :keyword destination_lease:
+            Required if the destination file has an active lease. Value can be a ShareLeaseClient object
+            or the lease ID as a string.
+        :paramtype destination_lease: ~azure.storage.fileshare.ShareLeaseClient or str
+        :returns: The new File Client.
+        :rtype: ~azure.storage.fileshare.ShareFileClient
+        """
+        if not new_name:
+            raise ValueError("Please specify a new file name.")
+
+        new_name = new_name.strip('/')
+        new_path_and_query = new_name.split('?')
+        new_file_path = new_path_and_query[0]
+        if len(new_path_and_query) == 2:
+            new_file_sas = new_path_and_query[1] or self._query_str.strip('?')
+        else:
+            new_file_sas = self._query_str.strip('?')
+
+        new_file_client = ShareFileClient(
+            f'{self.scheme}://{self.primary_hostname}', self.share_name, new_file_path,
+            credential=new_file_sas or self.credential, api_version=self.api_version,
+            _hosts=self._hosts, _configuration=self._config, _pipeline=self._pipeline,
+            _location_mode=self._location_mode, allow_trailing_dot=self.allow_trailing_dot,
+            allow_source_trailing_dot=self.allow_source_trailing_dot, token_intent=self.file_request_intent
+        )
+
+        kwargs.update(get_rename_smb_properties(kwargs))
+
+        file_http_headers = None
+        content_type = kwargs.pop('content_type', None)
+        if content_type:
+            file_http_headers = FileHTTPHeaders(
+                file_content_type=content_type
+            )
+
+        timeout = kwargs.pop('timeout', None)
+        overwrite = kwargs.pop('overwrite', None)
+        metadata = kwargs.pop('metadata', None)
+        headers = kwargs.pop('headers', {})
+        headers.update(add_metadata_headers(metadata))
+
+        source_access_conditions = get_source_access_conditions(kwargs.pop('source_lease', None))
+        dest_access_conditions = get_dest_access_conditions(kwargs.pop('destination_lease', None))
+
+        try:
+            await new_file_client._client.file.rename(  # pylint: disable=protected-access
+                self.url,
+                timeout=timeout,
+                replace_if_exists=overwrite,
+                file_http_headers=file_http_headers,
+                source_lease_access_conditions=source_access_conditions,
+                destination_lease_access_conditions=dest_access_conditions,
+                headers=headers,
+                **kwargs)
+
+            return new_file_client
+        except HttpResponseError as error:
+            process_storage_error(error)
+
+    @distributed_trace_async
     async def get_file_properties(self, **kwargs):
         # type: (Any) -> FileProperties
         """Returns all user-defined metadata, standard HTTP properties, and
@@ -675,7 +914,11 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
 
         :paramtype lease: ~azure.storage.fileshare.aio.ShareLeaseClient or str
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
         :returns: FileProperties
         :rtype: ~azure.storage.fileshare.FileProperties
         """
@@ -700,8 +943,8 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
     @distributed_trace_async
     async def set_http_headers(self, content_settings,  # type: ContentSettings
                                file_attributes="preserve",  # type: Union[str, NTFSAttributes]
-                               file_creation_time="preserve",  # type: Union[str, datetime]
-                               file_last_write_time="preserve",  # type: Union[str, datetime]
+                               file_creation_time="preserve",  # type: Optional[Union[str, datetime]]
+                               file_last_write_time="preserve",  # type: Optional[Union[str, datetime]]
                                file_permission=None,  # type: Optional[str]
                                permission_key=None,  # type: Optional[str]
                                **kwargs  # type: Any
@@ -734,6 +977,13 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
             directory/file. Note: Only one of the x-ms-file-permission or
             x-ms-file-permission-key should be specified.
         :type permission_key: str
+        :keyword file_change_time:
+            Change time for the file. If not specified, change time will be set to the current date/time.
+
+            .. versionadded:: 12.8.0
+                This parameter was introduced in API version '2021-06-08'.
+
+        :paramtype file_change_time: str or ~datetime.datetime
         :keyword lease:
             Required if the file has an active lease. Value can be a ShareLeaseClient object
             or the lease ID as a string.
@@ -742,7 +992,11 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
 
         :paramtype lease: ~azure.storage.fileshare.aio.ShareLeaseClient or str
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
         :returns: File-updated property dict (Etag and last modified).
         :rtype: dict(str, Any)
         """
@@ -758,6 +1012,7 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
             file_content_disposition=content_settings.content_disposition,
         )
         file_permission = _get_file_permission(file_permission, permission_key, 'preserve')
+        file_change_time = kwargs.pop('file_change_time', None)
         try:
             return await self._client.file.set_http_headers(  # type: ignore
                 file_content_length=file_content_length,
@@ -765,6 +1020,7 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
                 file_attributes=_str(file_attributes),
                 file_creation_time=_datetime_to_str(file_creation_time),
                 file_last_write_time=_datetime_to_str(file_last_write_time),
+                file_change_time=_datetime_to_str(file_change_time),
                 file_permission=file_permission,
                 file_permission_key=permission_key,
                 lease_access_conditions=access_conditions,
@@ -796,7 +1052,11 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
 
         :paramtype lease: ~azure.storage.fileshare.aio.ShareLeaseClient or str
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
         :returns: File-updated property dict (Etag and last modified).
         :rtype: dict(str, Any)
         """
@@ -838,6 +1098,15 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
             bitflips on the wire if using http instead of https as https (the default)
             will already validate. Note that this MD5 hash is not stored with the
             file.
+        :keyword file_last_write_mode:
+            If the file last write time should be preserved or overwritten. Possible values
+            are "preserve" or "now". If not specified, file last write time will be changed to
+            the current date/time.
+
+            .. versionadded:: 12.8.0
+                This parameter was introduced in API version '2021-06-08'.
+
+        :paramtype file_last_write_mode: Literal["preserve", "now"]
         :keyword lease:
             Required if the file has an active lease. Value can be a ShareLeaseClient object
             or the lease ID as a string.
@@ -846,7 +1115,11 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
 
         :paramtype lease: ~azure.storage.fileshare.aio.ShareLeaseClient or str
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
         :keyword str encoding:
             Defaults to UTF-8.
         :returns: File-updated property dict (Etag and last modified).
@@ -855,12 +1128,11 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
         validate_content = kwargs.pop('validate_content', False)
         timeout = kwargs.pop('timeout', None)
         encoding = kwargs.pop('encoding', 'UTF-8')
-        if self.require_encryption or (self.key_encryption_key is not None):
-            raise ValueError("Encryption not supported.")
-        if isinstance(data, six.text_type):
+        file_last_write_mode = kwargs.pop('file_last_write_mode', None)
+        if isinstance(data, str):
             data = data.encode(encoding)
         end_range = offset + length - 1  # Reformat to an inclusive range index
-        content_range = 'bytes={0}-{1}'.format(offset, end_range)
+        content_range = f'bytes={offset}-{end_range}'
         access_conditions = get_access_conditions(kwargs.pop('lease', None))
         try:
             return await self._client.file.upload_range(  # type: ignore
@@ -869,6 +1141,7 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
                 optionalbody=data,
                 timeout=timeout,
                 validate_content=validate_content,
+                file_last_written_mode=file_last_write_mode,
                 lease_access_conditions=access_conditions,
                 cls=return_response_headers,
                 **kwargs
@@ -905,6 +1178,32 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
         :param int source_offset:
             This indicates the start of the range of bytes(inclusive) that has to be taken from the copy source.
             The service will read the same number of bytes as the destination range (length-offset).
+        :keyword ~datetime.datetime source_if_modified_since:
+            A DateTime value. Azure expects the date value passed in to be UTC.
+            If timezone is included, any non-UTC datetimes will be converted to UTC.
+            If a date is passed in without timezone info, it is assumed to be UTC.
+            Specify this conditional header to copy the blob only if the source
+            blob has been modified since the specified date/time.
+        :keyword ~datetime.datetime source_if_unmodified_since:
+            A DateTime value. Azure expects the date value passed in to be UTC.
+            If timezone is included, any non-UTC datetimes will be converted to UTC.
+            If a date is passed in without timezone info, it is assumed to be UTC.
+            Specify this conditional header to copy the blob only if the source blob
+            has not been modified since the specified date/time.
+        :keyword str source_etag:
+            The source ETag value, or the wildcard character (*). Used to check if the resource has changed,
+            and act according to the condition specified by the `match_condition` parameter.
+        :keyword ~azure.core.MatchConditions source_match_condition:
+            The source match condition to use upon the etag.
+        :keyword file_last_write_mode:
+            If the file last write time should be preserved or overwritten. Possible values
+            are "preserve" or "now". If not specified, file last write time will be changed to
+            the current date/time.
+
+            .. versionadded:: 12.8.0
+                This parameter was introduced in API version '2021-06-08'.
+
+        :paramtype file_last_write_mode: Literal["preserve", "now"]
         :keyword lease:
             Required if the file has an active lease. Value can be a ShareLeaseClient object
             or the lease ID as a string.
@@ -913,7 +1212,14 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
 
         :paramtype lease: ~azure.storage.fileshare.aio.ShareLeaseClient or str
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
+        :keyword str source_authorization:
+            Authenticate as a service principal using a client secret to access a source blob. Ensure "bearer " is
+            the prefix of the source_authorization string.
         """
         options = self._upload_range_from_url_options(
             source_url=source_url,
@@ -949,7 +1255,11 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
 
         :paramtype lease: ~azure.storage.fileshare.ShareLeaseClient or str
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
         :returns:
             A list of valid ranges.
         :rtype: List[dict[str, int]]
@@ -991,7 +1301,11 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
             or the lease ID as a string.
         :paramtype lease: ~azure.storage.fileshare.ShareLeaseClient or str
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
         :returns:
             A tuple of two lists of file ranges as dictionaries with 'start' and 'end' keys.
             The first element are filled file ranges, the 2nd element is cleared file ranges.
@@ -1033,21 +1347,23 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
 
         :paramtype lease: ~azure.storage.fileshare.aio.ShareLeaseClient or str
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
         :returns: File-updated property dict (Etag and last modified).
         :rtype: Dict[str, Any]
         """
         access_conditions = get_access_conditions(kwargs.pop('lease', None))
         timeout = kwargs.pop('timeout', None)
-        if self.require_encryption or (self.key_encryption_key is not None):
-            raise ValueError("Unsupported method for encryption.")
 
         if offset is None or offset % 512 != 0:
             raise ValueError("offset must be an integer that aligns with 512 bytes file size")
         if length is None or length % 512 != 0:
             raise ValueError("length must be an integer that aligns with 512 bytes file size")
         end_range = length + offset - 1  # Reformat to an inclusive range index
-        content_range = "bytes={0}-{1}".format(offset, end_range)
+        content_range = f"bytes={offset}-{end_range}"
         try:
             return await self._client.file.upload_range(  # type: ignore
                 timeout=timeout,
@@ -1077,7 +1393,11 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
 
         :paramtype lease: ~azure.storage.fileshare.aio.ShareLeaseClient or str
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
         :returns: File-updated property dict (Etag and last modified).
         :rtype: Dict[str, Any]
         """
@@ -1100,13 +1420,17 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
 
     @distributed_trace
     def list_handles(self, **kwargs):
-        # type: (Any) -> AsyncItemPaged
+        # type: (Any) -> AsyncItemPaged[Handle]
         """Lists handles for file.
 
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
-        :returns: An auto-paging iterable of HandleItem
-        :rtype: ~azure.core.async_paging.AsyncItemPaged[~azure.storage.fileshare.HandleItem]
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
+        :returns: An auto-paging iterable of Handle
+        :rtype: ~azure.core.async_paging.AsyncItemPaged[~azure.storage.fileshare.Handle]
         """
         timeout = kwargs.pop('timeout', None)
         results_per_page = kwargs.pop("results_per_page", None)
@@ -1121,14 +1445,18 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
 
     @distributed_trace_async
     async def close_handle(self, handle, **kwargs):
-        # type: (Union[str, HandleItem], Any) -> Dict[str, int]
+        # type: (Union[str, Handle], Any) -> Dict[str, int]
         """Close an open file handle.
 
         :param handle:
             A specific handle to close.
         :type handle: str or ~azure.storage.fileshare.Handle
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
         :returns:
             The number of handles closed (this may be 0 if the specified handle was not found)
             and the number of handles failed to close in a dict.
@@ -1163,7 +1491,11 @@ class ShareFileClient(AsyncStorageAccountHostsMixin, ShareFileClientBase):
         This operation will block until the service has closed all open handles.
 
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-file-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-share
+            #other-client--per-operation-configuration>`_.
         :returns:
             The number of handles closed (this may be 0 if the specified handle was not found)
             and the number of handles failed to close in a dict.

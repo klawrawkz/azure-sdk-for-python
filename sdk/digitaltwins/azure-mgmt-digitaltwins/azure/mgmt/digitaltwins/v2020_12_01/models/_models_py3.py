@@ -1,4 +1,5 @@
 # coding=utf-8
+# pylint: disable=too-many-lines
 # --------------------------------------------------------------------------
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
@@ -6,68 +7,67 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Union
 
-from azure.core.exceptions import HttpResponseError
-import msrest.serialization
+from ... import _serialization
 
-from ._azure_digital_twins_management_client_enums import *
+if TYPE_CHECKING:
+    # pylint: disable=unused-import,ungrouped-imports
+    from .. import models as _models
 
 
-class CheckNameRequest(msrest.serialization.Model):
+class CheckNameRequest(_serialization.Model):
     """The result returned from a database check name availability request.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param name: Required. Resource name.
-    :type name: str
-    :ivar type: Required. The type of resource, for instance
-     Microsoft.DigitalTwins/digitalTwinsInstances. Default value:
-     "Microsoft.DigitalTwins/digitalTwinsInstances".
+    :ivar name: Resource name. Required.
+    :vartype name: str
+    :ivar type: The type of resource, for instance Microsoft.DigitalTwins/digitalTwinsInstances.
+     Required. Default value is "Microsoft.DigitalTwins/digitalTwinsInstances".
     :vartype type: str
     """
 
     _validation = {
-        'name': {'required': True},
-        'type': {'required': True, 'constant': True},
+        "name": {"required": True},
+        "type": {"required": True, "constant": True},
     }
 
     _attribute_map = {
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
     }
 
     type = "Microsoft.DigitalTwins/digitalTwinsInstances"
 
-    def __init__(
-        self,
-        *,
-        name: str,
-        **kwargs
-    ):
-        super(CheckNameRequest, self).__init__(**kwargs)
+    def __init__(self, *, name: str, **kwargs: Any) -> None:
+        """
+        :keyword name: Resource name. Required.
+        :paramtype name: str
+        """
+        super().__init__(**kwargs)
         self.name = name
 
 
-class CheckNameResult(msrest.serialization.Model):
+class CheckNameResult(_serialization.Model):
     """The result returned from a check name availability request.
 
-    :param name_available: Specifies a Boolean value that indicates if the name is available.
-    :type name_available: bool
-    :param message: Message indicating an unavailable name due to a conflict, or a description of
+    :ivar name_available: Specifies a Boolean value that indicates if the name is available.
+    :vartype name_available: bool
+    :ivar message: Message indicating an unavailable name due to a conflict, or a description of
      the naming rules that are violated.
-    :type message: str
-    :param reason: Message providing the reason why the given name is invalid. Possible values
-     include: "Invalid", "AlreadyExists".
-    :type reason: str or ~azure.mgmt.digitaltwins.models.Reason
+    :vartype message: str
+    :ivar reason: Message providing the reason why the given name is invalid. Known values are:
+     "Invalid" and "AlreadyExists".
+    :vartype reason: str or ~azure.mgmt.digitaltwins.v2020_12_01.models.Reason
     """
 
     _attribute_map = {
-        'name_available': {'key': 'nameAvailable', 'type': 'bool'},
-        'message': {'key': 'message', 'type': 'str'},
-        'reason': {'key': 'reason', 'type': 'str'},
+        "name_available": {"key": "nameAvailable", "type": "bool"},
+        "message": {"key": "message", "type": "str"},
+        "reason": {"key": "reason", "type": "str"},
     }
 
     def __init__(
@@ -75,60 +75,86 @@ class CheckNameResult(msrest.serialization.Model):
         *,
         name_available: Optional[bool] = None,
         message: Optional[str] = None,
-        reason: Optional[Union[str, "Reason"]] = None,
-        **kwargs
-    ):
-        super(CheckNameResult, self).__init__(**kwargs)
+        reason: Optional[Union[str, "_models.Reason"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword name_available: Specifies a Boolean value that indicates if the name is available.
+        :paramtype name_available: bool
+        :keyword message: Message indicating an unavailable name due to a conflict, or a description of
+         the naming rules that are violated.
+        :paramtype message: str
+        :keyword reason: Message providing the reason why the given name is invalid. Known values are:
+         "Invalid" and "AlreadyExists".
+        :paramtype reason: str or ~azure.mgmt.digitaltwins.v2020_12_01.models.Reason
+        """
+        super().__init__(**kwargs)
         self.name_available = name_available
         self.message = message
         self.reason = reason
 
 
-class ConnectionProperties(msrest.serialization.Model):
+class ConnectionProperties(_serialization.Model):
     """The properties of a private endpoint connection.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
-    :ivar provisioning_state: The provisioning state. Possible values include: "Pending",
-     "Approved", "Rejected", "Disconnected".
+    :ivar provisioning_state: The provisioning state. Known values are: "Pending", "Approved",
+     "Rejected", and "Disconnected".
     :vartype provisioning_state: str or
-     ~azure.mgmt.digitaltwins.models.ConnectionPropertiesProvisioningState
-    :param private_endpoint: The private endpoint property of a private endpoint connection.
-    :type private_endpoint: ~azure.mgmt.digitaltwins.models.PrivateEndpoint
-    :param group_ids: The list of group ids for the private endpoint connection.
-    :type group_ids: list[str]
-    :param private_link_service_connection_state: The current state of a private endpoint
-     connection.
-    :type private_link_service_connection_state: ~azure.mgmt.digitaltwins.models.ConnectionState
+     ~azure.mgmt.digitaltwins.v2020_12_01.models.ConnectionPropertiesProvisioningState
+    :ivar private_endpoint:
+    :vartype private_endpoint:
+     ~azure.mgmt.digitaltwins.v2020_12_01.models.ConnectionPropertiesPrivateEndpoint
+    :ivar group_ids: The list of group ids for the private endpoint connection.
+    :vartype group_ids: list[str]
+    :ivar private_link_service_connection_state:
+    :vartype private_link_service_connection_state:
+     ~azure.mgmt.digitaltwins.v2020_12_01.models.ConnectionPropertiesPrivateLinkServiceConnectionState
     """
 
     _validation = {
-        'provisioning_state': {'readonly': True},
+        "provisioning_state": {"readonly": True},
     }
 
     _attribute_map = {
-        'provisioning_state': {'key': 'provisioningState', 'type': 'str'},
-        'private_endpoint': {'key': 'privateEndpoint', 'type': 'PrivateEndpoint'},
-        'group_ids': {'key': 'groupIds', 'type': '[str]'},
-        'private_link_service_connection_state': {'key': 'privateLinkServiceConnectionState', 'type': 'ConnectionState'},
+        "provisioning_state": {"key": "provisioningState", "type": "str"},
+        "private_endpoint": {"key": "privateEndpoint", "type": "ConnectionPropertiesPrivateEndpoint"},
+        "group_ids": {"key": "groupIds", "type": "[str]"},
+        "private_link_service_connection_state": {
+            "key": "privateLinkServiceConnectionState",
+            "type": "ConnectionPropertiesPrivateLinkServiceConnectionState",
+        },
     }
 
     def __init__(
         self,
         *,
-        private_endpoint: Optional["PrivateEndpoint"] = None,
+        private_endpoint: Optional["_models.ConnectionPropertiesPrivateEndpoint"] = None,
         group_ids: Optional[List[str]] = None,
-        private_link_service_connection_state: Optional["ConnectionState"] = None,
-        **kwargs
-    ):
-        super(ConnectionProperties, self).__init__(**kwargs)
+        private_link_service_connection_state: Optional[
+            "_models.ConnectionPropertiesPrivateLinkServiceConnectionState"
+        ] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword private_endpoint:
+        :paramtype private_endpoint:
+         ~azure.mgmt.digitaltwins.v2020_12_01.models.ConnectionPropertiesPrivateEndpoint
+        :keyword group_ids: The list of group ids for the private endpoint connection.
+        :paramtype group_ids: list[str]
+        :keyword private_link_service_connection_state:
+        :paramtype private_link_service_connection_state:
+         ~azure.mgmt.digitaltwins.v2020_12_01.models.ConnectionPropertiesPrivateLinkServiceConnectionState
+        """
+        super().__init__(**kwargs)
         self.provisioning_state = None
         self.private_endpoint = private_endpoint
         self.group_ids = group_ids
         self.private_link_service_connection_state = private_link_service_connection_state
 
 
-class PrivateEndpoint(msrest.serialization.Model):
+class PrivateEndpoint(_serialization.Model):
     """The private endpoint property of a private endpoint connection.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -138,18 +164,16 @@ class PrivateEndpoint(msrest.serialization.Model):
     """
 
     _validation = {
-        'id': {'readonly': True},
+        "id": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(PrivateEndpoint, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.id = None
 
 
@@ -163,55 +187,65 @@ class ConnectionPropertiesPrivateEndpoint(PrivateEndpoint):
     """
 
     _validation = {
-        'id': {'readonly': True},
+        "id": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(ConnectionPropertiesPrivateEndpoint, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
 
 
-class ConnectionState(msrest.serialization.Model):
+class ConnectionState(_serialization.Model):
     """The current state of a private endpoint connection.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param status: Required. The status of a private endpoint connection. Possible values include:
-     "Pending", "Approved", "Rejected", "Disconnected".
-    :type status: str or ~azure.mgmt.digitaltwins.models.PrivateLinkServiceConnectionStatus
-    :param description: Required. The description for the current state of a private endpoint
-     connection.
-    :type description: str
-    :param actions_required: Actions required for a private endpoint connection.
-    :type actions_required: str
+    :ivar status: The status of a private endpoint connection. Required. Known values are:
+     "Pending", "Approved", "Rejected", and "Disconnected".
+    :vartype status: str or
+     ~azure.mgmt.digitaltwins.v2020_12_01.models.PrivateLinkServiceConnectionStatus
+    :ivar description: The description for the current state of a private endpoint connection.
+     Required.
+    :vartype description: str
+    :ivar actions_required: Actions required for a private endpoint connection.
+    :vartype actions_required: str
     """
 
     _validation = {
-        'status': {'required': True},
-        'description': {'required': True},
+        "status": {"required": True},
+        "description": {"required": True},
     }
 
     _attribute_map = {
-        'status': {'key': 'status', 'type': 'str'},
-        'description': {'key': 'description', 'type': 'str'},
-        'actions_required': {'key': 'actionsRequired', 'type': 'str'},
+        "status": {"key": "status", "type": "str"},
+        "description": {"key": "description", "type": "str"},
+        "actions_required": {"key": "actionsRequired", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        status: Union[str, "PrivateLinkServiceConnectionStatus"],
+        status: Union[str, "_models.PrivateLinkServiceConnectionStatus"],
         description: str,
         actions_required: Optional[str] = None,
-        **kwargs
-    ):
-        super(ConnectionState, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword status: The status of a private endpoint connection. Required. Known values are:
+         "Pending", "Approved", "Rejected", and "Disconnected".
+        :paramtype status: str or
+         ~azure.mgmt.digitaltwins.v2020_12_01.models.PrivateLinkServiceConnectionStatus
+        :keyword description: The description for the current state of a private endpoint connection.
+         Required.
+        :paramtype description: str
+        :keyword actions_required: Actions required for a private endpoint connection.
+        :paramtype actions_required: str
+        """
+        super().__init__(**kwargs)
         self.status = status
         self.description = description
         self.actions_required = actions_required
@@ -222,39 +256,51 @@ class ConnectionPropertiesPrivateLinkServiceConnectionState(ConnectionState):
 
     All required parameters must be populated in order to send to Azure.
 
-    :param status: Required. The status of a private endpoint connection. Possible values include:
-     "Pending", "Approved", "Rejected", "Disconnected".
-    :type status: str or ~azure.mgmt.digitaltwins.models.PrivateLinkServiceConnectionStatus
-    :param description: Required. The description for the current state of a private endpoint
-     connection.
-    :type description: str
-    :param actions_required: Actions required for a private endpoint connection.
-    :type actions_required: str
+    :ivar status: The status of a private endpoint connection. Required. Known values are:
+     "Pending", "Approved", "Rejected", and "Disconnected".
+    :vartype status: str or
+     ~azure.mgmt.digitaltwins.v2020_12_01.models.PrivateLinkServiceConnectionStatus
+    :ivar description: The description for the current state of a private endpoint connection.
+     Required.
+    :vartype description: str
+    :ivar actions_required: Actions required for a private endpoint connection.
+    :vartype actions_required: str
     """
 
     _validation = {
-        'status': {'required': True},
-        'description': {'required': True},
+        "status": {"required": True},
+        "description": {"required": True},
     }
 
     _attribute_map = {
-        'status': {'key': 'status', 'type': 'str'},
-        'description': {'key': 'description', 'type': 'str'},
-        'actions_required': {'key': 'actionsRequired', 'type': 'str'},
+        "status": {"key": "status", "type": "str"},
+        "description": {"key": "description", "type": "str"},
+        "actions_required": {"key": "actionsRequired", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        status: Union[str, "PrivateLinkServiceConnectionStatus"],
+        status: Union[str, "_models.PrivateLinkServiceConnectionStatus"],
         description: str,
         actions_required: Optional[str] = None,
-        **kwargs
-    ):
-        super(ConnectionPropertiesPrivateLinkServiceConnectionState, self).__init__(status=status, description=description, actions_required=actions_required, **kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword status: The status of a private endpoint connection. Required. Known values are:
+         "Pending", "Approved", "Rejected", and "Disconnected".
+        :paramtype status: str or
+         ~azure.mgmt.digitaltwins.v2020_12_01.models.PrivateLinkServiceConnectionStatus
+        :keyword description: The description for the current state of a private endpoint connection.
+         Required.
+        :paramtype description: str
+        :keyword actions_required: Actions required for a private endpoint connection.
+        :paramtype actions_required: str
+        """
+        super().__init__(status=status, description=description, actions_required=actions_required, **kwargs)
 
 
-class DigitalTwinsResource(msrest.serialization.Model):
+class DigitalTwinsResource(_serialization.Model):
     """The common properties of a DigitalTwinsInstance.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -267,28 +313,28 @@ class DigitalTwinsResource(msrest.serialization.Model):
     :vartype name: str
     :ivar type: The resource type.
     :vartype type: str
-    :param location: Required. The resource location.
-    :type location: str
-    :param tags: A set of tags. The resource tags.
-    :type tags: dict[str, str]
-    :param identity: The managed identity for the DigitalTwinsInstance.
-    :type identity: ~azure.mgmt.digitaltwins.models.DigitalTwinsIdentity
+    :ivar location: The resource location. Required.
+    :vartype location: str
+    :ivar tags: The resource tags.
+    :vartype tags: dict[str, str]
+    :ivar identity: The managed identity for the DigitalTwinsInstance.
+    :vartype identity: ~azure.mgmt.digitaltwins.v2020_12_01.models.DigitalTwinsIdentity
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True, 'pattern': r'^(?!-)[A-Za-z0-9-]{3,63}(?<!-)$'},
-        'type': {'readonly': True},
-        'location': {'required': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True, "pattern": r"^(?!-)[A-Za-z0-9-]{3,63}(?<!-)$"},
+        "type": {"readonly": True},
+        "location": {"required": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'location': {'key': 'location', 'type': 'str'},
-        'tags': {'key': 'tags', 'type': '{str}'},
-        'identity': {'key': 'identity', 'type': 'DigitalTwinsIdentity'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "location": {"key": "location", "type": "str"},
+        "tags": {"key": "tags", "type": "{str}"},
+        "identity": {"key": "identity", "type": "DigitalTwinsIdentity"},
     }
 
     def __init__(
@@ -296,10 +342,18 @@ class DigitalTwinsResource(msrest.serialization.Model):
         *,
         location: str,
         tags: Optional[Dict[str, str]] = None,
-        identity: Optional["DigitalTwinsIdentity"] = None,
-        **kwargs
-    ):
-        super(DigitalTwinsResource, self).__init__(**kwargs)
+        identity: Optional["_models.DigitalTwinsIdentity"] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword location: The resource location. Required.
+        :paramtype location: str
+        :keyword tags: The resource tags.
+        :paramtype tags: dict[str, str]
+        :keyword identity: The managed identity for the DigitalTwinsInstance.
+        :paramtype identity: ~azure.mgmt.digitaltwins.v2020_12_01.models.DigitalTwinsIdentity
+        """
+        super().__init__(**kwargs)
         self.id = None
         self.name = None
         self.type = None
@@ -308,7 +362,7 @@ class DigitalTwinsResource(msrest.serialization.Model):
         self.identity = identity
 
 
-class DigitalTwinsDescription(DigitalTwinsResource):
+class DigitalTwinsDescription(DigitalTwinsResource):  # pylint: disable=too-many-instance-attributes
     """The description of the DigitalTwins service.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -321,54 +375,59 @@ class DigitalTwinsDescription(DigitalTwinsResource):
     :vartype name: str
     :ivar type: The resource type.
     :vartype type: str
-    :param location: Required. The resource location.
-    :type location: str
-    :param tags: A set of tags. The resource tags.
-    :type tags: dict[str, str]
-    :param identity: The managed identity for the DigitalTwinsInstance.
-    :type identity: ~azure.mgmt.digitaltwins.models.DigitalTwinsIdentity
+    :ivar location: The resource location. Required.
+    :vartype location: str
+    :ivar tags: The resource tags.
+    :vartype tags: dict[str, str]
+    :ivar identity: The managed identity for the DigitalTwinsInstance.
+    :vartype identity: ~azure.mgmt.digitaltwins.v2020_12_01.models.DigitalTwinsIdentity
     :ivar created_time: Time when DigitalTwinsInstance was created.
     :vartype created_time: ~datetime.datetime
     :ivar last_updated_time: Time when DigitalTwinsInstance was updated.
     :vartype last_updated_time: ~datetime.datetime
-    :ivar provisioning_state: The provisioning state. Possible values include: "Provisioning",
-     "Deleting", "Updating", "Succeeded", "Failed", "Canceled", "Deleted", "Warning", "Suspending",
-     "Restoring", "Moving".
-    :vartype provisioning_state: str or ~azure.mgmt.digitaltwins.models.ProvisioningState
+    :ivar provisioning_state: The provisioning state. Known values are: "Provisioning", "Deleting",
+     "Updating", "Succeeded", "Failed", "Canceled", "Deleted", "Warning", "Suspending", "Restoring",
+     and "Moving".
+    :vartype provisioning_state: str or
+     ~azure.mgmt.digitaltwins.v2020_12_01.models.ProvisioningState
     :ivar host_name: Api endpoint to work with DigitalTwinsInstance.
     :vartype host_name: str
-    :param private_endpoint_connections:
-    :type private_endpoint_connections:
-     list[~azure.mgmt.digitaltwins.models.PrivateEndpointConnection]
-    :param public_network_access: Public network access for the DigitalTwinsInstance. Possible
-     values include: "Enabled", "Disabled".
-    :type public_network_access: str or ~azure.mgmt.digitaltwins.models.PublicNetworkAccess
+    :ivar private_endpoint_connections:
+    :vartype private_endpoint_connections:
+     list[~azure.mgmt.digitaltwins.v2020_12_01.models.PrivateEndpointConnection]
+    :ivar public_network_access: Public network access for the DigitalTwinsInstance. Known values
+     are: "Enabled" and "Disabled".
+    :vartype public_network_access: str or
+     ~azure.mgmt.digitaltwins.v2020_12_01.models.PublicNetworkAccess
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True, 'pattern': r'^(?!-)[A-Za-z0-9-]{3,63}(?<!-)$'},
-        'type': {'readonly': True},
-        'location': {'required': True},
-        'created_time': {'readonly': True},
-        'last_updated_time': {'readonly': True},
-        'provisioning_state': {'readonly': True},
-        'host_name': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True, "pattern": r"^(?!-)[A-Za-z0-9-]{3,63}(?<!-)$"},
+        "type": {"readonly": True},
+        "location": {"required": True},
+        "created_time": {"readonly": True},
+        "last_updated_time": {"readonly": True},
+        "provisioning_state": {"readonly": True},
+        "host_name": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'location': {'key': 'location', 'type': 'str'},
-        'tags': {'key': 'tags', 'type': '{str}'},
-        'identity': {'key': 'identity', 'type': 'DigitalTwinsIdentity'},
-        'created_time': {'key': 'properties.createdTime', 'type': 'iso-8601'},
-        'last_updated_time': {'key': 'properties.lastUpdatedTime', 'type': 'iso-8601'},
-        'provisioning_state': {'key': 'properties.provisioningState', 'type': 'str'},
-        'host_name': {'key': 'properties.hostName', 'type': 'str'},
-        'private_endpoint_connections': {'key': 'properties.privateEndpointConnections', 'type': '[PrivateEndpointConnection]'},
-        'public_network_access': {'key': 'properties.publicNetworkAccess', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "location": {"key": "location", "type": "str"},
+        "tags": {"key": "tags", "type": "{str}"},
+        "identity": {"key": "identity", "type": "DigitalTwinsIdentity"},
+        "created_time": {"key": "properties.createdTime", "type": "iso-8601"},
+        "last_updated_time": {"key": "properties.lastUpdatedTime", "type": "iso-8601"},
+        "provisioning_state": {"key": "properties.provisioningState", "type": "str"},
+        "host_name": {"key": "properties.hostName", "type": "str"},
+        "private_endpoint_connections": {
+            "key": "properties.privateEndpointConnections",
+            "type": "[PrivateEndpointConnection]",
+        },
+        "public_network_access": {"key": "properties.publicNetworkAccess", "type": "str"},
     }
 
     def __init__(
@@ -376,12 +435,27 @@ class DigitalTwinsDescription(DigitalTwinsResource):
         *,
         location: str,
         tags: Optional[Dict[str, str]] = None,
-        identity: Optional["DigitalTwinsIdentity"] = None,
-        private_endpoint_connections: Optional[List["PrivateEndpointConnection"]] = None,
-        public_network_access: Optional[Union[str, "PublicNetworkAccess"]] = None,
-        **kwargs
-    ):
-        super(DigitalTwinsDescription, self).__init__(location=location, tags=tags, identity=identity, **kwargs)
+        identity: Optional["_models.DigitalTwinsIdentity"] = None,
+        private_endpoint_connections: Optional[List["_models.PrivateEndpointConnection"]] = None,
+        public_network_access: Optional[Union[str, "_models.PublicNetworkAccess"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword location: The resource location. Required.
+        :paramtype location: str
+        :keyword tags: The resource tags.
+        :paramtype tags: dict[str, str]
+        :keyword identity: The managed identity for the DigitalTwinsInstance.
+        :paramtype identity: ~azure.mgmt.digitaltwins.v2020_12_01.models.DigitalTwinsIdentity
+        :keyword private_endpoint_connections:
+        :paramtype private_endpoint_connections:
+         list[~azure.mgmt.digitaltwins.v2020_12_01.models.PrivateEndpointConnection]
+        :keyword public_network_access: Public network access for the DigitalTwinsInstance. Known
+         values are: "Enabled" and "Disabled".
+        :paramtype public_network_access: str or
+         ~azure.mgmt.digitaltwins.v2020_12_01.models.PublicNetworkAccess
+        """
+        super().__init__(location=location, tags=tags, identity=identity, **kwargs)
         self.created_time = None
         self.last_updated_time = None
         self.provisioning_state = None
@@ -390,33 +464,39 @@ class DigitalTwinsDescription(DigitalTwinsResource):
         self.public_network_access = public_network_access
 
 
-class DigitalTwinsDescriptionListResult(msrest.serialization.Model):
+class DigitalTwinsDescriptionListResult(_serialization.Model):
     """A list of DigitalTwins description objects with a next link.
 
-    :param next_link: The link used to get the next page of DigitalTwins description objects.
-    :type next_link: str
-    :param value: A list of DigitalTwins description objects.
-    :type value: list[~azure.mgmt.digitaltwins.models.DigitalTwinsDescription]
+    :ivar next_link: The link used to get the next page of DigitalTwins description objects.
+    :vartype next_link: str
+    :ivar value: A list of DigitalTwins description objects.
+    :vartype value: list[~azure.mgmt.digitaltwins.v2020_12_01.models.DigitalTwinsDescription]
     """
 
     _attribute_map = {
-        'next_link': {'key': 'nextLink', 'type': 'str'},
-        'value': {'key': 'value', 'type': '[DigitalTwinsDescription]'},
+        "next_link": {"key": "nextLink", "type": "str"},
+        "value": {"key": "value", "type": "[DigitalTwinsDescription]"},
     }
 
     def __init__(
         self,
         *,
         next_link: Optional[str] = None,
-        value: Optional[List["DigitalTwinsDescription"]] = None,
-        **kwargs
-    ):
-        super(DigitalTwinsDescriptionListResult, self).__init__(**kwargs)
+        value: Optional[List["_models.DigitalTwinsDescription"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword next_link: The link used to get the next page of DigitalTwins description objects.
+        :paramtype next_link: str
+        :keyword value: A list of DigitalTwins description objects.
+        :paramtype value: list[~azure.mgmt.digitaltwins.v2020_12_01.models.DigitalTwinsDescription]
+        """
+        super().__init__(**kwargs)
         self.next_link = next_link
         self.value = value
 
 
-class ExternalResource(msrest.serialization.Model):
+class ExternalResource(_serialization.Model):
     """Definition of a resource.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -430,22 +510,20 @@ class ExternalResource(msrest.serialization.Model):
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True, 'pattern': r'^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{2,49}[a-zA-Z0-9]$'},
-        'type': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True, "pattern": r"^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{2,49}[a-zA-Z0-9]$"},
+        "type": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(ExternalResource, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.id = None
         self.name = None
         self.type = None
@@ -464,118 +542,137 @@ class DigitalTwinsEndpointResource(ExternalResource):
     :vartype name: str
     :ivar type: The resource type.
     :vartype type: str
-    :param properties: Required. DigitalTwinsInstance endpoint resource properties.
-    :type properties: ~azure.mgmt.digitaltwins.models.DigitalTwinsEndpointResourceProperties
+    :ivar properties: DigitalTwinsInstance endpoint resource properties. Required.
+    :vartype properties:
+     ~azure.mgmt.digitaltwins.v2020_12_01.models.DigitalTwinsEndpointResourceProperties
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True, 'pattern': r'^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{2,49}[a-zA-Z0-9]$'},
-        'type': {'readonly': True},
-        'properties': {'required': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True, "pattern": r"^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{2,49}[a-zA-Z0-9]$"},
+        "type": {"readonly": True},
+        "properties": {"required": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'properties': {'key': 'properties', 'type': 'DigitalTwinsEndpointResourceProperties'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "properties": {"key": "properties", "type": "DigitalTwinsEndpointResourceProperties"},
     }
 
-    def __init__(
-        self,
-        *,
-        properties: "DigitalTwinsEndpointResourceProperties",
-        **kwargs
-    ):
-        super(DigitalTwinsEndpointResource, self).__init__(**kwargs)
+    def __init__(self, *, properties: "_models.DigitalTwinsEndpointResourceProperties", **kwargs: Any) -> None:
+        """
+        :keyword properties: DigitalTwinsInstance endpoint resource properties. Required.
+        :paramtype properties:
+         ~azure.mgmt.digitaltwins.v2020_12_01.models.DigitalTwinsEndpointResourceProperties
+        """
+        super().__init__(**kwargs)
         self.properties = properties
 
 
-class DigitalTwinsEndpointResourceListResult(msrest.serialization.Model):
+class DigitalTwinsEndpointResourceListResult(_serialization.Model):
     """A list of DigitalTwinsInstance Endpoints with a next link.
 
-    :param next_link: The link used to get the next page of DigitalTwinsInstance Endpoints.
-    :type next_link: str
-    :param value: A list of DigitalTwinsInstance Endpoints.
-    :type value: list[~azure.mgmt.digitaltwins.models.DigitalTwinsEndpointResource]
+    :ivar next_link: The link used to get the next page of DigitalTwinsInstance Endpoints.
+    :vartype next_link: str
+    :ivar value: A list of DigitalTwinsInstance Endpoints.
+    :vartype value: list[~azure.mgmt.digitaltwins.v2020_12_01.models.DigitalTwinsEndpointResource]
     """
 
     _attribute_map = {
-        'next_link': {'key': 'nextLink', 'type': 'str'},
-        'value': {'key': 'value', 'type': '[DigitalTwinsEndpointResource]'},
+        "next_link": {"key": "nextLink", "type": "str"},
+        "value": {"key": "value", "type": "[DigitalTwinsEndpointResource]"},
     }
 
     def __init__(
         self,
         *,
         next_link: Optional[str] = None,
-        value: Optional[List["DigitalTwinsEndpointResource"]] = None,
-        **kwargs
-    ):
-        super(DigitalTwinsEndpointResourceListResult, self).__init__(**kwargs)
+        value: Optional[List["_models.DigitalTwinsEndpointResource"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword next_link: The link used to get the next page of DigitalTwinsInstance Endpoints.
+        :paramtype next_link: str
+        :keyword value: A list of DigitalTwinsInstance Endpoints.
+        :paramtype value:
+         list[~azure.mgmt.digitaltwins.v2020_12_01.models.DigitalTwinsEndpointResource]
+        """
+        super().__init__(**kwargs)
         self.next_link = next_link
         self.value = value
 
 
-class DigitalTwinsEndpointResourceProperties(msrest.serialization.Model):
+class DigitalTwinsEndpointResourceProperties(_serialization.Model):
     """Properties related to Digital Twins Endpoint.
 
-    You probably want to use the sub-classes and not this class directly. Known
-    sub-classes are: EventGrid, EventHub, ServiceBus.
+    You probably want to use the sub-classes and not this class directly. Known sub-classes are:
+    EventGrid, EventHub, ServiceBus
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param endpoint_type: Required. The type of Digital Twins endpoint.Constant filled by server.
-     Possible values include: "EventHub", "EventGrid", "ServiceBus".
-    :type endpoint_type: str or ~azure.mgmt.digitaltwins.models.EndpointType
-    :ivar provisioning_state: The provisioning state. Possible values include: "Provisioning",
-     "Deleting", "Succeeded", "Failed", "Canceled", "Deleted", "Warning", "Suspending", "Restoring",
-     "Moving", "Disabled".
-    :vartype provisioning_state: str or ~azure.mgmt.digitaltwins.models.EndpointProvisioningState
+    :ivar endpoint_type: The type of Digital Twins endpoint. Required. Known values are:
+     "EventHub", "EventGrid", and "ServiceBus".
+    :vartype endpoint_type: str or ~azure.mgmt.digitaltwins.v2020_12_01.models.EndpointType
+    :ivar provisioning_state: The provisioning state. Known values are: "Provisioning", "Deleting",
+     "Succeeded", "Failed", "Canceled", "Deleted", "Warning", "Suspending", "Restoring", "Moving",
+     and "Disabled".
+    :vartype provisioning_state: str or
+     ~azure.mgmt.digitaltwins.v2020_12_01.models.EndpointProvisioningState
     :ivar created_time: Time when the Endpoint was added to DigitalTwinsInstance.
     :vartype created_time: ~datetime.datetime
-    :param authentication_type: Specifies the authentication type being used for connecting to the
-     endpoint. Possible values include: "KeyBased", "IdentityBased".
-    :type authentication_type: str or ~azure.mgmt.digitaltwins.models.AuthenticationType
-    :param dead_letter_secret: Dead letter storage secret for key-based authentication. Will be
+    :ivar authentication_type: Specifies the authentication type being used for connecting to the
+     endpoint. Known values are: "KeyBased" and "IdentityBased".
+    :vartype authentication_type: str or
+     ~azure.mgmt.digitaltwins.v2020_12_01.models.AuthenticationType
+    :ivar dead_letter_secret: Dead letter storage secret for key-based authentication. Will be
      obfuscated during read.
-    :type dead_letter_secret: str
-    :param dead_letter_uri: Dead letter storage URL for identity-based authentication.
-    :type dead_letter_uri: str
+    :vartype dead_letter_secret: str
+    :ivar dead_letter_uri: Dead letter storage URL for identity-based authentication.
+    :vartype dead_letter_uri: str
     """
 
     _validation = {
-        'endpoint_type': {'required': True},
-        'provisioning_state': {'readonly': True},
-        'created_time': {'readonly': True},
+        "endpoint_type": {"required": True},
+        "provisioning_state": {"readonly": True},
+        "created_time": {"readonly": True},
     }
 
     _attribute_map = {
-        'endpoint_type': {'key': 'endpointType', 'type': 'str'},
-        'provisioning_state': {'key': 'provisioningState', 'type': 'str'},
-        'created_time': {'key': 'createdTime', 'type': 'iso-8601'},
-        'authentication_type': {'key': 'authenticationType', 'type': 'str'},
-        'dead_letter_secret': {'key': 'deadLetterSecret', 'type': 'str'},
-        'dead_letter_uri': {'key': 'deadLetterUri', 'type': 'str'},
+        "endpoint_type": {"key": "endpointType", "type": "str"},
+        "provisioning_state": {"key": "provisioningState", "type": "str"},
+        "created_time": {"key": "createdTime", "type": "iso-8601"},
+        "authentication_type": {"key": "authenticationType", "type": "str"},
+        "dead_letter_secret": {"key": "deadLetterSecret", "type": "str"},
+        "dead_letter_uri": {"key": "deadLetterUri", "type": "str"},
     }
 
-    _subtype_map = {
-        'endpoint_type': {'EventGrid': 'EventGrid', 'EventHub': 'EventHub', 'ServiceBus': 'ServiceBus'}
-    }
+    _subtype_map = {"endpoint_type": {"EventGrid": "EventGrid", "EventHub": "EventHub", "ServiceBus": "ServiceBus"}}
 
     def __init__(
         self,
         *,
-        authentication_type: Optional[Union[str, "AuthenticationType"]] = None,
+        authentication_type: Optional[Union[str, "_models.AuthenticationType"]] = None,
         dead_letter_secret: Optional[str] = None,
         dead_letter_uri: Optional[str] = None,
-        **kwargs
-    ):
-        super(DigitalTwinsEndpointResourceProperties, self).__init__(**kwargs)
-        self.endpoint_type = None  # type: Optional[str]
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword authentication_type: Specifies the authentication type being used for connecting to
+         the endpoint. Known values are: "KeyBased" and "IdentityBased".
+        :paramtype authentication_type: str or
+         ~azure.mgmt.digitaltwins.v2020_12_01.models.AuthenticationType
+        :keyword dead_letter_secret: Dead letter storage secret for key-based authentication. Will be
+         obfuscated during read.
+        :paramtype dead_letter_secret: str
+        :keyword dead_letter_uri: Dead letter storage URL for identity-based authentication.
+        :paramtype dead_letter_uri: str
+        """
+        super().__init__(**kwargs)
+        self.endpoint_type: Optional[str] = None
         self.provisioning_state = None
         self.created_time = None
         self.authentication_type = authentication_type
@@ -583,14 +680,14 @@ class DigitalTwinsEndpointResourceProperties(msrest.serialization.Model):
         self.dead_letter_uri = dead_letter_uri
 
 
-class DigitalTwinsIdentity(msrest.serialization.Model):
+class DigitalTwinsIdentity(_serialization.Model):
     """The managed identity for the DigitalTwinsInstance.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
-    :param type: The type of Managed Identity used by the DigitalTwinsInstance. Only SystemAssigned
-     is supported. Possible values include: "None", "SystemAssigned".
-    :type type: str or ~azure.mgmt.digitaltwins.models.DigitalTwinsIdentityType
+    :ivar type: The type of Managed Identity used by the DigitalTwinsInstance. Only SystemAssigned
+     is supported. Known values are: "None" and "SystemAssigned".
+    :vartype type: str or ~azure.mgmt.digitaltwins.v2020_12_01.models.DigitalTwinsIdentityType
     :ivar principal_id: The object id of the Managed Identity Resource. This will be sent to the RP
      from ARM via the x-ms-identity-principal-id header in the PUT request if the resource has a
      systemAssigned(implicit) identity.
@@ -602,82 +699,94 @@ class DigitalTwinsIdentity(msrest.serialization.Model):
     """
 
     _validation = {
-        'principal_id': {'readonly': True},
-        'tenant_id': {'readonly': True},
+        "principal_id": {"readonly": True},
+        "tenant_id": {"readonly": True},
     }
 
     _attribute_map = {
-        'type': {'key': 'type', 'type': 'str'},
-        'principal_id': {'key': 'principalId', 'type': 'str'},
-        'tenant_id': {'key': 'tenantId', 'type': 'str'},
+        "type": {"key": "type", "type": "str"},
+        "principal_id": {"key": "principalId", "type": "str"},
+        "tenant_id": {"key": "tenantId", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        type: Optional[Union[str, "DigitalTwinsIdentityType"]] = None,
-        **kwargs
-    ):
-        super(DigitalTwinsIdentity, self).__init__(**kwargs)
+    def __init__(self, *, type: Optional[Union[str, "_models.DigitalTwinsIdentityType"]] = None, **kwargs: Any) -> None:
+        """
+        :keyword type: The type of Managed Identity used by the DigitalTwinsInstance. Only
+         SystemAssigned is supported. Known values are: "None" and "SystemAssigned".
+        :paramtype type: str or ~azure.mgmt.digitaltwins.v2020_12_01.models.DigitalTwinsIdentityType
+        """
+        super().__init__(**kwargs)
         self.type = type
         self.principal_id = None
         self.tenant_id = None
 
 
-class DigitalTwinsPatchDescription(msrest.serialization.Model):
+class DigitalTwinsPatchDescription(_serialization.Model):
     """The description of the DigitalTwins service.
 
-    :param tags: A set of tags. Instance patch properties.
-    :type tags: dict[str, str]
-    :param identity: The managed identity for the DigitalTwinsInstance.
-    :type identity: ~azure.mgmt.digitaltwins.models.DigitalTwinsIdentity
-    :param properties: Properties for the DigitalTwinsInstance.
-    :type properties: ~azure.mgmt.digitaltwins.models.DigitalTwinsPatchProperties
+    :ivar tags: Instance patch properties.
+    :vartype tags: dict[str, str]
+    :ivar identity: The managed identity for the DigitalTwinsInstance.
+    :vartype identity: ~azure.mgmt.digitaltwins.v2020_12_01.models.DigitalTwinsIdentity
+    :ivar properties: Properties for the DigitalTwinsInstance.
+    :vartype properties: ~azure.mgmt.digitaltwins.v2020_12_01.models.DigitalTwinsPatchProperties
     """
 
     _attribute_map = {
-        'tags': {'key': 'tags', 'type': '{str}'},
-        'identity': {'key': 'identity', 'type': 'DigitalTwinsIdentity'},
-        'properties': {'key': 'properties', 'type': 'DigitalTwinsPatchProperties'},
+        "tags": {"key": "tags", "type": "{str}"},
+        "identity": {"key": "identity", "type": "DigitalTwinsIdentity"},
+        "properties": {"key": "properties", "type": "DigitalTwinsPatchProperties"},
     }
 
     def __init__(
         self,
         *,
         tags: Optional[Dict[str, str]] = None,
-        identity: Optional["DigitalTwinsIdentity"] = None,
-        properties: Optional["DigitalTwinsPatchProperties"] = None,
-        **kwargs
-    ):
-        super(DigitalTwinsPatchDescription, self).__init__(**kwargs)
+        identity: Optional["_models.DigitalTwinsIdentity"] = None,
+        properties: Optional["_models.DigitalTwinsPatchProperties"] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword tags: Instance patch properties.
+        :paramtype tags: dict[str, str]
+        :keyword identity: The managed identity for the DigitalTwinsInstance.
+        :paramtype identity: ~azure.mgmt.digitaltwins.v2020_12_01.models.DigitalTwinsIdentity
+        :keyword properties: Properties for the DigitalTwinsInstance.
+        :paramtype properties: ~azure.mgmt.digitaltwins.v2020_12_01.models.DigitalTwinsPatchProperties
+        """
+        super().__init__(**kwargs)
         self.tags = tags
         self.identity = identity
         self.properties = properties
 
 
-class DigitalTwinsPatchProperties(msrest.serialization.Model):
+class DigitalTwinsPatchProperties(_serialization.Model):
     """The properties of a DigitalTwinsInstance.
 
-    :param public_network_access: Public network access for the DigitalTwinsInstance. Possible
-     values include: "Enabled", "Disabled".
-    :type public_network_access: str or ~azure.mgmt.digitaltwins.models.PublicNetworkAccess
+    :ivar public_network_access: Public network access for the DigitalTwinsInstance. Known values
+     are: "Enabled" and "Disabled".
+    :vartype public_network_access: str or
+     ~azure.mgmt.digitaltwins.v2020_12_01.models.PublicNetworkAccess
     """
 
     _attribute_map = {
-        'public_network_access': {'key': 'publicNetworkAccess', 'type': 'str'},
+        "public_network_access": {"key": "publicNetworkAccess", "type": "str"},
     }
 
     def __init__(
-        self,
-        *,
-        public_network_access: Optional[Union[str, "PublicNetworkAccess"]] = None,
-        **kwargs
-    ):
-        super(DigitalTwinsPatchProperties, self).__init__(**kwargs)
+        self, *, public_network_access: Optional[Union[str, "_models.PublicNetworkAccess"]] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword public_network_access: Public network access for the DigitalTwinsInstance. Known
+         values are: "Enabled" and "Disabled".
+        :paramtype public_network_access: str or
+         ~azure.mgmt.digitaltwins.v2020_12_01.models.PublicNetworkAccess
+        """
+        super().__init__(**kwargs)
         self.public_network_access = public_network_access
 
 
-class ErrorDefinition(msrest.serialization.Model):
+class ErrorDefinition(_serialization.Model):
     """Error definition.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -687,49 +796,46 @@ class ErrorDefinition(msrest.serialization.Model):
     :ivar message: Description of the error.
     :vartype message: str
     :ivar details: Internal error details.
-    :vartype details: list[~azure.mgmt.digitaltwins.models.ErrorDefinition]
+    :vartype details: list[~azure.mgmt.digitaltwins.v2020_12_01.models.ErrorDefinition]
     """
 
     _validation = {
-        'code': {'readonly': True},
-        'message': {'readonly': True},
-        'details': {'readonly': True},
+        "code": {"readonly": True},
+        "message": {"readonly": True},
+        "details": {"readonly": True},
     }
 
     _attribute_map = {
-        'code': {'key': 'code', 'type': 'str'},
-        'message': {'key': 'message', 'type': 'str'},
-        'details': {'key': 'details', 'type': '[ErrorDefinition]'},
+        "code": {"key": "code", "type": "str"},
+        "message": {"key": "message", "type": "str"},
+        "details": {"key": "details", "type": "[ErrorDefinition]"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(ErrorDefinition, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.code = None
         self.message = None
         self.details = None
 
 
-class ErrorResponse(msrest.serialization.Model):
+class ErrorResponse(_serialization.Model):
     """Error response.
 
-    :param error: Error description.
-    :type error: ~azure.mgmt.digitaltwins.models.ErrorDefinition
+    :ivar error: Error description.
+    :vartype error: ~azure.mgmt.digitaltwins.v2020_12_01.models.ErrorDefinition
     """
 
     _attribute_map = {
-        'error': {'key': 'error', 'type': 'ErrorDefinition'},
+        "error": {"key": "error", "type": "ErrorDefinition"},
     }
 
-    def __init__(
-        self,
-        *,
-        error: Optional["ErrorDefinition"] = None,
-        **kwargs
-    ):
-        super(ErrorResponse, self).__init__(**kwargs)
+    def __init__(self, *, error: Optional["_models.ErrorDefinition"] = None, **kwargs: Any) -> None:
+        """
+        :keyword error: Error description.
+        :paramtype error: ~azure.mgmt.digitaltwins.v2020_12_01.models.ErrorDefinition
+        """
+        super().__init__(**kwargs)
         self.error = error
 
 
@@ -740,49 +846,51 @@ class EventGrid(DigitalTwinsEndpointResourceProperties):
 
     All required parameters must be populated in order to send to Azure.
 
-    :param endpoint_type: Required. The type of Digital Twins endpoint.Constant filled by server.
-     Possible values include: "EventHub", "EventGrid", "ServiceBus".
-    :type endpoint_type: str or ~azure.mgmt.digitaltwins.models.EndpointType
-    :ivar provisioning_state: The provisioning state. Possible values include: "Provisioning",
-     "Deleting", "Succeeded", "Failed", "Canceled", "Deleted", "Warning", "Suspending", "Restoring",
-     "Moving", "Disabled".
-    :vartype provisioning_state: str or ~azure.mgmt.digitaltwins.models.EndpointProvisioningState
+    :ivar endpoint_type: The type of Digital Twins endpoint. Required. Known values are:
+     "EventHub", "EventGrid", and "ServiceBus".
+    :vartype endpoint_type: str or ~azure.mgmt.digitaltwins.v2020_12_01.models.EndpointType
+    :ivar provisioning_state: The provisioning state. Known values are: "Provisioning", "Deleting",
+     "Succeeded", "Failed", "Canceled", "Deleted", "Warning", "Suspending", "Restoring", "Moving",
+     and "Disabled".
+    :vartype provisioning_state: str or
+     ~azure.mgmt.digitaltwins.v2020_12_01.models.EndpointProvisioningState
     :ivar created_time: Time when the Endpoint was added to DigitalTwinsInstance.
     :vartype created_time: ~datetime.datetime
-    :param authentication_type: Specifies the authentication type being used for connecting to the
-     endpoint. Possible values include: "KeyBased", "IdentityBased".
-    :type authentication_type: str or ~azure.mgmt.digitaltwins.models.AuthenticationType
-    :param dead_letter_secret: Dead letter storage secret for key-based authentication. Will be
+    :ivar authentication_type: Specifies the authentication type being used for connecting to the
+     endpoint. Known values are: "KeyBased" and "IdentityBased".
+    :vartype authentication_type: str or
+     ~azure.mgmt.digitaltwins.v2020_12_01.models.AuthenticationType
+    :ivar dead_letter_secret: Dead letter storage secret for key-based authentication. Will be
      obfuscated during read.
-    :type dead_letter_secret: str
-    :param dead_letter_uri: Dead letter storage URL for identity-based authentication.
-    :type dead_letter_uri: str
-    :param topic_endpoint: Required. EventGrid Topic Endpoint.
-    :type topic_endpoint: str
-    :param access_key1: Required. EventGrid secondary accesskey. Will be obfuscated during read.
-    :type access_key1: str
-    :param access_key2: EventGrid secondary accesskey. Will be obfuscated during read.
-    :type access_key2: str
+    :vartype dead_letter_secret: str
+    :ivar dead_letter_uri: Dead letter storage URL for identity-based authentication.
+    :vartype dead_letter_uri: str
+    :ivar topic_endpoint: EventGrid Topic Endpoint. Required.
+    :vartype topic_endpoint: str
+    :ivar access_key1: EventGrid secondary accesskey. Will be obfuscated during read. Required.
+    :vartype access_key1: str
+    :ivar access_key2: EventGrid secondary accesskey. Will be obfuscated during read.
+    :vartype access_key2: str
     """
 
     _validation = {
-        'endpoint_type': {'required': True},
-        'provisioning_state': {'readonly': True},
-        'created_time': {'readonly': True},
-        'topic_endpoint': {'required': True},
-        'access_key1': {'required': True},
+        "endpoint_type": {"required": True},
+        "provisioning_state": {"readonly": True},
+        "created_time": {"readonly": True},
+        "topic_endpoint": {"required": True},
+        "access_key1": {"required": True},
     }
 
     _attribute_map = {
-        'endpoint_type': {'key': 'endpointType', 'type': 'str'},
-        'provisioning_state': {'key': 'provisioningState', 'type': 'str'},
-        'created_time': {'key': 'createdTime', 'type': 'iso-8601'},
-        'authentication_type': {'key': 'authenticationType', 'type': 'str'},
-        'dead_letter_secret': {'key': 'deadLetterSecret', 'type': 'str'},
-        'dead_letter_uri': {'key': 'deadLetterUri', 'type': 'str'},
-        'topic_endpoint': {'key': 'TopicEndpoint', 'type': 'str'},
-        'access_key1': {'key': 'accessKey1', 'type': 'str'},
-        'access_key2': {'key': 'accessKey2', 'type': 'str'},
+        "endpoint_type": {"key": "endpointType", "type": "str"},
+        "provisioning_state": {"key": "provisioningState", "type": "str"},
+        "created_time": {"key": "createdTime", "type": "iso-8601"},
+        "authentication_type": {"key": "authenticationType", "type": "str"},
+        "dead_letter_secret": {"key": "deadLetterSecret", "type": "str"},
+        "dead_letter_uri": {"key": "deadLetterUri", "type": "str"},
+        "topic_endpoint": {"key": "TopicEndpoint", "type": "str"},
+        "access_key1": {"key": "accessKey1", "type": "str"},
+        "access_key2": {"key": "accessKey2", "type": "str"},
     }
 
     def __init__(
@@ -790,14 +898,36 @@ class EventGrid(DigitalTwinsEndpointResourceProperties):
         *,
         topic_endpoint: str,
         access_key1: str,
-        authentication_type: Optional[Union[str, "AuthenticationType"]] = None,
+        authentication_type: Optional[Union[str, "_models.AuthenticationType"]] = None,
         dead_letter_secret: Optional[str] = None,
         dead_letter_uri: Optional[str] = None,
         access_key2: Optional[str] = None,
-        **kwargs
-    ):
-        super(EventGrid, self).__init__(authentication_type=authentication_type, dead_letter_secret=dead_letter_secret, dead_letter_uri=dead_letter_uri, **kwargs)
-        self.endpoint_type = 'EventGrid'  # type: str
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword authentication_type: Specifies the authentication type being used for connecting to
+         the endpoint. Known values are: "KeyBased" and "IdentityBased".
+        :paramtype authentication_type: str or
+         ~azure.mgmt.digitaltwins.v2020_12_01.models.AuthenticationType
+        :keyword dead_letter_secret: Dead letter storage secret for key-based authentication. Will be
+         obfuscated during read.
+        :paramtype dead_letter_secret: str
+        :keyword dead_letter_uri: Dead letter storage URL for identity-based authentication.
+        :paramtype dead_letter_uri: str
+        :keyword topic_endpoint: EventGrid Topic Endpoint. Required.
+        :paramtype topic_endpoint: str
+        :keyword access_key1: EventGrid secondary accesskey. Will be obfuscated during read. Required.
+        :paramtype access_key1: str
+        :keyword access_key2: EventGrid secondary accesskey. Will be obfuscated during read.
+        :paramtype access_key2: str
+        """
+        super().__init__(
+            authentication_type=authentication_type,
+            dead_letter_secret=dead_letter_secret,
+            dead_letter_uri=dead_letter_uri,
+            **kwargs
+        )
+        self.endpoint_type: str = "EventGrid"
         self.topic_endpoint = topic_endpoint
         self.access_key1 = access_key1
         self.access_key2 = access_key2
@@ -810,87 +940,117 @@ class EventHub(DigitalTwinsEndpointResourceProperties):
 
     All required parameters must be populated in order to send to Azure.
 
-    :param endpoint_type: Required. The type of Digital Twins endpoint.Constant filled by server.
-     Possible values include: "EventHub", "EventGrid", "ServiceBus".
-    :type endpoint_type: str or ~azure.mgmt.digitaltwins.models.EndpointType
-    :ivar provisioning_state: The provisioning state. Possible values include: "Provisioning",
-     "Deleting", "Succeeded", "Failed", "Canceled", "Deleted", "Warning", "Suspending", "Restoring",
-     "Moving", "Disabled".
-    :vartype provisioning_state: str or ~azure.mgmt.digitaltwins.models.EndpointProvisioningState
+    :ivar endpoint_type: The type of Digital Twins endpoint. Required. Known values are:
+     "EventHub", "EventGrid", and "ServiceBus".
+    :vartype endpoint_type: str or ~azure.mgmt.digitaltwins.v2020_12_01.models.EndpointType
+    :ivar provisioning_state: The provisioning state. Known values are: "Provisioning", "Deleting",
+     "Succeeded", "Failed", "Canceled", "Deleted", "Warning", "Suspending", "Restoring", "Moving",
+     and "Disabled".
+    :vartype provisioning_state: str or
+     ~azure.mgmt.digitaltwins.v2020_12_01.models.EndpointProvisioningState
     :ivar created_time: Time when the Endpoint was added to DigitalTwinsInstance.
     :vartype created_time: ~datetime.datetime
-    :param authentication_type: Specifies the authentication type being used for connecting to the
-     endpoint. Possible values include: "KeyBased", "IdentityBased".
-    :type authentication_type: str or ~azure.mgmt.digitaltwins.models.AuthenticationType
-    :param dead_letter_secret: Dead letter storage secret for key-based authentication. Will be
+    :ivar authentication_type: Specifies the authentication type being used for connecting to the
+     endpoint. Known values are: "KeyBased" and "IdentityBased".
+    :vartype authentication_type: str or
+     ~azure.mgmt.digitaltwins.v2020_12_01.models.AuthenticationType
+    :ivar dead_letter_secret: Dead letter storage secret for key-based authentication. Will be
      obfuscated during read.
-    :type dead_letter_secret: str
-    :param dead_letter_uri: Dead letter storage URL for identity-based authentication.
-    :type dead_letter_uri: str
-    :param connection_string_primary_key: PrimaryConnectionString of the endpoint for key-based
+    :vartype dead_letter_secret: str
+    :ivar dead_letter_uri: Dead letter storage URL for identity-based authentication.
+    :vartype dead_letter_uri: str
+    :ivar connection_string_primary_key: PrimaryConnectionString of the endpoint for key-based
      authentication. Will be obfuscated during read.
-    :type connection_string_primary_key: str
-    :param connection_string_secondary_key: SecondaryConnectionString of the endpoint for key-based
+    :vartype connection_string_primary_key: str
+    :ivar connection_string_secondary_key: SecondaryConnectionString of the endpoint for key-based
      authentication. Will be obfuscated during read.
-    :type connection_string_secondary_key: str
-    :param endpoint_uri: The URL of the EventHub namespace for identity-based authentication. It
+    :vartype connection_string_secondary_key: str
+    :ivar endpoint_uri: The URL of the EventHub namespace for identity-based authentication. It
      must include the protocol sb://.
-    :type endpoint_uri: str
-    :param entity_path: The EventHub name in the EventHub namespace for identity-based
+    :vartype endpoint_uri: str
+    :ivar entity_path: The EventHub name in the EventHub namespace for identity-based
      authentication.
-    :type entity_path: str
+    :vartype entity_path: str
     """
 
     _validation = {
-        'endpoint_type': {'required': True},
-        'provisioning_state': {'readonly': True},
-        'created_time': {'readonly': True},
+        "endpoint_type": {"required": True},
+        "provisioning_state": {"readonly": True},
+        "created_time": {"readonly": True},
     }
 
     _attribute_map = {
-        'endpoint_type': {'key': 'endpointType', 'type': 'str'},
-        'provisioning_state': {'key': 'provisioningState', 'type': 'str'},
-        'created_time': {'key': 'createdTime', 'type': 'iso-8601'},
-        'authentication_type': {'key': 'authenticationType', 'type': 'str'},
-        'dead_letter_secret': {'key': 'deadLetterSecret', 'type': 'str'},
-        'dead_letter_uri': {'key': 'deadLetterUri', 'type': 'str'},
-        'connection_string_primary_key': {'key': 'connectionStringPrimaryKey', 'type': 'str'},
-        'connection_string_secondary_key': {'key': 'connectionStringSecondaryKey', 'type': 'str'},
-        'endpoint_uri': {'key': 'endpointUri', 'type': 'str'},
-        'entity_path': {'key': 'entityPath', 'type': 'str'},
+        "endpoint_type": {"key": "endpointType", "type": "str"},
+        "provisioning_state": {"key": "provisioningState", "type": "str"},
+        "created_time": {"key": "createdTime", "type": "iso-8601"},
+        "authentication_type": {"key": "authenticationType", "type": "str"},
+        "dead_letter_secret": {"key": "deadLetterSecret", "type": "str"},
+        "dead_letter_uri": {"key": "deadLetterUri", "type": "str"},
+        "connection_string_primary_key": {"key": "connectionStringPrimaryKey", "type": "str"},
+        "connection_string_secondary_key": {"key": "connectionStringSecondaryKey", "type": "str"},
+        "endpoint_uri": {"key": "endpointUri", "type": "str"},
+        "entity_path": {"key": "entityPath", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        authentication_type: Optional[Union[str, "AuthenticationType"]] = None,
+        authentication_type: Optional[Union[str, "_models.AuthenticationType"]] = None,
         dead_letter_secret: Optional[str] = None,
         dead_letter_uri: Optional[str] = None,
         connection_string_primary_key: Optional[str] = None,
         connection_string_secondary_key: Optional[str] = None,
         endpoint_uri: Optional[str] = None,
         entity_path: Optional[str] = None,
-        **kwargs
-    ):
-        super(EventHub, self).__init__(authentication_type=authentication_type, dead_letter_secret=dead_letter_secret, dead_letter_uri=dead_letter_uri, **kwargs)
-        self.endpoint_type = 'EventHub'  # type: str
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword authentication_type: Specifies the authentication type being used for connecting to
+         the endpoint. Known values are: "KeyBased" and "IdentityBased".
+        :paramtype authentication_type: str or
+         ~azure.mgmt.digitaltwins.v2020_12_01.models.AuthenticationType
+        :keyword dead_letter_secret: Dead letter storage secret for key-based authentication. Will be
+         obfuscated during read.
+        :paramtype dead_letter_secret: str
+        :keyword dead_letter_uri: Dead letter storage URL for identity-based authentication.
+        :paramtype dead_letter_uri: str
+        :keyword connection_string_primary_key: PrimaryConnectionString of the endpoint for key-based
+         authentication. Will be obfuscated during read.
+        :paramtype connection_string_primary_key: str
+        :keyword connection_string_secondary_key: SecondaryConnectionString of the endpoint for
+         key-based authentication. Will be obfuscated during read.
+        :paramtype connection_string_secondary_key: str
+        :keyword endpoint_uri: The URL of the EventHub namespace for identity-based authentication. It
+         must include the protocol sb://.
+        :paramtype endpoint_uri: str
+        :keyword entity_path: The EventHub name in the EventHub namespace for identity-based
+         authentication.
+        :paramtype entity_path: str
+        """
+        super().__init__(
+            authentication_type=authentication_type,
+            dead_letter_secret=dead_letter_secret,
+            dead_letter_uri=dead_letter_uri,
+            **kwargs
+        )
+        self.endpoint_type: str = "EventHub"
         self.connection_string_primary_key = connection_string_primary_key
         self.connection_string_secondary_key = connection_string_secondary_key
         self.endpoint_uri = endpoint_uri
         self.entity_path = entity_path
 
 
-class GroupIdInformation(msrest.serialization.Model):
+class GroupIdInformation(_serialization.Model):
     """The group information for creating a private endpoint on Digital Twin.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param properties: Required. The properties for a group information object.
-    :type properties: ~azure.mgmt.digitaltwins.models.GroupIdInformationProperties
-    :param id: The resource identifier.
-    :type id: str
+    :ivar properties: Required.
+    :vartype properties: ~azure.mgmt.digitaltwins.v2020_12_01.models.GroupIdInformationProperties
+    :ivar id: The resource identifier.
+    :vartype id: str
     :ivar name: The resource name.
     :vartype name: str
     :ivar type: The resource type.
@@ -898,47 +1058,53 @@ class GroupIdInformation(msrest.serialization.Model):
     """
 
     _validation = {
-        'properties': {'required': True},
-        'name': {'readonly': True, 'pattern': r'^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{2,49}[a-zA-Z0-9]$'},
-        'type': {'readonly': True},
+        "properties": {"required": True},
+        "name": {"readonly": True, "pattern": r"^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{2,49}[a-zA-Z0-9]$"},
+        "type": {"readonly": True},
     }
 
     _attribute_map = {
-        'properties': {'key': 'properties', 'type': 'GroupIdInformationProperties'},
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
+        "properties": {"key": "properties", "type": "GroupIdInformationProperties"},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        properties: "GroupIdInformationProperties",
-        id: Optional[str] = None,
-        **kwargs
-    ):
-        super(GroupIdInformation, self).__init__(**kwargs)
+        properties: "_models.GroupIdInformationProperties",
+        id: Optional[str] = None,  # pylint: disable=redefined-builtin
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword properties: Required.
+        :paramtype properties: ~azure.mgmt.digitaltwins.v2020_12_01.models.GroupIdInformationProperties
+        :keyword id: The resource identifier.
+        :paramtype id: str
+        """
+        super().__init__(**kwargs)
         self.properties = properties
         self.id = id
         self.name = None
         self.type = None
 
 
-class GroupIdInformationProperties(msrest.serialization.Model):
+class GroupIdInformationPropertiesAutoGenerated(_serialization.Model):
     """The properties for a group information object.
 
-    :param group_id: The group id.
-    :type group_id: str
-    :param required_members: The required members for a specific group id.
-    :type required_members: list[str]
-    :param required_zone_names: The required DNS zones for a specific group id.
-    :type required_zone_names: list[str]
+    :ivar group_id: The group id.
+    :vartype group_id: str
+    :ivar required_members: The required members for a specific group id.
+    :vartype required_members: list[str]
+    :ivar required_zone_names: The required DNS zones for a specific group id.
+    :vartype required_zone_names: list[str]
     """
 
     _attribute_map = {
-        'group_id': {'key': 'groupId', 'type': 'str'},
-        'required_members': {'key': 'requiredMembers', 'type': '[str]'},
-        'required_zone_names': {'key': 'requiredZoneNames', 'type': '[str]'},
+        "group_id": {"key": "groupId", "type": "str"},
+        "required_members": {"key": "requiredMembers", "type": "[str]"},
+        "required_zone_names": {"key": "requiredZoneNames", "type": "[str]"},
     }
 
     def __init__(
@@ -947,29 +1113,37 @@ class GroupIdInformationProperties(msrest.serialization.Model):
         group_id: Optional[str] = None,
         required_members: Optional[List[str]] = None,
         required_zone_names: Optional[List[str]] = None,
-        **kwargs
-    ):
-        super(GroupIdInformationProperties, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword group_id: The group id.
+        :paramtype group_id: str
+        :keyword required_members: The required members for a specific group id.
+        :paramtype required_members: list[str]
+        :keyword required_zone_names: The required DNS zones for a specific group id.
+        :paramtype required_zone_names: list[str]
+        """
+        super().__init__(**kwargs)
         self.group_id = group_id
         self.required_members = required_members
         self.required_zone_names = required_zone_names
 
 
-class GroupIdInformationPropertiesAutoGenerated(GroupIdInformationProperties):
-    """GroupIdInformationPropertiesAutoGenerated.
+class GroupIdInformationProperties(GroupIdInformationPropertiesAutoGenerated):
+    """GroupIdInformationProperties.
 
-    :param group_id: The group id.
-    :type group_id: str
-    :param required_members: The required members for a specific group id.
-    :type required_members: list[str]
-    :param required_zone_names: The required DNS zones for a specific group id.
-    :type required_zone_names: list[str]
+    :ivar group_id: The group id.
+    :vartype group_id: str
+    :ivar required_members: The required members for a specific group id.
+    :vartype required_members: list[str]
+    :ivar required_zone_names: The required DNS zones for a specific group id.
+    :vartype required_zone_names: list[str]
     """
 
     _attribute_map = {
-        'group_id': {'key': 'groupId', 'type': 'str'},
-        'required_members': {'key': 'requiredMembers', 'type': '[str]'},
-        'required_zone_names': {'key': 'requiredZoneNames', 'type': '[str]'},
+        "group_id": {"key": "groupId", "type": "str"},
+        "required_members": {"key": "requiredMembers", "type": "[str]"},
+        "required_zone_names": {"key": "requiredZoneNames", "type": "[str]"},
     }
 
     def __init__(
@@ -978,41 +1152,50 @@ class GroupIdInformationPropertiesAutoGenerated(GroupIdInformationProperties):
         group_id: Optional[str] = None,
         required_members: Optional[List[str]] = None,
         required_zone_names: Optional[List[str]] = None,
-        **kwargs
-    ):
-        super(GroupIdInformationPropertiesAutoGenerated, self).__init__(group_id=group_id, required_members=required_members, required_zone_names=required_zone_names, **kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword group_id: The group id.
+        :paramtype group_id: str
+        :keyword required_members: The required members for a specific group id.
+        :paramtype required_members: list[str]
+        :keyword required_zone_names: The required DNS zones for a specific group id.
+        :paramtype required_zone_names: list[str]
+        """
+        super().__init__(
+            group_id=group_id, required_members=required_members, required_zone_names=required_zone_names, **kwargs
+        )
 
 
-class GroupIdInformationResponse(msrest.serialization.Model):
+class GroupIdInformationResponse(_serialization.Model):
     """The available private link resources for a Digital Twin.
 
-    :param value: The list of available private link resources for a Digital Twin.
-    :type value: list[~azure.mgmt.digitaltwins.models.GroupIdInformation]
+    :ivar value: The list of available private link resources for a Digital Twin.
+    :vartype value: list[~azure.mgmt.digitaltwins.v2020_12_01.models.GroupIdInformation]
     """
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[GroupIdInformation]'},
+        "value": {"key": "value", "type": "[GroupIdInformation]"},
     }
 
-    def __init__(
-        self,
-        *,
-        value: Optional[List["GroupIdInformation"]] = None,
-        **kwargs
-    ):
-        super(GroupIdInformationResponse, self).__init__(**kwargs)
+    def __init__(self, *, value: Optional[List["_models.GroupIdInformation"]] = None, **kwargs: Any) -> None:
+        """
+        :keyword value: The list of available private link resources for a Digital Twin.
+        :paramtype value: list[~azure.mgmt.digitaltwins.v2020_12_01.models.GroupIdInformation]
+        """
+        super().__init__(**kwargs)
         self.value = value
 
 
-class Operation(msrest.serialization.Model):
+class Operation(_serialization.Model):
     """DigitalTwins service REST API operation.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
     :ivar name: Operation name: {provider}/{resource}/{read | write | action | delete}.
     :vartype name: str
-    :param display: Operation properties display.
-    :type display: ~azure.mgmt.digitaltwins.models.OperationDisplay
+    :ivar display: Operation properties display.
+    :vartype display: ~azure.mgmt.digitaltwins.v2020_12_01.models.OperationDisplay
     :ivar origin: The intended executor of the operation.
     :vartype origin: str
     :ivar is_data_action: If the operation is a data action (for data plane rbac).
@@ -1020,32 +1203,31 @@ class Operation(msrest.serialization.Model):
     """
 
     _validation = {
-        'name': {'readonly': True},
-        'origin': {'readonly': True},
-        'is_data_action': {'readonly': True},
+        "name": {"readonly": True},
+        "origin": {"readonly": True},
+        "is_data_action": {"readonly": True},
     }
 
     _attribute_map = {
-        'name': {'key': 'name', 'type': 'str'},
-        'display': {'key': 'display', 'type': 'OperationDisplay'},
-        'origin': {'key': 'origin', 'type': 'str'},
-        'is_data_action': {'key': 'isDataAction', 'type': 'bool'},
+        "name": {"key": "name", "type": "str"},
+        "display": {"key": "display", "type": "OperationDisplay"},
+        "origin": {"key": "origin", "type": "str"},
+        "is_data_action": {"key": "isDataAction", "type": "bool"},
     }
 
-    def __init__(
-        self,
-        *,
-        display: Optional["OperationDisplay"] = None,
-        **kwargs
-    ):
-        super(Operation, self).__init__(**kwargs)
+    def __init__(self, *, display: Optional["_models.OperationDisplay"] = None, **kwargs: Any) -> None:
+        """
+        :keyword display: Operation properties display.
+        :paramtype display: ~azure.mgmt.digitaltwins.v2020_12_01.models.OperationDisplay
+        """
+        super().__init__(**kwargs)
         self.name = None
         self.display = display
         self.origin = None
         self.is_data_action = None
 
 
-class OperationDisplay(msrest.serialization.Model):
+class OperationDisplay(_serialization.Model):
     """The object that represents the operation.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -1061,63 +1243,61 @@ class OperationDisplay(msrest.serialization.Model):
     """
 
     _validation = {
-        'provider': {'readonly': True},
-        'resource': {'readonly': True},
-        'operation': {'readonly': True},
-        'description': {'readonly': True},
+        "provider": {"readonly": True},
+        "resource": {"readonly": True},
+        "operation": {"readonly": True},
+        "description": {"readonly": True},
     }
 
     _attribute_map = {
-        'provider': {'key': 'provider', 'type': 'str'},
-        'resource': {'key': 'resource', 'type': 'str'},
-        'operation': {'key': 'operation', 'type': 'str'},
-        'description': {'key': 'description', 'type': 'str'},
+        "provider": {"key": "provider", "type": "str"},
+        "resource": {"key": "resource", "type": "str"},
+        "operation": {"key": "operation", "type": "str"},
+        "description": {"key": "description", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(OperationDisplay, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.provider = None
         self.resource = None
         self.operation = None
         self.description = None
 
 
-class OperationListResult(msrest.serialization.Model):
-    """A list of DigitalTwins service operations. It contains a list of operations and a URL link to get the next set of results.
+class OperationListResult(_serialization.Model):
+    """A list of DigitalTwins service operations. It contains a list of operations and a URL link to
+    get the next set of results.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
-    :param next_link: The link used to get the next page of DigitalTwins description objects.
-    :type next_link: str
+    :ivar next_link: The link used to get the next page of DigitalTwins description objects.
+    :vartype next_link: str
     :ivar value: A list of DigitalTwins operations supported by the Microsoft.DigitalTwins resource
      provider.
-    :vartype value: list[~azure.mgmt.digitaltwins.models.Operation]
+    :vartype value: list[~azure.mgmt.digitaltwins.v2020_12_01.models.Operation]
     """
 
     _validation = {
-        'value': {'readonly': True},
+        "value": {"readonly": True},
     }
 
     _attribute_map = {
-        'next_link': {'key': 'nextLink', 'type': 'str'},
-        'value': {'key': 'value', 'type': '[Operation]'},
+        "next_link": {"key": "nextLink", "type": "str"},
+        "value": {"key": "value", "type": "[Operation]"},
     }
 
-    def __init__(
-        self,
-        *,
-        next_link: Optional[str] = None,
-        **kwargs
-    ):
-        super(OperationListResult, self).__init__(**kwargs)
+    def __init__(self, *, next_link: Optional[str] = None, **kwargs: Any) -> None:
+        """
+        :keyword next_link: The link used to get the next page of DigitalTwins description objects.
+        :paramtype next_link: str
+        """
+        super().__init__(**kwargs)
         self.next_link = next_link
         self.value = None
 
 
-class PrivateEndpointConnection(msrest.serialization.Model):
+class PrivateEndpointConnection(_serialization.Model):
     """The private endpoint connection of a Digital Twin.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -1130,31 +1310,32 @@ class PrivateEndpointConnection(msrest.serialization.Model):
     :vartype name: str
     :ivar type: The resource type.
     :vartype type: str
-    :param properties: Required. The properties of a private endpoint connection.
-    :type properties: ~azure.mgmt.digitaltwins.models.ConnectionProperties
+    :ivar properties: Required.
+    :vartype properties:
+     ~azure.mgmt.digitaltwins.v2020_12_01.models.PrivateEndpointConnectionProperties
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True, 'pattern': r'^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{2,49}[a-zA-Z0-9]$'},
-        'type': {'readonly': True},
-        'properties': {'required': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True, "pattern": r"^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{2,49}[a-zA-Z0-9]$"},
+        "type": {"readonly": True},
+        "properties": {"required": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'properties': {'key': 'properties', 'type': 'ConnectionProperties'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "properties": {"key": "properties", "type": "PrivateEndpointConnectionProperties"},
     }
 
-    def __init__(
-        self,
-        *,
-        properties: "ConnectionProperties",
-        **kwargs
-    ):
-        super(PrivateEndpointConnection, self).__init__(**kwargs)
+    def __init__(self, *, properties: "_models.PrivateEndpointConnectionProperties", **kwargs: Any) -> None:
+        """
+        :keyword properties: Required.
+        :paramtype properties:
+         ~azure.mgmt.digitaltwins.v2020_12_01.models.PrivateEndpointConnectionProperties
+        """
+        super().__init__(**kwargs)
         self.id = None
         self.name = None
         self.type = None
@@ -1166,59 +1347,79 @@ class PrivateEndpointConnectionProperties(ConnectionProperties):
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
-    :ivar provisioning_state: The provisioning state. Possible values include: "Pending",
-     "Approved", "Rejected", "Disconnected".
+    :ivar provisioning_state: The provisioning state. Known values are: "Pending", "Approved",
+     "Rejected", and "Disconnected".
     :vartype provisioning_state: str or
-     ~azure.mgmt.digitaltwins.models.ConnectionPropertiesProvisioningState
-    :param private_endpoint: The private endpoint property of a private endpoint connection.
-    :type private_endpoint: ~azure.mgmt.digitaltwins.models.PrivateEndpoint
-    :param group_ids: The list of group ids for the private endpoint connection.
-    :type group_ids: list[str]
-    :param private_link_service_connection_state: The current state of a private endpoint
-     connection.
-    :type private_link_service_connection_state: ~azure.mgmt.digitaltwins.models.ConnectionState
+     ~azure.mgmt.digitaltwins.v2020_12_01.models.ConnectionPropertiesProvisioningState
+    :ivar private_endpoint:
+    :vartype private_endpoint:
+     ~azure.mgmt.digitaltwins.v2020_12_01.models.ConnectionPropertiesPrivateEndpoint
+    :ivar group_ids: The list of group ids for the private endpoint connection.
+    :vartype group_ids: list[str]
+    :ivar private_link_service_connection_state:
+    :vartype private_link_service_connection_state:
+     ~azure.mgmt.digitaltwins.v2020_12_01.models.ConnectionPropertiesPrivateLinkServiceConnectionState
     """
 
     _validation = {
-        'provisioning_state': {'readonly': True},
+        "provisioning_state": {"readonly": True},
     }
 
     _attribute_map = {
-        'provisioning_state': {'key': 'provisioningState', 'type': 'str'},
-        'private_endpoint': {'key': 'privateEndpoint', 'type': 'PrivateEndpoint'},
-        'group_ids': {'key': 'groupIds', 'type': '[str]'},
-        'private_link_service_connection_state': {'key': 'privateLinkServiceConnectionState', 'type': 'ConnectionState'},
+        "provisioning_state": {"key": "provisioningState", "type": "str"},
+        "private_endpoint": {"key": "privateEndpoint", "type": "ConnectionPropertiesPrivateEndpoint"},
+        "group_ids": {"key": "groupIds", "type": "[str]"},
+        "private_link_service_connection_state": {
+            "key": "privateLinkServiceConnectionState",
+            "type": "ConnectionPropertiesPrivateLinkServiceConnectionState",
+        },
     }
 
     def __init__(
         self,
         *,
-        private_endpoint: Optional["PrivateEndpoint"] = None,
+        private_endpoint: Optional["_models.ConnectionPropertiesPrivateEndpoint"] = None,
         group_ids: Optional[List[str]] = None,
-        private_link_service_connection_state: Optional["ConnectionState"] = None,
-        **kwargs
-    ):
-        super(PrivateEndpointConnectionProperties, self).__init__(private_endpoint=private_endpoint, group_ids=group_ids, private_link_service_connection_state=private_link_service_connection_state, **kwargs)
+        private_link_service_connection_state: Optional[
+            "_models.ConnectionPropertiesPrivateLinkServiceConnectionState"
+        ] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword private_endpoint:
+        :paramtype private_endpoint:
+         ~azure.mgmt.digitaltwins.v2020_12_01.models.ConnectionPropertiesPrivateEndpoint
+        :keyword group_ids: The list of group ids for the private endpoint connection.
+        :paramtype group_ids: list[str]
+        :keyword private_link_service_connection_state:
+        :paramtype private_link_service_connection_state:
+         ~azure.mgmt.digitaltwins.v2020_12_01.models.ConnectionPropertiesPrivateLinkServiceConnectionState
+        """
+        super().__init__(
+            private_endpoint=private_endpoint,
+            group_ids=group_ids,
+            private_link_service_connection_state=private_link_service_connection_state,
+            **kwargs
+        )
 
 
-class PrivateEndpointConnectionsResponse(msrest.serialization.Model):
+class PrivateEndpointConnectionsResponse(_serialization.Model):
     """The available private link connections for a Digital Twin.
 
-    :param value: The list of available private link connections for a Digital Twin.
-    :type value: list[~azure.mgmt.digitaltwins.models.PrivateEndpointConnection]
+    :ivar value: The list of available private link connections for a Digital Twin.
+    :vartype value: list[~azure.mgmt.digitaltwins.v2020_12_01.models.PrivateEndpointConnection]
     """
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[PrivateEndpointConnection]'},
+        "value": {"key": "value", "type": "[PrivateEndpointConnection]"},
     }
 
-    def __init__(
-        self,
-        *,
-        value: Optional[List["PrivateEndpointConnection"]] = None,
-        **kwargs
-    ):
-        super(PrivateEndpointConnectionsResponse, self).__init__(**kwargs)
+    def __init__(self, *, value: Optional[List["_models.PrivateEndpointConnection"]] = None, **kwargs: Any) -> None:
+        """
+        :keyword value: The list of available private link connections for a Digital Twin.
+        :paramtype value: list[~azure.mgmt.digitaltwins.v2020_12_01.models.PrivateEndpointConnection]
+        """
+        super().__init__(**kwargs)
         self.value = value
 
 
@@ -1229,69 +1430,98 @@ class ServiceBus(DigitalTwinsEndpointResourceProperties):
 
     All required parameters must be populated in order to send to Azure.
 
-    :param endpoint_type: Required. The type of Digital Twins endpoint.Constant filled by server.
-     Possible values include: "EventHub", "EventGrid", "ServiceBus".
-    :type endpoint_type: str or ~azure.mgmt.digitaltwins.models.EndpointType
-    :ivar provisioning_state: The provisioning state. Possible values include: "Provisioning",
-     "Deleting", "Succeeded", "Failed", "Canceled", "Deleted", "Warning", "Suspending", "Restoring",
-     "Moving", "Disabled".
-    :vartype provisioning_state: str or ~azure.mgmt.digitaltwins.models.EndpointProvisioningState
+    :ivar endpoint_type: The type of Digital Twins endpoint. Required. Known values are:
+     "EventHub", "EventGrid", and "ServiceBus".
+    :vartype endpoint_type: str or ~azure.mgmt.digitaltwins.v2020_12_01.models.EndpointType
+    :ivar provisioning_state: The provisioning state. Known values are: "Provisioning", "Deleting",
+     "Succeeded", "Failed", "Canceled", "Deleted", "Warning", "Suspending", "Restoring", "Moving",
+     and "Disabled".
+    :vartype provisioning_state: str or
+     ~azure.mgmt.digitaltwins.v2020_12_01.models.EndpointProvisioningState
     :ivar created_time: Time when the Endpoint was added to DigitalTwinsInstance.
     :vartype created_time: ~datetime.datetime
-    :param authentication_type: Specifies the authentication type being used for connecting to the
-     endpoint. Possible values include: "KeyBased", "IdentityBased".
-    :type authentication_type: str or ~azure.mgmt.digitaltwins.models.AuthenticationType
-    :param dead_letter_secret: Dead letter storage secret for key-based authentication. Will be
+    :ivar authentication_type: Specifies the authentication type being used for connecting to the
+     endpoint. Known values are: "KeyBased" and "IdentityBased".
+    :vartype authentication_type: str or
+     ~azure.mgmt.digitaltwins.v2020_12_01.models.AuthenticationType
+    :ivar dead_letter_secret: Dead letter storage secret for key-based authentication. Will be
      obfuscated during read.
-    :type dead_letter_secret: str
-    :param dead_letter_uri: Dead letter storage URL for identity-based authentication.
-    :type dead_letter_uri: str
-    :param primary_connection_string: PrimaryConnectionString of the endpoint for key-based
+    :vartype dead_letter_secret: str
+    :ivar dead_letter_uri: Dead letter storage URL for identity-based authentication.
+    :vartype dead_letter_uri: str
+    :ivar primary_connection_string: PrimaryConnectionString of the endpoint for key-based
      authentication. Will be obfuscated during read.
-    :type primary_connection_string: str
-    :param secondary_connection_string: SecondaryConnectionString of the endpoint for key-based
+    :vartype primary_connection_string: str
+    :ivar secondary_connection_string: SecondaryConnectionString of the endpoint for key-based
      authentication. Will be obfuscated during read.
-    :type secondary_connection_string: str
-    :param endpoint_uri: The URL of the ServiceBus namespace for identity-based authentication. It
+    :vartype secondary_connection_string: str
+    :ivar endpoint_uri: The URL of the ServiceBus namespace for identity-based authentication. It
      must include the protocol sb://.
-    :type endpoint_uri: str
-    :param entity_path: The ServiceBus Topic name for identity-based authentication.
-    :type entity_path: str
+    :vartype endpoint_uri: str
+    :ivar entity_path: The ServiceBus Topic name for identity-based authentication.
+    :vartype entity_path: str
     """
 
     _validation = {
-        'endpoint_type': {'required': True},
-        'provisioning_state': {'readonly': True},
-        'created_time': {'readonly': True},
+        "endpoint_type": {"required": True},
+        "provisioning_state": {"readonly": True},
+        "created_time": {"readonly": True},
     }
 
     _attribute_map = {
-        'endpoint_type': {'key': 'endpointType', 'type': 'str'},
-        'provisioning_state': {'key': 'provisioningState', 'type': 'str'},
-        'created_time': {'key': 'createdTime', 'type': 'iso-8601'},
-        'authentication_type': {'key': 'authenticationType', 'type': 'str'},
-        'dead_letter_secret': {'key': 'deadLetterSecret', 'type': 'str'},
-        'dead_letter_uri': {'key': 'deadLetterUri', 'type': 'str'},
-        'primary_connection_string': {'key': 'primaryConnectionString', 'type': 'str'},
-        'secondary_connection_string': {'key': 'secondaryConnectionString', 'type': 'str'},
-        'endpoint_uri': {'key': 'endpointUri', 'type': 'str'},
-        'entity_path': {'key': 'entityPath', 'type': 'str'},
+        "endpoint_type": {"key": "endpointType", "type": "str"},
+        "provisioning_state": {"key": "provisioningState", "type": "str"},
+        "created_time": {"key": "createdTime", "type": "iso-8601"},
+        "authentication_type": {"key": "authenticationType", "type": "str"},
+        "dead_letter_secret": {"key": "deadLetterSecret", "type": "str"},
+        "dead_letter_uri": {"key": "deadLetterUri", "type": "str"},
+        "primary_connection_string": {"key": "primaryConnectionString", "type": "str"},
+        "secondary_connection_string": {"key": "secondaryConnectionString", "type": "str"},
+        "endpoint_uri": {"key": "endpointUri", "type": "str"},
+        "entity_path": {"key": "entityPath", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        authentication_type: Optional[Union[str, "AuthenticationType"]] = None,
+        authentication_type: Optional[Union[str, "_models.AuthenticationType"]] = None,
         dead_letter_secret: Optional[str] = None,
         dead_letter_uri: Optional[str] = None,
         primary_connection_string: Optional[str] = None,
         secondary_connection_string: Optional[str] = None,
         endpoint_uri: Optional[str] = None,
         entity_path: Optional[str] = None,
-        **kwargs
-    ):
-        super(ServiceBus, self).__init__(authentication_type=authentication_type, dead_letter_secret=dead_letter_secret, dead_letter_uri=dead_letter_uri, **kwargs)
-        self.endpoint_type = 'ServiceBus'  # type: str
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword authentication_type: Specifies the authentication type being used for connecting to
+         the endpoint. Known values are: "KeyBased" and "IdentityBased".
+        :paramtype authentication_type: str or
+         ~azure.mgmt.digitaltwins.v2020_12_01.models.AuthenticationType
+        :keyword dead_letter_secret: Dead letter storage secret for key-based authentication. Will be
+         obfuscated during read.
+        :paramtype dead_letter_secret: str
+        :keyword dead_letter_uri: Dead letter storage URL for identity-based authentication.
+        :paramtype dead_letter_uri: str
+        :keyword primary_connection_string: PrimaryConnectionString of the endpoint for key-based
+         authentication. Will be obfuscated during read.
+        :paramtype primary_connection_string: str
+        :keyword secondary_connection_string: SecondaryConnectionString of the endpoint for key-based
+         authentication. Will be obfuscated during read.
+        :paramtype secondary_connection_string: str
+        :keyword endpoint_uri: The URL of the ServiceBus namespace for identity-based authentication.
+         It must include the protocol sb://.
+        :paramtype endpoint_uri: str
+        :keyword entity_path: The ServiceBus Topic name for identity-based authentication.
+        :paramtype entity_path: str
+        """
+        super().__init__(
+            authentication_type=authentication_type,
+            dead_letter_secret=dead_letter_secret,
+            dead_letter_uri=dead_letter_uri,
+            **kwargs
+        )
+        self.endpoint_type: str = "ServiceBus"
         self.primary_connection_string = primary_connection_string
         self.secondary_connection_string = secondary_connection_string
         self.endpoint_uri = endpoint_uri

@@ -26,23 +26,25 @@ with open('CHANGELOG.md', encoding='utf-8') as f:
 setup(
     name=PACKAGE_NAME,
     version=version,
+    include_package_data=True,
     description='Microsoft Azure {} Client Library for Python'.format(PACKAGE_PPRINT_NAME),
     long_description=readme + '\n\n' + changelog,
     long_description_content_type='text/markdown',
     url='https://github.com/Azure/azure-sdk-for-python',
+    keywords="azure, cognitive services, document translation, document translator, translator, translate, translation, azure sdk",
     author='Microsoft Corporation',
     author_email='azpysdkhelp@microsoft.com',
     license='MIT License',
     classifiers=[
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
+        "Programming Language :: Python :: 3 :: Only",
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
         'License :: OSI Approved :: MIT License',
     ],
     packages=find_packages(exclude=[
@@ -52,17 +54,13 @@ setup(
         'azure.ai',
         'azure.ai.translation'
     ]),
+    python_requires=">=3.8",
     install_requires=[
-        "azure-core<2.0.0,>=1.10.0",
-        "msrest>=0.6.21",
-        'six>=1.11.0'
+        "azure-core>=1.24.0",
+        "isodate>=0.6.1",
     ],
-    extras_require={
-        ":python_version<'3.0'": ['azure-ai-translation-nspkg'],
-        ":python_version<'3.5'": ['typing'],
-    },
     project_urls={
         'Bug Reports': 'https://github.com/Azure/azure-sdk-for-python/issues',
-        'Source': 'https://github.com/Azure/azure-sdk-python',
+        'Source': 'https://github.com/Azure/azure-sdk-for-python',
     }
 )

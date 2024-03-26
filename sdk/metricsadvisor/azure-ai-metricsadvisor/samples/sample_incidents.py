@@ -37,13 +37,13 @@ def sample_list_incidents_for_detection_configuration():
     subscription_key = os.getenv("METRICS_ADVISOR_SUBSCRIPTION_KEY")
     api_key = os.getenv("METRICS_ADVISOR_API_KEY")
     detection_configuration_id = os.getenv("METRICS_ADVISOR_DETECTION_CONFIGURATION_ID")
-
+    
     client = MetricsAdvisorClient(service_endpoint,
                                   MetricsAdvisorKeyCredential(subscription_key, api_key))
     results = client.list_incidents(
         detection_configuration_id=detection_configuration_id,
-        start_time=datetime.datetime(2020, 1, 1),
-        end_time=datetime.datetime(2020, 9, 9),
+        start_time=datetime.datetime(2021, 1, 1),
+        end_time=datetime.datetime(2021, 9, 9),
     )
     for result in results:
         print("Metric id: {}".format(result.metric_id))

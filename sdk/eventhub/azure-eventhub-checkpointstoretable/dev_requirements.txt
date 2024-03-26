@@ -1,0 +1,3 @@
+-e ../../../tools/azure-sdk-tools
+aiohttp
+-e ../../../tools/azure-devtools

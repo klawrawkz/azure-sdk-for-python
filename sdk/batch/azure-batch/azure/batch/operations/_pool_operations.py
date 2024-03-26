@@ -24,7 +24,7 @@ class PoolOperations(object):
     :param config: Configuration of service client.
     :param serializer: An object model serializer.
     :param deserializer: An object model deserializer.
-    :ivar api_version: Client API Version. Constant value: "2020-09-01.12.0".
+    :ivar api_version: The API version to use for the request. Constant value: "2023-11-01.18.0".
     """
 
     models = models
@@ -34,7 +34,7 @@ class PoolOperations(object):
         self._client = client
         self._serialize = serializer
         self._deserialize = deserializer
-        self.api_version = "2020-09-01.12.0"
+        self.api_version = "2023-11-01.18.0"
 
         self.config = config
 
@@ -155,100 +155,6 @@ class PoolOperations(object):
 
         return deserialized
     list_usage_metrics.metadata = {'url': '/poolusagemetrics'}
-
-    def get_all_lifetime_statistics(
-            self, pool_get_all_lifetime_statistics_options=None, custom_headers=None, raw=False, **operation_config):
-        """Gets lifetime summary statistics for all of the Pools in the specified
-        Account.
-
-        Statistics are aggregated across all Pools that have ever existed in
-        the Account, from Account creation to the last update time of the
-        statistics. The statistics may not be immediately available. The Batch
-        service performs periodic roll-up of statistics. The typical delay is
-        about 30 minutes.
-
-        :param pool_get_all_lifetime_statistics_options: Additional parameters
-         for the operation
-        :type pool_get_all_lifetime_statistics_options:
-         ~azure.batch.models.PoolGetAllLifetimeStatisticsOptions
-        :param dict custom_headers: headers that will be added to the request
-        :param bool raw: returns the direct response alongside the
-         deserialized response
-        :param operation_config: :ref:`Operation configuration
-         overrides<msrest:optionsforoperations>`.
-        :return: PoolStatistics or ClientRawResponse if raw=true
-        :rtype: ~azure.batch.models.PoolStatistics or
-         ~msrest.pipeline.ClientRawResponse
-        :raises:
-         :class:`BatchErrorException<azure.batch.models.BatchErrorException>`
-        """
-        timeout = None
-        if pool_get_all_lifetime_statistics_options is not None:
-            timeout = pool_get_all_lifetime_statistics_options.timeout
-        client_request_id = None
-        if pool_get_all_lifetime_statistics_options is not None:
-            client_request_id = pool_get_all_lifetime_statistics_options.client_request_id
-        return_client_request_id = None
-        if pool_get_all_lifetime_statistics_options is not None:
-            return_client_request_id = pool_get_all_lifetime_statistics_options.return_client_request_id
-        ocp_date = None
-        if pool_get_all_lifetime_statistics_options is not None:
-            ocp_date = pool_get_all_lifetime_statistics_options.ocp_date
-
-        # Construct URL
-        url = self.get_all_lifetime_statistics.metadata['url']
-        path_format_arguments = {
-            'batchUrl': self._serialize.url("self.config.batch_url", self.config.batch_url, 'str', skip_quote=True)
-        }
-        url = self._client.format_url(url, **path_format_arguments)
-
-        # Construct parameters
-        query_parameters = {}
-        query_parameters['api-version'] = self._serialize.query("self.api_version", self.api_version, 'str')
-        if timeout is not None:
-            query_parameters['timeout'] = self._serialize.query("timeout", timeout, 'int')
-
-        # Construct headers
-        header_parameters = {}
-        header_parameters['Accept'] = 'application/json'
-        if self.config.generate_client_request_id:
-            header_parameters['client-request-id'] = str(uuid.uuid1())
-        if custom_headers:
-            header_parameters.update(custom_headers)
-        if self.config.accept_language is not None:
-            header_parameters['accept-language'] = self._serialize.header("self.config.accept_language", self.config.accept_language, 'str')
-        if client_request_id is not None:
-            header_parameters['client-request-id'] = self._serialize.header("client_request_id", client_request_id, 'str')
-        if return_client_request_id is not None:
-            header_parameters['return-client-request-id'] = self._serialize.header("return_client_request_id", return_client_request_id, 'bool')
-        if ocp_date is not None:
-            header_parameters['ocp-date'] = self._serialize.header("ocp_date", ocp_date, 'rfc-1123')
-
-        # Construct and send request
-        request = self._client.get(url, query_parameters, header_parameters)
-        response = self._client.send(request, stream=False, **operation_config)
-
-        if response.status_code not in [200]:
-            raise models.BatchErrorException(self._deserialize, response)
-
-        header_dict = {}
-        deserialized = None
-        if response.status_code == 200:
-            deserialized = self._deserialize('PoolStatistics', response)
-            header_dict = {
-                'client-request-id': 'str',
-                'request-id': 'str',
-                'ETag': 'str',
-                'Last-Modified': 'rfc-1123',
-            }
-
-        if raw:
-            client_raw_response = ClientRawResponse(deserialized, response)
-            client_raw_response.add_headers(header_dict)
-            return client_raw_response
-
-        return deserialized
-    get_all_lifetime_statistics.metadata = {'url': '/lifetimepoolstats'}
 
     def add(
             self, pool, pool_add_options=None, custom_headers=None, raw=False, **operation_config):
@@ -978,25 +884,22 @@ class PoolOperations(object):
         :param pool_id: The ID of the Pool on which to enable automatic
          scaling.
         :type pool_id: str
-        :param auto_scale_formula: The formula for the desired number of
-         Compute Nodes in the Pool. The formula is checked for validity before
+        :param auto_scale_formula: The formula is checked for validity before
          it is applied to the Pool. If the formula is not valid, the Batch
          service rejects the request with detailed error information. For more
          information about specifying this formula, see Automatically scale
          Compute Nodes in an Azure Batch Pool
          (https://azure.microsoft.com/en-us/documentation/articles/batch-automatic-scaling).
         :type auto_scale_formula: str
-        :param auto_scale_evaluation_interval: The time interval at which to
-         automatically adjust the Pool size according to the autoscale formula.
-         The default value is 15 minutes. The minimum and maximum value are 5
-         minutes and 168 hours respectively. If you specify a value less than 5
-         minutes or greater than 168 hours, the Batch service rejects the
-         request with an invalid property value error; if you are calling the
-         REST API directly, the HTTP status code is 400 (Bad Request). If you
-         specify a new interval, then the existing autoscale evaluation
-         schedule will be stopped and a new autoscale evaluation schedule will
-         be started, with its starting time being the time when this request
-         was issued.
+        :param auto_scale_evaluation_interval: The default value is 15
+         minutes. The minimum and maximum value are 5 minutes and 168 hours
+         respectively. If you specify a value less than 5 minutes or greater
+         than 168 hours, the Batch service rejects the request with an invalid
+         property value error; if you are calling the REST API directly, the
+         HTTP status code is 400 (Bad Request). If you specify a new interval,
+         then the existing autoscale evaluation schedule will be stopped and a
+         new autoscale evaluation schedule will be started, with its starting
+         time being the time when this request was issued.
         :type auto_scale_evaluation_interval: timedelta
         :param pool_enable_auto_scale_options: Additional parameters for the
          operation
@@ -1109,8 +1012,7 @@ class PoolOperations(object):
         :param pool_id: The ID of the Pool on which to evaluate the automatic
          scaling formula.
         :type pool_id: str
-        :param auto_scale_formula: The formula for the desired number of
-         Compute Nodes in the Pool. The formula is validated and its results
+        :param auto_scale_formula: The formula is validated and its results
          calculated, but it is not applied to the Pool. To apply the formula to
          the Pool, 'Enable automatic scaling on a Pool'. For more information
          about specifying this formula, see Automatically scale Compute Nodes
@@ -1531,7 +1433,7 @@ class PoolOperations(object):
 
         This operation can only run when the allocation state of the Pool is
         steady. When this operation runs, the allocation state changes from
-        steady to resizing.
+        steady to resizing. Each request may remove up to 100 nodes.
 
         :param pool_id: The ID of the Pool from which you want to remove
          Compute Nodes.

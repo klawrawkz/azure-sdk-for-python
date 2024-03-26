@@ -6,27 +6,24 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
-try:
-    from ._models_py3 import PolicyAssignment
-    from ._models_py3 import PolicyAssignmentListResult
-    from ._models_py3 import PolicyDefinition
-    from ._models_py3 import PolicyDefinitionListResult
-except (SyntaxError, ImportError):
-    from ._models import PolicyAssignment  # type: ignore
-    from ._models import PolicyAssignmentListResult  # type: ignore
-    from ._models import PolicyDefinition  # type: ignore
-    from ._models import PolicyDefinitionListResult  # type: ignore
+from ._models_py3 import PolicyAssignment
+from ._models_py3 import PolicyAssignmentListResult
+from ._models_py3 import PolicyDefinition
+from ._models_py3 import PolicyDefinitionListResult
 
-from ._policy_client_enums import (
-    PolicyMode,
-    PolicyType,
-)
+from ._policy_client_enums import PolicyMode
+from ._policy_client_enums import PolicyType
+from ._patch import __all__ as _patch_all
+from ._patch import *  # pylint: disable=unused-wildcard-import
+from ._patch import patch_sdk as _patch_sdk
 
 __all__ = [
-    'PolicyAssignment',
-    'PolicyAssignmentListResult',
-    'PolicyDefinition',
-    'PolicyDefinitionListResult',
-    'PolicyMode',
-    'PolicyType',
+    "PolicyAssignment",
+    "PolicyAssignmentListResult",
+    "PolicyDefinition",
+    "PolicyDefinitionListResult",
+    "PolicyMode",
+    "PolicyType",
 ]
+__all__.extend([p for p in _patch_all if p not in __all__])
+_patch_sdk()

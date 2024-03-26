@@ -34,6 +34,14 @@ azure.core.credentials
    :undoc-members:
    :inherited-members:
 
+azure.core.credentials_async
+----------------------------
+
+.. automodule:: azure.core.credentials_async
+   :members:
+   :undoc-members:
+   :inherited-members:
+
 azure.core.exceptions
 ---------------------
 
@@ -42,7 +50,7 @@ azure.core.exceptions
    :undoc-members:
 
 azure.core.messaging
--------------------
+--------------------
 
 .. automodule:: azure.core.messaging
    :members:
@@ -66,9 +74,26 @@ azure.core.settings
    :inherited-members:
 
 azure.core.serialization
--------------------
+------------------------
 
 .. automodule:: azure.core.serialization
    :members:
    :undoc-members:
    :inherited-members:
+
+azure.core.rest
+---------------
+
+.. automodule:: azure.core.rest
+   :members:
+   :undoc-members:
+   :inherited-members:
+
+azure.core.utils
+----------------
+
+.. automodule:: azure.core.utils
+   :members:
+   :undoc-members:
+   :inherited-members:
+

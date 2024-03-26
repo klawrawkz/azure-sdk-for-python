@@ -1,4 +1,5 @@
 # coding=utf-8
+# pylint: disable=too-many-lines
 # --------------------------------------------------------------------------
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
@@ -7,48 +8,49 @@
 # --------------------------------------------------------------------------
 
 import datetime
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Union
 
-from azure.core.exceptions import HttpResponseError
-import msrest.serialization
+from ... import _serialization
 
-from ._web_site_management_client_enums import *
+if TYPE_CHECKING:
+    # pylint: disable=unused-import,ungrouped-imports
+    from .. import models as _models
 
 
-class Address(msrest.serialization.Model):
+class Address(_serialization.Model):
     """Address information for domain registration.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param address1: Required. First line of an Address.
-    :type address1: str
-    :param address2: The second line of the Address. Optional.
-    :type address2: str
-    :param city: Required. The city for the address.
-    :type city: str
-    :param country: Required. The country for the address.
-    :type country: str
-    :param postal_code: Required. The postal code for the address.
-    :type postal_code: str
-    :param state: Required. The state or province for the address.
-    :type state: str
+    :ivar address1: First line of an Address. Required.
+    :vartype address1: str
+    :ivar address2: The second line of the Address. Optional.
+    :vartype address2: str
+    :ivar city: The city for the address. Required.
+    :vartype city: str
+    :ivar country: The country for the address. Required.
+    :vartype country: str
+    :ivar postal_code: The postal code for the address. Required.
+    :vartype postal_code: str
+    :ivar state: The state or province for the address. Required.
+    :vartype state: str
     """
 
     _validation = {
-        'address1': {'required': True},
-        'city': {'required': True},
-        'country': {'required': True},
-        'postal_code': {'required': True},
-        'state': {'required': True},
+        "address1": {"required": True},
+        "city": {"required": True},
+        "country": {"required": True},
+        "postal_code": {"required": True},
+        "state": {"required": True},
     }
 
     _attribute_map = {
-        'address1': {'key': 'address1', 'type': 'str'},
-        'address2': {'key': 'address2', 'type': 'str'},
-        'city': {'key': 'city', 'type': 'str'},
-        'country': {'key': 'country', 'type': 'str'},
-        'postal_code': {'key': 'postalCode', 'type': 'str'},
-        'state': {'key': 'state', 'type': 'str'},
+        "address1": {"key": "address1", "type": "str"},
+        "address2": {"key": "address2", "type": "str"},
+        "city": {"key": "city", "type": "str"},
+        "country": {"key": "country", "type": "str"},
+        "postal_code": {"key": "postalCode", "type": "str"},
+        "state": {"key": "state", "type": "str"},
     }
 
     def __init__(
@@ -60,9 +62,23 @@ class Address(msrest.serialization.Model):
         postal_code: str,
         state: str,
         address2: Optional[str] = None,
-        **kwargs
-    ):
-        super(Address, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword address1: First line of an Address. Required.
+        :paramtype address1: str
+        :keyword address2: The second line of the Address. Optional.
+        :paramtype address2: str
+        :keyword city: The city for the address. Required.
+        :paramtype city: str
+        :keyword country: The country for the address. Required.
+        :paramtype country: str
+        :keyword postal_code: The postal code for the address. Required.
+        :paramtype postal_code: str
+        :keyword state: The state or province for the address. Required.
+        :paramtype state: str
+        """
+        super().__init__(**kwargs)
         self.address1 = address1
         self.address2 = address2
         self.city = city
@@ -71,49 +87,50 @@ class Address(msrest.serialization.Model):
         self.state = state
 
 
-class Contact(msrest.serialization.Model):
-    """Contact information for domain registration. If 'Domain Privacy' option is not selected then the contact information is made publicly available through the Whois 
-directories as per ICANN requirements.
+class Contact(_serialization.Model):
+    """Contact information for domain registration. If 'Domain Privacy' option is not selected then
+    the contact information is made publicly available through the Whois
+    directories as per ICANN requirements.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param address_mailing: Mailing address.
-    :type address_mailing: ~azure.mgmt.web.v2015_04_01.models.Address
-    :param email: Required. Email address.
-    :type email: str
-    :param fax: Fax number.
-    :type fax: str
-    :param job_title: Job title.
-    :type job_title: str
-    :param name_first: Required. First name.
-    :type name_first: str
-    :param name_last: Required. Last name.
-    :type name_last: str
-    :param name_middle: Middle name.
-    :type name_middle: str
-    :param organization: Organization contact belongs to.
-    :type organization: str
-    :param phone: Required. Phone number.
-    :type phone: str
+    :ivar address_mailing: Mailing address.
+    :vartype address_mailing: ~azure.mgmt.web.v2015_04_01.models.Address
+    :ivar email: Email address. Required.
+    :vartype email: str
+    :ivar fax: Fax number.
+    :vartype fax: str
+    :ivar job_title: Job title.
+    :vartype job_title: str
+    :ivar name_first: First name. Required.
+    :vartype name_first: str
+    :ivar name_last: Last name. Required.
+    :vartype name_last: str
+    :ivar name_middle: Middle name.
+    :vartype name_middle: str
+    :ivar organization: Organization contact belongs to.
+    :vartype organization: str
+    :ivar phone: Phone number. Required.
+    :vartype phone: str
     """
 
     _validation = {
-        'email': {'required': True},
-        'name_first': {'required': True},
-        'name_last': {'required': True},
-        'phone': {'required': True},
+        "email": {"required": True},
+        "name_first": {"required": True},
+        "name_last": {"required": True},
+        "phone": {"required": True},
     }
 
     _attribute_map = {
-        'address_mailing': {'key': 'addressMailing', 'type': 'Address'},
-        'email': {'key': 'email', 'type': 'str'},
-        'fax': {'key': 'fax', 'type': 'str'},
-        'job_title': {'key': 'jobTitle', 'type': 'str'},
-        'name_first': {'key': 'nameFirst', 'type': 'str'},
-        'name_last': {'key': 'nameLast', 'type': 'str'},
-        'name_middle': {'key': 'nameMiddle', 'type': 'str'},
-        'organization': {'key': 'organization', 'type': 'str'},
-        'phone': {'key': 'phone', 'type': 'str'},
+        "address_mailing": {"key": "addressMailing", "type": "Address"},
+        "email": {"key": "email", "type": "str"},
+        "fax": {"key": "fax", "type": "str"},
+        "job_title": {"key": "jobTitle", "type": "str"},
+        "name_first": {"key": "nameFirst", "type": "str"},
+        "name_last": {"key": "nameLast", "type": "str"},
+        "name_middle": {"key": "nameMiddle", "type": "str"},
+        "organization": {"key": "organization", "type": "str"},
+        "phone": {"key": "phone", "type": "str"},
     }
 
     def __init__(
@@ -123,14 +140,34 @@ directories as per ICANN requirements.
         name_first: str,
         name_last: str,
         phone: str,
-        address_mailing: Optional["Address"] = None,
+        address_mailing: Optional["_models.Address"] = None,
         fax: Optional[str] = None,
         job_title: Optional[str] = None,
         name_middle: Optional[str] = None,
         organization: Optional[str] = None,
-        **kwargs
-    ):
-        super(Contact, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword address_mailing: Mailing address.
+        :paramtype address_mailing: ~azure.mgmt.web.v2015_04_01.models.Address
+        :keyword email: Email address. Required.
+        :paramtype email: str
+        :keyword fax: Fax number.
+        :paramtype fax: str
+        :keyword job_title: Job title.
+        :paramtype job_title: str
+        :keyword name_first: First name. Required.
+        :paramtype name_first: str
+        :keyword name_last: Last name. Required.
+        :paramtype name_last: str
+        :keyword name_middle: Middle name.
+        :paramtype name_middle: str
+        :keyword organization: Organization contact belongs to.
+        :paramtype organization: str
+        :keyword phone: Phone number. Required.
+        :paramtype phone: str
+        """
+        super().__init__(**kwargs)
         self.address_mailing = address_mailing
         self.email = email
         self.fax = fax
@@ -142,116 +179,127 @@ directories as per ICANN requirements.
         self.phone = phone
 
 
-class CsmOperationCollection(msrest.serialization.Model):
+class CsmOperationCollection(_serialization.Model):
     """Collection of Azure resource manager operation metadata.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param value: Required. Collection of resources.
-    :type value: list[~azure.mgmt.web.v2015_04_01.models.CsmOperationDescription]
+    :ivar value: Collection of resources. Required.
+    :vartype value: list[~azure.mgmt.web.v2015_04_01.models.CsmOperationDescription]
     :ivar next_link: Link to next page of resources.
     :vartype next_link: str
     """
 
     _validation = {
-        'value': {'required': True},
-        'next_link': {'readonly': True},
+        "value": {"required": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[CsmOperationDescription]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[CsmOperationDescription]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        value: List["CsmOperationDescription"],
-        **kwargs
-    ):
-        super(CsmOperationCollection, self).__init__(**kwargs)
+    def __init__(self, *, value: List["_models.CsmOperationDescription"], **kwargs: Any) -> None:
+        """
+        :keyword value: Collection of resources. Required.
+        :paramtype value: list[~azure.mgmt.web.v2015_04_01.models.CsmOperationDescription]
+        """
+        super().__init__(**kwargs)
         self.value = value
         self.next_link = None
 
 
-class CsmOperationDescription(msrest.serialization.Model):
+class CsmOperationDescription(_serialization.Model):
     """Description of an operation available for Microsoft.Web resource provider.
 
-    :param name:
-    :type name: str
-    :param display: Meta data about operation used for display in portal.
-    :type display: ~azure.mgmt.web.v2015_04_01.models.CsmOperationDisplay
-    :param origin:
-    :type origin: str
-    :param properties: Properties available for a Microsoft.Web resource provider operation.
-    :type properties: ~azure.mgmt.web.v2015_04_01.models.CsmOperationDescriptionProperties
+    :ivar name:
+    :vartype name: str
+    :ivar display: Meta data about operation used for display in portal.
+    :vartype display: ~azure.mgmt.web.v2015_04_01.models.CsmOperationDisplay
+    :ivar origin:
+    :vartype origin: str
+    :ivar properties: Properties available for a Microsoft.Web resource provider operation.
+    :vartype properties: ~azure.mgmt.web.v2015_04_01.models.CsmOperationDescriptionProperties
     """
 
     _attribute_map = {
-        'name': {'key': 'name', 'type': 'str'},
-        'display': {'key': 'display', 'type': 'CsmOperationDisplay'},
-        'origin': {'key': 'origin', 'type': 'str'},
-        'properties': {'key': 'properties', 'type': 'CsmOperationDescriptionProperties'},
+        "name": {"key": "name", "type": "str"},
+        "display": {"key": "display", "type": "CsmOperationDisplay"},
+        "origin": {"key": "origin", "type": "str"},
+        "properties": {"key": "properties", "type": "CsmOperationDescriptionProperties"},
     }
 
     def __init__(
         self,
         *,
         name: Optional[str] = None,
-        display: Optional["CsmOperationDisplay"] = None,
+        display: Optional["_models.CsmOperationDisplay"] = None,
         origin: Optional[str] = None,
-        properties: Optional["CsmOperationDescriptionProperties"] = None,
-        **kwargs
-    ):
-        super(CsmOperationDescription, self).__init__(**kwargs)
+        properties: Optional["_models.CsmOperationDescriptionProperties"] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword name:
+        :paramtype name: str
+        :keyword display: Meta data about operation used for display in portal.
+        :paramtype display: ~azure.mgmt.web.v2015_04_01.models.CsmOperationDisplay
+        :keyword origin:
+        :paramtype origin: str
+        :keyword properties: Properties available for a Microsoft.Web resource provider operation.
+        :paramtype properties: ~azure.mgmt.web.v2015_04_01.models.CsmOperationDescriptionProperties
+        """
+        super().__init__(**kwargs)
         self.name = name
         self.display = display
         self.origin = origin
         self.properties = properties
 
 
-class CsmOperationDescriptionProperties(msrest.serialization.Model):
+class CsmOperationDescriptionProperties(_serialization.Model):
     """Properties available for a Microsoft.Web resource provider operation.
 
-    :param service_specification: Resource metrics service provided by Microsoft.Insights resource
+    :ivar service_specification: Resource metrics service provided by Microsoft.Insights resource
      provider.
-    :type service_specification: ~azure.mgmt.web.v2015_04_01.models.ServiceSpecification
+    :vartype service_specification: ~azure.mgmt.web.v2015_04_01.models.ServiceSpecification
     """
 
     _attribute_map = {
-        'service_specification': {'key': 'serviceSpecification', 'type': 'ServiceSpecification'},
+        "service_specification": {"key": "serviceSpecification", "type": "ServiceSpecification"},
     }
 
     def __init__(
-        self,
-        *,
-        service_specification: Optional["ServiceSpecification"] = None,
-        **kwargs
-    ):
-        super(CsmOperationDescriptionProperties, self).__init__(**kwargs)
+        self, *, service_specification: Optional["_models.ServiceSpecification"] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword service_specification: Resource metrics service provided by Microsoft.Insights
+         resource provider.
+        :paramtype service_specification: ~azure.mgmt.web.v2015_04_01.models.ServiceSpecification
+        """
+        super().__init__(**kwargs)
         self.service_specification = service_specification
 
 
-class CsmOperationDisplay(msrest.serialization.Model):
+class CsmOperationDisplay(_serialization.Model):
     """Meta data about operation used for display in portal.
 
-    :param provider:
-    :type provider: str
-    :param resource:
-    :type resource: str
-    :param operation:
-    :type operation: str
-    :param description:
-    :type description: str
+    :ivar provider:
+    :vartype provider: str
+    :ivar resource:
+    :vartype resource: str
+    :ivar operation:
+    :vartype operation: str
+    :ivar description:
+    :vartype description: str
     """
 
     _attribute_map = {
-        'provider': {'key': 'provider', 'type': 'str'},
-        'resource': {'key': 'resource', 'type': 'str'},
-        'operation': {'key': 'operation', 'type': 'str'},
-        'description': {'key': 'description', 'type': 'str'},
+        "provider": {"key": "provider", "type": "str"},
+        "resource": {"key": "resource", "type": "str"},
+        "operation": {"key": "operation", "type": "str"},
+        "description": {"key": "description", "type": "str"},
     }
 
     def __init__(
@@ -261,34 +309,44 @@ class CsmOperationDisplay(msrest.serialization.Model):
         resource: Optional[str] = None,
         operation: Optional[str] = None,
         description: Optional[str] = None,
-        **kwargs
-    ):
-        super(CsmOperationDisplay, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword provider:
+        :paramtype provider: str
+        :keyword resource:
+        :paramtype resource: str
+        :keyword operation:
+        :paramtype operation: str
+        :keyword description:
+        :paramtype description: str
+        """
+        super().__init__(**kwargs)
         self.provider = provider
         self.resource = resource
         self.operation = operation
         self.description = description
 
 
-class Dimension(msrest.serialization.Model):
-    """Dimension of a resource metric. For e.g. instance specific HTTP requests for a web app, 
-where instance name is dimension of the metric HTTP request.
+class Dimension(_serialization.Model):
+    """Dimension of a resource metric. For e.g. instance specific HTTP requests for a web app,
+    where instance name is dimension of the metric HTTP request.
 
-    :param name:
-    :type name: str
-    :param display_name:
-    :type display_name: str
-    :param internal_name:
-    :type internal_name: str
-    :param to_be_exported_for_shoebox:
-    :type to_be_exported_for_shoebox: bool
+    :ivar name:
+    :vartype name: str
+    :ivar display_name:
+    :vartype display_name: str
+    :ivar internal_name:
+    :vartype internal_name: str
+    :ivar to_be_exported_for_shoebox:
+    :vartype to_be_exported_for_shoebox: bool
     """
 
     _attribute_map = {
-        'name': {'key': 'name', 'type': 'str'},
-        'display_name': {'key': 'displayName', 'type': 'str'},
-        'internal_name': {'key': 'internalName', 'type': 'str'},
-        'to_be_exported_for_shoebox': {'key': 'toBeExportedForShoebox', 'type': 'bool'},
+        "name": {"key": "name", "type": "str"},
+        "display_name": {"key": "displayName", "type": "str"},
+        "internal_name": {"key": "internalName", "type": "str"},
+        "to_be_exported_for_shoebox": {"key": "toBeExportedForShoebox", "type": "bool"},
     }
 
     def __init__(
@@ -298,16 +356,26 @@ where instance name is dimension of the metric HTTP request.
         display_name: Optional[str] = None,
         internal_name: Optional[str] = None,
         to_be_exported_for_shoebox: Optional[bool] = None,
-        **kwargs
-    ):
-        super(Dimension, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword name:
+        :paramtype name: str
+        :keyword display_name:
+        :paramtype display_name: str
+        :keyword internal_name:
+        :paramtype internal_name: str
+        :keyword to_be_exported_for_shoebox:
+        :paramtype to_be_exported_for_shoebox: bool
+        """
+        super().__init__(**kwargs)
         self.name = name
         self.display_name = display_name
         self.internal_name = internal_name
         self.to_be_exported_for_shoebox = to_be_exported_for_shoebox
 
 
-class Resource(msrest.serialization.Model):
+class Resource(_serialization.Model):
     """Azure resource. This resource is tracked in Azure Resource Manager.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -318,41 +386,44 @@ class Resource(msrest.serialization.Model):
     :vartype id: str
     :ivar name: Resource Name.
     :vartype name: str
-    :param kind: Kind of resource.
-    :type kind: str
-    :param location: Required. Resource Location.
-    :type location: str
+    :ivar kind: Kind of resource.
+    :vartype kind: str
+    :ivar location: Resource Location. Required.
+    :vartype location: str
     :ivar type: Resource type.
     :vartype type: str
-    :param tags: A set of tags. Resource tags.
-    :type tags: dict[str, str]
+    :ivar tags: Resource tags.
+    :vartype tags: dict[str, str]
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'location': {'required': True},
-        'type': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "location": {"required": True},
+        "type": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'kind': {'key': 'kind', 'type': 'str'},
-        'location': {'key': 'location', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'tags': {'key': 'tags', 'type': '{str}'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "kind": {"key": "kind", "type": "str"},
+        "location": {"key": "location", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "tags": {"key": "tags", "type": "{str}"},
     }
 
     def __init__(
-        self,
-        *,
-        location: str,
-        kind: Optional[str] = None,
-        tags: Optional[Dict[str, str]] = None,
-        **kwargs
-    ):
-        super(Resource, self).__init__(**kwargs)
+        self, *, location: str, kind: Optional[str] = None, tags: Optional[Dict[str, str]] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword kind: Kind of resource.
+        :paramtype kind: str
+        :keyword location: Resource Location. Required.
+        :paramtype location: str
+        :keyword tags: Resource tags.
+        :paramtype tags: dict[str, str]
+        """
+        super().__init__(**kwargs)
         self.id = None
         self.name = None
         self.kind = kind
@@ -361,7 +432,7 @@ class Resource(msrest.serialization.Model):
         self.tags = tags
 
 
-class Domain(Resource):
+class Domain(Resource):  # pylint: disable=too-many-instance-attributes
     """Information about a domain.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -372,44 +443,44 @@ class Domain(Resource):
     :vartype id: str
     :ivar name: Resource Name.
     :vartype name: str
-    :param kind: Kind of resource.
-    :type kind: str
-    :param location: Required. Resource Location.
-    :type location: str
+    :ivar kind: Kind of resource.
+    :vartype kind: str
+    :ivar location: Resource Location. Required.
+    :vartype location: str
     :ivar type: Resource type.
     :vartype type: str
-    :param tags: A set of tags. Resource tags.
-    :type tags: dict[str, str]
-    :param contact_admin: Administrative contact.
-    :type contact_admin: ~azure.mgmt.web.v2015_04_01.models.Contact
-    :param contact_billing: Billing contact.
-    :type contact_billing: ~azure.mgmt.web.v2015_04_01.models.Contact
-    :param contact_registrant: Registrant contact.
-    :type contact_registrant: ~azure.mgmt.web.v2015_04_01.models.Contact
-    :param contact_tech: Technical contact.
-    :type contact_tech: ~azure.mgmt.web.v2015_04_01.models.Contact
-    :ivar registration_status: Domain registration status. Possible values include: "Active",
-     "Awaiting", "Cancelled", "Confiscated", "Disabled", "Excluded", "Expired", "Failed", "Held",
-     "Locked", "Parked", "Pending", "Reserved", "Reverted", "Suspended", "Transferred", "Unknown",
-     "Unlocked", "Unparked", "Updated", "JsonConverterFailed".
+    :ivar tags: Resource tags.
+    :vartype tags: dict[str, str]
+    :ivar contact_admin: Administrative contact.
+    :vartype contact_admin: ~azure.mgmt.web.v2015_04_01.models.Contact
+    :ivar contact_billing: Billing contact.
+    :vartype contact_billing: ~azure.mgmt.web.v2015_04_01.models.Contact
+    :ivar contact_registrant: Registrant contact.
+    :vartype contact_registrant: ~azure.mgmt.web.v2015_04_01.models.Contact
+    :ivar contact_tech: Technical contact.
+    :vartype contact_tech: ~azure.mgmt.web.v2015_04_01.models.Contact
+    :ivar registration_status: Domain registration status. Known values are: "Active", "Awaiting",
+     "Cancelled", "Confiscated", "Disabled", "Excluded", "Expired", "Failed", "Held", "Locked",
+     "Parked", "Pending", "Reserved", "Reverted", "Suspended", "Transferred", "Unknown", "Unlocked",
+     "Unparked", "Updated", and "JsonConverterFailed".
     :vartype registration_status: str or ~azure.mgmt.web.v2015_04_01.models.DomainStatus
-    :ivar provisioning_state: Domain provisioning state. Possible values include: "Succeeded",
-     "Failed", "Canceled", "InProgress", "Deleting".
+    :ivar provisioning_state: Domain provisioning state. Known values are: "Succeeded", "Failed",
+     "Canceled", "InProgress", and "Deleting".
     :vartype provisioning_state: str or ~azure.mgmt.web.v2015_04_01.models.ProvisioningState
     :ivar name_servers: Name servers.
     :vartype name_servers: list[str]
-    :param privacy: :code:`<code>true</code>` if domain privacy is enabled for this domain;
+    :ivar privacy: :code:`<code>true</code>` if domain privacy is enabled for this domain;
      otherwise, :code:`<code>false</code>`.
-    :type privacy: bool
+    :vartype privacy: bool
     :ivar created_time: Domain creation timestamp.
     :vartype created_time: ~datetime.datetime
     :ivar expiration_time: Domain expiration timestamp.
     :vartype expiration_time: ~datetime.datetime
     :ivar last_renewed_time: Timestamp when the domain was renewed last time.
     :vartype last_renewed_time: ~datetime.datetime
-    :param auto_renew: :code:`<code>true</code>` if the domain should be automatically renewed;
+    :ivar auto_renew: :code:`<code>true</code>` if the domain should be automatically renewed;
      otherwise, :code:`<code>false</code>`.
-    :type auto_renew: bool
+    :vartype auto_renew: bool
     :ivar ready_for_dns_record_management: :code:`<code>true</code>` if Azure can assign this
      domain to App Service apps; otherwise, :code:`<code>false</code>`. This value will be
      :code:`<code>true</code>` if domain registration status is active and
@@ -418,88 +489,121 @@ class Domain(Resource):
     :ivar managed_host_names: All hostnames derived from the domain and assigned to Azure
      resources.
     :vartype managed_host_names: list[~azure.mgmt.web.v2015_04_01.models.HostName]
-    :param consent: Legal agreement consent.
-    :type consent: ~azure.mgmt.web.v2015_04_01.models.DomainPurchaseConsent
+    :ivar consent: Legal agreement consent.
+    :vartype consent: ~azure.mgmt.web.v2015_04_01.models.DomainPurchaseConsent
     :ivar domain_not_renewable_reasons: Reasons why domain is not renewable.
     :vartype domain_not_renewable_reasons: list[str or
      ~azure.mgmt.web.v2015_04_01.models.DomainPropertiesDomainNotRenewableReasonsItem]
-    :param dns_type: Current DNS type. Possible values include: "AzureDns",
-     "DefaultDomainRegistrarDns".
-    :type dns_type: str or ~azure.mgmt.web.v2015_04_01.models.DnsType
-    :param dns_zone_id: Azure DNS Zone to use.
-    :type dns_zone_id: str
-    :param target_dns_type: Target DNS type (would be used for migration). Possible values include:
-     "AzureDns", "DefaultDomainRegistrarDns".
-    :type target_dns_type: str or ~azure.mgmt.web.v2015_04_01.models.DnsType
-    :param auth_code:
-    :type auth_code: str
+    :ivar dns_type: Current DNS type. Known values are: "AzureDns" and "DefaultDomainRegistrarDns".
+    :vartype dns_type: str or ~azure.mgmt.web.v2015_04_01.models.DnsType
+    :ivar dns_zone_id: Azure DNS Zone to use.
+    :vartype dns_zone_id: str
+    :ivar target_dns_type: Target DNS type (would be used for migration). Known values are:
+     "AzureDns" and "DefaultDomainRegistrarDns".
+    :vartype target_dns_type: str or ~azure.mgmt.web.v2015_04_01.models.DnsType
+    :ivar auth_code:
+    :vartype auth_code: str
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'location': {'required': True},
-        'type': {'readonly': True},
-        'registration_status': {'readonly': True},
-        'provisioning_state': {'readonly': True},
-        'name_servers': {'readonly': True},
-        'created_time': {'readonly': True},
-        'expiration_time': {'readonly': True},
-        'last_renewed_time': {'readonly': True},
-        'ready_for_dns_record_management': {'readonly': True},
-        'managed_host_names': {'readonly': True},
-        'domain_not_renewable_reasons': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "location": {"required": True},
+        "type": {"readonly": True},
+        "registration_status": {"readonly": True},
+        "provisioning_state": {"readonly": True},
+        "name_servers": {"readonly": True},
+        "created_time": {"readonly": True},
+        "expiration_time": {"readonly": True},
+        "last_renewed_time": {"readonly": True},
+        "ready_for_dns_record_management": {"readonly": True},
+        "managed_host_names": {"readonly": True},
+        "domain_not_renewable_reasons": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'kind': {'key': 'kind', 'type': 'str'},
-        'location': {'key': 'location', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'tags': {'key': 'tags', 'type': '{str}'},
-        'contact_admin': {'key': 'properties.contactAdmin', 'type': 'Contact'},
-        'contact_billing': {'key': 'properties.contactBilling', 'type': 'Contact'},
-        'contact_registrant': {'key': 'properties.contactRegistrant', 'type': 'Contact'},
-        'contact_tech': {'key': 'properties.contactTech', 'type': 'Contact'},
-        'registration_status': {'key': 'properties.registrationStatus', 'type': 'str'},
-        'provisioning_state': {'key': 'properties.provisioningState', 'type': 'str'},
-        'name_servers': {'key': 'properties.nameServers', 'type': '[str]'},
-        'privacy': {'key': 'properties.privacy', 'type': 'bool'},
-        'created_time': {'key': 'properties.createdTime', 'type': 'iso-8601'},
-        'expiration_time': {'key': 'properties.expirationTime', 'type': 'iso-8601'},
-        'last_renewed_time': {'key': 'properties.lastRenewedTime', 'type': 'iso-8601'},
-        'auto_renew': {'key': 'properties.autoRenew', 'type': 'bool'},
-        'ready_for_dns_record_management': {'key': 'properties.readyForDnsRecordManagement', 'type': 'bool'},
-        'managed_host_names': {'key': 'properties.managedHostNames', 'type': '[HostName]'},
-        'consent': {'key': 'properties.consent', 'type': 'DomainPurchaseConsent'},
-        'domain_not_renewable_reasons': {'key': 'properties.domainNotRenewableReasons', 'type': '[str]'},
-        'dns_type': {'key': 'properties.dnsType', 'type': 'str'},
-        'dns_zone_id': {'key': 'properties.dnsZoneId', 'type': 'str'},
-        'target_dns_type': {'key': 'properties.targetDnsType', 'type': 'str'},
-        'auth_code': {'key': 'properties.authCode', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "kind": {"key": "kind", "type": "str"},
+        "location": {"key": "location", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "tags": {"key": "tags", "type": "{str}"},
+        "contact_admin": {"key": "properties.contactAdmin", "type": "Contact"},
+        "contact_billing": {"key": "properties.contactBilling", "type": "Contact"},
+        "contact_registrant": {"key": "properties.contactRegistrant", "type": "Contact"},
+        "contact_tech": {"key": "properties.contactTech", "type": "Contact"},
+        "registration_status": {"key": "properties.registrationStatus", "type": "str"},
+        "provisioning_state": {"key": "properties.provisioningState", "type": "str"},
+        "name_servers": {"key": "properties.nameServers", "type": "[str]"},
+        "privacy": {"key": "properties.privacy", "type": "bool"},
+        "created_time": {"key": "properties.createdTime", "type": "iso-8601"},
+        "expiration_time": {"key": "properties.expirationTime", "type": "iso-8601"},
+        "last_renewed_time": {"key": "properties.lastRenewedTime", "type": "iso-8601"},
+        "auto_renew": {"key": "properties.autoRenew", "type": "bool"},
+        "ready_for_dns_record_management": {"key": "properties.readyForDnsRecordManagement", "type": "bool"},
+        "managed_host_names": {"key": "properties.managedHostNames", "type": "[HostName]"},
+        "consent": {"key": "properties.consent", "type": "DomainPurchaseConsent"},
+        "domain_not_renewable_reasons": {"key": "properties.domainNotRenewableReasons", "type": "[str]"},
+        "dns_type": {"key": "properties.dnsType", "type": "str"},
+        "dns_zone_id": {"key": "properties.dnsZoneId", "type": "str"},
+        "target_dns_type": {"key": "properties.targetDnsType", "type": "str"},
+        "auth_code": {"key": "properties.authCode", "type": "str"},
     }
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-locals
         self,
         *,
         location: str,
         kind: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None,
-        contact_admin: Optional["Contact"] = None,
-        contact_billing: Optional["Contact"] = None,
-        contact_registrant: Optional["Contact"] = None,
-        contact_tech: Optional["Contact"] = None,
+        contact_admin: Optional["_models.Contact"] = None,
+        contact_billing: Optional["_models.Contact"] = None,
+        contact_registrant: Optional["_models.Contact"] = None,
+        contact_tech: Optional["_models.Contact"] = None,
         privacy: Optional[bool] = None,
-        auto_renew: Optional[bool] = True,
-        consent: Optional["DomainPurchaseConsent"] = None,
-        dns_type: Optional[Union[str, "DnsType"]] = None,
+        auto_renew: bool = True,
+        consent: Optional["_models.DomainPurchaseConsent"] = None,
+        dns_type: Optional[Union[str, "_models.DnsType"]] = None,
         dns_zone_id: Optional[str] = None,
-        target_dns_type: Optional[Union[str, "DnsType"]] = None,
+        target_dns_type: Optional[Union[str, "_models.DnsType"]] = None,
         auth_code: Optional[str] = None,
-        **kwargs
-    ):
-        super(Domain, self).__init__(kind=kind, location=location, tags=tags, **kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword kind: Kind of resource.
+        :paramtype kind: str
+        :keyword location: Resource Location. Required.
+        :paramtype location: str
+        :keyword tags: Resource tags.
+        :paramtype tags: dict[str, str]
+        :keyword contact_admin: Administrative contact.
+        :paramtype contact_admin: ~azure.mgmt.web.v2015_04_01.models.Contact
+        :keyword contact_billing: Billing contact.
+        :paramtype contact_billing: ~azure.mgmt.web.v2015_04_01.models.Contact
+        :keyword contact_registrant: Registrant contact.
+        :paramtype contact_registrant: ~azure.mgmt.web.v2015_04_01.models.Contact
+        :keyword contact_tech: Technical contact.
+        :paramtype contact_tech: ~azure.mgmt.web.v2015_04_01.models.Contact
+        :keyword privacy: :code:`<code>true</code>` if domain privacy is enabled for this domain;
+         otherwise, :code:`<code>false</code>`.
+        :paramtype privacy: bool
+        :keyword auto_renew: :code:`<code>true</code>` if the domain should be automatically renewed;
+         otherwise, :code:`<code>false</code>`.
+        :paramtype auto_renew: bool
+        :keyword consent: Legal agreement consent.
+        :paramtype consent: ~azure.mgmt.web.v2015_04_01.models.DomainPurchaseConsent
+        :keyword dns_type: Current DNS type. Known values are: "AzureDns" and
+         "DefaultDomainRegistrarDns".
+        :paramtype dns_type: str or ~azure.mgmt.web.v2015_04_01.models.DnsType
+        :keyword dns_zone_id: Azure DNS Zone to use.
+        :paramtype dns_zone_id: str
+        :keyword target_dns_type: Target DNS type (would be used for migration). Known values are:
+         "AzureDns" and "DefaultDomainRegistrarDns".
+        :paramtype target_dns_type: str or ~azure.mgmt.web.v2015_04_01.models.DnsType
+        :keyword auth_code:
+        :paramtype auth_code: str
+        """
+        super().__init__(kind=kind, location=location, tags=tags, **kwargs)
         self.contact_admin = contact_admin
         self.contact_billing = contact_billing
         self.contact_registrant = contact_registrant
@@ -522,24 +626,24 @@ class Domain(Resource):
         self.auth_code = auth_code
 
 
-class DomainAvailablilityCheckResult(msrest.serialization.Model):
+class DomainAvailablilityCheckResult(_serialization.Model):
     """Domain availability check result.
 
-    :param name: Name of the domain.
-    :type name: str
-    :param available: :code:`<code>true</code>` if domain can be purchased using CreateDomain API;
+    :ivar name: Name of the domain.
+    :vartype name: str
+    :ivar available: :code:`<code>true</code>` if domain can be purchased using CreateDomain API;
      otherwise, :code:`<code>false</code>`.
-    :type available: bool
-    :param domain_type: Valid values are Regular domain: Azure will charge the full price of domain
+    :vartype available: bool
+    :ivar domain_type: Valid values are Regular domain: Azure will charge the full price of domain
      registration, SoftDeleted: Purchasing this domain will simply restore it and this operation
-     will not cost anything. Possible values include: "Regular", "SoftDeleted".
-    :type domain_type: str or ~azure.mgmt.web.v2015_04_01.models.DomainType
+     will not cost anything. Known values are: "Regular" and "SoftDeleted".
+    :vartype domain_type: str or ~azure.mgmt.web.v2015_04_01.models.DomainType
     """
 
     _attribute_map = {
-        'name': {'key': 'name', 'type': 'str'},
-        'available': {'key': 'available', 'type': 'bool'},
-        'domain_type': {'key': 'domainType', 'type': 'str'},
+        "name": {"key": "name", "type": "str"},
+        "available": {"key": "available", "type": "bool"},
+        "domain_type": {"key": "domainType", "type": "str"},
     }
 
     def __init__(
@@ -547,50 +651,60 @@ class DomainAvailablilityCheckResult(msrest.serialization.Model):
         *,
         name: Optional[str] = None,
         available: Optional[bool] = None,
-        domain_type: Optional[Union[str, "DomainType"]] = None,
-        **kwargs
-    ):
-        super(DomainAvailablilityCheckResult, self).__init__(**kwargs)
+        domain_type: Optional[Union[str, "_models.DomainType"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword name: Name of the domain.
+        :paramtype name: str
+        :keyword available: :code:`<code>true</code>` if domain can be purchased using CreateDomain
+         API; otherwise, :code:`<code>false</code>`.
+        :paramtype available: bool
+        :keyword domain_type: Valid values are Regular domain: Azure will charge the full price of
+         domain registration, SoftDeleted: Purchasing this domain will simply restore it and this
+         operation will not cost anything. Known values are: "Regular" and "SoftDeleted".
+        :paramtype domain_type: str or ~azure.mgmt.web.v2015_04_01.models.DomainType
+        """
+        super().__init__(**kwargs)
         self.name = name
         self.available = available
         self.domain_type = domain_type
 
 
-class DomainCollection(msrest.serialization.Model):
+class DomainCollection(_serialization.Model):
     """Collection of domains.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param value: Required. Collection of resources.
-    :type value: list[~azure.mgmt.web.v2015_04_01.models.Domain]
+    :ivar value: Collection of resources. Required.
+    :vartype value: list[~azure.mgmt.web.v2015_04_01.models.Domain]
     :ivar next_link: Link to next page of resources.
     :vartype next_link: str
     """
 
     _validation = {
-        'value': {'required': True},
-        'next_link': {'readonly': True},
+        "value": {"required": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[Domain]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[Domain]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        value: List["Domain"],
-        **kwargs
-    ):
-        super(DomainCollection, self).__init__(**kwargs)
+    def __init__(self, *, value: List["_models.Domain"], **kwargs: Any) -> None:
+        """
+        :keyword value: Collection of resources. Required.
+        :paramtype value: list[~azure.mgmt.web.v2015_04_01.models.Domain]
+        """
+        super().__init__(**kwargs)
         self.value = value
         self.next_link = None
 
 
-class DomainControlCenterSsoRequest(msrest.serialization.Model):
+class DomainControlCenterSsoRequest(_serialization.Model):
     """Single sign-on request information for domain management.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -599,34 +713,32 @@ class DomainControlCenterSsoRequest(msrest.serialization.Model):
     :vartype url: str
     :ivar post_parameter_key: Post parameter key.
     :vartype post_parameter_key: str
-    :ivar post_parameter_value: Post parameter value. Client should use 'application/x-www-form-
-     urlencoded' encoding for this value.
+    :ivar post_parameter_value: Post parameter value. Client should use
+     'application/x-www-form-urlencoded' encoding for this value.
     :vartype post_parameter_value: str
     """
 
     _validation = {
-        'url': {'readonly': True},
-        'post_parameter_key': {'readonly': True},
-        'post_parameter_value': {'readonly': True},
+        "url": {"readonly": True},
+        "post_parameter_key": {"readonly": True},
+        "post_parameter_value": {"readonly": True},
     }
 
     _attribute_map = {
-        'url': {'key': 'url', 'type': 'str'},
-        'post_parameter_key': {'key': 'postParameterKey', 'type': 'str'},
-        'post_parameter_value': {'key': 'postParameterValue', 'type': 'str'},
+        "url": {"key": "url", "type": "str"},
+        "post_parameter_key": {"key": "postParameterKey", "type": "str"},
+        "post_parameter_value": {"key": "postParameterValue", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(DomainControlCenterSsoRequest, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.url = None
         self.post_parameter_key = None
         self.post_parameter_value = None
 
 
-class ProxyOnlyResource(msrest.serialization.Model):
+class ProxyOnlyResource(_serialization.Model):
     """Azure proxy only resource. This resource is not tracked by Azure Resource Manager.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -635,32 +747,31 @@ class ProxyOnlyResource(msrest.serialization.Model):
     :vartype id: str
     :ivar name: Resource Name.
     :vartype name: str
-    :param kind: Kind of resource.
-    :type kind: str
+    :ivar kind: Kind of resource.
+    :vartype kind: str
     :ivar type: Resource type.
     :vartype type: str
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'kind': {'key': 'kind', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "kind": {"key": "kind", "type": "str"},
+        "type": {"key": "type", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        kind: Optional[str] = None,
-        **kwargs
-    ):
-        super(ProxyOnlyResource, self).__init__(**kwargs)
+    def __init__(self, *, kind: Optional[str] = None, **kwargs: Any) -> None:
+        """
+        :keyword kind: Kind of resource.
+        :paramtype kind: str
+        """
+        super().__init__(**kwargs)
         self.id = None
         self.name = None
         self.kind = kind
@@ -676,74 +787,73 @@ class DomainOwnershipIdentifier(ProxyOnlyResource):
     :vartype id: str
     :ivar name: Resource Name.
     :vartype name: str
-    :param kind: Kind of resource.
-    :type kind: str
+    :ivar kind: Kind of resource.
+    :vartype kind: str
     :ivar type: Resource type.
     :vartype type: str
-    :param ownership_id: Ownership Id.
-    :type ownership_id: str
+    :ivar ownership_id: Ownership Id.
+    :vartype ownership_id: str
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'kind': {'key': 'kind', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'ownership_id': {'key': 'properties.ownershipId', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "kind": {"key": "kind", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "ownership_id": {"key": "properties.ownershipId", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        kind: Optional[str] = None,
-        ownership_id: Optional[str] = None,
-        **kwargs
-    ):
-        super(DomainOwnershipIdentifier, self).__init__(kind=kind, **kwargs)
+    def __init__(self, *, kind: Optional[str] = None, ownership_id: Optional[str] = None, **kwargs: Any) -> None:
+        """
+        :keyword kind: Kind of resource.
+        :paramtype kind: str
+        :keyword ownership_id: Ownership Id.
+        :paramtype ownership_id: str
+        """
+        super().__init__(kind=kind, **kwargs)
         self.ownership_id = ownership_id
 
 
-class DomainOwnershipIdentifierCollection(msrest.serialization.Model):
+class DomainOwnershipIdentifierCollection(_serialization.Model):
     """Collection of domain ownership identifiers.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param value: Required. Collection of resources.
-    :type value: list[~azure.mgmt.web.v2015_04_01.models.DomainOwnershipIdentifier]
+    :ivar value: Collection of resources. Required.
+    :vartype value: list[~azure.mgmt.web.v2015_04_01.models.DomainOwnershipIdentifier]
     :ivar next_link: Link to next page of resources.
     :vartype next_link: str
     """
 
     _validation = {
-        'value': {'required': True},
-        'next_link': {'readonly': True},
+        "value": {"required": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[DomainOwnershipIdentifier]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[DomainOwnershipIdentifier]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        value: List["DomainOwnershipIdentifier"],
-        **kwargs
-    ):
-        super(DomainOwnershipIdentifierCollection, self).__init__(**kwargs)
+    def __init__(self, *, value: List["_models.DomainOwnershipIdentifier"], **kwargs: Any) -> None:
+        """
+        :keyword value: Collection of resources. Required.
+        :paramtype value: list[~azure.mgmt.web.v2015_04_01.models.DomainOwnershipIdentifier]
+        """
+        super().__init__(**kwargs)
         self.value = value
         self.next_link = None
 
 
-class DomainPatchResource(ProxyOnlyResource):
+class DomainPatchResource(ProxyOnlyResource):  # pylint: disable=too-many-instance-attributes
     """ARM resource for a domain.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -752,40 +862,40 @@ class DomainPatchResource(ProxyOnlyResource):
     :vartype id: str
     :ivar name: Resource Name.
     :vartype name: str
-    :param kind: Kind of resource.
-    :type kind: str
+    :ivar kind: Kind of resource.
+    :vartype kind: str
     :ivar type: Resource type.
     :vartype type: str
-    :param contact_admin: Administrative contact.
-    :type contact_admin: ~azure.mgmt.web.v2015_04_01.models.Contact
-    :param contact_billing: Billing contact.
-    :type contact_billing: ~azure.mgmt.web.v2015_04_01.models.Contact
-    :param contact_registrant: Registrant contact.
-    :type contact_registrant: ~azure.mgmt.web.v2015_04_01.models.Contact
-    :param contact_tech: Technical contact.
-    :type contact_tech: ~azure.mgmt.web.v2015_04_01.models.Contact
-    :ivar registration_status: Domain registration status. Possible values include: "Active",
-     "Awaiting", "Cancelled", "Confiscated", "Disabled", "Excluded", "Expired", "Failed", "Held",
-     "Locked", "Parked", "Pending", "Reserved", "Reverted", "Suspended", "Transferred", "Unknown",
-     "Unlocked", "Unparked", "Updated", "JsonConverterFailed".
+    :ivar contact_admin: Administrative contact.
+    :vartype contact_admin: ~azure.mgmt.web.v2015_04_01.models.Contact
+    :ivar contact_billing: Billing contact.
+    :vartype contact_billing: ~azure.mgmt.web.v2015_04_01.models.Contact
+    :ivar contact_registrant: Registrant contact.
+    :vartype contact_registrant: ~azure.mgmt.web.v2015_04_01.models.Contact
+    :ivar contact_tech: Technical contact.
+    :vartype contact_tech: ~azure.mgmt.web.v2015_04_01.models.Contact
+    :ivar registration_status: Domain registration status. Known values are: "Active", "Awaiting",
+     "Cancelled", "Confiscated", "Disabled", "Excluded", "Expired", "Failed", "Held", "Locked",
+     "Parked", "Pending", "Reserved", "Reverted", "Suspended", "Transferred", "Unknown", "Unlocked",
+     "Unparked", "Updated", and "JsonConverterFailed".
     :vartype registration_status: str or ~azure.mgmt.web.v2015_04_01.models.DomainStatus
-    :ivar provisioning_state: Domain provisioning state. Possible values include: "Succeeded",
-     "Failed", "Canceled", "InProgress", "Deleting".
+    :ivar provisioning_state: Domain provisioning state. Known values are: "Succeeded", "Failed",
+     "Canceled", "InProgress", and "Deleting".
     :vartype provisioning_state: str or ~azure.mgmt.web.v2015_04_01.models.ProvisioningState
     :ivar name_servers: Name servers.
     :vartype name_servers: list[str]
-    :param privacy: :code:`<code>true</code>` if domain privacy is enabled for this domain;
+    :ivar privacy: :code:`<code>true</code>` if domain privacy is enabled for this domain;
      otherwise, :code:`<code>false</code>`.
-    :type privacy: bool
+    :vartype privacy: bool
     :ivar created_time: Domain creation timestamp.
     :vartype created_time: ~datetime.datetime
     :ivar expiration_time: Domain expiration timestamp.
     :vartype expiration_time: ~datetime.datetime
     :ivar last_renewed_time: Timestamp when the domain was renewed last time.
     :vartype last_renewed_time: ~datetime.datetime
-    :param auto_renew: :code:`<code>true</code>` if the domain should be automatically renewed;
+    :ivar auto_renew: :code:`<code>true</code>` if the domain should be automatically renewed;
      otherwise, :code:`<code>false</code>`.
-    :type auto_renew: bool
+    :vartype auto_renew: bool
     :ivar ready_for_dns_record_management: :code:`<code>true</code>` if Azure can assign this
      domain to App Service apps; otherwise, :code:`<code>false</code>`. This value will be
      :code:`<code>true</code>` if domain registration status is active and
@@ -794,83 +904,112 @@ class DomainPatchResource(ProxyOnlyResource):
     :ivar managed_host_names: All hostnames derived from the domain and assigned to Azure
      resources.
     :vartype managed_host_names: list[~azure.mgmt.web.v2015_04_01.models.HostName]
-    :param consent: Legal agreement consent.
-    :type consent: ~azure.mgmt.web.v2015_04_01.models.DomainPurchaseConsent
+    :ivar consent: Legal agreement consent.
+    :vartype consent: ~azure.mgmt.web.v2015_04_01.models.DomainPurchaseConsent
     :ivar domain_not_renewable_reasons: Reasons why domain is not renewable.
     :vartype domain_not_renewable_reasons: list[str or
      ~azure.mgmt.web.v2015_04_01.models.DomainPatchResourcePropertiesDomainNotRenewableReasonsItem]
-    :param dns_type: Current DNS type. Possible values include: "AzureDns",
-     "DefaultDomainRegistrarDns".
-    :type dns_type: str or ~azure.mgmt.web.v2015_04_01.models.DnsType
-    :param dns_zone_id: Azure DNS Zone to use.
-    :type dns_zone_id: str
-    :param target_dns_type: Target DNS type (would be used for migration). Possible values include:
-     "AzureDns", "DefaultDomainRegistrarDns".
-    :type target_dns_type: str or ~azure.mgmt.web.v2015_04_01.models.DnsType
-    :param auth_code:
-    :type auth_code: str
+    :ivar dns_type: Current DNS type. Known values are: "AzureDns" and "DefaultDomainRegistrarDns".
+    :vartype dns_type: str or ~azure.mgmt.web.v2015_04_01.models.DnsType
+    :ivar dns_zone_id: Azure DNS Zone to use.
+    :vartype dns_zone_id: str
+    :ivar target_dns_type: Target DNS type (would be used for migration). Known values are:
+     "AzureDns" and "DefaultDomainRegistrarDns".
+    :vartype target_dns_type: str or ~azure.mgmt.web.v2015_04_01.models.DnsType
+    :ivar auth_code:
+    :vartype auth_code: str
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'registration_status': {'readonly': True},
-        'provisioning_state': {'readonly': True},
-        'name_servers': {'readonly': True},
-        'created_time': {'readonly': True},
-        'expiration_time': {'readonly': True},
-        'last_renewed_time': {'readonly': True},
-        'ready_for_dns_record_management': {'readonly': True},
-        'managed_host_names': {'readonly': True},
-        'domain_not_renewable_reasons': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "registration_status": {"readonly": True},
+        "provisioning_state": {"readonly": True},
+        "name_servers": {"readonly": True},
+        "created_time": {"readonly": True},
+        "expiration_time": {"readonly": True},
+        "last_renewed_time": {"readonly": True},
+        "ready_for_dns_record_management": {"readonly": True},
+        "managed_host_names": {"readonly": True},
+        "domain_not_renewable_reasons": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'kind': {'key': 'kind', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'contact_admin': {'key': 'properties.contactAdmin', 'type': 'Contact'},
-        'contact_billing': {'key': 'properties.contactBilling', 'type': 'Contact'},
-        'contact_registrant': {'key': 'properties.contactRegistrant', 'type': 'Contact'},
-        'contact_tech': {'key': 'properties.contactTech', 'type': 'Contact'},
-        'registration_status': {'key': 'properties.registrationStatus', 'type': 'str'},
-        'provisioning_state': {'key': 'properties.provisioningState', 'type': 'str'},
-        'name_servers': {'key': 'properties.nameServers', 'type': '[str]'},
-        'privacy': {'key': 'properties.privacy', 'type': 'bool'},
-        'created_time': {'key': 'properties.createdTime', 'type': 'iso-8601'},
-        'expiration_time': {'key': 'properties.expirationTime', 'type': 'iso-8601'},
-        'last_renewed_time': {'key': 'properties.lastRenewedTime', 'type': 'iso-8601'},
-        'auto_renew': {'key': 'properties.autoRenew', 'type': 'bool'},
-        'ready_for_dns_record_management': {'key': 'properties.readyForDnsRecordManagement', 'type': 'bool'},
-        'managed_host_names': {'key': 'properties.managedHostNames', 'type': '[HostName]'},
-        'consent': {'key': 'properties.consent', 'type': 'DomainPurchaseConsent'},
-        'domain_not_renewable_reasons': {'key': 'properties.domainNotRenewableReasons', 'type': '[str]'},
-        'dns_type': {'key': 'properties.dnsType', 'type': 'str'},
-        'dns_zone_id': {'key': 'properties.dnsZoneId', 'type': 'str'},
-        'target_dns_type': {'key': 'properties.targetDnsType', 'type': 'str'},
-        'auth_code': {'key': 'properties.authCode', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "kind": {"key": "kind", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "contact_admin": {"key": "properties.contactAdmin", "type": "Contact"},
+        "contact_billing": {"key": "properties.contactBilling", "type": "Contact"},
+        "contact_registrant": {"key": "properties.contactRegistrant", "type": "Contact"},
+        "contact_tech": {"key": "properties.contactTech", "type": "Contact"},
+        "registration_status": {"key": "properties.registrationStatus", "type": "str"},
+        "provisioning_state": {"key": "properties.provisioningState", "type": "str"},
+        "name_servers": {"key": "properties.nameServers", "type": "[str]"},
+        "privacy": {"key": "properties.privacy", "type": "bool"},
+        "created_time": {"key": "properties.createdTime", "type": "iso-8601"},
+        "expiration_time": {"key": "properties.expirationTime", "type": "iso-8601"},
+        "last_renewed_time": {"key": "properties.lastRenewedTime", "type": "iso-8601"},
+        "auto_renew": {"key": "properties.autoRenew", "type": "bool"},
+        "ready_for_dns_record_management": {"key": "properties.readyForDnsRecordManagement", "type": "bool"},
+        "managed_host_names": {"key": "properties.managedHostNames", "type": "[HostName]"},
+        "consent": {"key": "properties.consent", "type": "DomainPurchaseConsent"},
+        "domain_not_renewable_reasons": {"key": "properties.domainNotRenewableReasons", "type": "[str]"},
+        "dns_type": {"key": "properties.dnsType", "type": "str"},
+        "dns_zone_id": {"key": "properties.dnsZoneId", "type": "str"},
+        "target_dns_type": {"key": "properties.targetDnsType", "type": "str"},
+        "auth_code": {"key": "properties.authCode", "type": "str"},
     }
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-locals
         self,
         *,
         kind: Optional[str] = None,
-        contact_admin: Optional["Contact"] = None,
-        contact_billing: Optional["Contact"] = None,
-        contact_registrant: Optional["Contact"] = None,
-        contact_tech: Optional["Contact"] = None,
+        contact_admin: Optional["_models.Contact"] = None,
+        contact_billing: Optional["_models.Contact"] = None,
+        contact_registrant: Optional["_models.Contact"] = None,
+        contact_tech: Optional["_models.Contact"] = None,
         privacy: Optional[bool] = None,
-        auto_renew: Optional[bool] = True,
-        consent: Optional["DomainPurchaseConsent"] = None,
-        dns_type: Optional[Union[str, "DnsType"]] = None,
+        auto_renew: bool = True,
+        consent: Optional["_models.DomainPurchaseConsent"] = None,
+        dns_type: Optional[Union[str, "_models.DnsType"]] = None,
         dns_zone_id: Optional[str] = None,
-        target_dns_type: Optional[Union[str, "DnsType"]] = None,
+        target_dns_type: Optional[Union[str, "_models.DnsType"]] = None,
         auth_code: Optional[str] = None,
-        **kwargs
-    ):
-        super(DomainPatchResource, self).__init__(kind=kind, **kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword kind: Kind of resource.
+        :paramtype kind: str
+        :keyword contact_admin: Administrative contact.
+        :paramtype contact_admin: ~azure.mgmt.web.v2015_04_01.models.Contact
+        :keyword contact_billing: Billing contact.
+        :paramtype contact_billing: ~azure.mgmt.web.v2015_04_01.models.Contact
+        :keyword contact_registrant: Registrant contact.
+        :paramtype contact_registrant: ~azure.mgmt.web.v2015_04_01.models.Contact
+        :keyword contact_tech: Technical contact.
+        :paramtype contact_tech: ~azure.mgmt.web.v2015_04_01.models.Contact
+        :keyword privacy: :code:`<code>true</code>` if domain privacy is enabled for this domain;
+         otherwise, :code:`<code>false</code>`.
+        :paramtype privacy: bool
+        :keyword auto_renew: :code:`<code>true</code>` if the domain should be automatically renewed;
+         otherwise, :code:`<code>false</code>`.
+        :paramtype auto_renew: bool
+        :keyword consent: Legal agreement consent.
+        :paramtype consent: ~azure.mgmt.web.v2015_04_01.models.DomainPurchaseConsent
+        :keyword dns_type: Current DNS type. Known values are: "AzureDns" and
+         "DefaultDomainRegistrarDns".
+        :paramtype dns_type: str or ~azure.mgmt.web.v2015_04_01.models.DnsType
+        :keyword dns_zone_id: Azure DNS Zone to use.
+        :paramtype dns_zone_id: str
+        :keyword target_dns_type: Target DNS type (would be used for migration). Known values are:
+         "AzureDns" and "DefaultDomainRegistrarDns".
+        :paramtype target_dns_type: str or ~azure.mgmt.web.v2015_04_01.models.DnsType
+        :keyword auth_code:
+        :paramtype auth_code: str
+        """
+        super().__init__(kind=kind, **kwargs)
         self.contact_admin = contact_admin
         self.contact_billing = contact_billing
         self.contact_registrant = contact_registrant
@@ -893,22 +1032,22 @@ class DomainPatchResource(ProxyOnlyResource):
         self.auth_code = auth_code
 
 
-class DomainPurchaseConsent(msrest.serialization.Model):
+class DomainPurchaseConsent(_serialization.Model):
     """Domain purchase consent object, representing acceptance of applicable legal agreements.
 
-    :param agreement_keys: List of applicable legal agreement keys. This list can be retrieved
-     using ListLegalAgreements API under :code:`<code>TopLevelDomain</code>` resource.
-    :type agreement_keys: list[str]
-    :param agreed_by: Client IP address.
-    :type agreed_by: str
-    :param agreed_at: Timestamp when the agreements were accepted.
-    :type agreed_at: ~datetime.datetime
+    :ivar agreement_keys: List of applicable legal agreement keys. This list can be retrieved using
+     ListLegalAgreements API under :code:`<code>TopLevelDomain</code>` resource.
+    :vartype agreement_keys: list[str]
+    :ivar agreed_by: Client IP address.
+    :vartype agreed_by: str
+    :ivar agreed_at: Timestamp when the agreements were accepted.
+    :vartype agreed_at: ~datetime.datetime
     """
 
     _attribute_map = {
-        'agreement_keys': {'key': 'agreementKeys', 'type': '[str]'},
-        'agreed_by': {'key': 'agreedBy', 'type': 'str'},
-        'agreed_at': {'key': 'agreedAt', 'type': 'iso-8601'},
+        "agreement_keys": {"key": "agreementKeys", "type": "[str]"},
+        "agreed_by": {"key": "agreedBy", "type": "str"},
+        "agreed_at": {"key": "agreedAt", "type": "iso-8601"},
     }
 
     def __init__(
@@ -917,96 +1056,107 @@ class DomainPurchaseConsent(msrest.serialization.Model):
         agreement_keys: Optional[List[str]] = None,
         agreed_by: Optional[str] = None,
         agreed_at: Optional[datetime.datetime] = None,
-        **kwargs
-    ):
-        super(DomainPurchaseConsent, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword agreement_keys: List of applicable legal agreement keys. This list can be retrieved
+         using ListLegalAgreements API under :code:`<code>TopLevelDomain</code>` resource.
+        :paramtype agreement_keys: list[str]
+        :keyword agreed_by: Client IP address.
+        :paramtype agreed_by: str
+        :keyword agreed_at: Timestamp when the agreements were accepted.
+        :paramtype agreed_at: ~datetime.datetime
+        """
+        super().__init__(**kwargs)
         self.agreement_keys = agreement_keys
         self.agreed_by = agreed_by
         self.agreed_at = agreed_at
 
 
-class DomainRecommendationSearchParameters(msrest.serialization.Model):
+class DomainRecommendationSearchParameters(_serialization.Model):
     """Domain recommendation search parameters.
 
-    :param keywords: Keywords to be used for generating domain recommendations.
-    :type keywords: str
-    :param max_domain_recommendations: Maximum number of recommendations.
-    :type max_domain_recommendations: int
+    :ivar keywords: Keywords to be used for generating domain recommendations.
+    :vartype keywords: str
+    :ivar max_domain_recommendations: Maximum number of recommendations.
+    :vartype max_domain_recommendations: int
     """
 
     _attribute_map = {
-        'keywords': {'key': 'keywords', 'type': 'str'},
-        'max_domain_recommendations': {'key': 'maxDomainRecommendations', 'type': 'int'},
+        "keywords": {"key": "keywords", "type": "str"},
+        "max_domain_recommendations": {"key": "maxDomainRecommendations", "type": "int"},
     }
 
     def __init__(
-        self,
-        *,
-        keywords: Optional[str] = None,
-        max_domain_recommendations: Optional[int] = None,
-        **kwargs
-    ):
-        super(DomainRecommendationSearchParameters, self).__init__(**kwargs)
+        self, *, keywords: Optional[str] = None, max_domain_recommendations: Optional[int] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword keywords: Keywords to be used for generating domain recommendations.
+        :paramtype keywords: str
+        :keyword max_domain_recommendations: Maximum number of recommendations.
+        :paramtype max_domain_recommendations: int
+        """
+        super().__init__(**kwargs)
         self.keywords = keywords
         self.max_domain_recommendations = max_domain_recommendations
 
 
-class ErrorResponse(msrest.serialization.Model):
+class ErrorResponse(_serialization.Model):
     """Error Response.
 
-    :param code: Error code.
-    :type code: str
-    :param message: Error message indicating why the operation failed.
-    :type message: str
+    :ivar code: Error code.
+    :vartype code: str
+    :ivar message: Error message indicating why the operation failed.
+    :vartype message: str
     """
 
     _attribute_map = {
-        'code': {'key': 'code', 'type': 'str'},
-        'message': {'key': 'message', 'type': 'str'},
+        "code": {"key": "code", "type": "str"},
+        "message": {"key": "message", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        code: Optional[str] = None,
-        message: Optional[str] = None,
-        **kwargs
-    ):
-        super(ErrorResponse, self).__init__(**kwargs)
+    def __init__(self, *, code: Optional[str] = None, message: Optional[str] = None, **kwargs: Any) -> None:
+        """
+        :keyword code: Error code.
+        :paramtype code: str
+        :keyword message: Error message indicating why the operation failed.
+        :paramtype message: str
+        """
+        super().__init__(**kwargs)
         self.code = code
         self.message = message
 
 
-class HostName(msrest.serialization.Model):
+class HostName(_serialization.Model):
     """Details of a hostname derived from a domain.
 
-    :param name: Name of the hostname.
-    :type name: str
-    :param site_names: List of apps the hostname is assigned to. This list will have more than one
+    :ivar name: Name of the hostname.
+    :vartype name: str
+    :ivar site_names: List of apps the hostname is assigned to. This list will have more than one
      app only if the hostname is pointing to a Traffic Manager.
-    :type site_names: list[str]
-    :param azure_resource_name: Name of the Azure resource the hostname is assigned to. If it is
+    :vartype site_names: list[str]
+    :ivar azure_resource_name: Name of the Azure resource the hostname is assigned to. If it is
      assigned to a Traffic Manager then it will be the Traffic Manager name otherwise it will be the
      app name.
-    :type azure_resource_name: str
-    :param azure_resource_type: Type of the Azure resource the hostname is assigned to. Possible
-     values include: "Website", "TrafficManager".
-    :type azure_resource_type: str or ~azure.mgmt.web.v2015_04_01.models.AzureResourceType
-    :param custom_host_name_dns_record_type: Type of the DNS record. Possible values include:
-     "CName", "A".
-    :type custom_host_name_dns_record_type: str or
+    :vartype azure_resource_name: str
+    :ivar azure_resource_type: Type of the Azure resource the hostname is assigned to. Known values
+     are: "Website" and "TrafficManager".
+    :vartype azure_resource_type: str or ~azure.mgmt.web.v2015_04_01.models.AzureResourceType
+    :ivar custom_host_name_dns_record_type: Type of the DNS record. Known values are: "CName" and
+     "A".
+    :vartype custom_host_name_dns_record_type: str or
      ~azure.mgmt.web.v2015_04_01.models.CustomHostNameDnsRecordType
-    :param host_name_type: Type of the hostname. Possible values include: "Verified", "Managed".
-    :type host_name_type: str or ~azure.mgmt.web.v2015_04_01.models.HostNameType
+    :ivar host_name_type: Type of the hostname. Known values are: "Verified" and "Managed".
+    :vartype host_name_type: str or ~azure.mgmt.web.v2015_04_01.models.HostNameType
     """
 
     _attribute_map = {
-        'name': {'key': 'name', 'type': 'str'},
-        'site_names': {'key': 'siteNames', 'type': '[str]'},
-        'azure_resource_name': {'key': 'azureResourceName', 'type': 'str'},
-        'azure_resource_type': {'key': 'azureResourceType', 'type': 'str'},
-        'custom_host_name_dns_record_type': {'key': 'customHostNameDnsRecordType', 'type': 'str'},
-        'host_name_type': {'key': 'hostNameType', 'type': 'str'},
+        "name": {"key": "name", "type": "str"},
+        "site_names": {"key": "siteNames", "type": "[str]"},
+        "azure_resource_name": {"key": "azureResourceName", "type": "str"},
+        "azure_resource_type": {"key": "azureResourceType", "type": "str"},
+        "custom_host_name_dns_record_type": {"key": "customHostNameDnsRecordType", "type": "str"},
+        "host_name_type": {"key": "hostNameType", "type": "str"},
     }
 
     def __init__(
@@ -1015,12 +1165,32 @@ class HostName(msrest.serialization.Model):
         name: Optional[str] = None,
         site_names: Optional[List[str]] = None,
         azure_resource_name: Optional[str] = None,
-        azure_resource_type: Optional[Union[str, "AzureResourceType"]] = None,
-        custom_host_name_dns_record_type: Optional[Union[str, "CustomHostNameDnsRecordType"]] = None,
-        host_name_type: Optional[Union[str, "HostNameType"]] = None,
-        **kwargs
-    ):
-        super(HostName, self).__init__(**kwargs)
+        azure_resource_type: Optional[Union[str, "_models.AzureResourceType"]] = None,
+        custom_host_name_dns_record_type: Optional[Union[str, "_models.CustomHostNameDnsRecordType"]] = None,
+        host_name_type: Optional[Union[str, "_models.HostNameType"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword name: Name of the hostname.
+        :paramtype name: str
+        :keyword site_names: List of apps the hostname is assigned to. This list will have more than
+         one app only if the hostname is pointing to a Traffic Manager.
+        :paramtype site_names: list[str]
+        :keyword azure_resource_name: Name of the Azure resource the hostname is assigned to. If it is
+         assigned to a Traffic Manager then it will be the Traffic Manager name otherwise it will be the
+         app name.
+        :paramtype azure_resource_name: str
+        :keyword azure_resource_type: Type of the Azure resource the hostname is assigned to. Known
+         values are: "Website" and "TrafficManager".
+        :paramtype azure_resource_type: str or ~azure.mgmt.web.v2015_04_01.models.AzureResourceType
+        :keyword custom_host_name_dns_record_type: Type of the DNS record. Known values are: "CName"
+         and "A".
+        :paramtype custom_host_name_dns_record_type: str or
+         ~azure.mgmt.web.v2015_04_01.models.CustomHostNameDnsRecordType
+        :keyword host_name_type: Type of the hostname. Known values are: "Verified" and "Managed".
+        :paramtype host_name_type: str or ~azure.mgmt.web.v2015_04_01.models.HostNameType
+        """
+        super().__init__(**kwargs)
         self.name = name
         self.site_names = site_names
         self.azure_resource_name = azure_resource_name
@@ -1029,83 +1199,83 @@ class HostName(msrest.serialization.Model):
         self.host_name_type = host_name_type
 
 
-class MetricAvailability(msrest.serialization.Model):
+class MetricAvailability(_serialization.Model):
     """Retention policy of a resource metric.
 
-    :param time_grain:
-    :type time_grain: str
-    :param blob_duration:
-    :type blob_duration: str
+    :ivar time_grain:
+    :vartype time_grain: str
+    :ivar blob_duration:
+    :vartype blob_duration: str
     """
 
     _attribute_map = {
-        'time_grain': {'key': 'timeGrain', 'type': 'str'},
-        'blob_duration': {'key': 'blobDuration', 'type': 'str'},
+        "time_grain": {"key": "timeGrain", "type": "str"},
+        "blob_duration": {"key": "blobDuration", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        time_grain: Optional[str] = None,
-        blob_duration: Optional[str] = None,
-        **kwargs
-    ):
-        super(MetricAvailability, self).__init__(**kwargs)
+    def __init__(self, *, time_grain: Optional[str] = None, blob_duration: Optional[str] = None, **kwargs: Any) -> None:
+        """
+        :keyword time_grain:
+        :paramtype time_grain: str
+        :keyword blob_duration:
+        :paramtype blob_duration: str
+        """
+        super().__init__(**kwargs)
         self.time_grain = time_grain
         self.blob_duration = blob_duration
 
 
-class MetricSpecification(msrest.serialization.Model):
+class MetricSpecification(_serialization.Model):  # pylint: disable=too-many-instance-attributes
     """Definition of a single resource metric.
 
-    :param name:
-    :type name: str
-    :param display_name:
-    :type display_name: str
-    :param display_description:
-    :type display_description: str
-    :param unit:
-    :type unit: str
-    :param aggregation_type:
-    :type aggregation_type: str
-    :param supports_instance_level_aggregation:
-    :type supports_instance_level_aggregation: bool
-    :param enable_regional_mdm_account:
-    :type enable_regional_mdm_account: bool
-    :param source_mdm_account:
-    :type source_mdm_account: str
-    :param source_mdm_namespace:
-    :type source_mdm_namespace: str
-    :param metric_filter_pattern:
-    :type metric_filter_pattern: str
-    :param fill_gap_with_zero:
-    :type fill_gap_with_zero: bool
-    :param is_internal:
-    :type is_internal: bool
-    :param dimensions:
-    :type dimensions: list[~azure.mgmt.web.v2015_04_01.models.Dimension]
-    :param category:
-    :type category: str
-    :param availabilities:
-    :type availabilities: list[~azure.mgmt.web.v2015_04_01.models.MetricAvailability]
+    :ivar name:
+    :vartype name: str
+    :ivar display_name:
+    :vartype display_name: str
+    :ivar display_description:
+    :vartype display_description: str
+    :ivar unit:
+    :vartype unit: str
+    :ivar aggregation_type:
+    :vartype aggregation_type: str
+    :ivar supports_instance_level_aggregation:
+    :vartype supports_instance_level_aggregation: bool
+    :ivar enable_regional_mdm_account:
+    :vartype enable_regional_mdm_account: bool
+    :ivar source_mdm_account:
+    :vartype source_mdm_account: str
+    :ivar source_mdm_namespace:
+    :vartype source_mdm_namespace: str
+    :ivar metric_filter_pattern:
+    :vartype metric_filter_pattern: str
+    :ivar fill_gap_with_zero:
+    :vartype fill_gap_with_zero: bool
+    :ivar is_internal:
+    :vartype is_internal: bool
+    :ivar dimensions:
+    :vartype dimensions: list[~azure.mgmt.web.v2015_04_01.models.Dimension]
+    :ivar category:
+    :vartype category: str
+    :ivar availabilities:
+    :vartype availabilities: list[~azure.mgmt.web.v2015_04_01.models.MetricAvailability]
     """
 
     _attribute_map = {
-        'name': {'key': 'name', 'type': 'str'},
-        'display_name': {'key': 'displayName', 'type': 'str'},
-        'display_description': {'key': 'displayDescription', 'type': 'str'},
-        'unit': {'key': 'unit', 'type': 'str'},
-        'aggregation_type': {'key': 'aggregationType', 'type': 'str'},
-        'supports_instance_level_aggregation': {'key': 'supportsInstanceLevelAggregation', 'type': 'bool'},
-        'enable_regional_mdm_account': {'key': 'enableRegionalMdmAccount', 'type': 'bool'},
-        'source_mdm_account': {'key': 'sourceMdmAccount', 'type': 'str'},
-        'source_mdm_namespace': {'key': 'sourceMdmNamespace', 'type': 'str'},
-        'metric_filter_pattern': {'key': 'metricFilterPattern', 'type': 'str'},
-        'fill_gap_with_zero': {'key': 'fillGapWithZero', 'type': 'bool'},
-        'is_internal': {'key': 'isInternal', 'type': 'bool'},
-        'dimensions': {'key': 'dimensions', 'type': '[Dimension]'},
-        'category': {'key': 'category', 'type': 'str'},
-        'availabilities': {'key': 'availabilities', 'type': '[MetricAvailability]'},
+        "name": {"key": "name", "type": "str"},
+        "display_name": {"key": "displayName", "type": "str"},
+        "display_description": {"key": "displayDescription", "type": "str"},
+        "unit": {"key": "unit", "type": "str"},
+        "aggregation_type": {"key": "aggregationType", "type": "str"},
+        "supports_instance_level_aggregation": {"key": "supportsInstanceLevelAggregation", "type": "bool"},
+        "enable_regional_mdm_account": {"key": "enableRegionalMdmAccount", "type": "bool"},
+        "source_mdm_account": {"key": "sourceMdmAccount", "type": "str"},
+        "source_mdm_namespace": {"key": "sourceMdmNamespace", "type": "str"},
+        "metric_filter_pattern": {"key": "metricFilterPattern", "type": "str"},
+        "fill_gap_with_zero": {"key": "fillGapWithZero", "type": "bool"},
+        "is_internal": {"key": "isInternal", "type": "bool"},
+        "dimensions": {"key": "dimensions", "type": "[Dimension]"},
+        "category": {"key": "category", "type": "str"},
+        "availabilities": {"key": "availabilities", "type": "[MetricAvailability]"},
     }
 
     def __init__(
@@ -1123,12 +1293,44 @@ class MetricSpecification(msrest.serialization.Model):
         metric_filter_pattern: Optional[str] = None,
         fill_gap_with_zero: Optional[bool] = None,
         is_internal: Optional[bool] = None,
-        dimensions: Optional[List["Dimension"]] = None,
+        dimensions: Optional[List["_models.Dimension"]] = None,
         category: Optional[str] = None,
-        availabilities: Optional[List["MetricAvailability"]] = None,
-        **kwargs
-    ):
-        super(MetricSpecification, self).__init__(**kwargs)
+        availabilities: Optional[List["_models.MetricAvailability"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword name:
+        :paramtype name: str
+        :keyword display_name:
+        :paramtype display_name: str
+        :keyword display_description:
+        :paramtype display_description: str
+        :keyword unit:
+        :paramtype unit: str
+        :keyword aggregation_type:
+        :paramtype aggregation_type: str
+        :keyword supports_instance_level_aggregation:
+        :paramtype supports_instance_level_aggregation: bool
+        :keyword enable_regional_mdm_account:
+        :paramtype enable_regional_mdm_account: bool
+        :keyword source_mdm_account:
+        :paramtype source_mdm_account: str
+        :keyword source_mdm_namespace:
+        :paramtype source_mdm_namespace: str
+        :keyword metric_filter_pattern:
+        :paramtype metric_filter_pattern: str
+        :keyword fill_gap_with_zero:
+        :paramtype fill_gap_with_zero: bool
+        :keyword is_internal:
+        :paramtype is_internal: bool
+        :keyword dimensions:
+        :paramtype dimensions: list[~azure.mgmt.web.v2015_04_01.models.Dimension]
+        :keyword category:
+        :paramtype category: str
+        :keyword availabilities:
+        :paramtype availabilities: list[~azure.mgmt.web.v2015_04_01.models.MetricAvailability]
+        """
+        super().__init__(**kwargs)
         self.name = name
         self.display_name = display_name
         self.display_description = display_description
@@ -1146,156 +1348,158 @@ class MetricSpecification(msrest.serialization.Model):
         self.availabilities = availabilities
 
 
-class NameIdentifier(msrest.serialization.Model):
+class NameIdentifier(_serialization.Model):
     """Identifies an object.
 
-    :param name: Name of the object.
-    :type name: str
+    :ivar name: Name of the object.
+    :vartype name: str
     """
 
     _attribute_map = {
-        'name': {'key': 'name', 'type': 'str'},
+        "name": {"key": "name", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        name: Optional[str] = None,
-        **kwargs
-    ):
-        super(NameIdentifier, self).__init__(**kwargs)
+    def __init__(self, *, name: Optional[str] = None, **kwargs: Any) -> None:
+        """
+        :keyword name: Name of the object.
+        :paramtype name: str
+        """
+        super().__init__(**kwargs)
         self.name = name
 
 
-class NameIdentifierCollection(msrest.serialization.Model):
+class NameIdentifierCollection(_serialization.Model):
     """Collection of domain name identifiers.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param value: Required. Collection of resources.
-    :type value: list[~azure.mgmt.web.v2015_04_01.models.NameIdentifier]
+    :ivar value: Collection of resources. Required.
+    :vartype value: list[~azure.mgmt.web.v2015_04_01.models.NameIdentifier]
     :ivar next_link: Link to next page of resources.
     :vartype next_link: str
     """
 
     _validation = {
-        'value': {'required': True},
-        'next_link': {'readonly': True},
+        "value": {"required": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[NameIdentifier]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[NameIdentifier]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        value: List["NameIdentifier"],
-        **kwargs
-    ):
-        super(NameIdentifierCollection, self).__init__(**kwargs)
+    def __init__(self, *, value: List["_models.NameIdentifier"], **kwargs: Any) -> None:
+        """
+        :keyword value: Collection of resources. Required.
+        :paramtype value: list[~azure.mgmt.web.v2015_04_01.models.NameIdentifier]
+        """
+        super().__init__(**kwargs)
         self.value = value
         self.next_link = None
 
 
-class ServiceSpecification(msrest.serialization.Model):
+class ServiceSpecification(_serialization.Model):
     """Resource metrics service provided by Microsoft.Insights resource provider.
 
-    :param metric_specifications:
-    :type metric_specifications: list[~azure.mgmt.web.v2015_04_01.models.MetricSpecification]
+    :ivar metric_specifications:
+    :vartype metric_specifications: list[~azure.mgmt.web.v2015_04_01.models.MetricSpecification]
     """
 
     _attribute_map = {
-        'metric_specifications': {'key': 'metricSpecifications', 'type': '[MetricSpecification]'},
+        "metric_specifications": {"key": "metricSpecifications", "type": "[MetricSpecification]"},
     }
 
     def __init__(
-        self,
-        *,
-        metric_specifications: Optional[List["MetricSpecification"]] = None,
-        **kwargs
-    ):
-        super(ServiceSpecification, self).__init__(**kwargs)
+        self, *, metric_specifications: Optional[List["_models.MetricSpecification"]] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword metric_specifications:
+        :paramtype metric_specifications: list[~azure.mgmt.web.v2015_04_01.models.MetricSpecification]
+        """
+        super().__init__(**kwargs)
         self.metric_specifications = metric_specifications
 
 
-class TldLegalAgreement(msrest.serialization.Model):
+class TldLegalAgreement(_serialization.Model):
     """Legal agreement for a top level domain.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param agreement_key: Required. Unique identifier for the agreement.
-    :type agreement_key: str
-    :param title: Required. Agreement title.
-    :type title: str
-    :param content: Required. Agreement details.
-    :type content: str
-    :param url: URL where a copy of the agreement details is hosted.
-    :type url: str
+    :ivar agreement_key: Unique identifier for the agreement. Required.
+    :vartype agreement_key: str
+    :ivar title: Agreement title. Required.
+    :vartype title: str
+    :ivar content: Agreement details. Required.
+    :vartype content: str
+    :ivar url: URL where a copy of the agreement details is hosted.
+    :vartype url: str
     """
 
     _validation = {
-        'agreement_key': {'required': True},
-        'title': {'required': True},
-        'content': {'required': True},
+        "agreement_key": {"required": True},
+        "title": {"required": True},
+        "content": {"required": True},
     }
 
     _attribute_map = {
-        'agreement_key': {'key': 'agreementKey', 'type': 'str'},
-        'title': {'key': 'title', 'type': 'str'},
-        'content': {'key': 'content', 'type': 'str'},
-        'url': {'key': 'url', 'type': 'str'},
+        "agreement_key": {"key": "agreementKey", "type": "str"},
+        "title": {"key": "title", "type": "str"},
+        "content": {"key": "content", "type": "str"},
+        "url": {"key": "url", "type": "str"},
     }
 
     def __init__(
-        self,
-        *,
-        agreement_key: str,
-        title: str,
-        content: str,
-        url: Optional[str] = None,
-        **kwargs
-    ):
-        super(TldLegalAgreement, self).__init__(**kwargs)
+        self, *, agreement_key: str, title: str, content: str, url: Optional[str] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword agreement_key: Unique identifier for the agreement. Required.
+        :paramtype agreement_key: str
+        :keyword title: Agreement title. Required.
+        :paramtype title: str
+        :keyword content: Agreement details. Required.
+        :paramtype content: str
+        :keyword url: URL where a copy of the agreement details is hosted.
+        :paramtype url: str
+        """
+        super().__init__(**kwargs)
         self.agreement_key = agreement_key
         self.title = title
         self.content = content
         self.url = url
 
 
-class TldLegalAgreementCollection(msrest.serialization.Model):
+class TldLegalAgreementCollection(_serialization.Model):
     """Collection of top-level domain legal agreements.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param value: Required. Collection of resources.
-    :type value: list[~azure.mgmt.web.v2015_04_01.models.TldLegalAgreement]
+    :ivar value: Collection of resources. Required.
+    :vartype value: list[~azure.mgmt.web.v2015_04_01.models.TldLegalAgreement]
     :ivar next_link: Link to next page of resources.
     :vartype next_link: str
     """
 
     _validation = {
-        'value': {'required': True},
-        'next_link': {'readonly': True},
+        "value": {"required": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[TldLegalAgreement]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[TldLegalAgreement]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        value: List["TldLegalAgreement"],
-        **kwargs
-    ):
-        super(TldLegalAgreementCollection, self).__init__(**kwargs)
+    def __init__(self, *, value: List["_models.TldLegalAgreement"], **kwargs: Any) -> None:
+        """
+        :keyword value: Collection of resources. Required.
+        :paramtype value: list[~azure.mgmt.web.v2015_04_01.models.TldLegalAgreement]
+        """
+        super().__init__(**kwargs)
         self.value = value
         self.next_link = None
 
@@ -1309,102 +1513,106 @@ class TopLevelDomain(ProxyOnlyResource):
     :vartype id: str
     :ivar name: Resource Name.
     :vartype name: str
-    :param kind: Kind of resource.
-    :type kind: str
+    :ivar kind: Kind of resource.
+    :vartype kind: str
     :ivar type: Resource type.
     :vartype type: str
     :ivar domain_name: Name of the top level domain.
     :vartype domain_name: str
-    :param privacy: If :code:`<code>true</code>`, then the top level domain supports domain
-     privacy; otherwise, :code:`<code>false</code>`.
-    :type privacy: bool
+    :ivar privacy: If :code:`<code>true</code>`, then the top level domain supports domain privacy;
+     otherwise, :code:`<code>false</code>`.
+    :vartype privacy: bool
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'domain_name': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "domain_name": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'kind': {'key': 'kind', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'domain_name': {'key': 'properties.name', 'type': 'str'},
-        'privacy': {'key': 'properties.privacy', 'type': 'bool'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "kind": {"key": "kind", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "domain_name": {"key": "properties.name", "type": "str"},
+        "privacy": {"key": "properties.privacy", "type": "bool"},
     }
 
-    def __init__(
-        self,
-        *,
-        kind: Optional[str] = None,
-        privacy: Optional[bool] = None,
-        **kwargs
-    ):
-        super(TopLevelDomain, self).__init__(kind=kind, **kwargs)
+    def __init__(self, *, kind: Optional[str] = None, privacy: Optional[bool] = None, **kwargs: Any) -> None:
+        """
+        :keyword kind: Kind of resource.
+        :paramtype kind: str
+        :keyword privacy: If :code:`<code>true</code>`, then the top level domain supports domain
+         privacy; otherwise, :code:`<code>false</code>`.
+        :paramtype privacy: bool
+        """
+        super().__init__(kind=kind, **kwargs)
         self.domain_name = None
         self.privacy = privacy
 
 
-class TopLevelDomainAgreementOption(msrest.serialization.Model):
+class TopLevelDomainAgreementOption(_serialization.Model):
     """Options for retrieving the list of top level domain legal agreements.
 
-    :param include_privacy: If :code:`<code>true</code>`, then the list of agreements will include
+    :ivar include_privacy: If :code:`<code>true</code>`, then the list of agreements will include
      agreements for domain privacy as well; otherwise, :code:`<code>false</code>`.
-    :type include_privacy: bool
-    :param for_transfer: If :code:`<code>true</code>`, then the list of agreements will include
+    :vartype include_privacy: bool
+    :ivar for_transfer: If :code:`<code>true</code>`, then the list of agreements will include
      agreements for domain transfer as well; otherwise, :code:`<code>false</code>`.
-    :type for_transfer: bool
+    :vartype for_transfer: bool
     """
 
     _attribute_map = {
-        'include_privacy': {'key': 'includePrivacy', 'type': 'bool'},
-        'for_transfer': {'key': 'forTransfer', 'type': 'bool'},
+        "include_privacy": {"key": "includePrivacy", "type": "bool"},
+        "for_transfer": {"key": "forTransfer", "type": "bool"},
     }
 
     def __init__(
-        self,
-        *,
-        include_privacy: Optional[bool] = None,
-        for_transfer: Optional[bool] = None,
-        **kwargs
-    ):
-        super(TopLevelDomainAgreementOption, self).__init__(**kwargs)
+        self, *, include_privacy: Optional[bool] = None, for_transfer: Optional[bool] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword include_privacy: If :code:`<code>true</code>`, then the list of agreements will
+         include agreements for domain privacy as well; otherwise, :code:`<code>false</code>`.
+        :paramtype include_privacy: bool
+        :keyword for_transfer: If :code:`<code>true</code>`, then the list of agreements will include
+         agreements for domain transfer as well; otherwise, :code:`<code>false</code>`.
+        :paramtype for_transfer: bool
+        """
+        super().__init__(**kwargs)
         self.include_privacy = include_privacy
         self.for_transfer = for_transfer
 
 
-class TopLevelDomainCollection(msrest.serialization.Model):
+class TopLevelDomainCollection(_serialization.Model):
     """Collection of Top-level domains.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param value: Required. Collection of resources.
-    :type value: list[~azure.mgmt.web.v2015_04_01.models.TopLevelDomain]
+    :ivar value: Collection of resources. Required.
+    :vartype value: list[~azure.mgmt.web.v2015_04_01.models.TopLevelDomain]
     :ivar next_link: Link to next page of resources.
     :vartype next_link: str
     """
 
     _validation = {
-        'value': {'required': True},
-        'next_link': {'readonly': True},
+        "value": {"required": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[TopLevelDomain]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[TopLevelDomain]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        value: List["TopLevelDomain"],
-        **kwargs
-    ):
-        super(TopLevelDomainCollection, self).__init__(**kwargs)
+    def __init__(self, *, value: List["_models.TopLevelDomain"], **kwargs: Any) -> None:
+        """
+        :keyword value: Collection of resources. Required.
+        :paramtype value: list[~azure.mgmt.web.v2015_04_01.models.TopLevelDomain]
+        """
+        super().__init__(**kwargs)
         self.value = value
         self.next_link = None

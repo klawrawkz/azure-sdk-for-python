@@ -1,7 +1,7 @@
 trigger: none
 
 variables:
-  PythonVersion: '3.6'
+  PythonVersion: '3.11'
 
 jobs:
   - job: 'Generate_Individual_Package_Documentation'
@@ -12,7 +12,7 @@ jobs:
     timeoutInMinutes: 120
 
     pool:
-      vmImage: 'ubuntu-18.04'
+      vmImage: 'ubuntu-20.04'
 
     steps:
       - task: UsePythonVersion@0
@@ -21,13 +21,14 @@ jobs:
           versionSpec: '$(PythonVersion)'
 
       - script: |
-          pip install -r eng/ci_tools.txt
+          python -m pip install setuptools==58.3.0
+          python -m pip install -r eng/ci_tools.txt
         displayName: 'Prep Environment'
 
       - task: PythonScript@0
         displayName: 'Generate Docs'
         inputs:
-          scriptPath: 'scripts/devops_tasks/setup_execute_tests.py'
+          scriptPath: 'scripts/devops_tasks/dispatch_tox.py'
           arguments: >-
             "$(BuildTargetingString)"
             --toxenv=sphinx

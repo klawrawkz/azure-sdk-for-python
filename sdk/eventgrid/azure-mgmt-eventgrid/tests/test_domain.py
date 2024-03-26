@@ -6,19 +6,21 @@
 # license information.
 # --------------------------------------------------------------------------
 import unittest
+import pytest
 
 from azure.mgmt.eventgrid import EventGridManagementClient
 
-from devtools_testutils import AzureMgmtTestCase, ResourceGroupPreparer
+from devtools_testutils import AzureMgmtRecordedTestCase, RandomNameResourceGroupPreparer, recorded_by_proxy
 
 
-class MgmtEventGridTest(AzureMgmtTestCase):
+class TestMgmtEventGrid(AzureMgmtRecordedTestCase):
 
-    def setUp(self):
-        super(MgmtEventGridTest, self).setUp()
+    def setup_method(self, method):
         self.eventgrid_client = self.create_mgmt_client(EventGridManagementClient)
 
-    @ResourceGroupPreparer()
+    @pytest.mark.live_test_only
+    @RandomNameResourceGroupPreparer(location="eastus2")
+    @recorded_by_proxy
     def test_domain(self, resource_group, location):
         # create
         DOMAIN_NAME = self.get_resource_name('domain')

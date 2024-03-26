@@ -18,30 +18,34 @@ from ._reservation_recommendations_operations import ReservationRecommendationsO
 from ._reservation_recommendation_details_operations import ReservationRecommendationDetailsOperations
 from ._reservation_transactions_operations import ReservationTransactionsOperations
 from ._price_sheet_operations import PriceSheetOperations
-from ._forecasts_operations import ForecastsOperations
 from ._operations import Operations
 from ._aggregated_cost_operations import AggregatedCostOperations
 from ._events_operations import EventsOperations
 from ._lots_operations import LotsOperations
 from ._credits_operations import CreditsOperations
 
+from ._patch import __all__ as _patch_all
+from ._patch import *  # pylint: disable=unused-wildcard-import
+from ._patch import patch_sdk as _patch_sdk
+
 __all__ = [
-    'UsageDetailsOperations',
-    'MarketplacesOperations',
-    'BudgetsOperations',
-    'TagsOperations',
-    'ChargesOperations',
-    'BalancesOperations',
-    'ReservationsSummariesOperations',
-    'ReservationsDetailsOperations',
-    'ReservationRecommendationsOperations',
-    'ReservationRecommendationDetailsOperations',
-    'ReservationTransactionsOperations',
-    'PriceSheetOperations',
-    'ForecastsOperations',
-    'Operations',
-    'AggregatedCostOperations',
-    'EventsOperations',
-    'LotsOperations',
-    'CreditsOperations',
+    "UsageDetailsOperations",
+    "MarketplacesOperations",
+    "BudgetsOperations",
+    "TagsOperations",
+    "ChargesOperations",
+    "BalancesOperations",
+    "ReservationsSummariesOperations",
+    "ReservationsDetailsOperations",
+    "ReservationRecommendationsOperations",
+    "ReservationRecommendationDetailsOperations",
+    "ReservationTransactionsOperations",
+    "PriceSheetOperations",
+    "Operations",
+    "AggregatedCostOperations",
+    "EventsOperations",
+    "LotsOperations",
+    "CreditsOperations",
 ]
+__all__.extend([p for p in _patch_all if p not in __all__])
+_patch_sdk()

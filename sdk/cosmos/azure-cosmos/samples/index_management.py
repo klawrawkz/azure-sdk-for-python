@@ -1,18 +1,21 @@
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See LICENSE.txt in the project root for
+# license information.
+# -------------------------------------------------------------------------
+import certifi
+
 import azure.cosmos.documents as documents
 import azure.cosmos.cosmos_client as cosmos_client
 import azure.cosmos.exceptions as exceptions
 from azure.cosmos.partition_key import PartitionKey
-import requests
-import traceback
-import urllib3
-from requests.utils import DEFAULT_CA_BUNDLE_PATH as CaCertPath
 
 import config
 
 HOST = config.settings['host']
 MASTER_KEY = config.settings['master_key']
 DATABASE_ID = config.settings['database_id']
-CONTAINER_ID = "index-samples"
+CONTAINER_ID = config.settings['container_id']
 PARTITION_KEY = PartitionKey(path='/id', kind='Hash')
 
 # A typical container has the following properties within it's indexingPolicy property
@@ -21,7 +24,7 @@ PARTITION_KEY = PartitionKey(path='/id', kind='Hash')
 #   includedPaths
 #   excludedPaths
 #
-# We can toggle 'automatic' to eiher be True or False depending upon whether we want to have indexing over all columns by default or not.
+# We can toggle 'automatic' to either be True or False depending upon whether we want to have indexing over all columns by default or not.
 #
 # We can provide options while creating documents. indexingDirective is one such,
 # by which we can tell whether it should be included or excluded in the index of the parent container.
@@ -31,19 +34,15 @@ PARTITION_KEY = PartitionKey(path='/id', kind='Hash')
 # To run this Demo, please provide your own CA certs file or download one from
 #     http://curl.haxx.se/docs/caextract.html
 # Setup the certificate file in .pem format.
-# If you still get an SSLError, try disabling certificate verification and suppress warnings
+CA_CERT_FILE = certifi.where()
 
 def obtain_client():
-    connection_policy = documents.ConnectionPolicy()
-    connection_policy.SSLConfiguration = documents.SSLConfiguration()
-    # Try to setup the cacert.pem
-    # connection_policy.SSLConfiguration.SSLCaCerts = CaCertPath
-    # Else, disable verification
-    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-    connection_policy.SSLConfiguration.SSLCaCerts = False
-
-    return cosmos_client.CosmosClient(HOST, MASTER_KEY, "Session", connection_policy=connection_policy)
-
+    return cosmos_client.CosmosClient(
+        HOST,
+        MASTER_KEY,
+        "Session",
+        connection_verify=CA_CERT_FILE
+    )
 
 # Query for Entity / Entities
 def query_entities(parent, entity_type, id = None):
@@ -60,20 +59,20 @@ def query_entities(parent, entity_type, id = None):
                 entities = list(parent.list_databases())
             else:
                 entities = list(parent.query_databases(find_entity_by_id_query))
-
         elif entity_type == 'container':
             if id == None:
                 entities = list(parent.list_containers())
             else:
                 entities = list(parent.query_containers(find_entity_by_id_query))
-
         elif entity_type == 'document':
             if id == None:
                 entities = list(parent.read_all_items())
             else:
                 entities = list(parent.query_items(find_entity_by_id_query))
+        else:
+            raise ValueError(f"Unexpected entity type: {entity_type}")
     except exceptions.AzureError as e:
-        print("The following error occured while querying for the entity / entities ", entity_type, id if id != None else "")
+        print("The following error occurred while querying for the entity / entities ", entity_type, id if id != None else "")
         print(e)
         raise
     if id == None:
@@ -133,7 +132,7 @@ def query_documents_with_custom_query(container, query_with_optional_parameters,
     except exceptions.CosmosHttpResponseError as e:
         if e.status_code == 400:
             # Can occur when we are trying to query on excluded paths
-            print("Bad Request exception occured: ", e)
+            print("Bad Request exception occurred: ", e)
             pass
         else:
             raise
@@ -171,9 +170,9 @@ def explicitly_exclude_from_index(db):
             }
         query_documents_with_custom_query(created_Container, query)
 
-        # Now, create a document but this time explictly exclude it from the container using IndexingDirective
+        # Now, create a document but this time explicitly exclude it from the container using IndexingDirective
         # Then query for that document
-        # Shoud NOT find it, because we excluded it from the index
+        # Should NOT find it, because we excluded it from the index
         # BUT, the document is there and doing a ReadDocument by Id will prove it
         doc2 = created_Container.create_item(
             body={ "id" : "doc2", "orderId" : "order2" },
@@ -344,7 +343,7 @@ def range_scan_on_hash_index(db):
        ===== Warning=====
        This was made an opt-in model by design.
        Scanning is an expensive operation and doing this will have a large impact
-       on RequstUnits charged for an operation and will likely result in queries being throttled sooner.
+       on RequestUnits charged for an operation and will likely result in queries being throttled sooner.
     """
     try:
         delete_container_if_exists(db, CONTAINER_ID)

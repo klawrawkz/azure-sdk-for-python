@@ -28,7 +28,7 @@ def example_create_servicebus_client_sync():
     # [START create_sb_client_from_conn_str_sync]
     import os
     from azure.servicebus import ServiceBusClient
-    servicebus_connection_str = os.environ['SERVICE_BUS_CONNECTION_STR']
+    servicebus_connection_str = os.environ['SERVICEBUS_CONNECTION_STR']
     servicebus_client = ServiceBusClient.from_connection_string(conn_str=servicebus_connection_str)
     # [END create_sb_client_from_conn_str_sync]
 
@@ -36,7 +36,7 @@ def example_create_servicebus_client_sync():
     import os
     from azure.identity import DefaultAzureCredential
     from azure.servicebus import ServiceBusClient
-    fully_qualified_namespace = os.environ['SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE']
+    fully_qualified_namespace = os.environ['SERVICEBUS_FULLY_QUALIFIED_NAMESPACE']
     servicebus_client = ServiceBusClient(
         fully_qualified_namespace=fully_qualified_namespace,
         credential=DefaultAzureCredential()
@@ -50,8 +50,8 @@ def example_create_servicebus_sender_sync():
     # [START create_servicebus_sender_from_conn_str_sync]
     import os
     from azure.servicebus import ServiceBusSender
-    servicebus_connection_str = os.environ['SERVICE_BUS_CONNECTION_STR']
-    queue_name = os.environ['SERVICE_BUS_QUEUE_NAME']
+    servicebus_connection_str = os.environ['SERVICEBUS_CONNECTION_STR']
+    queue_name = os.environ['SERVICEBUS_QUEUE_NAME']
     queue_sender = ServiceBusSender._from_connection_string(
         conn_str=servicebus_connection_str,
         queue_name=queue_name
@@ -61,8 +61,8 @@ def example_create_servicebus_sender_sync():
     # [START create_servicebus_sender_from_sb_client_sync]
     import os
     from azure.servicebus import ServiceBusClient
-    servicebus_connection_str = os.environ['SERVICE_BUS_CONNECTION_STR']
-    queue_name = os.environ['SERVICE_BUS_QUEUE_NAME']
+    servicebus_connection_str = os.environ['SERVICEBUS_CONNECTION_STR']
+    queue_name = os.environ['SERVICEBUS_QUEUE_NAME']
     servicebus_client = ServiceBusClient.from_connection_string(conn_str=servicebus_connection_str)
     with servicebus_client:
         queue_sender = servicebus_client.get_queue_sender(queue_name=queue_name)
@@ -71,8 +71,8 @@ def example_create_servicebus_sender_sync():
     # [START create_topic_sender_from_sb_client_sync]
     import os
     from azure.servicebus import ServiceBusClient
-    servicebus_connection_str = os.environ['SERVICE_BUS_CONNECTION_STR']
-    topic_name = os.environ['SERVICE_BUS_TOPIC_NAME']
+    servicebus_connection_str = os.environ['SERVICEBUS_CONNECTION_STR']
+    topic_name = os.environ['SERVICEBUS_TOPIC_NAME']
     servicebus_client = ServiceBusClient.from_connection_string(conn_str=servicebus_connection_str)
     with servicebus_client:
         topic_sender = servicebus_client.get_topic_sender(topic_name=topic_name)
@@ -88,8 +88,8 @@ def example_create_servicebus_receiver_sync():
     # [START create_servicebus_receiver_from_conn_str_sync]
     import os
     from azure.servicebus import ServiceBusReceiver
-    servicebus_connection_str = os.environ['SERVICE_BUS_CONNECTION_STR']
-    queue_name = os.environ['SERVICE_BUS_QUEUE_NAME']
+    servicebus_connection_str = os.environ['SERVICEBUS_CONNECTION_STR']
+    queue_name = os.environ['SERVICEBUS_QUEUE_NAME']
     queue_receiver = ServiceBusReceiver._from_connection_string(
         conn_str=servicebus_connection_str,
         queue_name=queue_name
@@ -99,8 +99,8 @@ def example_create_servicebus_receiver_sync():
     # [START create_queue_deadletter_receiver_from_sb_client_sync]
     import os
     from azure.servicebus import ServiceBusClient, ServiceBusSubQueue
-    servicebus_connection_str = os.environ['SERVICE_BUS_CONNECTION_STR']
-    queue_name = os.environ['SERVICE_BUS_QUEUE_NAME']
+    servicebus_connection_str = os.environ['SERVICEBUS_CONNECTION_STR']
+    queue_name = os.environ['SERVICEBUS_QUEUE_NAME']
     servicebus_client = ServiceBusClient.from_connection_string(conn_str=servicebus_connection_str)
     with servicebus_client:
         queue_dlq_receiver = servicebus_client.get_queue_receiver(queue_name=queue_name, sub_queue=ServiceBusSubQueue.DEAD_LETTER)
@@ -109,8 +109,8 @@ def example_create_servicebus_receiver_sync():
     # [START create_servicebus_receiver_from_sb_client_sync]
     import os
     from azure.servicebus import ServiceBusClient
-    servicebus_connection_str = os.environ['SERVICE_BUS_CONNECTION_STR']
-    queue_name = os.environ['SERVICE_BUS_QUEUE_NAME']
+    servicebus_connection_str = os.environ['SERVICEBUS_CONNECTION_STR']
+    queue_name = os.environ['SERVICEBUS_QUEUE_NAME']
     servicebus_client = ServiceBusClient.from_connection_string(conn_str=servicebus_connection_str)
     with servicebus_client:
         queue_receiver = servicebus_client.get_queue_receiver(queue_name=queue_name)
@@ -119,9 +119,9 @@ def example_create_servicebus_receiver_sync():
     # [START create_subscription_receiver_from_sb_client_sync]
     import os
     from azure.servicebus import ServiceBusClient
-    servicebus_connection_str = os.environ['SERVICE_BUS_CONNECTION_STR']
-    topic_name = os.environ["SERVICE_BUS_TOPIC_NAME"]
-    subscription_name = os.environ["SERVICE_BUS_SUBSCRIPTION_NAME"]
+    servicebus_connection_str = os.environ['SERVICEBUS_CONNECTION_STR']
+    topic_name = os.environ["SERVICEBUS_TOPIC_NAME"]
+    subscription_name = os.environ["SERVICEBUS_SUBSCRIPTION_NAME"]
     servicebus_client = ServiceBusClient.from_connection_string(conn_str=servicebus_connection_str)
     with servicebus_client:
         subscription_receiver = servicebus_client.get_subscription_receiver(
@@ -133,9 +133,9 @@ def example_create_servicebus_receiver_sync():
     # [START create_subscription_deadletter_receiver_from_sb_client_sync]
     import os
     from azure.servicebus import ServiceBusClient, ServiceBusSubQueue
-    servicebus_connection_str = os.environ['SERVICE_BUS_CONNECTION_STR']
-    topic_name = os.environ["SERVICE_BUS_TOPIC_NAME"]
-    subscription_name = os.environ["SERVICE_BUS_SUBSCRIPTION_NAME"]
+    servicebus_connection_str = os.environ['SERVICEBUS_CONNECTION_STR']
+    topic_name = os.environ["SERVICEBUS_TOPIC_NAME"]
+    subscription_name = os.environ["SERVICEBUS_SUBSCRIPTION_NAME"]
     servicebus_client = ServiceBusClient.from_connection_string(conn_str=servicebus_connection_str)
     with servicebus_client:
         subscription_dlq_receiver = servicebus_client.get_subscription_receiver(
@@ -154,8 +154,8 @@ def example_send_and_receive_sync():
     servicebus_sender = example_create_servicebus_sender_sync()
     # [START send_sync]
     with servicebus_sender:
-        message = ServiceBusMessage("Hello World")
-        servicebus_sender.send_messages(message)
+        message_send = ServiceBusMessage("Hello World")
+        servicebus_sender.send_messages(message_send)
     # [END send_sync]
         servicebus_sender.send_messages([ServiceBusMessage("Hello World")] * 5)
 
@@ -167,10 +167,10 @@ def example_send_and_receive_sync():
     # [END create_batch_sync]
 
     # [START send_complex_message]
-    message = ServiceBusMessage(
+    message_send = ServiceBusMessage(
         "Hello World!!",
         session_id="MySessionID",
-        user_properties={'data': 'custom_data'},
+        application_properties={'data': 'custom_data'},
         time_to_live=datetime.timedelta(seconds=30),
         label='MyLabel'
     )
@@ -179,8 +179,8 @@ def example_send_and_receive_sync():
     servicebus_receiver = example_create_servicebus_receiver_sync()
     # [START peek_messages_sync]
     with servicebus_receiver:
-        messages = servicebus_receiver.peek_messages()
-        for message in messages:
+        messages_peek = servicebus_receiver.peek_messages()
+        for message in messages_peek:
             print(str(message))
     # [END peek_messages_sync]
 
@@ -200,19 +200,21 @@ def example_send_and_receive_sync():
     servicebus_receiver = example_create_servicebus_receiver_sync()
     # [START receive_sync]
     with servicebus_receiver:
-        messages = servicebus_receiver.receive_messages(max_wait_time=5)
-        for message in messages:
+        messages_sync = servicebus_receiver.receive_messages(max_wait_time=5)
+        for message in messages_sync:
             print(str(message))
             servicebus_receiver.complete_message(message)
     # [END receive_sync]
 
         # [START receive_complex_message]
-        messages = servicebus_receiver.receive_messages(max_wait_time=5)
-        for message in messages:
+        from typing import List
+        from azure.servicebus import ServiceBusReceivedMessage
+        messages_complex: List[ServiceBusReceivedMessage] = servicebus_receiver.receive_messages(max_wait_time=5)
+        for message in messages_complex:
             print("Receiving: {}".format(message))
             print("Time to live: {}".format(message.time_to_live))
             print("Sequence number: {}".format(message.sequence_number))
-            print("Enqueued Sequence numger: {}".format(message.enqueued_sequence_number))
+            print("Enqueued Sequence number: {}".format(message.enqueued_sequence_number))
             print("Partition Key: {}".format(message.partition_key))
             print("Application Properties: {}".format(message.application_properties))
             print("Delivery count: {}".format(message.delivery_count))
@@ -223,32 +225,32 @@ def example_send_and_receive_sync():
         # [END receive_complex_message]
 
         # [START abandon_message_sync]
-        messages = servicebus_receiver.receive_messages(max_wait_time=5)
-        for message in messages:
+        messages_abandon = servicebus_receiver.receive_messages(max_wait_time=5)
+        for message in messages_abandon:
             servicebus_receiver.abandon_message(message)
         # [END abandon_message_sync]
 
         # [START complete_message_sync]
-        messages = servicebus_receiver.receive_messages(max_wait_time=5)
-        for message in messages:
+        messages_complete = servicebus_receiver.receive_messages(max_wait_time=5)
+        for message in messages_complete:
             servicebus_receiver.complete_message(message)
         # [END complete_message_sync]
 
         # [START defer_message_sync]
-        messages = servicebus_receiver.receive_messages(max_wait_time=5)
-        for message in messages:
+        messages_defer = servicebus_receiver.receive_messages(max_wait_time=5)
+        for message in messages_defer:
             servicebus_receiver.defer_message(message)
         # [END defer_message_sync]
 
         # [START dead_letter_message_sync]
-        messages = servicebus_receiver.receive_messages(max_wait_time=5)
-        for message in messages:
+        messages_dead_letter = servicebus_receiver.receive_messages(max_wait_time=5)
+        for message in messages_dead_letter:
             servicebus_receiver.dead_letter_message(message)
         # [END dead_letter_message_sync]
 
         # [START renew_message_lock_sync]
-        messages = servicebus_receiver.receive_messages(max_wait_time=5)
-        for message in messages:
+        messages_lock = servicebus_receiver.receive_messages(max_wait_time=5)
+        for message in messages_lock:
             servicebus_receiver.renew_message_lock(message)
         # [END renew_message_lock_sync]
 
@@ -270,8 +272,8 @@ def example_receive_deferred_sync():
     # [START receive_defer_sync]
     with servicebus_receiver:
         deferred_sequenced_numbers = []
-        messages = servicebus_receiver.receive_messages(max_wait_time=5)
-        for message in messages:
+        messages_defer = servicebus_receiver.receive_messages(max_wait_time=5)
+        for message in messages_defer:
             deferred_sequenced_numbers.append(message.sequence_number)
             print(str(message))
             servicebus_receiver.defer_message(message)
@@ -287,8 +289,8 @@ def example_receive_deferred_sync():
 
 def example_receive_deadletter_sync():
     from azure.servicebus import ServiceBusSubQueue
-    servicebus_connection_str = os.environ['SERVICE_BUS_CONNECTION_STR']
-    queue_name = os.environ['SERVICE_BUS_QUEUE_NAME']
+    servicebus_connection_str = os.environ['SERVICEBUS_CONNECTION_STR']
+    queue_name = os.environ['SERVICEBUS_QUEUE_NAME']
 
     with ServiceBusClient.from_connection_string(conn_str=servicebus_connection_str) as servicebus_client:
         with servicebus_client.get_queue_sender(queue_name) as servicebus_sender:
@@ -304,16 +306,16 @@ def example_receive_deadletter_sync():
                 )
 
         with servicebus_client.get_queue_receiver(queue_name, sub_queue=ServiceBusSubQueue.DEAD_LETTER) as servicebus_deadletter_receiver:
-            messages = servicebus_deadletter_receiver.receive_messages(max_wait_time=5)
-            for message in messages:
+            messages_deadletter = servicebus_deadletter_receiver.receive_messages(max_wait_time=5)
+            for message in messages_deadletter:
                 servicebus_deadletter_receiver.complete_message(message)
         # [END receive_deadletter_sync]
 
 
 def example_session_ops_sync():
-    servicebus_connection_str = os.environ['SERVICE_BUS_CONNECTION_STR']
-    queue_name = os.environ['SERVICE_BUS_SESSION_QUEUE_NAME']
-    session_id = os.environ['SERVICE_BUS_SESSION_ID']
+    servicebus_connection_str = os.environ['SERVICEBUS_CONNECTION_STR']
+    queue_name = os.environ['SERVICEBUS_SESSION_QUEUE_NAME']
+    session_id = os.environ['SERVICEBUS_SESSION_ID']
 
     with ServiceBusClient.from_connection_string(conn_str=servicebus_connection_str) as servicebus_client:
 

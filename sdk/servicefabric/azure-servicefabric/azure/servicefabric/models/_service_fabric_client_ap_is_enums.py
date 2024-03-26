@@ -162,6 +162,7 @@ class UpgradeMode(str, Enum):
     unmonitored_auto = "UnmonitoredAuto"  #: The upgrade will proceed automatically without performing any health monitoring. The value is 1
     unmonitored_manual = "UnmonitoredManual"  #: The upgrade will stop after completing each upgrade domain, giving the opportunity to manually monitor health before proceeding. The value is 2
     monitored = "Monitored"  #: The upgrade will stop after completing each upgrade domain and automatically monitor health before proceeding. The value is 3
+    unmonitored_deferred = "UnmonitoredDeferred"  #: Perform a node-by-node upgrade. No action is performed when upgrade starts; upgrade is applied on each node when it is deactivated with intent restart or higher. The value is 4
 
 
 class UpgradeSortOrder(str, Enum):
@@ -187,6 +188,15 @@ class UpgradeDomainState(str, Enum):
     pending = "Pending"  #: The upgrade domain has not started upgrading yet. The value is 1
     in_progress = "InProgress"  #: The upgrade domain is being upgraded but not complete yet. The value is 2
     completed = "Completed"  #: The upgrade domain has completed upgrade. The value is 3
+
+
+class UpgradeUnitState(str, Enum):
+
+    invalid = "Invalid"  #: Indicates the upgrade unit state is invalid. All Service Fabric enumerations have the invalid type. The value is zero.
+    pending = "Pending"  #: The upgrade unit has not started upgrading yet. The value is 1
+    in_progress = "InProgress"  #: The upgrade unit is being upgraded but not complete yet. The value is 2
+    completed = "Completed"  #: The upgrade unit has completed upgrade. The value is 3
+    failed = "Failed"  #: The upgrade unit has failed to upgrade. The value is 4
 
 
 class UpgradeState(str, Enum):
@@ -251,6 +261,9 @@ class ReplicaRole(str, Enum):
     primary = "Primary"  #: Refers to the replica in the set on which all read and write operations are complete in order to enforce strong consistency semantics. Read operations are handled directly by the Primary replica, while write operations must be acknowledged by a quorum of the replicas in the replica set. There can only be one Primary replica in a replica set at a time. The value is 2.
     idle_secondary = "IdleSecondary"  #: Refers to a replica in the set that receives a state transfer from the Primary replica to prepare for becoming an active Secondary replica. There can be multiple Idle Secondary replicas in a replica set at a time. Idle Secondary replicas do not count as a part of a write quorum. The value is 3.
     active_secondary = "ActiveSecondary"  #: Refers to a replica in the set that receives state updates from the Primary replica, applies them, and sends acknowledgements back. Secondary replicas must participate in the write quorum for a replica set. There can be multiple active Secondary replicas in a replica set at a time. The number of active Secondary replicas is configurable that the reliability subsystem should maintain. The value is 4.
+    idle_auxiliary = "IdleAuxiliary"  #: Refers to a replica in the set that receives a state transfer from the Primary replica to prepare for becoming an ActiveAuxiliary replica. There can be multiple IdleAuxiliary replicas in a replica set at a time. IdleAuxiliary replicas do not count as a part of a write quorum. The value is 5.
+    active_auxiliary = "ActiveAuxiliary"  #: Refers to a replica in the set that receives state updates from the Primary replica, applies them, and sends acknowledgements back. ActiveAuxiliary replicas must participate in the write quorum for a replica set. There can be multiple active ActiveAuxiliary replicas in a replica set at a time. The number of active ActiveAuxiliary replicas is configurable that the reliability subsystem should maintain. The value is 6.
+    primary_auxiliary = "PrimaryAuxiliary"  #: Refers to the replica in the set that is used to rebuild a new Secondary replica to relinquish primary status to. It cannot field read or write requests. The value is 7.
 
 
 class ReconfigurationPhase(str, Enum):
@@ -376,6 +389,13 @@ class HealthEvaluationKind(str, Enum):
     delta_nodes_check = "DeltaNodesCheck"  #: Indicates that the health evaluation is for the delta of unhealthy cluster nodes. The value is 19.
     upgrade_domain_delta_nodes_check = "UpgradeDomainDeltaNodesCheck"  #: Indicates that the health evaluation is for the delta of unhealthy upgrade domain cluster nodes. The value is 20.
     application_type_applications = "ApplicationTypeApplications"  #: – Indicates that the health evaluation is for applications of an application type. The value is 21.
+    node_type_nodes = "NodeTypeNodes"  #: – Indicates that the health evaluation is for nodes of a node type. The value is 22.
+
+
+class Ordering(str, Enum):
+
+    desc = "Desc"  #: Descending sort order.
+    asc = "Asc"  #: Ascending sort order.
 
 
 class NodeDeactivationIntent(str, Enum):
@@ -752,6 +772,7 @@ class BackupStorageKind(str, Enum):
     file_share = "FileShare"  #: Indicates file/ SMB share to be used as backup storage.
     azure_blob_store = "AzureBlobStore"  #: Indicates Azure blob store to be used as backup storage.
     dsms_azure_blob_store = "DsmsAzureBlobStore"  #: Indicates Dsms Azure blob store to be used as backup storage.
+    managed_identity_azure_blob_store = "ManagedIdentityAzureBlobStore"  #: Indicates Azure blob store to be used as backup storage using managed identity.
 
 
 class BackupScheduleKind(str, Enum):
@@ -792,6 +813,13 @@ class BackupType(str, Enum):
     invalid = "Invalid"  #: Indicates an invalid backup type. All Service Fabric enumerations have the invalid type.
     full = "Full"  #: Indicates a full backup.
     incremental = "Incremental"  #: Indicates an incremental backup. A backup chain is comprised of a full backup followed by 0 or more incremental backups.
+
+
+class ManagedIdentityType(str, Enum):
+
+    invalid = "Invalid"  #: Indicates an invalid managed identity type. All Service Fabric enumerations have the invalid type.
+    vmss = "VMSS"  #: Indicates VMSS managed identity should be used to connect to Azure blob store.
+    cluster = "Cluster"  #: Indicates cluster managed identity should be used to connect to Azure blob store.
 
 
 class BackupScheduleFrequencyType(str, Enum):
@@ -894,6 +922,14 @@ class ScalingMechanismKind(str, Enum):
     invalid = "Invalid"  #: Indicates the scaling mechanism is invalid. All Service Fabric enumerations have the invalid type. The value is zero.
     partition_instance_count = "PartitionInstanceCount"  #: Indicates a mechanism for scaling where new instances are added or removed from a partition. The value is 1.
     add_remove_incremental_named_partition = "AddRemoveIncrementalNamedPartition"  #: Indicates a mechanism for scaling where new named partitions are added or removed from a service. The value is 2.
+
+
+class ServiceHostUpgradeImpact(str, Enum):
+
+    invalid = "Invalid"  #: Indicates the upgrade impact is invalid. All Service Fabric enumerations have the invalid type. The value is zero.
+    none = "None"  #: The upgrade is not expected to cause service host restarts. The value is 1.
+    service_host_restart = "ServiceHostRestart"  #: The upgrade is expected to cause a service host restart. The value is 2.
+    unexpected_service_host_restart = "UnexpectedServiceHostRestart"  #: The upgrade will cause an unexpected service host restart. This indicates a bug in the Service Fabric runtime and proceeding with an upgrade with this impact may lead to skipped safety checks. Running the upgrade with the ForceRestart flag will force proper safety checks. The value is 3.
 
 
 class ResourceStatus(str, Enum):

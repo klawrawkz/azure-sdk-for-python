@@ -6,29 +6,20 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
-from enum import Enum, EnumMeta
-from six import with_metaclass
-
-class _CaseInsensitiveEnumMeta(EnumMeta):
-    def __getitem__(self, name):
-        return super().__getitem__(name.upper())
-
-    def __getattr__(cls, name):
-        """Return the enum member matching `name`
-        We use __getattr__ instead of descriptors or inserting into the enum
-        class' __dict__ in order to support `name` and `value` being both
-        properties for enum members (which live in the class' __dict__) and
-        enum members themselves.
-        """
-        try:
-            return cls._member_map_[name.upper()]
-        except KeyError:
-            raise AttributeError(name)
+from enum import Enum
+from azure.core import CaseInsensitiveEnumMeta
 
 
-class ConnectionState(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The state of the connection.
-    """
+class Command(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """Invoked command."""
+
+    TRACEROUTE = "Traceroute"
+    PING = "Ping"
+    BGP_ROUTE = "BgpRoute"
+
+
+class ConnectionState(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The state of the connection."""
 
     NONE = "None"
     PENDING_APPROVAL = "PendingApproval"
@@ -38,10 +29,12 @@ class ConnectionState(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
     PROVISIONING_COMPLETED = "ProvisioningCompleted"
     VALIDATING = "Validating"
     ACTIVE = "Active"
+    TYPE_CHANGE_REQUESTED = "TypeChangeRequested"
+    TYPE_CHANGE_IN_PROGRESS = "TypeChangeInProgress"
 
-class DirectPeeringType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The type of direct peering.
-    """
+
+class DirectPeeringType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The type of direct peering."""
 
     EDGE = "Edge"
     TRANSIT = "Transit"
@@ -49,56 +42,83 @@ class DirectPeeringType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
     INTERNAL = "Internal"
     IX = "Ix"
     IX_RS = "IxRs"
+    VOICE = "Voice"
+    EDGE_ZONE_FOR_OPERATORS = "EdgeZoneForOperators"
 
-class Enum0(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
+
+class Enum0(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """Enum0."""
 
     AVAILABLE = "Available"
     UNAVAILABLE = "Unavailable"
 
-class Enum1(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
+
+class Family(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The family of the peering SKU."""
 
     DIRECT = "Direct"
     EXCHANGE = "Exchange"
 
-class Enum14(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
+
+class Kind(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The kind of the peering."""
 
     DIRECT = "Direct"
     EXCHANGE = "Exchange"
 
-class Enum15(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
 
-    EDGE = "Edge"
-    TRANSIT = "Transit"
-    CDN = "Cdn"
-    INTERNAL = "Internal"
-    IX = "Ix"
-    IX_RS = "IxRs"
-
-class Family(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The family of the peering SKU.
-    """
-
-    DIRECT = "Direct"
-    EXCHANGE = "Exchange"
-
-class Kind(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The kind of the peering.
-    """
-
-    DIRECT = "Direct"
-    EXCHANGE = "Exchange"
-
-class LearnedType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The prefix learned type
-    """
+class LearnedType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The prefix learned type."""
 
     NONE = "None"
     VIA_SERVICE_PROVIDER = "ViaServiceProvider"
     VIA_SESSION = "ViaSession"
 
-class PrefixValidationState(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The prefix validation state.
-    """
+
+class LegacyPeeringsKind(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """LegacyPeeringsKind."""
+
+    DIRECT = "Direct"
+    EXCHANGE = "Exchange"
+
+
+class LookingGlassCommand(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """LookingGlassCommand."""
+
+    TRACEROUTE = "Traceroute"
+    PING = "Ping"
+    BGP_ROUTE = "BgpRoute"
+
+
+class LookingGlassSourceType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """LookingGlassSourceType."""
+
+    EDGE_SITE = "EdgeSite"
+    AZURE_REGION = "AzureRegion"
+
+
+class PeeringLocationsDirectPeeringType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """PeeringLocationsDirectPeeringType."""
+
+    EDGE = "Edge"
+    TRANSIT = "Transit"
+    CDN = "Cdn"
+    INTERNAL = "Internal"
+    IX = "Ix"
+    IX_RS = "IxRs"
+    VOICE = "Voice"
+    EDGE_ZONE_FOR_OPERATORS = "EdgeZoneForOperators"
+
+
+class PeeringLocationsKind(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """PeeringLocationsKind."""
+
+    DIRECT = "Direct"
+    EXCHANGE = "Exchange"
+
+
+class PrefixValidationState(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The prefix validation state."""
 
     NONE = "None"
     INVALID = "Invalid"
@@ -108,18 +128,18 @@ class PrefixValidationState(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum))
     WARNING = "Warning"
     UNKNOWN = "Unknown"
 
-class ProvisioningState(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The provisioning state of the resource.
-    """
+
+class ProvisioningState(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The provisioning state of the resource."""
 
     SUCCEEDED = "Succeeded"
     UPDATING = "Updating"
     DELETING = "Deleting"
     FAILED = "Failed"
 
-class Role(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The role of the contact.
-    """
+
+class Role(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The role of the contact."""
 
     NOC = "Noc"
     POLICY = "Policy"
@@ -128,16 +148,16 @@ class Role(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
     ESCALATION = "Escalation"
     OTHER = "Other"
 
-class SessionAddressProvider(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The field indicating if Microsoft provides session ip addresses.
-    """
+
+class SessionAddressProvider(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The field indicating if Microsoft provides session ip addresses."""
 
     MICROSOFT = "Microsoft"
     PEER = "Peer"
 
-class SessionStateV4(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The state of the IPv4 session.
-    """
+
+class SessionStateV4(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The state of the IPv4 session."""
 
     NONE = "None"
     IDLE = "Idle"
@@ -151,9 +171,9 @@ class SessionStateV4(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
     PENDING_UPDATE = "PendingUpdate"
     PENDING_REMOVE = "PendingRemove"
 
-class SessionStateV6(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The state of the IPv6 session.
-    """
+
+class SessionStateV6(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The state of the IPv6 session."""
 
     NONE = "None"
     IDLE = "Idle"
@@ -167,24 +187,24 @@ class SessionStateV6(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
     PENDING_UPDATE = "PendingUpdate"
     PENDING_REMOVE = "PendingRemove"
 
-class Size(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The size of the peering SKU.
-    """
+
+class Size(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The size of the peering SKU."""
 
     FREE = "Free"
     METERED = "Metered"
     UNLIMITED = "Unlimited"
 
-class Tier(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The tier of the peering SKU.
-    """
+
+class Tier(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The tier of the peering SKU."""
 
     BASIC = "Basic"
     PREMIUM = "Premium"
 
-class ValidationState(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The validation state of the ASN associated with the peer.
-    """
+
+class ValidationState(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The validation state of the ASN associated with the peer."""
 
     NONE = "None"
     PENDING = "Pending"

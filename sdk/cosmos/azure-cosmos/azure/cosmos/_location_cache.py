@@ -56,7 +56,7 @@ def get_endpoint_by_location(locations):
 
 
 class LocationCache(object):  # pylint: disable=too-many-public-methods,too-many-instance-attributes
-    def current_time_millis(self):  # pylint: disable=no-self-use
+    def current_time_millis(self):
         return int(round(time.time() * 1000))
 
     def __init__(
@@ -187,7 +187,7 @@ class LocationCache(object):  # pylint: disable=too-many-public-methods,too-many
     def clear_stale_endpoint_unavailability_info(self):
         new_location_unavailability_info = {}
         if self.location_unavailability_info_by_endpoint:
-            for unavailable_endpoint in self.location_unavailability_info_by_endpoint:
+            for unavailable_endpoint in self.location_unavailability_info_by_endpoint:  #pylint: disable=consider-using-dict-items
                 unavailability_info = self.location_unavailability_info_by_endpoint[unavailable_endpoint]
                 if not (
                     unavailability_info
@@ -223,19 +223,19 @@ class LocationCache(object):  # pylint: disable=too-many-public-methods,too-many
         return True
 
     def mark_endpoint_unavailable(self, unavailable_endpoint, unavailable_operation_type):
-        unavailablility_info = (
+        unavailability_info = (
             self.location_unavailability_info_by_endpoint[unavailable_endpoint]
             if unavailable_endpoint in self.location_unavailability_info_by_endpoint
             else None
         )
         current_time = self.current_time_millis()
-        if not unavailablility_info:
+        if not unavailability_info:
             self.location_unavailability_info_by_endpoint[unavailable_endpoint] = {
                 "lastUnavailabilityCheckTimeStamp": current_time,
                 "operationType": set([unavailable_operation_type]),
             }
         else:
-            unavailable_operations = set([unavailable_operation_type]).union(unavailablility_info["operationType"])
+            unavailable_operations = set([unavailable_operation_type]).union(unavailability_info["operationType"])
             self.location_unavailability_info_by_endpoint[unavailable_endpoint] = {
                 "lastUnavailabilityCheckTimeStamp": current_time,
                 "operationType": unavailable_operations,
@@ -319,7 +319,7 @@ class LocationCache(object):  # pylint: disable=too-many-public-methods,too-many
     def can_use_multiple_write_locations(self):
         return self.use_multiple_write_locations and self.enable_multiple_writable_locations
 
-    def can_use_multiple_write_locations_for_request(self, request):
+    def can_use_multiple_write_locations_for_request(self, request):  # pylint: disable=name-too-long
         return self.can_use_multiple_write_locations() and (
             request.resource_type == http_constants.ResourceType.Document
             or (

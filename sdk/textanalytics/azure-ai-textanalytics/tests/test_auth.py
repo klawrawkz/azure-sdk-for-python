@@ -1,21 +1,25 @@
-# coding=utf-8
 # ------------------------------------
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 # ------------------------------------
 
 import pytest
-
-from testcase import TextAnalyticsTest, GlobalTextAnalyticsAccountPreparer
-from azure.ai.textanalytics import TextAnalyticsClient
+from testcase import TextAnalyticsTest, TextAnalyticsPreparer
+from azure.ai.textanalytics import TextAnalyticsClient, AnalyzeSentimentAction
 from azure.core.credentials import AzureKeyCredential
+import os
+
 
 class TestAuth(TextAnalyticsTest):
+
     @pytest.mark.live_test_only
-    def test_active_directory_auth(self):
-        token = self.generate_oauth_token()
-        endpoint = self.get_oauth_endpoint()
-        text_analytics = TextAnalyticsClient(endpoint, token)
+    @TextAnalyticsPreparer()
+    def test_active_directory_auth(self, **kwargs):
+        textanalytics_test_endpoint = kwargs.pop("textanalytics_test_endpoint")
+        token = self.get_credential(TextAnalyticsClient)
+        text_analytics_endpoint_suffix = os.environ.get("TEXTANALYTICS_ENDPOINT_SUFFIX",".cognitiveservices.azure.com")
+        credential_scopes = ["https://{}/.default".format(text_analytics_endpoint_suffix[1:])]
+        text_analytics = TextAnalyticsClient(textanalytics_test_endpoint, token, credential_scopes=credential_scopes)
 
         docs = [{"id": "1", "text": "I should take my cat to the veterinarian."},
                 {"id": "2", "text": "Este es un document escrito en Español."},
@@ -24,22 +28,44 @@ class TestAuth(TextAnalyticsTest):
 
         response = text_analytics.detect_language(docs)
 
-    @GlobalTextAnalyticsAccountPreparer()
-    def test_empty_credentials(self, resource_group, location, text_analytics_account, text_analytics_account_key):
-        with self.assertRaises(TypeError):
-            text_analytics = TextAnalyticsClient(text_analytics_account, "")
+    @pytest.mark.live_test_only
+    @TextAnalyticsPreparer()
+    def test_analyze_active_directory_auth(self, **kwargs):
+        textanalytics_test_endpoint = kwargs.pop("textanalytics_test_endpoint")
+        token = self.get_credential(TextAnalyticsClient)
+        text_analytics_endpoint_suffix = os.environ.get("TEXTANALYTICS_ENDPOINT_SUFFIX",".cognitiveservices.azure.com")
+        credential_scopes = ["https://{}/.default".format(text_analytics_endpoint_suffix[1:])]
+        text_analytics = TextAnalyticsClient(textanalytics_test_endpoint, token, credential_scopes=credential_scopes)
 
-    @GlobalTextAnalyticsAccountPreparer()
-    def test_bad_type_for_credentials(self, resource_group, location, text_analytics_account, text_analytics_account_key):
-        with self.assertRaises(TypeError):
-            text_analytics = TextAnalyticsClient(text_analytics_account, [])
+        docs = ["Microsoft was founded by Bill Gates and Paul Allen."]
 
-    @GlobalTextAnalyticsAccountPreparer()
-    def test_none_credentials(self, resource_group, location, text_analytics_account, text_analytics_account_key):
-        with self.assertRaises(ValueError):
-            text_analytics = TextAnalyticsClient(text_analytics_account, None)
+        response = text_analytics.begin_analyze_actions(
+            docs,
+            actions=[AnalyzeSentimentAction()],
+        ).result()
 
-    @GlobalTextAnalyticsAccountPreparer()
-    def test_none_endpoint(self, resource_group, location, text_analytics_account, text_analytics_account_key):
-        with self.assertRaises(ValueError):
-            text_analytics = TextAnalyticsClient(None, AzureKeyCredential(text_analytics_account_key))
+        pages = list(response)
+
+    @TextAnalyticsPreparer()
+    def test_empty_credentials(self, **kwargs):
+        textanalytics_test_endpoint = kwargs.pop("textanalytics_test_endpoint")
+        with pytest.raises(TypeError):
+            text_analytics = TextAnalyticsClient(textanalytics_test_endpoint, "")
+
+    @TextAnalyticsPreparer()
+    def test_bad_type_for_credentials(self, **kwargs):
+        textanalytics_test_endpoint = kwargs.pop("textanalytics_test_endpoint")
+        with pytest.raises(TypeError):
+            text_analytics = TextAnalyticsClient(textanalytics_test_endpoint, [])
+
+    @TextAnalyticsPreparer()
+    def test_none_credentials(self, **kwargs):
+        textanalytics_test_endpoint = kwargs.pop("textanalytics_test_endpoint")
+        with pytest.raises(ValueError):
+            text_analytics = TextAnalyticsClient(textanalytics_test_endpoint, None)
+
+    @TextAnalyticsPreparer()
+    def test_none_endpoint(self, **kwargs):
+        textanalytics_test_api_key = kwargs.pop("textanalytics_test_api_key")
+        with pytest.raises(ValueError):
+            text_analytics = TextAnalyticsClient(None, AzureKeyCredential(textanalytics_test_api_key))

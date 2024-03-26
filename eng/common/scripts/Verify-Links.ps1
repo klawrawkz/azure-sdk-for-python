@@ -12,47 +12,52 @@
   Specifies the file that contains a set of links to ignore when verifying.
 
   .PARAMETER devOpsLogging
-  Switch that will enable devops specific logging for warnings  
+  Switch that will enable devops specific logging for warnings.
 
   .PARAMETER recursive
-  Check the links recurisvely based on recursivePattern.  
-  
+  Check the links recurisvely. Applies to links starting with 'baseUrl' parameter. Defaults to true.
+
   .PARAMETER baseUrl
   Recursively check links for all links verified that begin with this baseUrl, defaults to the folder the url is contained in.
-  
+  If 'recursive' parameter is set to false, this parameter has no effect.
+
   .PARAMETER rootUrl
-  Path to the root of the site for resolving rooted relative links, defaults to host root for http and file directory for local files.  
-  
+  Path to the root of the site for resolving rooted relative links, defaults to host root for http and file directory for local files.
+
   .PARAMETER errorStatusCodes
-  List of http status codes that count as broken links. Defaults to 400, 401, 404, SocketError.HostNotFound = 11001, SocketError.NoData = 11004.  
-  
+  List of http status codes that count as broken links. Defaults to 400, 404, SocketError.HostNotFound = 11001, SocketError.NoData = 11004.
+
   .PARAMETER branchReplaceRegex
-  Regex to check if the link needs to be replaced. E.g. ^(https://github.com/.*/(?:blob|tree)/)master(/.*)$
-  
+  Regex to check if the link needs to be replaced. E.g. ^(https://github.com/.*/(?:blob|tree)/)main(/.*)$
+
   .PARAMETER branchReplacementName
-  The substitute branch name or SHA commit.  
-  
+  The substitute branch name or SHA commit.
+
   .PARAMETER checkLinkGuidance
-  Flag to allow checking against azure sdk link guidance. Check link guidance here: https://aka.ms/azsdk/guideline/links.  
-  
+  Flag to allow checking against azure sdk link guidance. Check link guidance here: https://aka.ms/azsdk/guideline/links.
+
   .PARAMETER userAgent
   UserAgent to be configured for web requests. Defaults to current Chrome version.
 
-  .INPUTS
-  None. No required inputs.
+  .PARAMETER inputCacheFile
+  Path to a file that contains a list of links that are known valid so we can skip checking them.
 
-  .OUTPUTS
-  None. Verify-Links.ps1 does not generate any output.
+  .PARAMETER outputCacheFile
+  Path to a file that the script will output all the validated links after running all checks.
 
-  .EXAMPLE
-  PS> .\Verify-Links.ps1
-
-  .EXAMPLE
-  PS> .\Verify-Links.ps1 -urls C:\README.md
+  .PARAMETER requestTimeoutSec
+  The number of seconds before we timeout when sending an individual web request. Default is 15 seconds.
 
   .EXAMPLE
-  PS> .\Verify-Links -urls C:\README.md -checkLinkGuidance $true
+  PS> .\Verify-Links.ps1 C:\README.md
+
+  .EXAMPLE
+  PS> .\Verify-Links.ps1 https://azure.github.io/azure-sdk/index.html
+
+  .EXAMPLE
+  PS> .\Verify-Links C:\README.md -checkLinkGuidance $true
 #>
+[CmdletBinding()]
 param (
   [string[]] $urls,
   [string] $ignoreLinksFile = "$PSScriptRoot/ignore-links.txt",
@@ -60,12 +65,17 @@ param (
   [switch] $recursive = $true,
   [string] $baseUrl = "",
   [string] $rootUrl = "",
-  [array] $errorStatusCodes = @(400, 401, 404, 11001, 11004),
+  [array] $errorStatusCodes = @(400, 404, 11001, 11004),
   [string] $branchReplaceRegex = "",
   [string] $branchReplacementName = "",
   [bool] $checkLinkGuidance = $false,
-  [string] $userAgent
+  [string] $userAgent,
+  [string] $inputCacheFile,
+  [string] $outputCacheFile,
+  [string] $requestTimeoutSec  = 15
 )
+
+Set-StrictMode -Version 3.0
 
 $ProgressPreference = "SilentlyContinue"; # Disable invoke-webrequest progress dialog
 # Regex of the locale keywords.
@@ -88,7 +98,7 @@ function NormalizeUrl([string]$url){
   }
 
   if ($script:rootUrl -eq "") {
-    if ($uri.IsFile) { 
+    if ($uri.IsFile) {
       # for files default to the containing directory
       $script:rootUrl = $script:baseUrl;
     }
@@ -129,7 +139,7 @@ function ResolveUri ([System.Uri]$referralUri, [string]$link)
   # If the link is mailto, skip it.
   if ($link.StartsWith("mailto:")) {
     Write-Verbose "Skipping $link because it is a mailto link."
-    return $null
+    return
   }
 
   $linkUri = [System.Uri]$link;
@@ -156,12 +166,12 @@ function ResolveUri ([System.Uri]$referralUri, [string]$link)
   # If the link is not a web request, like mailto, skip it.
   if (!$linkUri.Scheme.StartsWith("http") -and !$linkUri.IsFile) {
     Write-Verbose "Skipping $linkUri because it is not http or file based."
-    return $null
+    return
   }
 
   if ($null -ne $ignoreLinks -and ($ignoreLinks.Contains($link) -or $ignoreLinks.Contains($linkUri.ToString()))) {
     Write-Verbose "Ignoring invalid link $linkUri because it is in the ignore file."
-    return $null
+    return
   }
 
   return $linkUri;
@@ -177,28 +187,38 @@ function ParseLinks([string]$baseUri, [string]$htmlContent)
   #$hrefs | Foreach-Object { Write-Host $_ }
 
   Write-Verbose "Found $($hrefs.Count) raw href's in page $baseUri";
-  $links = $hrefs | ForEach-Object { ResolveUri $baseUri $_.Groups["href"].Value } | Sort-Object -Unique
+  [string[]] $links = $hrefs | ForEach-Object { ResolveUri $baseUri $_.Groups["href"].Value }
 
   #$links | Foreach-Object { Write-Host $_ }
 
-  return $links
+  if ($null -eq $links) {
+    $links = @()
+  }
+
+  return ,$links
 }
 
-function CheckLink ([System.Uri]$linkUri)
+function CheckLink ([System.Uri]$linkUri, $allowRetry=$true)
 {
   if(!$linkUri.ToString().Trim()) {
     LogWarning "Found Empty link. Please use absolute link instead. Check here for more information: https://aka.ms/azsdk/guideline/links"
     return $false
   }
-  if ($checkedLinks.ContainsKey($linkUri)) { 
-    if (!$checkedLinks[$linkUri]) {
-      LogWarning "broken link $linkUri"
+
+  $originalLinkUri = $linkUri
+  $linkUri = ReplaceGithubLink $linkUri
+
+  $link = $linkUri.ToString()
+
+  if ($checkedLinks.ContainsKey($link)) {
+    if (!$checkedLinks[$link]) {
+      LogWarning "broken link $link"
     }
-    return $checkedLinks[$linkUri] 
+    return $checkedLinks[$link]
   }
 
   $linkValid = $true
-  Write-Verbose "Checking link $linkUri..."  
+  Write-Verbose "Checking link $linkUri..."
 
   if ($linkUri.IsFile) {
     if (!(Test-Path $linkUri.LocalPath)) {
@@ -211,14 +231,14 @@ function CheckLink ([System.Uri]$linkUri)
       $headRequestSucceeded = $true
       try {
         # Attempt HEAD request first
-        $response = Invoke-WebRequest -Uri $linkUri -Method HEAD -UserAgent $userAgent
+        $response = Invoke-WebRequest -Uri $linkUri -Method HEAD -UserAgent $userAgent -TimeoutSec $requestTimeoutSec
       }
       catch {
         $headRequestSucceeded = $false
       }
       if (!$headRequestSucceeded) {
         # Attempt a GET request if the HEAD request failed.
-        $response = Invoke-WebRequest -Uri $linkUri -Method GET -UserAgent $userAgent
+        $response = Invoke-WebRequest -Uri $linkUri -Method GET -UserAgent $userAgent -TimeoutSec $requestTimeoutSec
       }
       $statusCode = $response.StatusCode
       if ($statusCode -ne 200) {
@@ -226,35 +246,99 @@ function CheckLink ([System.Uri]$linkUri)
       }
     }
     catch {
-      $statusCode = $_.Exception.Response.StatusCode.value__
+      
+      $responsePresent = $_.Exception.psobject.Properties.name -contains "Response"
+      if ($responsePresent) {
+        $statusCode = $_.Exception.Response.StatusCode.value__
+      } else {
+        $statusCode = $null
+      }
 
-      if(!$statusCode) {
+      if (!$statusCode) {
         # Try to pull the error code from any inner SocketException we might hit
-        $statusCode = $_.Exception.InnerException.ErrorCode
+        
+        $innerExceptionPresent = $_.Exception.psobject.Properties.name -contains "InnerException"
+        
+        $errorCodePresent = $false
+        if ($innerExceptionPresent -and $_.Exception.InnerException) {
+          $errorCodePresent = $_.Exception.InnerException.psobject.Properties.name -contains "ErrorCode"
+        }
+
+        if ($errorCodePresent) {
+          $statusCode = $_.Exception.InnerException.ErrorCode
+        }
       }
 
       if ($statusCode -in $errorStatusCodes) {
-        LogWarning "[$statusCode] broken link $linkUri"
+        if ($originalLinkUri -ne $linkUri) {
+          LogError "[$statusCode] broken link $originalLinkUri (resolved to $linkUri)"
+        }
+        else {
+          LogError "[$statusCode] broken link $linkUri"
+        }
+
         $linkValid = $false
       }
       else {
+
         if ($null -ne $statusCode) {
-          Write-Host "[$statusCode] while requesting $linkUri"
+
+          # For 429 rate-limiting try to pause if possible
+          if ($allowRetry -and $responsePresent -and $statusCode -eq 429) {
+
+            $headersPresent = $_.Exception.psobject.Properties.name -contains "Headers"
+
+            $retryAfterPresent = $false
+            if ($headersPresent) {
+              $retryAfterPresent = $_.Exception.Headers.psobject.Properties.name -contains "RetryAfter"
+            }
+
+            $retryAfterDeltaPresent = $false
+            if ($retryAfterPresent) {
+              $retryAfterDeltaPresent = $_.Exception.Headers.RetryAfter.psobject.Properties.name -contains "Delta"
+            }
+
+            if ($retryAfterDeltaPresent) {
+              $retryAfter = $_.Exception.Response.Headers.RetryAfter.Delta.TotalSeconds
+            }
+
+            # Default retry after 60 (arbitrary) seconds if no header given
+            if (!$retryAfterDeltaPresent -or $retryAfter -gt 60) { $retryAfter = 60 }
+            Write-Host "Rate-Limited for $retryAfter seconds while requesting $linkUri"
+
+            Start-Sleep -Seconds $retryAfter
+            $linkValid = CheckLink $originalLinkUri -allowRetry $false
+          }
+          else {
+            Write-Host "[$statusCode] handled while requesting $linkUri"
+            # Override and set status code in the cache so it is truthy
+            # so we don't keep checking but we don't think it is valid either
+            $linkValid = $statusCode
+          }
         }
         else {
           Write-Host "Exception while requesting $linkUri"
           Write-Host $_.Exception.ToString()
+          # Override and set exception in the cache so it is truthy
+          # so we don't keep checking but we don't think it is valid either
+          $linkValid = "Exception"
         }
       }
     }
   }
-  
+  elseif ($link.StartsWith("#")) {
+    # Ignore anchor links as we don't have a great way to check them.
+  }
+  else {
+    LogWarning "Link has invalid format $linkUri"
+    $linkValid = $false
+  }
+
   if ($checkLinkGuidance) {
     if ($linkUri.Scheme -eq 'http') {
       LogWarning "DO NOT use 'http' in $linkUri. Please use secure link with https instead. Check here for more information: https://aka.ms/azsdk/guideline/links"
       $linkValid = $false
     }
-    $link = $linkUri.ToString()
     # Check if the url is relative links, suppress the archor link validation.
     if (!$linkUri.IsAbsoluteUri -and !$link.StartsWith("#")) {
       LogWarning "DO NOT use relative link $linkUri. Please use absolute link instead. Check here for more information: https://aka.ms/azsdk/guideline/links"
@@ -272,28 +356,32 @@ function CheckLink ([System.Uri]$linkUri)
     }
   }
 
-  $checkedLinks[$linkUri] = $linkValid
+  $checkedLinks[$link] = $linkValid
   return $linkValid
 }
 
 function ReplaceGithubLink([string]$originLink) {
-  if (!$branchReplacementName) {
+  if (!$branchReplacementName -or !$branchReplaceRegex) {
     return $originLink
   }
   $ReplacementPattern = "`${1}$branchReplacementName`$2"
-  return $originLink -replace $branchReplaceRegex, $ReplacementPattern 
+  return $originLink -replace $branchReplaceRegex, $ReplacementPattern
 }
 
 function GetLinks([System.Uri]$pageUri)
 {
   if ($pageUri.Scheme.StartsWith("http")) {
     try {
-      $response = Invoke-WebRequest -Uri $pageUri -UserAgent $userAgent
+      $response = Invoke-WebRequest -Uri $pageUri -UserAgent $userAgent -TimeoutSec $requestTimeoutSec -MaximumRetryCount 3
       $content = $response.Content
+
+      if ($pageUri.ToString().EndsWith(".md")) {
+        $content = (ConvertFrom-MarkDown -InputObject $content).html
+      }
     }
     catch {
       $statusCode = $_.Exception.Response.StatusCode.value__
-      Write-Error "Invalid page [$statusCode] $pageUri"
+      LogError "Invalid page [$statusCode] $pageUri"
     }
   }
   elseif ($pageUri.IsFile -and (Test-Path $pageUri.LocalPath)) {
@@ -315,19 +403,19 @@ function GetLinks([System.Uri]$pageUri)
     }
   }
   else {
-    Write-Error "Don't know how to process uri $pageUri"
+    LogError "Don't know how to process uri $pageUri"
   }
 
-  $links = ParseLinks $pageUri $content
+  [string[]] $links = ParseLinks $pageUri $content
 
-  return $links;
+  return ,$links;
 }
 
 if ($urls) {
   if ($urls.Count -eq 0) {
     Write-Host "Usage $($MyInvocation.MyCommand.Name) <urls>";
     exit 1;
-  }  
+  }
 }
 
 if ($PSVersionTable.PSVersion.Major -lt 6)
@@ -335,63 +423,121 @@ if ($PSVersionTable.PSVersion.Major -lt 6)
   LogWarning "Some web requests will not work in versions of PS earlier then 6. You are running version $($PSVersionTable.PSVersion)."
 }
 $ignoreLinks = @();
-if (Test-Path $ignoreLinksFile)
-{
-  $ignoreLinks = [Array](Get-Content $ignoreLinksFile | ForEach-Object { ($_ -replace "#.*", "").Trim() } | Where-Object { $_ -ne "" })
+if (Test-Path $ignoreLinksFile) {
+  $ignoreLinks = (Get-Content $ignoreLinksFile).Where({ $_.Trim() -ne "" -and !$_.StartsWith("#") })
 }
 
-$checkedPages = @{};
-$checkedLinks = @{};
-$badLinks = @{};
+# Use default hashtable constructor instead of @{} because we need them to be case sensitive
+$checkedPages = New-Object Hashtable
+$checkedLinks = New-Object Hashtable
+
+if ($inputCacheFile)
+{
+  $cacheContent = ""
+  if ($inputCacheFile.StartsWith("http")) {
+    try {
+      $response = Invoke-WebRequest -Uri $inputCacheFile -TimeoutSec $requestTimeoutSec -MaximumRetryCount 3
+      $cacheContent = $response.Content
+    }
+    catch {
+      $statusCode = $_.Exception.Response.StatusCode.value__
+      LogError "Failed to read cache file from  page [$statusCode] $inputCacheFile"
+    }
+  }
+  elseif (Test-Path $inputCacheFile) {
+    $cacheContent = Get-Content $inputCacheFile -Raw
+  }
+  $goodLinks = $cacheContent.Split("`n").Where({ $_.Trim() -ne "" -and !$_.StartsWith("#") })
+
+  foreach ($goodLink in $goodLinks) {
+    $checkedLinks[$goodLink] = $true
+  }
+}
+
+$cachedLinksCount = $checkedLinks.Count
+
+if ($cachedLinksCount) {
+  Write-Host "Skipping checks on $cachedLinksCount links found in the given cache of known good links."
+}
+
+$badLinks = New-Object Hashtable
 $pageUrisToCheck = new-object System.Collections.Queue
 foreach ($url in $urls) {
-  $uri = NormalizeUrl $url  
+  $uri = NormalizeUrl $url
   $pageUrisToCheck.Enqueue($uri);
 }
 
+if ($devOpsLogging) {
+  Write-Host "##[group]Link checking details"
+}
 while ($pageUrisToCheck.Count -ne 0)
 {
   $pageUri = $pageUrisToCheck.Dequeue();
-  if ($checkedPages.ContainsKey($pageUri)) { continue }
-  $checkedPages[$pageUri] = $true;
+  Write-Verbose "Processing pageUri $pageUri"
+  try {
+    if ($checkedPages.ContainsKey($pageUri)) { continue }
+    $checkedPages[$pageUri] = $true;
 
-  $linkUris = GetLinks $pageUri
-  Write-Host "Found $($linkUris.Count) links on page $pageUri";
-  $badLinksPerPage = @();
-  foreach ($linkUri in $linkUris) {
-    $replacedLink = ReplaceGithubLink $linkUri
-    $isLinkValid = CheckLink $replacedLink
-    if (!$isLinkValid -and !$badLinksPerPage.Contains($linkUri)) {
-      if (!$linkUri.ToString().Trim()) {
-        $linkUri = $emptyLinkMessage
+    [string[]] $linkUris = GetLinks $pageUri
+    Write-Host "Checking $($linkUris.Count) links found on page $pageUri";
+    $badLinksPerPage = @();
+    foreach ($linkUri in $linkUris) {
+      $isLinkValid = CheckLink $linkUri
+      if (!$isLinkValid -and !$badLinksPerPage.Contains($linkUri)) {
+        if (!$linkUri.ToString().Trim()) {
+          $linkUri = $emptyLinkMessage
+        }
+        $badLinksPerPage += $linkUri
       }
-      $badLinksPerPage += $linkUri
-    }
-    if ($recursive -and $isLinkValid) {
-      if ($linkUri.ToString().StartsWith($baseUrl) -and !$checkedPages.ContainsKey($linkUri)) {
-        $pageUrisToCheck.Enqueue($linkUri);
+      if ($recursive -and $isLinkValid) {
+        if ($linkUri.ToString().StartsWith($baseUrl) -and !$checkedPages.ContainsKey($linkUri)) {
+          $pageUrisToCheck.Enqueue($linkUri);
+        }
       }
     }
-  }
-  if ($badLinksPerPage.Count -gt 0) {
-    $badLinks[$pageUri] = $badLinksPerPage
-  }
-}
-
-if ($badLinks.Count -gt 0) {
-  Write-Host "Summary of broken links:"
-}
-foreach ($pageLink in $badLinks.Keys) {
-  Write-Host "'$pageLink' has $($badLinks[$pageLink].Count) broken link(s):"
-  foreach ($brokenLink in $badLinks[$pageLink]) {
-    Write-Host "  $brokenLink"
+    if ($badLinksPerPage.Count -gt 0) {
+      $badLinks[$pageUri] = $badLinksPerPage
+    }
+  } catch {
+    Write-Host "Exception encountered while processing pageUri $pageUri : $($_.Exception)"
+    throw
   }
 }
 
-if ($badLinks.Count -gt 0) {
-  LogError "Found $($checkedLinks.Count) links with $($badLinks.Count) page(s) broken."
-} 
-else {
-  Write-Host "Found $($checkedLinks.Count) links. No broken links found."
+try {
+  if ($devOpsLogging) {
+    Write-Host "##[endgroup]"
+  }
+
+  if ($badLinks.Count -gt 0) {
+    Write-Host "Summary of broken links:"
+  }
+  foreach ($pageLink in $badLinks.Keys) {
+    Write-Host "'$pageLink' has $($badLinks[$pageLink].Count) broken link(s):"
+    foreach ($brokenLink in $badLinks[$pageLink]) {
+      Write-Host "  $brokenLink"
+    }
+  }
+
+  $linksChecked = $checkedLinks.Count - $cachedLinksCount
+
+  if ($badLinks.Count -gt 0) {
+    Write-Host "Checked $linksChecked links with $($badLinks.Count) broken link(s) found."
+  }
+  else {
+    Write-Host "Checked $linksChecked links. No broken links found."
+  }
+
+  if ($outputCacheFile)
+  {
+    $goodLinks = $checkedLinks.Keys.Where({ "True" -eq $checkedLinks[$_].ToString() }) | Sort-Object
+
+    Write-Host "Writing the list of validated links to $outputCacheFile"
+    $goodLinks | Set-Content $outputCacheFile
+  }
+} catch {
+  Write-Host "Exception encountered after all pageUris have been processed : $($_.Exception)"
+  throw
 }
+
 exit $badLinks.Count

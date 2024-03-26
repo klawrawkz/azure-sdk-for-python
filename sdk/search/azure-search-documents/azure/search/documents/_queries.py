@@ -3,33 +3,24 @@
 # Licensed under the MIT License. See License.txt in the project root for
 # license information.
 # --------------------------------------------------------------------------
-from typing import TYPE_CHECKING
-
+from typing import Type, Union, List, cast
 from ._generated.models import AutocompleteRequest, SearchRequest, SuggestRequest
 
-if TYPE_CHECKING:
-    # pylint:disable=unused-import
-    from typing import Any, List, Type, Union
 
+class _QueryBase:
 
-class _QueryBase(object):
+    _request_type: Union[Type[AutocompleteRequest], Type[SearchRequest], Type[SuggestRequest]] = cast(
+        Union[Type[AutocompleteRequest], Type[SearchRequest], Type[SuggestRequest]],
+        None,
+    )
 
-    _request_type = (
-        None
-    )  # type: Union[Type[AutocompleteRequest], Type[SearchRequest], Type[SuggestRequest]]
-
-    def __init__(self, **kwargs):
-        # type: (**Any) -> None
+    def __init__(self, **kwargs) -> None:
         self._request = self._request_type(**kwargs)  # pylint:disable=not-callable
 
-    def __repr__(self):
-        # type: () -> str
-        return "<{} [{}]>".format(self.__class__.__name__, self._request.search_text)[
-            :1024
-        ]
+    def __repr__(self) -> str:
+        return "<{} [{}]>".format(self.__class__.__name__, self._request.search_text)[:1024]
 
-    def filter(self, expression):
-        # type: (str) -> None
+    def filter(self, expression: str) -> None:
         """Add a `filter` expression for the search results.
 
         :param expression: An ODate expression of for the query filter.
@@ -38,17 +29,17 @@ class _QueryBase(object):
         self._request.filter = expression
 
     @property
-    def request(self):
+    def request(self) -> Union[AutocompleteRequest, SearchRequest, SuggestRequest]:
         """The service request for this operation.
 
+        :return: The service request for this operation.
+        :rtype: AutocompleteRequest or SearchRequest or SuggestRequest
         """
         return self._request
 
 
 class AutocompleteQuery(_QueryBase):
-    """Represent an autocomplete query again an Azure Search index.
-
-    """
+    """Represent an autocomplete query again an Azure Search index."""
 
     _request_type = AutocompleteRequest
 
@@ -56,33 +47,37 @@ class AutocompleteQuery(_QueryBase):
 
 
 class SearchQuery(_QueryBase):
-    """Represent a rich search query again an Azure Search index.
-
-    """
+    """Represent a rich search query again an Azure Search index."""
 
     _request_type = SearchRequest
 
     __doc__ = SearchRequest.__doc__
 
-    def order_by(self, *fields):
-        # type: (*str) -> None
+    def order_by(self, *fields: Union[str, List[str]]) -> None:
         """Update the `orderby` property for the search results.
 
-        :param fields: An list of fields for the query result to be ordered by.
-        :type expression: str
+        :param fields: A list of fields for the query result to be ordered by.
+        :type fields: str or list[str]
         :raises: ValueError
         """
         if not fields:
             raise ValueError("At least one field must be provided")
+        if not fields:
+            raise ValueError("At least one field must be provided")
+        selects = []
+        for field in fields:
+            if isinstance(field, list):
+                selects.append(",".join(field))
+            else:
+                selects.append(field)
+        request = cast(SearchRequest, self._request)
+        request.order_by = ",".join(selects)
 
-        self._request.order_by = ",".join(fields)
-
-    def select(self, *fields):
-        # type: (*str) -> None
+    def select(self, *fields: Union[str, List[str]]) -> None:
         """Update the `select` property for the search results.
 
-        :param fields: An list of fields for the query result to return.
-        :type expression: str
+        :param fields: A list of fields for the query result to return.
+        :type fields: str or list[str]
         :raises: ValueError
         """
         if not fields:
@@ -93,24 +88,42 @@ class SearchQuery(_QueryBase):
                 selects.append(",".join(field))
             else:
                 selects.append(field)
-        self._request.select = ",".join(selects)
+        request = cast(SearchRequest, self._request)
+        request.select = ",".join(selects)
 
 
 class SuggestQuery(_QueryBase):
-    """Represent a search suggestion query again an Azure Search index.
-
-    """
+    """Represent a search suggestion query again an Azure Search index."""
 
     _request_type = SuggestRequest
 
     __doc__ = SuggestRequest.__doc__
 
-    def select(self, *fields):
-        # type: (*str) -> None
+    def order_by(self, *fields: Union[str, List[str]]) -> None:
+        """Update the `orderby` property for the search results.
+
+        :param fields: A list of fields for the query result to be ordered by.
+        :type fields: str or list[str]
+        :raises: ValueError
+        """
+        if not fields:
+            raise ValueError("At least one field must be provided")
+        if not fields:
+            raise ValueError("At least one field must be provided")
+        selects = []
+        for field in fields:
+            if isinstance(field, list):
+                selects.append(",".join(field))
+            else:
+                selects.append(field)
+        request = cast(SuggestRequest, self._request)
+        request.order_by = ",".join(selects)
+
+    def select(self, *fields: Union[str, List[str]]) -> None:
         """Update the `select` property for the search results.
 
-        :param fields: An list of fields for the query result to return.
-        :type expression: str
+        :param fields: A list of fields for the query result to return.
+        :type fields: str or list[str]
         :raises: ValueError
         """
         if not fields:
@@ -122,4 +135,5 @@ class SuggestQuery(_QueryBase):
                 selects.append(",".join(field))
             else:
                 selects.append(field)
-        self._request.select = ",".join(selects)
+        request = cast(SuggestRequest, self._request)
+        request.select = ",".join(selects)

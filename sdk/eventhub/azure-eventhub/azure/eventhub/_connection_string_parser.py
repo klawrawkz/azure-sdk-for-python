@@ -2,12 +2,9 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse  # type: ignore
-
-from ._common import DictMixin
+from typing import Any, Dict, Optional
+from ._mixin import DictMixin
+from ._client_base import _parse_conn_str
 
 
 class EventHubConnectionStringProperties(DictMixin):
@@ -15,94 +12,95 @@ class EventHubConnectionStringProperties(DictMixin):
     Properties of a connection string.
     """
 
-    def __init__(self, **kwargs):
-        self._fully_qualified_namespace = kwargs.pop("fully_qualified_namespace", None)
-        self._endpoint = kwargs.pop("endpoint", None)
-        self._eventhub_name = kwargs.pop("eventhub_name", None)
-        self._shared_access_signature = kwargs.pop("shared_access_signature", None)
-        self._shared_access_key_name = kwargs.pop("shared_access_key_name", None)
-        self._shared_access_key = kwargs.pop("shared_access_key", None)
+    def __init__( # pylint: disable=unused-argument
+        self,
+        *,
+        fully_qualified_namespace: str,
+        endpoint: str,
+        eventhub_name: Optional[str] = None,
+        shared_access_signature: Optional[str] = None,
+        shared_access_key_name: Optional[str] = None,
+        shared_access_key: Optional[str] = None,
+        **kwargs: Any
+    ) -> None:
+        self._fully_qualified_namespace: str = fully_qualified_namespace
+        self._endpoint: str = endpoint
+        self._eventhub_name: Optional[str] = eventhub_name
+        self._shared_access_signature: Optional[str] = shared_access_signature
+        self._shared_access_key_name: Optional[str] = shared_access_key_name
+        self._shared_access_key: Optional[str] = shared_access_key
 
     @property
-    def fully_qualified_namespace(self):
+    def fully_qualified_namespace(self) -> str:
         """The fully qualified host name for the Event Hubs namespace.
         The namespace format is: `<yournamespace>.servicebus.windows.net`.
+
+        :rtype: str
         """
         return self._fully_qualified_namespace
 
     @property
-    def endpoint(self):
-        """The endpoint for the Event Hubs resource. In the format sb://<FQDN>/"""
+    def endpoint(self) -> str:
+        """The endpoint for the Event Hubs resource. In the format sb://<FQDN>/
+
+        :rtype: str
+        """
         return self._endpoint
 
     @property
-    def eventhub_name(self):
-        """Optional. The name of the Event Hub, represented by `EntityPath` in the connection string."""
+    def eventhub_name(self) -> Optional[str]:
+        """Optional. The name of the Event Hub, represented by `EntityPath` in the connection string.
+
+        :rtype: str
+        """
         return self._eventhub_name
 
     @property
-    def shared_access_signature(self):
+    def shared_access_signature(self) -> Optional[str]:
         """
         This can be provided instead of the shared_access_key_name and the shared_access_key.
+
+        :rtype: str
         """
         return self._shared_access_signature
 
     @property
-    def shared_access_key_name(self):
+    def shared_access_key_name(self) -> Optional[str]:
         """
         The name of the shared_access_key. This must be used along with the shared_access_key.
+
+        :rtype: str
         """
         return self._shared_access_key_name
 
     @property
-    def shared_access_key(self):
+    def shared_access_key(self) -> Optional[str]:
         """
         The shared_access_key can be used along with the shared_access_key_name as a credential.
+
+        :rtype: str
         """
         return self._shared_access_key
 
 
-def parse_connection_string(conn_str):
-    # type(str) -> EventHubConnectionStringProperties
+def parse_connection_string(conn_str: str) -> "EventHubConnectionStringProperties":
     """Parse the connection string into a properties bag containing its component parts.
 
     :param conn_str: The connection string that has to be parsed.
     :type conn_str: str
+    :return: A properties bag containing the parsed connection string.
     :rtype: ~azure.eventhub.EventHubConnectionStringProperties
     """
-    conn_settings = [s.split("=", 1) for s in conn_str.split(";")]
-    if any(len(tup) != 2 for tup in conn_settings):
-        raise ValueError("Connection string is either blank or malformed.")
-    conn_settings = dict(conn_settings)
-    shared_access_signature = None
-    for key, value in conn_settings.items():
-        if key.lower() == "sharedaccesssignature":
-            shared_access_signature = value
-    shared_access_key = conn_settings.get("SharedAccessKey")
-    shared_access_key_name = conn_settings.get("SharedAccessKeyName")
-    if any([shared_access_key, shared_access_key_name]) and not all(
-        [shared_access_key, shared_access_key_name]
-    ):
-        raise ValueError(
-            "Connection string must have both SharedAccessKeyName and SharedAccessKey."
-        )
-    if shared_access_signature is not None and shared_access_key is not None:
-        raise ValueError(
-            "Only one of the SharedAccessKey or SharedAccessSignature must be present."
-        )
-    endpoint = conn_settings.get("Endpoint")
-    if not endpoint:
-        raise ValueError("Connection string is either blank or malformed.")
-    parsed = urlparse(endpoint.rstrip("/"))
-    if not parsed.netloc:
-        raise ValueError("Invalid Endpoint on the Connection String.")
-    namespace = parsed.netloc.strip()
-    props = {
-        "fully_qualified_namespace": namespace,
+    fully_qualified_namespace, policy, key, entity, signature = _parse_conn_str(
+        conn_str, check_case=True
+    )[:-1]
+    endpoint = "sb://" + fully_qualified_namespace + "/"
+    props: Dict[str, Any] = {
+        "fully_qualified_namespace": fully_qualified_namespace,
         "endpoint": endpoint,
-        "eventhub_name": conn_settings.get("EntityPath"),
-        "shared_access_signature": shared_access_signature,
-        "shared_access_key_name": shared_access_key_name,
-        "shared_access_key": shared_access_key,
+        "eventhub_name": entity,
+        "shared_access_signature": signature,
+        "shared_access_key_name": policy,
+        "shared_access_key": key,
     }
     return EventHubConnectionStringProperties(**props)

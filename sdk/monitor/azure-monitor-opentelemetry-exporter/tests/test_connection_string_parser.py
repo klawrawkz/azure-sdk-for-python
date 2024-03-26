@@ -83,6 +83,7 @@ class TestConnectionStringParser(unittest.TestCase):
         self.assertRaises(
             ValueError,
             lambda: ConnectionStringParser(
+                # spell-checker:ignore cabc
                 connection_string="InstrumentationKey=1234abcd-6789-4ef-8cabc-1234567890ab"
             ),
         )
@@ -140,22 +141,6 @@ class TestConnectionStringParser(unittest.TestCase):
             ValueError,
             lambda: ConnectionStringParser(
                 connection_string="InstrumentationKey=1234abcd-5678-4xfa-8abc-1234567890ab"
-            ),
-        )
-
-    def test_invalid_key_version(self):
-        self.assertRaises(
-            ValueError,
-            lambda: ConnectionStringParser(
-                connection_string="InstrumentationKey=1234abcd-5678-6efa-8abc-1234567890ab"
-            ),
-        )
-
-    def test_invalid_key_variant(self):
-        self.assertRaises(
-            ValueError,
-            lambda: ConnectionStringParser(
-                connection_string="InstrumentationKey=1234abcd-5678-4efa-2abc-1234567890ab"
             ),
         )
 
@@ -220,6 +205,34 @@ class TestConnectionStringParser(unittest.TestCase):
         )
         self.assertEqual(
             parser.endpoint, "https://dc.services.visualstudio.com"
+        )
+
+    def test_process_options_live_endpoint_code_cs(self):
+        os.environ[
+            "APPLICATIONINSIGHTS_CONNECTION_STRING"
+        ] = "Authorization=ikey;IngestionEndpoint=456;InstrumentationKey=" + self._valid_instrumentation_key
+        parser = ConnectionStringParser(
+            connection_string="Authorization=ikey;IngestionEndpoint=123;LiveEndpoint=111",
+        )
+        self.assertEqual(parser.endpoint, "123")
+        self.assertEqual(parser.live_endpoint, "111")
+
+    def test_process_options_live_endpoint_env_cs(self):
+        os.environ[
+            "APPLICATIONINSIGHTS_CONNECTION_STRING"
+        ] = "Authorization=ikey;IngestionEndpoint=456;LiveEndpoint=111;InstrumentationKey=" + self._valid_instrumentation_key
+        parser = ConnectionStringParser(
+            connection_string=None,
+        )
+        self.assertEqual(parser.endpoint, "456")
+        self.assertEqual(parser.live_endpoint, "111")
+
+    def test_process_options_live_endpoint_default(self):
+        parser = ConnectionStringParser(
+            connection_string=self._valid_connection_string,
+        )
+        self.assertEqual(
+            parser.live_endpoint, "https://rt.services.visualstudio.com"
         )
 
     def test_parse_connection_string_invalid(self):

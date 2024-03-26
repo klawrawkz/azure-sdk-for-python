@@ -1,7 +1,153 @@
 # Release History
 
-## 4.1.2 (Unreleased)
+## 4.18.1 (Unreleased)
 
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
+## 4.18.0 (2024-03-12)
+
+### Features Added
+
+- Added new enum values to `SystemEventNames` related to Azure Api Center.
+
+## 4.17.0 (2024-02-08)
+This version and all future versions will require Python 3.8+.
+
+### Features Added
+
+- Added new enums values to `SystemEventNames` related to Azure Storage and Azure VMware Solution.
+
+## 4.16.0 (2023-11-08)
+
+### Features Added
+
+- Added new enum values to `SystemEventnames` related to Azure Resource Notifications.
+
+## 4.15.0 (2023-10-12)
+
+### Features Added
+
+- Added new enum values to `SystemEventNames` related to Azure Communication Services and Azure Resource Notifications.
+
+## 4.14.0 (2023-09-13)
+
+### Features Added
+
+- Added new enum values to `SystemEventNames` related to Azure App Configuration and Azure EventGrid.
+
+## 4.13.0 (2023-06-08)
+
+### Features Added
+
+- Added new enum values to `SystemEventNames` related to Azure Container Services.
+
+## 4.12.0b1 (2023-05-22)
+
+### Features Added
+
+- Added a new EventGridClient that supports `publish_cloud_events`, `receive_cloud_events`, `acknowledge_cloud_events` , `release_cloud_events`, and `reject_cloud_events` operations.
+- Added new models to support these new operations on EventGridClient.
+
+## 4.11.0 (2023-05-09)
+
+### Features Added
+
+- Added new enum values to `SystemEventNames` related to Storage Tasks, Azure Communication Services and Azure HealthcareApis.
+
+## 4.10.0 (2023-04-11)
+
+### Features Added
+
+- Added new enum values to `SystemEventNames` related to Azure Communication Services, DataBox and ApiManagementGateway APIs.
+
+### Bugs Fixed
+
+- `SystemEventNames` enums for APIManagement were incorrectly capitalized, changed `Api` to `API`.
+
+### Other Changes
+
+- Removed `msrest` dependency and `six` dependency
+- Added `isodate` dependency
+
+## 4.9.1 (2022-11-08)
+
+- This version and all future versions will require Python 3.7+.
+
+### Features Added
+
+- Added new enum values to `SystemEventNames` related to health care APIs.
+
+## 4.9.0 (2022-07-05)
+
+### Features Added
+
+- Added support for publishing events to a channel.
+
+## 4.9.0b1 (2022-04-07)
+
+### Features Added
+
+- Added support for publishing events to a channel.
+
+## 4.8.0 (2022-04-06)
+
+- This version and all future versions will require Python 3.6+. Python 2.7 is no longer supported.
+
+### Features Added
+
+- Added new enum values to `SystemEventNames` related to health care APIs.
+
+## 4.7.1 (2021-11-18)
+
+### Bugs Fixed
+
+- The `send` API will raise on exceptions.
+
+## 4.7.0 (2021-11-09)
+
+### Features Added
+
+- Added support for publishing native CNCF cloudevents (https://pypi.org/project/cloudevents/).
+
+## 4.6.0 (2021-10-05)
+
+### Features Added
+
+- Added new enum values to `SystemEvents`.
+
+## 4.5.0 (2021-08-10)
+
+### Features Added
+
+- Added a new enum value `Microsoft.ContainerService.NewKubernetesVersionAvailable` to `SystemEvents`.
+- Added a `from_json` method which now accepts storage QueueMessage, eventhub's EventData or ServiceBusMessage or simply json bytes to return an `EventGridEvent`
+
+## 4.4.0 (2021-07-19)
+
+- Bumped `msrest` dependency to `0.6.21` to align with mgmt package.
+
+### Features Added
+
+- `EventGridPublisherClient` now supports Azure Active Directory (AAD) for authentication.
+
+## 4.3.0 (2021-06-09)
+
+  **New Features**
+  - Added new event names related to blob inventory to the `SystemEventNames` enum.
+
+  **Bug Fixes**
+  - Replaced the `ServiceBusDeadletterMessagesAvailableWithNoListenerEventName` with the right value.
+
+## 4.2.0 (2021-05-12)
+
+  **New Features**
+  - Added new event names to the `SystemEventNames` enum.
 
 ## 4.1.1 (2021-04-07)
 
@@ -15,7 +161,7 @@
 
 ## 4.0.0 (2021-03-09)
 
-  **Note:** This is the first stable release of our efforts to create a user-friendly and Pythonic client library for Azure EventGrid. Users migrating from `v1.x` are advised to view the [migration guide](https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/eventgrid/azure-eventgrid/migration_guide.md).
+  **Note:** This is the first stable release of our efforts to create a user-friendly and Pythonic client library for Azure EventGrid. Users migrating from `v1.x` are advised to view the [migration guide](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/eventgrid/azure-eventgrid/migration_guide.md).
 
   **New Features**
   - `azure-eventgrid` package now supports `azure.core.messaging.CloudEvent` which honors the CNCF CloudEvent spec.
@@ -50,7 +196,7 @@
   - `azure.eventgrid.generate_shared_access_signature` method is now renamed to `generate_sas`.
   - `EventGridConsumer`is now removed. Please see the samples to see how events can be deserialized.
   - `CustomEvent` model is removed. Dictionaries must be used to send a custom schema.
-  
+
   **Bug Fixes**
   - `EventGridEvent` has two additional required positional parameters namely, `data` and `data_version`.
   - `EventGridPublisherClient` now appropriately throws a `ValueError` if an invalid credential is passed during initialization.
@@ -117,7 +263,7 @@ introduce breaking changes.
       - "is" should not be used at all.
       - "format" will return the string value, where "%s" string
         formatting will return `NameOfEnum.stringvalue`. Format syntax
-        should be prefered.
+        should be preferred.
   - New Long Running Operation:
       - Return type changes from
         `msrestazure.azure_operation.AzureOperationPoller` to

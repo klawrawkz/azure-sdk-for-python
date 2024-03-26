@@ -1,0 +1,5 @@
+-e ../../../tools/azure-devtools
+-e ../../../tools/azure-sdk-tools
+pytest-mock
+pytest-testdox
+flake8

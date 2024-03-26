@@ -3,10 +3,11 @@
 # Licensed under the MIT License. See License.txt in the project root for
 # license information.
 # --------------------------------------------------------------------------
-from sys import version_info
-from re import match
+import re
 from enum import Enum
+from typing import Any
 
+from azure.core import CaseInsensitiveEnumMeta
 from azure.core.exceptions import (
     HttpResponseError,
     ResourceNotFoundError,
@@ -17,30 +18,25 @@ from azure.core.exceptions import (
 )
 from azure.core.pipeline.policies import ContentDecodePolicy
 
-if version_info < (3,):
 
-    def _str(value):
-        if isinstance(value, unicode):  # pylint: disable=undefined-variable
-            return value.encode("utf-8")
-
-        return str(value)
-else:
-    _str = str
-
-
-
-def _to_str(value):
-    return _str(value) if value is not None else None
-
-
-_ERROR_ATTRIBUTE_MISSING = "'{0}' object has no attribute '{1}'"
-_ERROR_BATCH_COMMIT_FAIL = "Batch Commit Fail"
 _ERROR_TYPE_NOT_SUPPORTED = "Type not supported when sending data to the service: {0}."
 _ERROR_VALUE_TOO_LARGE = "{0} is too large to be cast to type {1}."
-_ERROR_ATTRIBUTE_MISSING = "'{0}' object has no attribute '{1}'"
 _ERROR_UNKNOWN = "Unknown error ({0})"
 _ERROR_VALUE_NONE = "{0} should not be None."
-_ERROR_UNKNOWN_KEY_WRAP_ALGORITHM = "Unknown key wrap algorithm."
+
+# Storage table validation regex breakdown:
+# ^ Match start of string.
+# [a-zA-Z]{1} Match any letter for exactly 1 character.
+# [a-zA-Z0-9]{2,62} Match any alphanumeric character for between 2 and 62 characters.
+# $ End of string
+_STORAGE_VALID_TABLE = re.compile(r"^[a-zA-Z]{1}[a-zA-Z0-9]{2,62}$")
+
+# Cosmos table validation regex breakdown:
+# ^ Match start of string.
+# [^/\#?]{0,254} Match any character that is not /\#? for between 0-253 characters.
+# [^ /\#?]{1} Match any character that is not /\#? or a space for exactly 1 character.
+# $ End of string
+_COSMOS_VALID_TABLE = re.compile(r"^[^/\\#?]{0,253}[^ /\\#?]{1}$")
 
 
 def _validate_not_none(param_name, param):
@@ -52,35 +48,92 @@ def _wrap_exception(ex, desired_type):
     msg = ""
     if len(ex.args) > 0:
         msg = ex.args[0]
-    if version_info >= (3,):
-        # Automatic chaining in Python 3 means we keep the trace
-        return desired_type(msg)
-
-    # There isn't a good solution in 2 for keeping the stack trace
-    # in general, or that will not result in an error in 3
-    # However, we can keep the previous error type and message
+    return desired_type(msg)
     # TODO: In the future we will log the trace
-    return desired_type("{}: {}".format(ex.__class__.__name__, msg))
 
 
-def _validate_table_name(table_name):
-    if match("^[a-zA-Z]{1}[a-zA-Z0-9]{2,62}$", table_name) is None:
+def _validate_storage_tablename(table_name):
+    if _STORAGE_VALID_TABLE.match(table_name) is None:
         raise ValueError(
-            "Table names must be alphanumeric, cannot begin with a number, and must be between 3-63 characters long."
+            "Storage table names must be alphanumeric, cannot begin with a number, \
+                and must be between 3-63 characters long."
         )
 
 
-def _process_table_error(storage_error):
-    raise_error = HttpResponseError
-    error_code = storage_error.response.headers.get("x-ms-error-code")
-    error_message = storage_error.message
+def _validate_cosmos_tablename(table_name):
+    if _COSMOS_VALID_TABLE.match(table_name) is None:
+        raise ValueError(
+            "Cosmos table names must contain from 1-255 characters, \
+                and they cannot contain /, \\, #, ?, or a trailing space."
+        )
+
+
+def _validate_tablename_error(decoded_error, table_name):
+    if (
+        decoded_error.error_code == "InvalidResourceName"
+        and "The specified resource name contains invalid characters" in decoded_error.message
+    ):
+        # This error is raised by Storage for any table/entity operations where the table name contains
+        # forbidden characters.
+        _validate_storage_tablename(table_name)
+    elif (
+        decoded_error.error_code == "InvalidResourceName"
+        and "The specifed resource name contains invalid characters" in decoded_error.message
+    ):
+        # This error is raised by Storage for any table/entity operations where the table name contains
+        # forbidden characters.
+        _validate_storage_tablename(table_name)
+    elif (
+        decoded_error.error_code == "OutOfRangeInput"
+        and "The specified resource name length is not within the permissible limits" in decoded_error.message
+    ):
+        # This error is raised by Storage for any table/entity operations where the table name is < 3 or > 63
+        # characters long
+        _validate_storage_tablename(table_name)
+    elif decoded_error.error_code == "InternalServerError" and (
+        "The resource name presented contains invalid character" in decoded_error.message
+        or "The resource name can't end with space" in decoded_error.message
+    ):
+        # This error is raised by Cosmos during create_table if the table name contains forbidden
+        # characters or ends in a space.
+        _validate_cosmos_tablename(table_name)
+    elif decoded_error.error_code == "BadRequest" and "The input name is invalid." in decoded_error.message:
+        # This error is raised by Cosmos specifically during create_table if the table name is 255 or more
+        # characters. Entity operations on a too-long-table name simply result in a ResourceNotFoundError.
+        _validate_cosmos_tablename(table_name)
+    elif decoded_error.error_code == "InvalidInput" and (
+        "Request url is invalid." in decoded_error.message
+        or "One of the input values is invalid." in decoded_error.message
+        or "The table name contains an invalid character" in decoded_error.message
+        or "Table name cannot end with a space." in decoded_error.message
+    ):
+        # This error is raised by Cosmos for any entity operations or delete_table if the table name contains
+        # forbidden characters (except in the case of trailing space and backslash).
+        _validate_cosmos_tablename(table_name)
+    elif decoded_error.error_code == "Unauthorized" and (
+        "The input authorization token can't serve the request." in decoded_error.message
+        or "The MAC signature found in the HTTP request" in decoded_error.message
+    ):
+        # This error is raised by Cosmos specifically on entity operations where the table name contains
+        # some forbidden characters, and seems to be a bug in the service authentication.
+        _validate_cosmos_tablename(table_name)
+
+
+def _validate_key_values(decoded_error, partition_key, row_key):
+    if decoded_error.error_code == "PropertiesNeedValue":
+        if partition_key is None:
+            raise ValueError("PartitionKey must be present in an entity") from decoded_error
+        if row_key is None:
+            raise ValueError("RowKey must be present in an entity") from decoded_error
+
+
+def _decode_error(response, error_message=None, error_type=None, **kwargs):  # pylint: disable=too-many-branches
+    error_code = response.headers.get("x-ms-error-code")
     additional_data = {}
     try:
-        error_body = ContentDecodePolicy.deserialize_from_http_generics(
-            storage_error.response
-        )
+        error_body = ContentDecodePolicy.deserialize_from_http_generics(response)
         if isinstance(error_body, dict):
-            for info in error_body["odata.error"]:
+            for info in error_body.get("odata.error", {}):
                 if info == "code":
                     error_code = error_body["odata.error"][info]
                 elif info == "message":
@@ -89,6 +142,7 @@ def _process_table_error(storage_error):
                     additional_data[info.tag] = info.text
         else:
             if error_body:
+                # Attempt to parse from XML element
                 for info in error_body.iter():
                     if info.tag.lower().find("code") != -1:
                         error_code = info.text
@@ -96,117 +150,195 @@ def _process_table_error(storage_error):
                         error_message = info.text
                     else:
                         additional_data[info.tag] = info.text
+    except AttributeError:
+        # Response body wasn't XML, give up trying to parse
+        error_message = str(error_body)
     except DecodeError:
         pass
 
     try:
-        if error_code:
+        if not error_type:
             error_code = TableErrorCode(error_code)
-            if error_code in [TableErrorCode.condition_not_met]:
-                raise_error = ResourceModifiedError
-            if error_code in [
+            if error_code in [TableErrorCode.condition_not_met, TableErrorCode.update_condition_not_satisfied]:
+                error_type = ResourceModifiedError
+            elif error_code in [
                 TableErrorCode.invalid_authentication_info,
                 TableErrorCode.authentication_failed,
             ]:
-                raise_error = ClientAuthenticationError
-            if error_code in [
+                error_type = ClientAuthenticationError
+            elif error_code in [
                 TableErrorCode.resource_not_found,
                 TableErrorCode.table_not_found,
                 TableErrorCode.entity_not_found,
                 ResourceNotFoundError,
             ]:
-                raise_error = ResourceNotFoundError
-            if error_code in [
+                error_type = ResourceNotFoundError
+            elif error_code in [
                 TableErrorCode.resource_already_exists,
                 TableErrorCode.table_already_exists,
                 TableErrorCode.account_already_exists,
                 TableErrorCode.entity_already_exists,
                 ResourceExistsError,
             ]:
-                raise_error = ResourceExistsError
+                error_type = ResourceExistsError
+            else:
+                error_type = HttpResponseError
     except ValueError:
         # Got an unknown error code
-        pass
+        error_type = HttpResponseError
 
     try:
-        error_message += "\nErrorCode:{}".format(error_code.value)
+        error_message = f"{error_message}\nErrorCode:{error_code.value}"
     except AttributeError:
-        error_message += "\nErrorCode:{}".format(error_code)
+        error_message = f"{error_message}\nErrorCode:{error_code}"
     for name, info in additional_data.items():
-        error_message += "\n{}:{}".format(name, info)
+        error_message += f"\n{name}:{info}"
 
-    error = raise_error(message=error_message, response=storage_error.response)
+    error = error_type(message=error_message, response=response, **kwargs)
     error.error_code = error_code
     error.additional_info = additional_data
-    raise error
+    return error
 
 
-class TableErrorCode(str, Enum):
+def _process_table_error(storage_error, table_name=None):
+    try:
+        decoded_error = _decode_error(storage_error.response, storage_error.message)
+    except AttributeError as exc:
+        raise storage_error from exc
+    if table_name:
+        _validate_tablename_error(decoded_error, table_name)
+    raise decoded_error from storage_error
+
+
+def _reprocess_error(decoded_error, identifiers=None):
+    try:
+        error_code = decoded_error.error_code
+        message = decoded_error.message
+        authentication_failed = "Server failed to authenticate the request"
+        invalid_input = (
+            "The number of keys specified in the URI does not match number of key properties for the resource"
+        )
+        invalid_query_parameter_value = "Value for one of the query parameters specified in the request URI is invalid"
+        invalid_url = "Request url is invalid"
+        properties_need_value = "The values are not specified for all properties in the entity"
+        table_does_not_exist = "The table specified does not exist"
+        if (  # pylint: disable=too-many-boolean-expressions
+            (error_code == "AuthenticationFailed" and authentication_failed in message)
+            or (error_code == "InvalidInput" and invalid_input in message)
+            or (error_code == "InvalidInput" and invalid_url in message)
+            or (error_code == "InvalidQueryParameterValue" and invalid_query_parameter_value in message)
+            or (error_code == "PropertiesNeedValue" and properties_need_value in message)
+            or (error_code == "TableNotFound" and table_does_not_exist in message)
+        ):
+            args_list = list(decoded_error.args)
+            args_list[0] += (
+                "\nA possible cause of this error could be that the account URL used to"
+                "create the Client includes an invalid path, for example the table name. Please check your account URL."
+            )
+            decoded_error.args = tuple(args_list)
+
+        if identifiers is not None and error_code == "InvalidXmlDocument" and len(identifiers) > 5:
+            raise ValueError(
+                "Too many access policies provided. The server does not support setting more than 5 access policies"
+                "on a single resource."
+            )
+    except AttributeError as exc:
+        raise decoded_error from exc
+
+
+class TableTransactionError(HttpResponseError):
+    """There is a failure in the transaction operations.
+
+    :ivar int index: If available, the index of the operation in the transaction that caused the error.
+     Defaults to 0 in the case where an index was not provided, or the error applies across operations.
+    :ivar ~azure.data.tables.TableErrorCode error_code: The error code.
+    :ivar str message: The error message.
+    :ivar additional_info: Any additional data for the error.
+    :vartype additional_info: Mapping[str, Any]
+    """
+
+    def __init__(self, **kwargs: Any) -> None:
+        super(TableTransactionError, self).__init__(**kwargs)
+        self.index = kwargs.get("index", self._extract_index())
+
+    def _extract_index(self) -> int:
+        try:
+            message_sections = self.message.split(":", 1)
+            return int(message_sections[0])
+        except Exception:  # pylint:disable=broad-except
+            return 0
+
+
+class RequestTooLargeError(TableTransactionError):
+    """An error response with status code 413 - Request Entity Too Large"""
+
+
+class TableErrorCode(str, Enum, metaclass=CaseInsensitiveEnumMeta):
     # Generic storage values
-    account_already_exists = "AccountAlreadyExists"
-    account_being_created = "AccountBeingCreated"
-    account_is_disabled = "AccountIsDisabled"
-    authentication_failed = "AuthenticationFailed"
-    authorization_failure = "AuthorizationFailure"
-    no_authentication_information = "NoAuthenticationInformation"
-    condition_headers_not_supported = "ConditionHeadersNotSupported"
-    condition_not_met = "ConditionNotMet"
-    empty_metadata_key = "EmptyMetadataKey"
-    insufficient_account_permissions = "InsufficientAccountPermissions"
-    internal_error = "InternalError"
-    invalid_authentication_info = "InvalidAuthenticationInfo"
-    invalid_header_value = "InvalidHeaderValue"
-    invalid_http_verb = "InvalidHttpVerb"
-    invalid_input = "InvalidInput"
-    invalid_md5 = "InvalidMd5"
-    invalid_metadata = "InvalidMetadata"
-    invalid_query_parameter_value = "InvalidQueryParameterValue"
-    invalid_range = "InvalidRange"
-    invalid_resource_name = "InvalidResourceName"
-    invalid_uri = "InvalidUri"
-    invalid_xml_document = "InvalidXmlDocument"
-    invalid_xml_node_value = "InvalidXmlNodeValue"
-    md5_mismatch = "Md5Mismatch"
-    metadata_too_large = "MetadataTooLarge"
-    missing_content_length_header = "MissingContentLengthHeader"
-    missing_required_query_parameter = "MissingRequiredQueryParameter"
-    missing_required_header = "MissingRequiredHeader"
-    missing_required_xml_node = "MissingRequiredXmlNode"
-    multiple_condition_headers_not_supported = "MultipleConditionHeadersNotSupported"
-    operation_timed_out = "OperationTimedOut"
-    out_of_range_input = "OutOfRangeInput"
-    out_of_range_query_parameter_value = "OutOfRangeQueryParameterValue"
-    request_body_too_large = "RequestBodyTooLarge"
-    resource_type_mismatch = "ResourceTypeMismatch"
-    request_url_failed_to_parse = "RequestUrlFailedToParse"
-    resource_already_exists = "ResourceAlreadyExists"
-    resource_not_found = "ResourceNotFound"
-    server_busy = "ServerBusy"
-    unsupported_header = "UnsupportedHeader"
-    unsupported_xml_node = "UnsupportedXmlNode"
-    unsupported_query_parameter = "UnsupportedQueryParameter"
-    unsupported_http_verb = "UnsupportedHttpVerb"
+    ACCOUNT_ALREADY_EXISTS = "AccountAlreadyExists"
+    ACCOUNT_BEING_CREATED = "AccountBeingCreated"
+    ACCOUNT_IS_DISABLED = "AccountIsDisabled"
+    AUTHENTICATION_FAILED = "AuthenticationFailed"
+    AUTHORIZATION_FAILURE = "AuthorizationFailure"
+    NO_AUTHENTICATION_INFORMATION = "NoAuthenticationInformation"
+    CONDITION_HEADERS_NOT_SUPPORTED = "ConditionHeadersNotSupported"
+    CONDITION_NOT_MET = "ConditionNotMet"
+    EMPTY_METADATA_KEY = "EmptyMetadataKey"
+    INSUFFICIENT_ACCOUNT_PERMISSIONS = "InsufficientAccountPermissions"
+    INTERNAL_ERROR = "InternalError"
+    INVALID_AUTHENTICATION_INFO = "InvalidAuthenticationInfo"
+    INVALID_HEADER_VALUE = "InvalidHeaderValue"
+    INVALID_HTTP_VERB = "InvalidHttpVerb"
+    INVALID_INPUT = "InvalidInput"
+    INVALID_MD5 = "InvalidMd5"
+    INVALID_METADATA = "InvalidMetadata"
+    INVALID_QUERY_PARAMETER_VALUE = "InvalidQueryParameterValue"
+    INVALID_RANGE = "InvalidRange"
+    INVALID_RESOURCE_NAME = "InvalidResourceName"
+    INVALID_URI = "InvalidUri"
+    INVALID_XML_DOCUMENT = "InvalidXmlDocument"
+    INVALID_XML_NODE_VALUE = "InvalidXmlNodeValue"
+    MD5_MISMATCH = "Md5Mismatch"
+    METADATA_TOO_LARGE = "MetadataTooLarge"
+    MISSING_CONTENT_LENGTH_HEADER = "MissingContentLengthHeader"
+    MISSING_REQUIRED_QUERY_PARAMETER = "MissingRequiredQueryParameter"
+    MISSING_REQUIRED_HEADER = "MissingRequiredHeader"
+    MISSING_REQUIRED_XML_NODE = "MissingRequiredXmlNode"
+    MULTIPLE_CONDITION_HEADERS_NOT_SUPPORTED = "MultipleConditionHeadersNotSupported"
+    OPERATION_TIMED_OUT = "OperationTimedOut"
+    OUT_OF_RANGE_INPUT = "OutOfRangeInput"
+    OUT_OF_RANGE_QUERY_PARAMETER_VALUE = "OutOfRangeQueryParameterValue"
+    REQUEST_BODY_TOO_LARGE = "RequestBodyTooLarge"
+    RESOURCE_TYPE_MISMATCH = "ResourceTypeMismatch"
+    REQUEST_URL_FAILED_TO_PARSE = "RequestUrlFailedToParse"
+    RESOURCE_ALREADY_EXISTS = "ResourceAlreadyExists"
+    RESOURCE_NOT_FOUND = "ResourceNotFound"
+    SERVER_BUSY = "ServerBusy"
+    UNSUPPORTED_HEADER = "UnsupportedHeader"
+    UNSUPPORTED_XML_NODE = "UnsupportedXmlNode"
+    UNSUPPORTED_QUERY_PARAMETER = "UnsupportedQueryParameter"
+    UNSUPPORTED_HTTP_VERB = "UnsupportedHttpVerb"
 
     # table error codes
-    duplicate_properties_specified = "DuplicatePropertiesSpecified"
-    entity_not_found = "EntityNotFound"
-    entity_already_exists = "EntityAlreadyExists"
-    entity_too_large = "EntityTooLarge"
-    host_information_not_present = "HostInformationNotPresent"
-    invalid_duplicate_row = "InvalidDuplicateRow"
-    invalid_value_type = "InvalidValueType"
-    json_format_not_supported = "JsonFormatNotSupported"
-    method_not_allowed = "MethodNotAllowed"
-    not_implemented = "NotImplemented"
-    properties_need_value = "PropertiesNeedValue"
-    property_name_invalid = "PropertyNameInvalid"
-    property_name_too_long = "PropertyNameTooLong"
-    property_value_too_large = "PropertyValueTooLarge"
-    table_already_exists = "TableAlreadyExists"
-    table_being_deleted = "TableBeingDeleted"
-    table_not_found = "TableNotFound"
-    too_many_properties = "TooManyProperties"
-    update_condition_not_satisfied = "UpdateConditionNotSatisfied"
-    x_method_incorrect_count = "XMethodIncorrectCount"
-    x_method_incorrect_value = "XMethodIncorrectValue"
-    x_method_not_using_post = "XMethodNotUsingPost"
+    DUPLICATE_PROPERTIES_SPECIFIED = "DuplicatePropertiesSpecified"
+    ENTITY_NOT_FOUND = "EntityNotFound"
+    ENTITY_ALREADY_EXISTS = "EntityAlreadyExists"
+    ENTITY_TOO_LARGE = "EntityTooLarge"
+    HOST_INFORMATION_NOT_PRESENT = "HostInformationNotPresent"
+    INVALID_DUPLICATE_ROW = "InvalidDuplicateRow"
+    INVALID_VALUE_TYPE = "InvalidValueType"
+    JSON_FORMAT_NOT_SUPPORTED = "JsonFormatNotSupported"
+    METHOD_NOT_ALLOWED = "MethodNotAllowed"
+    NOT_IMPLEMENTED = "NotImplemented"
+    PROPERTIES_NEED_VALUE = "PropertiesNeedValue"
+    PROPERTY_NAME_INVALID = "PropertyNameInvalid"
+    PROPERTY_NAME_TOO_LONG = "PropertyNameTooLong"
+    PROPERTY_VALUE_TOO_LARGE = "PropertyValueTooLarge"
+    TABLE_ALREADY_EXISTS = "TableAlreadyExists"
+    TABLE_BEING_DELETED = "TableBeingDeleted"
+    TABLE_NOT_FOUND = "TableNotFound"
+    TOO_MANY_PROPERTIES = "TooManyProperties"
+    UPDATE_CONDITION_NOT_SATISFIED = "UpdateConditionNotSatisfied"
+    X_METHOD_INCORRECT_COUNT = "XMethodIncorrectCount"
+    X_METHOD_INCORRECT_VALUE = "XMethodIncorrectValue"
+    X_METHOD_NOT_USING_POST = "XMethodNotUsingPost"

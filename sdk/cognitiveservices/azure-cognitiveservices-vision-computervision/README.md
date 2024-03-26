@@ -87,7 +87,7 @@ export ACCOUNT_KEY=$(az cognitiveservices account keys list \
 
 Once you've populated the `ACCOUNT_REGION` and `ACCOUNT_KEY` environment variables, you can create the [ComputerVisionClient][ref_computervisionclient] client object.
 
-```Python
+```python
 from azure.cognitiveservices.vision.computervision import ComputerVisionClient
 from azure.cognitiveservices.vision.computervision.models import VisualFeatureTypes
 from msrest.authentication import CognitiveServicesCredentials
@@ -128,7 +128,7 @@ The following sections provide several code snippets covering some of the most c
 
 You can analyze an image for certain features with [`analyze_image`][ref_computervisionclient_analyze_image]. Use the [`visual_features`][ref_computervision_model_visualfeatures] property to set the types of analysis to perform on the image. Common values are `VisualFeatureTypes.tags` and `VisualFeatureTypes.description`.
 
-```Python
+```python
 url = "https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Broadway_and_Times_Square_by_night.jpg/450px-Broadway_and_Times_Square_by_night.jpg"
 
 image_analysis = client.analyze_image(url,visual_features=[VisualFeatureTypes.tags])
@@ -141,7 +141,7 @@ for tag in image_analysis.tags:
 
 Review the subject domains used to analyze your image with [`list_models`][ref_computervisionclient_list_models]. These domain names are used when [analyzing an image by domain](#analyze-an-image-by-domain). An example of a domain is `landmarks`.
 
-```Python
+```python
 models = client.list_models()
 
 for x in models.models_property:
@@ -152,7 +152,7 @@ for x in models.models_property:
 
 You can analyze an image by subject domain with [`analyze_image_by_domain`][ref_computervisionclient_analyze_image_by_domain]. Get the [list of supported subject domains](#get-subject-domain-list) in order to use the correct domain name.
 
-```Python
+```python
 domain = "landmarks"
 url = "https://images.pexels.com/photos/338515/pexels-photo-338515.jpeg"
 language = "en"
@@ -168,7 +168,7 @@ for landmark in analysis.result["landmarks"]:
 
 You can get a language-based text description of an image with [`describe_image`][ref_computervisionclient_describe_image]. Request several descriptions with the `max_description` property if you are doing text analysis for keywords associated with the image. Examples of a text description for the following image include `a train crossing a bridge over a body of water`, `a large bridge over a body of water`, and `a train crossing a bridge over a large body of water`.
 
-```Python
+```python
 domain = "landmarks"
 url = "http://www.public-domain-photos.com/free-stock-photos-4/travel/san-francisco/golden-gate-bridge-in-san-francisco.jpg"
 language = "en"
@@ -185,7 +185,7 @@ for caption in analysis.captions:
 
 You can get any handwritten or printed text from an image. This requires two calls to the SDK: [`read`][ref_computervisionclient_read] and [`get_read_result`][ref_computervisionclient_get_read_result]. The call to read is asynchronous. In the results of the get_read_result call, you need to check if the first call completed with [`OperationStatusCodes`][ref_computervision_model_operationstatuscodes] before extracting the text data. The results include the text as well as the bounding box coordinates for the text.
 
-```Python
+```python
 # import models
 from azure.cognitiveservices.vision.computervision.models import OperationStatusCodes
 
@@ -218,7 +218,7 @@ You can generate a thumbnail (JPG) of an image with [`generate_thumbnail`][ref_c
 
 This example uses the [Pillow][pypi_pillow] package to save the new thumbnail image locally.
 
-```Python
+```python
 from PIL import Image
 import io
 
@@ -238,11 +238,11 @@ image.save('thumbnail.jpg')
 
 ### General
 
-When you interact with the [ComputerVisionClient][ref_computervisionclient] client object using the Python SDK, the [`ComputerVisionErrorException`][ref_computervision_computervisionerrorexception] class is used to return errors. Errors returned by the service correspond to the same HTTP status codes returned for REST API requests.
+When you interact with the [ComputerVisionClient][ref_computervisionclient] client object using the Python SDK, the [`ComputerVisionErrorResponseException`][ref_computervision_computervisionerrorexception] class is used to return errors. Errors returned by the service correspond to the same HTTP status codes returned for REST API requests.
 
 For example, if you try to analyze an image with an invalid key, a `401` error is returned. In the following snippet, the [error][ref_httpfailure] is handled gracefully by catching the exception and displaying additional information about the error.
 
-```Python
+```python
 
 domain = "landmarks"
 url = "http://www.public-domain-photos.com/free-stock-photos-4/travel/san-francisco/golden-gate-bridge-in-san-francisco.jpg"
@@ -293,14 +293,14 @@ For more extensive documentation on the Computer Vision service, see the [Azure 
 [venv]: https://docs.python.org/3/library/venv.html
 [virtualenv]: https://virtualenv.pypa.io
 
-[source_code]: https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/cognitiveservices/azure-cognitiveservices-vision-computervision
+[source_code]: https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/cognitiveservices/azure-cognitiveservices-vision-computervision
 
 [pypi_computervision]:https://pypi.org/project/azure-cognitiveservices-vision-computervision/
 [pypi_pillow]:https://pypi.org/project/Pillow/
 
 [ref_computervision_sdk]: https://docs.microsoft.com/python/api/azure-cognitiveservices-vision-computervision/azure.cognitiveservices.vision.computervision?view=azure-python
-[ref_computervision_computervisionerrorexception]:https://docs.microsoft.com/python/api/azure-cognitiveservices-vision-computervision/azure.cognitiveservices.vision.computervision.models.computervisionerrorexception?view=azure-python
-[ref_httpfailure]: https://docs.microsoft.com/python/api/msrest/msrest.exceptions.httpoperationerror?view=azure-python
+[ref_computervision_computervisionerrorexception]:https://docs.microsoft.com/python/api/azure-cognitiveservices-vision-computervision/azure.cognitiveservices.vision.computervision.models.computervisionerrorresponseexception?view=azure-python
+[ref_httpfailure]: https://github.com/Azure/msrest-for-python/blob/master/msrest/exceptions.py#L133
 
 
 [computervision_resource]: https://docs.microsoft.com/azure/cognitive-services/computer-vision/vision-api-how-to-topics/howtosubscribe

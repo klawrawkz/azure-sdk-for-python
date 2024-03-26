@@ -1,37 +1,27 @@
-# coding=utf-8
 # ------------------------------------
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 # ------------------------------------
 
 import pytest
-
-from azure.core.pipeline.transport import AioHttpTransport
-from multidict import CIMultiDict, CIMultiDictProxy
+from azure.ai.textanalytics import AnalyzeSentimentAction
 from azure.ai.textanalytics.aio import TextAnalyticsClient
 from azure.core.credentials import AzureKeyCredential
-from testcase import GlobalTextAnalyticsAccountPreparer
-from asynctestcase import AsyncTextAnalyticsTest
+from testcase import TextAnalyticsPreparer
+from testcase import TextAnalyticsTest
+import os
 
 
-class AiohttpTestTransport(AioHttpTransport):
-    """Workaround to vcrpy bug: https://github.com/kevin1024/vcrpy/pull/461
-    """
-    async def send(self, request, **config):
-        response = await super(AiohttpTestTransport, self).send(request, **config)
-        if not isinstance(response.headers, CIMultiDictProxy):
-            response.headers = CIMultiDictProxy(CIMultiDict(response.internal_response.headers))
-            response.content_type = response.headers.get("content-type")
-        return response
+class TestAuth(TextAnalyticsTest):
 
-
-class TestAuth(AsyncTextAnalyticsTest):
     @pytest.mark.live_test_only
-    @GlobalTextAnalyticsAccountPreparer()
-    async def test_active_directory_auth(self):
-        token = self.generate_oauth_token()
-        endpoint = self.get_oauth_endpoint()
-        text_analytics = TextAnalyticsClient(endpoint, token)
+    @TextAnalyticsPreparer()
+    async def test_active_directory_auth(self, **kwargs):
+        textanalytics_test_endpoint = kwargs.pop("textanalytics_test_endpoint")
+        token = self.get_credential(TextAnalyticsClient, is_async=True)
+        text_analytics_endpoint_suffix = os.environ.get("TEXTANALYTICS_ENDPOINT_SUFFIX",".cognitiveservices.azure.com")
+        credential_scopes = ["https://{}/.default".format(text_analytics_endpoint_suffix[1:])]
+        text_analytics = TextAnalyticsClient(textanalytics_test_endpoint, token, credential_scopes=credential_scopes)
 
         docs = [{"id": "1", "text": "I should take my cat to the veterinarian."},
                 {"id": "2", "text": "Este es un document escrito en Español."},
@@ -40,22 +30,47 @@ class TestAuth(AsyncTextAnalyticsTest):
 
         response = await text_analytics.detect_language(docs)
 
-    @GlobalTextAnalyticsAccountPreparer()
-    async def test_empty_credentials(self, resource_group, location, text_analytics_account, text_analytics_account_key):
-        with self.assertRaises(TypeError):
-            text_analytics = TextAnalyticsClient(text_analytics_account, "")
+    @pytest.mark.live_test_only
+    @TextAnalyticsPreparer()
+    async def test_analyze_active_directory_auth(self, **kwargs):
+        textanalytics_test_endpoint = kwargs.pop("textanalytics_test_endpoint")
+        token = self.get_credential(TextAnalyticsClient, is_async=True)
+        text_analytics_endpoint_suffix = os.environ.get("TEXTANALYTICS_ENDPOINT_SUFFIX",".cognitiveservices.azure.com")
+        credential_scopes = ["https://{}/.default".format(text_analytics_endpoint_suffix[1:])]
+        text_analytics = TextAnalyticsClient(textanalytics_test_endpoint, token, credential_scopes=credential_scopes)
 
-    @GlobalTextAnalyticsAccountPreparer()
-    def test_bad_type_for_credentials(self, resource_group, location, text_analytics_account, text_analytics_account_key):
-        with self.assertRaises(TypeError):
-            text_analytics = TextAnalyticsClient(text_analytics_account, [])
+        docs = ["Microsoft was founded by Bill Gates and Paul Allen."]
 
-    @GlobalTextAnalyticsAccountPreparer()
-    def test_none_credentials(self, resource_group, location, text_analytics_account, text_analytics_account_key):
-        with self.assertRaises(ValueError):
-            text_analytics = TextAnalyticsClient(text_analytics_account, None)
+        async with text_analytics:
+            poller = await text_analytics.begin_analyze_actions(
+                docs,
+                actions=[AnalyzeSentimentAction()],
+            )
+            result = await poller.result()
 
-    @GlobalTextAnalyticsAccountPreparer()
-    def test_none_endpoint(self, resource_group, location, text_analytics_account, text_analytics_account_key):
-        with self.assertRaises(ValueError):
-            text_analytics = TextAnalyticsClient(None, AzureKeyCredential(text_analytics_account_key))
+            async for res in result:
+                assert res
+
+    @TextAnalyticsPreparer()
+    async def test_empty_credentials(self, **kwargs):
+        textanalytics_test_endpoint = kwargs.pop("textanalytics_test_endpoint")
+        with pytest.raises(TypeError):
+            text_analytics = TextAnalyticsClient(textanalytics_test_endpoint, "")
+
+    @TextAnalyticsPreparer()
+    def test_bad_type_for_credentials(self, **kwargs):
+        textanalytics_test_endpoint = kwargs.pop("textanalytics_test_endpoint")
+        with pytest.raises(TypeError):
+            text_analytics = TextAnalyticsClient(textanalytics_test_endpoint, [])
+
+    @TextAnalyticsPreparer()
+    def test_none_credentials(self, **kwargs):
+        textanalytics_test_endpoint = kwargs.pop("textanalytics_test_endpoint")
+        with pytest.raises(ValueError):
+            text_analytics = TextAnalyticsClient(textanalytics_test_endpoint, None)
+
+    @TextAnalyticsPreparer()
+    def test_none_endpoint(self, **kwargs):
+        textanalytics_test_api_key = kwargs.pop("textanalytics_test_api_key")
+        with pytest.raises(ValueError):
+            text_analytics = TextAnalyticsClient(None, AzureKeyCredential(textanalytics_test_api_key))

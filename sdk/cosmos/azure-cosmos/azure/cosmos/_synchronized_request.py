@@ -25,8 +25,7 @@
 import json
 import time
 
-from six.moves.urllib.parse import urlparse
-import six
+from urllib.parse import urlparse
 from azure.core.exceptions import DecodeError  # type: ignore
 
 from . import exceptions
@@ -37,6 +36,8 @@ from . import _retry_utility
 def _is_readable_stream(obj):
     """Checks whether obj is a file-like readable stream.
 
+    :param Union[str, unicode, file-like stream object, dict, list, None] obj: the object to be checked.
+    :returns: whether the object is a file-like readable stream.
     :rtype: boolean
     """
     if hasattr(obj, "read") and callable(getattr(obj, "read")):
@@ -50,20 +51,17 @@ def _request_body_from_data(data):
     When `data` is dict and list into unicode string; otherwise return `data`
     without making any change.
 
-    :param (str, unicode, file-like stream object, dict, list or None) data:
-
-    :rtype:
-        str, unicode, file-like stream object, or None
+    :param Union[str, unicode, file-like stream object, dict, list, None] data:
+    :returns: the json dump data.
+    :rtype: Union[str, unicode, file-like stream object, None]
 
     """
-    if data is None or isinstance(data, six.string_types) or _is_readable_stream(data):
+    if data is None or isinstance(data, str) or _is_readable_stream(data):
         return data
     if isinstance(data, (dict, list, tuple)):
 
         json_dumped = json.dumps(data, separators=(",", ":"))
 
-        if six.PY2:
-            return json_dumped.decode("utf-8")
         return json_dumped
     return None
 
@@ -77,8 +75,8 @@ def _Request(global_endpoint_manager, request_params, connection_policy, pipelin
         useWriteEndpoint, useAlternateWriteEndpoint information
     :param documents.ConnectionPolicy connection_policy:
     :param azure.core.PipelineClient pipeline_client:
-        Pipeline client to process the resquest
-    :param azure.core.HttpRequest request:
+        Pipeline client to process the request
+    :param azure.core.pipeline.transport.HttpRequest request:
         The request object to send through the pipeline
     :return: tuple of (result, headers)
     :rtype: tuple of (dict, dict)
@@ -87,7 +85,7 @@ def _Request(global_endpoint_manager, request_params, connection_policy, pipelin
     # pylint: disable=protected-access
 
     connection_timeout = connection_policy.RequestTimeout
-    connection_timeout = kwargs.pop("connection_timeout", connection_timeout / 1000.0)
+    connection_timeout = kwargs.pop("connection_timeout", connection_timeout)
 
     # Every request tries to perform a refresh
     client_timeout = kwargs.get('timeout')
@@ -144,8 +142,7 @@ def _Request(global_endpoint_manager, request_params, connection_policy, pipelin
     headers = dict(response.headers)
 
     data = response.body()
-    if data and not six.PY2:
-        # python 3 compatible: convert data from byte to unicode string
+    if data:
         data = data.decode("utf-8")
 
     if response.status_code == 404:
@@ -165,7 +162,7 @@ def _Request(global_endpoint_manager, request_params, connection_policy, pipelin
             raise DecodeError(
                 message="Failed to decode JSON data: {}".format(e),
                 response=response,
-                error=e)
+                error=e) from e
 
     return result, headers
 
@@ -192,21 +189,18 @@ def SynchronizedRequest(
     :param _GlobalEndpointManager global_endpoint_manager:
     :param documents.ConnectionPolicy connection_policy:
     :param azure.core.PipelineClient pipeline_client: PipelineClient to process the request.
-    :param str method:
-    :param str path:
-    :param (str, unicode, file-like stream object, dict, list or None) request_data:
-    :param dict query_params:
-    :param dict headers:
+    :param HttpRequest request: the HTTP request to be sent
+    :param (str, unicode, file-like stream object, dict, list or None) request_data: the data to be sent in the request
     :return: tuple of (result, headers)
     :rtype: tuple of (dict dict)
     """
     request.data = _request_body_from_data(request_data)
-    if request.data and isinstance(request.data, six.string_types):
+    if request.data and isinstance(request.data, str):
         request.headers[http_constants.HttpHeaders.ContentLength] = len(request.data)
     elif request.data is None:
         request.headers[http_constants.HttpHeaders.ContentLength] = 0
 
-    # Pass _Request function with it's parameters to retry_utility's Execute method that wraps the call with retries
+    # Pass _Request function with its parameters to retry_utility's Execute method that wraps the call with retries
     return _retry_utility.Execute(
         client,
         global_endpoint_manager,

@@ -17,7 +17,9 @@ USAGE:
     python sample_query_tables.py
 
     Set the environment variables with your own values before running the sample:
-    1) AZURE_STORAGE_CONNECTION_STRING - the connection string to your storage account
+    1) TABLES_STORAGE_ENDPOINT_SUFFIX - the Table service account URL suffix
+    2) TABLES_STORAGE_ACCOUNT_NAME - the name of the storage account
+    3) TABLES_PRIMARY_STORAGE_ACCOUNT_KEY - the storage account access key
 """
 
 import os
@@ -25,23 +27,17 @@ from dotenv import find_dotenv, load_dotenv
 
 
 class QueryTables(object):
-
     def __init__(self):
         load_dotenv(find_dotenv())
-        self.access_key = os.getenv("TABLES_PRIMARY_STORAGE_ACCOUNT_KEY")
-        self.endpoint = os.getenv("TABLES_STORAGE_ENDPOINT_SUFFIX")
-        self.account_name = os.getenv("TABLES_STORAGE_ACCOUNT_NAME")
-        self.account_url = "{}.table.{}".format(self.account_name, self.endpoint)
-        self.connection_string = "DefaultEndpointsProtocol=https;AccountName={};AccountKey={};EndpointSuffix={}".format(
-            self.account_name,
-            self.access_key,
-            self.endpoint
-        )
-        self.table_name = "SampleQueryTables"
+        self.access_key = os.environ["TABLES_PRIMARY_STORAGE_ACCOUNT_KEY"]
+        self.endpoint_suffix = os.environ["TABLES_STORAGE_ENDPOINT_SUFFIX"]
+        self.account_name = os.environ["TABLES_STORAGE_ACCOUNT_NAME"]
+        self.connection_string = f"DefaultEndpointsProtocol=https;AccountName={self.account_name};AccountKey={self.access_key};EndpointSuffix={self.endpoint_suffix}"
 
     def tables_in_account(self):
         # Instantiate the TableServiceClient from a connection string
         from azure.data.tables import TableServiceClient
+
         with TableServiceClient.from_connection_string(conn_str=self.connection_string) as table_service:
 
             # [START tsc_create_table]
@@ -55,17 +51,17 @@ class QueryTables(object):
                 list_tables = table_service.list_tables()
                 print("Listing tables:")
                 for table in list_tables:
-                    print("\t{}".format(table.table_name))
+                    print(f"\t{table.name}")
                 # [END tsc_list_tables]
 
                 # [START tsc_query_tables]
                 table_name = "mytable1"
-                name_filter = "TableName eq '{}'".format(table_name)
-                queried_tables = table_service.query_tables(filter=name_filter)
+                name_filter = f"TableName eq '{table_name}'"
+                queried_tables = table_service.query_tables(name_filter)
 
                 print("Queried_tables")
                 for table in queried_tables:
-                    print("\t{}".format(table.table_name))
+                    print(f"\t{table.name}")
                 # [END tsc_query_tables]
 
             finally:
@@ -75,6 +71,7 @@ class QueryTables(object):
 
     def delete_tables(self):
         from azure.data.tables import TableServiceClient
+
         with TableServiceClient.from_connection_string(conn_str=self.connection_string) as ts:
             tables = ["mytable1", "mytable2"]
             for table in tables:
@@ -83,7 +80,7 @@ class QueryTables(object):
                 except:
                     pass
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     sample = QueryTables()
-    sample.delete_tables()
     sample.tables_in_account()

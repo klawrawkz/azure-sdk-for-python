@@ -4,18 +4,11 @@
 # license information.
 #--------------------------------------------------------------------------
 
-import logging
 import sys
-import os
 import pytest
-import json
 import base64
-import datetime as dt
 
-from devtools_testutils import AzureMgmtTestCase
-from msrest.serialization import UTC
 from azure.core.messaging import CloudEvent
-from azure.eventgrid._generated import models as internal_models
 from azure.eventgrid._helpers import _cloud_event_to_generated
 from azure.eventgrid import SystemEventNames, EventGridEvent
 from _mocks import (
@@ -24,7 +17,7 @@ from _mocks import (
     cloud_storage_bytes,
     )
 
-class EventGridSerializationTests(AzureMgmtTestCase):
+class EventGridSerializationTests:
 
     def _assert_cloud_event_serialized(self, expected, actual):
         assert expected['source'] == actual['source']
@@ -108,7 +101,7 @@ class EventGridSerializationTests(AzureMgmtTestCase):
                     data_version="2.0"
                     )
 
-    def test_import_from_sytem_events(self):
+    def test_import_from_system_events(self):
         var = SystemEventNames.AcsChatMemberAddedToThreadWithUserEventName 
         assert var == "Microsoft.Communication.ChatMemberAddedToThreadWithUser"
         assert SystemEventNames.KeyVaultKeyNearExpiryEventName == "Microsoft.KeyVault.KeyNearExpiry"
@@ -128,3 +121,13 @@ class EventGridSerializationTests(AzureMgmtTestCase):
             )
         
         assert "EventGridEvent(subject=sample2" in event.__repr__()
+
+    def test_servicebus_system_events_alias(self):
+        val = "Microsoft.ServiceBus.DeadletterMessagesAvailableWithNoListeners"
+        assert SystemEventNames.ServiceBusDeadletterMessagesAvailableWithNoListenerEventName == SystemEventNames.ServiceBusDeadletterMessagesAvailableWithNoListenersEventName
+        assert SystemEventNames.ServiceBusDeadletterMessagesAvailableWithNoListenerEventName == val
+        assert SystemEventNames.ServiceBusDeadletterMessagesAvailableWithNoListenersEventName == val
+        assert SystemEventNames(val) == SystemEventNames.ServiceBusDeadletterMessagesAvailableWithNoListenerEventName
+        assert SystemEventNames(val) == SystemEventNames.ServiceBusDeadletterMessagesAvailableWithNoListenersEventName
+        with pytest.raises(ValueError):
+            SystemEventNames("Microsoft.ServiceBus.DeadletterMessagesAvailableWithNoListener")

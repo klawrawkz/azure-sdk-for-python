@@ -1,5 +1,128 @@
 # Release History
 
+## 3.3.0 (2023-10-23)
+
+### Features Added
+
+  - Added operation group SandboxCustomImagesOperations
+  - Model ClusterUpdate has a new parameter zones
+  - Model EndpointDetail has a new parameter ip_address
+  - Model LanguageExtension has a new parameter language_extension_custom_image_name
+  - Model VirtualNetworkConfiguration has a new parameter state
+
+## 3.2.0 (2023-07-21)
+
+### Features Added
+
+  - Added operation ClustersOperations.begin_migrate
+  - Added operation group DatabaseOperations
+  - Model Cluster has a new parameter migration_cluster
+  - Model ClusterUpdate has a new parameter migration_cluster
+  - Model DatabaseListResult has a new parameter next_link
+  - Model ReadOnlyFollowingDatabase has a new parameter suspension_details
+  - Model ReadWriteDatabase has a new parameter key_vault_properties
+  - Model ReadWriteDatabase has a new parameter suspension_details
+  - Operation DatabasesOperations.list_by_cluster has a new optional parameter skiptoken
+  - Operation DatabasesOperations.list_by_cluster has a new optional parameter top
+
+## 3.1.0 (2023-02-15)
+
+### Features Added
+
+  - Added operation group SkusOperations
+  - Model LanguageExtension has a new parameter language_extension_image_name
+  - Model SkuLocationInfoItem has a new parameter zone_details
+  - Model TableLevelSharingProperties has a new parameter functions_to_exclude
+  - Model TableLevelSharingProperties has a new parameter functions_to_include
+
+## 3.1.0b1 (2022-12-27)
+
+### Features Added
+
+  - Added operation group SkusOperations
+  - Model LanguageExtension has a new parameter language_extension_image_name
+  - Model SkuLocationInfoItem has a new parameter zone_details
+
+## 3.0.0 (2022-09-15)
+
+### Features Added
+
+  - Model AttachedDatabaseConfiguration has a new parameter database_name_override
+  - Model AttachedDatabaseConfiguration has a new parameter database_name_prefix
+  - Model EventHubDataConnection has a new parameter retrieval_start_date
+  - Model FollowerDatabaseDefinition has a new parameter database_share_origin
+  - Model FollowerDatabaseDefinition has a new parameter table_level_sharing_properties
+  - Model IotHubDataConnection has a new parameter retrieval_start_date
+  - Model ReadOnlyFollowingDatabase has a new parameter database_share_origin
+  - Model ReadOnlyFollowingDatabase has a new parameter original_database_name
+  - Model ReadOnlyFollowingDatabase has a new parameter table_level_sharing_properties
+
+### Breaking Changes
+
+  - Operation DatabasesOperations.begin_create_or_update has a new parameter caller_role
+  - Operation DatabasesOperations.begin_update has a new parameter caller_role
+
+## 2.2.0 (2022-02-22)
+
+**Features**
+
+  - Added operation group OperationsResultsLocationOperations
+  - Model Cluster has a new parameter private_endpoint_connections
+  - Model Cluster has a new parameter public_ip_type
+  - Model Cluster has a new parameter virtual_cluster_graduation_properties
+  - Model ClusterPrincipalAssignment has a new parameter aad_object_id
+  - Model ClusterUpdate has a new parameter private_endpoint_connections
+  - Model ClusterUpdate has a new parameter public_ip_type
+  - Model ClusterUpdate has a new parameter virtual_cluster_graduation_properties
+  - Model DatabasePrincipalAssignment has a new parameter aad_object_id
+  - Model EventGridDataConnection has a new parameter database_routing
+  - Model EventGridDataConnection has a new parameter event_grid_resource_id
+  - Model EventGridDataConnection has a new parameter managed_identity_object_id
+  - Model EventGridDataConnection has a new parameter managed_identity_resource_id
+  - Model EventHubDataConnection has a new parameter database_routing
+  - Model EventHubDataConnection has a new parameter managed_identity_object_id
+  - Model IotHubDataConnection has a new parameter database_routing
+  - Model OperationResult has a new parameter provisioning_state
+  - Model Script has a new parameter script_content
+
+## 2.1.0 (2021-09-22)
+
+**Features**
+
+  - Model Cluster has a new parameter accepted_audiences
+  - Model Cluster has a new parameter allowed_fqdn_list
+  - Model Cluster has a new parameter enable_auto_stop
+  - Model Cluster has a new parameter allowed_ip_range_list
+  - Model Cluster has a new parameter system_data
+  - Model Cluster has a new parameter restrict_outbound_network_access
+  - Model Cluster has a new parameter public_network_access
+  - Model ClusterUpdate has a new parameter accepted_audiences
+  - Model ClusterUpdate has a new parameter allowed_fqdn_list
+  - Model ClusterUpdate has a new parameter enable_auto_stop
+  - Model ClusterUpdate has a new parameter allowed_ip_range_list
+  - Model ClusterUpdate has a new parameter restrict_outbound_network_access
+  - Model ClusterUpdate has a new parameter public_network_access
+  - Added operation AttachedDatabaseConfigurationsOperations.check_name_availability
+  - Added operation ClustersOperations.list_outbound_network_dependencies_endpoints
+  - Added operation group PrivateEndpointConnectionsOperations
+  - Added operation group ManagedPrivateEndpointsOperations
+  - Added operation group PrivateLinkResourcesOperations
+
+## 2.0.0 (2021-04-26)
+
+**Features**
+
+  - Model EventHubDataConnection has a new parameter managed_identity_resource_id
+  - Model Cluster has a new parameter etag
+  - Model AttachedDatabaseConfiguration has a new parameter table_level_sharing_properties
+  - Added operation group ScriptsOperations
+  - Added operation group OperationsResultsOperations
+
+**Breaking changes**
+
+  - Operation ClustersOperations.begin_update has a new signature
+  - Operation ClustersOperations.begin_create_or_update has a new signature
+
 ## 1.0.0 (2021-02-04)
 
 - GA release
@@ -18,7 +141,7 @@ This version uses a next-generation code generator that introduces important bre
   - `credentials` parameter has been renamed `credential`
 
 - The `config` attribute no longer exists on a client, configuration should be passed as kwarg. Example: `MyClient(credential, subscription_id, enable_logging=True)`. For a complete set of
-  supported options, see the [parameters accept in init documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
+  supported options, see the [parameters accept in init documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
 - You can't import a `version` module anymore, use `__version__` instead
 - Operations that used to return a `msrest.polling.LROPoller` now returns a `azure.core.polling.LROPoller` and are prefixed with `begin_`.
 - Exceptions tree have been simplified and most exceptions are now `azure.core.exceptions.HttpResponseError` (`CloudError` has been removed).
@@ -26,13 +149,13 @@ This version uses a next-generation code generator that introduces important bre
 
   - `raw` has been removed. Equivalent feature can be found using `cls`, a callback that will give access to internal HTTP response for advanced user
   - For a complete set of
-  supported options, see the [parameters accept in Request documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
+  supported options, see the [parameters accept in Request documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
 
 **General new features**
 
 - Type annotations support using `typing`. SDKs are mypy ready.
 - This client has now stable and official support for async. Check the `aio` namespace of your package to find the async client.
-- This client now support natively tracing library like OpenCensus or OpenTelemetry. See this [tracing quickstart](https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/core/azure-core-tracing-opentelemetry) for an overview.
+- This client now support natively tracing library like OpenCensus or OpenTelemetry. See this [tracing quickstart](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/core/azure-core-tracing-opentelemetry) for an overview.
 
 ## 0.7.0 (2020-03-20)
 

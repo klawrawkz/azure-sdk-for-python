@@ -53,7 +53,7 @@ class RsaKey(Key):  # pylint:disable=too-many-public-methods
 
     @property
     def p(self):
-        return _int_to_bytes(self._public_key_material().p) if self.is_private_key() else None
+        return _int_to_bytes(self._private_key_material().p) if self.is_private_key() else None
 
     @property
     def q(self):
@@ -99,7 +99,7 @@ class RsaKey(Key):  # pylint:disable=too-many-public-methods
 
     @classmethod
     def from_jwk(cls, jwk):
-        if jwk.kty != "RSA" and jwk.kty != "RSA-HSM":
+        if jwk.kty not in ("RSA", "RSA-HSM"):
             raise ValueError('The specified jwk must have a key type of "RSA" or "RSA-HSM"')
 
         if not jwk.n or not jwk.e:

@@ -6,5 +6,18 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
-from ._azure_maps_resource_provider import AzureMapsResourceProvider
-__all__ = ['AzureMapsResourceProvider']
+from ._azure_maps_management_client import AzureMapsManagementClient
+
+try:
+    from ._patch import __all__ as _patch_all
+    from ._patch import *  # pylint: disable=unused-wildcard-import
+except ImportError:
+    _patch_all = []
+from ._patch import patch_sdk as _patch_sdk
+
+__all__ = [
+    "AzureMapsManagementClient",
+]
+__all__.extend([p for p in _patch_all if p not in __all__])
+
+_patch_sdk()

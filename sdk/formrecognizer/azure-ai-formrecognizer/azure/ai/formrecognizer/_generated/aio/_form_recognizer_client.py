@@ -11,17 +11,18 @@
 
 from typing import Any, Optional, TYPE_CHECKING
 
+from msrest import Deserializer, Serializer
+
 from azure.core import AsyncPipelineClient
-from azure.core.pipeline.transport import AsyncHttpResponse, HttpRequest
 from azure.profiles import KnownProfiles, ProfileDefinition
 from azure.profiles.multiapiclient import MultiApiClientMixin
-from msrest import Deserializer, Serializer
 
 from ._configuration import FormRecognizerClientConfiguration
 from ._operations_mixin import FormRecognizerClientOperationsMixin
 
 if TYPE_CHECKING:
     # pylint: disable=unused-import,ungrouped-imports
+    from azure.core.credentials import TokenCredential
     from azure.core.credentials_async import AsyncTokenCredential
 
 class _SDKClient(object):
@@ -53,11 +54,27 @@ class FormRecognizerClient(FormRecognizerClientOperationsMixin, MultiApiClientMi
     :keyword int polling_interval: Default waiting time between two polls for LRO operations if no Retry-After header is present.
     """
 
-    DEFAULT_API_VERSION = '2.1-preview.3'
+    DEFAULT_API_VERSION = '2.1'
     _PROFILE_TAG = "azure.ai.formrecognizer.FormRecognizerClient"
     LATEST_PROFILE = ProfileDefinition({
         _PROFILE_TAG: {
             None: DEFAULT_API_VERSION,
+            'authorize_copy_document_model': '2022-08-31',
+            'begin_analyze_document': '2022-08-31',
+            'begin_build_document_model': '2022-08-31',
+            'begin_compose_document_model': '2022-08-31',
+            'begin_copy_document_model_to': '2022-08-31',
+            'delete_document_model': '2022-08-31',
+            'document_classifiers': '2023-07-31',
+            'document_models': '2023-07-31',
+            'get_analyze_document_result': '2022-08-31',
+            'get_document_model': '2022-08-31',
+            'get_document_models': '2022-08-31',
+            'get_operation': '2022-08-31',
+            'get_operations': '2022-08-31',
+            'get_resource_details': '2022-08-31',
+            'miscellaneous': '2023-07-31',
+            'train_custom_model_async': '2.0',
         }},
         _PROFILE_TAG + " latest"
     )
@@ -70,10 +87,12 @@ class FormRecognizerClient(FormRecognizerClientOperationsMixin, MultiApiClientMi
         profile: KnownProfiles = KnownProfiles.default,
         **kwargs  # type: Any
     ) -> None:
-        if api_version == '2.0':
+        if api_version == '2022-08-31' or api_version == '2023-07-31':
+            base_url = '{endpoint}/formrecognizer'
+        elif api_version == '2.0':
             base_url = '{endpoint}/formrecognizer/v2.0'
-        elif api_version == '2.1-preview.3':
-            base_url = '{endpoint}/formrecognizer/v2.1-preview.3'
+        elif api_version == '2.1':
+            base_url = '{endpoint}/formrecognizer/v2.1'
         else:
             raise ValueError("API version {} is not available".format(api_version))
         self._config = FormRecognizerClientConfiguration(credential, endpoint, **kwargs)
@@ -91,16 +110,63 @@ class FormRecognizerClient(FormRecognizerClientOperationsMixin, MultiApiClientMi
     def models(cls, api_version=DEFAULT_API_VERSION):
         """Module depends on the API version:
 
+           * 2022-08-31: :mod:`v2022_08_31.models<azure.ai.formrecognizer.v2022_08_31.models>`
+           * 2023-07-31: :mod:`v2023_07_31.models<azure.ai.formrecognizer.v2023_07_31.models>`
            * 2.0: :mod:`v2_0.models<azure.ai.formrecognizer.v2_0.models>`
-           * 2.1-preview.3: :mod:`v2_1_preview_3.models<azure.ai.formrecognizer.v2_1_preview_3.models>`
+           * 2.1: :mod:`v2_1.models<azure.ai.formrecognizer.v2_1.models>`
         """
-        if api_version == '2.0':
+        if api_version == '2022-08-31':
+            from ..v2022_08_31 import models
+            return models
+        elif api_version == '2023-07-31':
+            from ..v2023_07_31 import models
+            return models
+        elif api_version == '2.0':
             from ..v2_0 import models
             return models
-        elif api_version == '2.1-preview.3':
-            from ..v2_1_preview_3 import models
+        elif api_version == '2.1':
+            from ..v2_1 import models
             return models
         raise ValueError("API version {} is not available".format(api_version))
+
+    @property
+    def document_classifiers(self):
+        """Instance depends on the API version:
+
+           * 2023-07-31: :class:`DocumentClassifiersOperations<azure.ai.formrecognizer.v2023_07_31.aio.operations.DocumentClassifiersOperations>`
+        """
+        api_version = self._get_api_version('document_classifiers')
+        if api_version == '2023-07-31':
+            from ..v2023_07_31.aio.operations import DocumentClassifiersOperations as OperationClass
+        else:
+            raise ValueError("API version {} does not have operation group 'document_classifiers'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+
+    @property
+    def document_models(self):
+        """Instance depends on the API version:
+
+           * 2023-07-31: :class:`DocumentModelsOperations<azure.ai.formrecognizer.v2023_07_31.aio.operations.DocumentModelsOperations>`
+        """
+        api_version = self._get_api_version('document_models')
+        if api_version == '2023-07-31':
+            from ..v2023_07_31.aio.operations import DocumentModelsOperations as OperationClass
+        else:
+            raise ValueError("API version {} does not have operation group 'document_models'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
+
+    @property
+    def miscellaneous(self):
+        """Instance depends on the API version:
+
+           * 2023-07-31: :class:`MiscellaneousOperations<azure.ai.formrecognizer.v2023_07_31.aio.operations.MiscellaneousOperations>`
+        """
+        api_version = self._get_api_version('miscellaneous')
+        if api_version == '2023-07-31':
+            from ..v2023_07_31.aio.operations import MiscellaneousOperations as OperationClass
+        else:
+            raise ValueError("API version {} does not have operation group 'miscellaneous'".format(api_version))
+        return OperationClass(self._client, self._config, Serializer(self._models_dict(api_version)), Deserializer(self._models_dict(api_version)))
 
     async def close(self):
         await self._client.close()

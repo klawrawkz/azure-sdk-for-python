@@ -6,56 +6,48 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
-from enum import Enum, EnumMeta
-from six import with_metaclass
-
-class _CaseInsensitiveEnumMeta(EnumMeta):
-    def __getitem__(self, name):
-        return super().__getitem__(name.upper())
-
-    def __getattr__(cls, name):
-        """Return the enum member matching `name`
-        We use __getattr__ instead of descriptors or inserting into the enum
-        class' __dict__ in order to support `name` and `value` being both
-        properties for enum members (which live in the class' __dict__) and
-        enum members themselves.
-        """
-        try:
-            return cls._member_map_[name.upper()]
-        except KeyError:
-            raise AttributeError(name)
+from enum import Enum
+from azure.core import CaseInsensitiveEnumMeta
 
 
-class AccessKeyType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """Which access key to regenerate.
-    """
+class AccessKeyType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """Which access key to regenerate."""
 
     PRIMARY = "Primary"
     SECONDARY = "Secondary"
 
-class ActionType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """Enum. Indicates the action type. "Internal" refers to actions that are for internal only APIs.
-    """
+
+class ActionType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """Enum. Indicates the action type. "Internal" refers to actions that are for internal only APIs."""
 
     INTERNAL = "Internal"
 
-class AofFrequency(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """Sets the frequency at which data is written to disk.
-    """
+
+class AofFrequency(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """Sets the frequency at which data is written to disk."""
 
     ONE_S = "1s"
     ALWAYS = "always"
 
-class ClusteringPolicy(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """Clustering policy - default is OSSCluster. Specified at create time.
-    """
+
+class ClusteringPolicy(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """Clustering policy - default is OSSCluster. Specified at create time."""
 
     ENTERPRISE_CLUSTER = "EnterpriseCluster"
     OSS_CLUSTER = "OSSCluster"
 
-class EvictionPolicy(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """Redis eviction policy - default is VolatileLRU
+
+class CmkIdentityType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """Only userAssignedIdentity is supported in this API version; other types may be supported in the
+    future.
     """
+
+    SYSTEM_ASSIGNED_IDENTITY = "systemAssignedIdentity"
+    USER_ASSIGNED_IDENTITY = "userAssignedIdentity"
+
+
+class EvictionPolicy(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """Redis eviction policy - default is VolatileLRU."""
 
     ALL_KEYS_LFU = "AllKeysLFU"
     ALL_KEYS_LRU = "AllKeysLRU"
@@ -66,33 +58,56 @@ class EvictionPolicy(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
     VOLATILE_RANDOM = "VolatileRandom"
     NO_EVICTION = "NoEviction"
 
-class Origin(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
+
+class LinkState(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """State of the link between the database resources."""
+
+    LINKED = "Linked"
+    LINKING = "Linking"
+    UNLINKING = "Unlinking"
+    LINK_FAILED = "LinkFailed"
+    UNLINK_FAILED = "UnlinkFailed"
+
+
+class ManagedServiceIdentityType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """Type of managed service identity (where both SystemAssigned and UserAssigned types are
+    allowed).
+    """
+
+    NONE = "None"
+    SYSTEM_ASSIGNED = "SystemAssigned"
+    USER_ASSIGNED = "UserAssigned"
+    SYSTEM_ASSIGNED_USER_ASSIGNED = "SystemAssigned, UserAssigned"
+
+
+class Origin(str, Enum, metaclass=CaseInsensitiveEnumMeta):
     """The intended executor of the operation; as in Resource Based Access Control (RBAC) and audit
-    logs UX. Default value is "user,system"
+    logs UX. Default value is "user,system".
     """
 
     USER = "user"
     SYSTEM = "system"
     USER_SYSTEM = "user,system"
 
-class PrivateEndpointConnectionProvisioningState(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The current provisioning state.
-    """
+
+class PrivateEndpointConnectionProvisioningState(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The current provisioning state."""
 
     SUCCEEDED = "Succeeded"
     CREATING = "Creating"
     DELETING = "Deleting"
     FAILED = "Failed"
 
-class PrivateEndpointServiceConnectionStatus(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The private endpoint connection status.
-    """
+
+class PrivateEndpointServiceConnectionStatus(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The private endpoint connection status."""
 
     PENDING = "Pending"
     APPROVED = "Approved"
     REJECTED = "Rejected"
 
-class Protocol(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
+
+class Protocol(str, Enum, metaclass=CaseInsensitiveEnumMeta):
     """Specifies whether redis clients can connect using TLS-encrypted or plaintext redis protocols.
     Default is TLS-encrypted.
     """
@@ -100,9 +115,9 @@ class Protocol(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
     ENCRYPTED = "Encrypted"
     PLAINTEXT = "Plaintext"
 
-class ProvisioningState(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """Current provisioning status
-    """
+
+class ProvisioningState(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """Current provisioning status."""
 
     SUCCEEDED = "Succeeded"
     FAILED = "Failed"
@@ -111,17 +126,17 @@ class ProvisioningState(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
     UPDATING = "Updating"
     DELETING = "Deleting"
 
-class RdbFrequency(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """Sets the frequency at which a snapshot of the database is created.
-    """
+
+class RdbFrequency(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """Sets the frequency at which a snapshot of the database is created."""
 
     ONE_H = "1h"
     SIX_H = "6h"
     TWELVE_H = "12h"
 
-class ResourceState(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """Current resource status
-    """
+
+class ResourceState(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """Current resource status."""
 
     RUNNING = "Running"
     CREATING = "Creating"
@@ -135,10 +150,13 @@ class ResourceState(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
     DISABLING = "Disabling"
     DISABLE_FAILED = "DisableFailed"
     DISABLED = "Disabled"
+    SCALING = "Scaling"
+    SCALING_FAILED = "ScalingFailed"
 
-class SkuName(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
+
+class SkuName(str, Enum, metaclass=CaseInsensitiveEnumMeta):
     """The type of RedisEnterprise cluster to deploy. Possible values: (Enterprise_E10,
-    EnterpriseFlash_F300 etc.)
+    EnterpriseFlash_F300 etc.).
     """
 
     ENTERPRISE_E10 = "Enterprise_E10"
@@ -149,9 +167,9 @@ class SkuName(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
     ENTERPRISE_FLASH_F700 = "EnterpriseFlash_F700"
     ENTERPRISE_FLASH_F1500 = "EnterpriseFlash_F1500"
 
-class TlsVersion(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The minimum TLS version for the cluster to support, e.g. '1.2'
-    """
+
+class TlsVersion(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The minimum TLS version for the cluster to support, e.g. '1.2'."""
 
     ONE0 = "1.0"
     ONE1 = "1.1"

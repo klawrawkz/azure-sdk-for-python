@@ -3,7 +3,6 @@
 trigger:
   branches:
     include:
-    - master
     - main
     - hotfix/*
     - release/*
@@ -12,13 +11,10 @@ trigger:
     include:
     - sdk/eventhub/
     - sdk/core/
-    - tools/
-    - eng/
 
 pr:
   branches:
     include:
-    - master
     - main
     - feature/*
     - hotfix/*
@@ -28,8 +24,6 @@ pr:
     include:
     - sdk/eventhub/
     - sdk/core/
-    - tools/
-    - eng/
 
 extends:
   template: ../../eng/pipelines/templates/stages/archetype-sdk-client.yml
@@ -38,7 +32,7 @@ extends:
     # Override the base matrix due to https://github.com/Azure/azure-sdk-for-python/issues/17837
     MatrixConfigs:
       - Name: eventhub_ci_matrix
-        Path: eng/pipelines/templates/stages/platform-matrix-cryptography-dependency.json
+        Path: eng/pipelines/templates/stages/platform-matrix-no-312.json
         Selection: sparse
         GenerateVMJobs: true
     MatrixFilters:
@@ -50,5 +44,7 @@ extends:
       safeName: azureeventhubcheckpointstoreblobaio
     - name: azure-eventhub-checkpointstoreblob
       safeName: azureeventhubcheckpointstoreblob
+    - name: azure-eventhub-checkpointstoretable
+      safeName: azureeventhubcheckpointstoretable
     - name: azure-mgmt-eventhub
       safeName: azuremgmteventhub

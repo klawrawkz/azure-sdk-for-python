@@ -1,4 +1,5 @@
 # coding=utf-8
+# pylint: disable=too-many-lines
 # --------------------------------------------------------------------------
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
@@ -7,150 +8,23 @@
 # --------------------------------------------------------------------------
 
 import datetime
-from typing import Dict, List, Optional, Union
+import sys
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Union
 
-from azure.core.exceptions import HttpResponseError
-import msrest.serialization
+from .. import _serialization
 
-from ._synapse_management_client_enums import *
+if sys.version_info >= (3, 9):
+    from collections.abc import MutableMapping
+else:
+    from typing import MutableMapping  # type: ignore  # pylint: disable=ungrouped-imports
 
-
-class AutoPauseProperties(msrest.serialization.Model):
-    """Auto-pausing properties of a Big Data pool powered by Apache Spark.
-
-    :param delay_in_minutes: Number of minutes of idle time before the Big Data pool is
-     automatically paused.
-    :type delay_in_minutes: int
-    :param enabled: Whether auto-pausing is enabled for the Big Data pool.
-    :type enabled: bool
-    """
-
-    _attribute_map = {
-        'delay_in_minutes': {'key': 'delayInMinutes', 'type': 'int'},
-        'enabled': {'key': 'enabled', 'type': 'bool'},
-    }
-
-    def __init__(
-        self,
-        *,
-        delay_in_minutes: Optional[int] = None,
-        enabled: Optional[bool] = None,
-        **kwargs
-    ):
-        super(AutoPauseProperties, self).__init__(**kwargs)
-        self.delay_in_minutes = delay_in_minutes
-        self.enabled = enabled
+if TYPE_CHECKING:
+    # pylint: disable=unused-import,ungrouped-imports
+    from .. import models as _models
+JSON = MutableMapping[str, Any]  # pylint: disable=unsubscriptable-object
 
 
-class AutoScaleProperties(msrest.serialization.Model):
-    """Auto-scaling properties of a Big Data pool powered by Apache Spark.
-
-    :param min_node_count: The minimum number of nodes the Big Data pool can support.
-    :type min_node_count: int
-    :param enabled: Whether automatic scaling is enabled for the Big Data pool.
-    :type enabled: bool
-    :param max_node_count: The maximum number of nodes the Big Data pool can support.
-    :type max_node_count: int
-    """
-
-    _attribute_map = {
-        'min_node_count': {'key': 'minNodeCount', 'type': 'int'},
-        'enabled': {'key': 'enabled', 'type': 'bool'},
-        'max_node_count': {'key': 'maxNodeCount', 'type': 'int'},
-    }
-
-    def __init__(
-        self,
-        *,
-        min_node_count: Optional[int] = None,
-        enabled: Optional[bool] = None,
-        max_node_count: Optional[int] = None,
-        **kwargs
-    ):
-        super(AutoScaleProperties, self).__init__(**kwargs)
-        self.min_node_count = min_node_count
-        self.enabled = enabled
-        self.max_node_count = max_node_count
-
-
-class AvailableRpOperation(msrest.serialization.Model):
-    """An operation that is available in this resource provider.
-
-    :param display: Display properties of the operation.
-    :type display: ~azure.mgmt.synapse.models.AvailableRpOperationDisplayInfo
-    :param is_data_action: Whether this operation is a data action.
-    :type is_data_action: str
-    :param name: Operation name.
-    :type name: str
-    :param origin: Operation origin.
-    :type origin: str
-    :param service_specification: Operation service specification.
-    :type service_specification: ~azure.mgmt.synapse.models.OperationMetaServiceSpecification
-    """
-
-    _attribute_map = {
-        'display': {'key': 'display', 'type': 'AvailableRpOperationDisplayInfo'},
-        'is_data_action': {'key': 'isDataAction', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'origin': {'key': 'origin', 'type': 'str'},
-        'service_specification': {'key': 'properties.serviceSpecification', 'type': 'OperationMetaServiceSpecification'},
-    }
-
-    def __init__(
-        self,
-        *,
-        display: Optional["AvailableRpOperationDisplayInfo"] = None,
-        is_data_action: Optional[str] = None,
-        name: Optional[str] = None,
-        origin: Optional[str] = None,
-        service_specification: Optional["OperationMetaServiceSpecification"] = None,
-        **kwargs
-    ):
-        super(AvailableRpOperation, self).__init__(**kwargs)
-        self.display = display
-        self.is_data_action = is_data_action
-        self.name = name
-        self.origin = origin
-        self.service_specification = service_specification
-
-
-class AvailableRpOperationDisplayInfo(msrest.serialization.Model):
-    """Description of an available operation.
-
-    :param description: Operation description.
-    :type description: str
-    :param resource: Resource type.
-    :type resource: str
-    :param provider: Resource provider name.
-    :type provider: str
-    :param operation: Operation name.
-    :type operation: str
-    """
-
-    _attribute_map = {
-        'description': {'key': 'description', 'type': 'str'},
-        'resource': {'key': 'resource', 'type': 'str'},
-        'provider': {'key': 'provider', 'type': 'str'},
-        'operation': {'key': 'operation', 'type': 'str'},
-    }
-
-    def __init__(
-        self,
-        *,
-        description: Optional[str] = None,
-        resource: Optional[str] = None,
-        provider: Optional[str] = None,
-        operation: Optional[str] = None,
-        **kwargs
-    ):
-        super(AvailableRpOperationDisplayInfo, self).__init__(**kwargs)
-        self.description = description
-        self.resource = resource
-        self.provider = provider
-        self.operation = operation
-
-
-class Resource(msrest.serialization.Model):
+class Resource(_serialization.Model):
     """Common fields that are returned in the response for all Azure Resource Manager resources.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -166,25 +40,482 @@ class Resource(msrest.serialization.Model):
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+    }
+
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
+        self.id = None
+        self.name = None
+        self.type = None
+
+
+class ProxyResource(Resource):
+    """The resource model definition for a Azure Resource Manager proxy resource. It will not have
+    tags and a location.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    :ivar id: Fully qualified resource ID for the resource. Ex -
+     /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}.
+    :vartype id: str
+    :ivar name: The name of the resource.
+    :vartype name: str
+    :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
+     "Microsoft.Storage/storageAccounts".
+    :vartype type: str
+    """
+
+    _validation = {
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+    }
+
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
+
+
+class AttachedDatabaseConfiguration(ProxyResource):  # pylint: disable=too-many-instance-attributes
+    """Class representing an attached database configuration.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    :ivar id: Fully qualified resource ID for the resource. Ex -
+     /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}.
+    :vartype id: str
+    :ivar name: The name of the resource.
+    :vartype name: str
+    :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
+     "Microsoft.Storage/storageAccounts".
+    :vartype type: str
+    :ivar location: Resource location.
+    :vartype location: str
+    :ivar system_data: Azure Resource Manager metadata containing createdBy and modifiedBy
+     information.
+    :vartype system_data: ~azure.mgmt.synapse.models.SystemData
+    :ivar provisioning_state: The provisioned state of the resource. Known values are: "Running",
+     "Creating", "Deleting", "Succeeded", "Failed", "Moving", and "Canceled".
+    :vartype provisioning_state: str or ~azure.mgmt.synapse.models.ResourceProvisioningState
+    :ivar database_name: The name of the database which you would like to attach, use * if you want
+     to follow all current and future databases.
+    :vartype database_name: str
+    :ivar kusto_pool_resource_id: The resource id of the kusto pool where the databases you would
+     like to attach reside.
+    :vartype kusto_pool_resource_id: str
+    :ivar attached_database_names: The list of databases from the clusterResourceId which are
+     currently attached to the kusto pool.
+    :vartype attached_database_names: list[str]
+    :ivar default_principals_modification_kind: The default principals modification kind. Known
+     values are: "Union", "Replace", and "None".
+    :vartype default_principals_modification_kind: str or
+     ~azure.mgmt.synapse.models.DefaultPrincipalsModificationKind
+    :ivar table_level_sharing_properties: Table level sharing specifications.
+    :vartype table_level_sharing_properties: ~azure.mgmt.synapse.models.TableLevelSharingProperties
+    """
+
+    _validation = {
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "system_data": {"readonly": True},
+        "provisioning_state": {"readonly": True},
+        "attached_database_names": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "location": {"key": "location", "type": "str"},
+        "system_data": {"key": "systemData", "type": "SystemData"},
+        "provisioning_state": {"key": "properties.provisioningState", "type": "str"},
+        "database_name": {"key": "properties.databaseName", "type": "str"},
+        "kusto_pool_resource_id": {"key": "properties.clusterResourceId", "type": "str"},
+        "attached_database_names": {"key": "properties.attachedDatabaseNames", "type": "[str]"},
+        "default_principals_modification_kind": {"key": "properties.defaultPrincipalsModificationKind", "type": "str"},
+        "table_level_sharing_properties": {
+            "key": "properties.tableLevelSharingProperties",
+            "type": "TableLevelSharingProperties",
+        },
     }
 
     def __init__(
         self,
-        **kwargs
-    ):
-        super(Resource, self).__init__(**kwargs)
-        self.id = None
-        self.name = None
-        self.type = None
+        *,
+        location: Optional[str] = None,
+        database_name: Optional[str] = None,
+        kusto_pool_resource_id: Optional[str] = None,
+        default_principals_modification_kind: Optional[Union[str, "_models.DefaultPrincipalsModificationKind"]] = None,
+        table_level_sharing_properties: Optional["_models.TableLevelSharingProperties"] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword location: Resource location.
+        :paramtype location: str
+        :keyword database_name: The name of the database which you would like to attach, use * if you
+         want to follow all current and future databases.
+        :paramtype database_name: str
+        :keyword kusto_pool_resource_id: The resource id of the kusto pool where the databases you
+         would like to attach reside.
+        :paramtype kusto_pool_resource_id: str
+        :keyword default_principals_modification_kind: The default principals modification kind. Known
+         values are: "Union", "Replace", and "None".
+        :paramtype default_principals_modification_kind: str or
+         ~azure.mgmt.synapse.models.DefaultPrincipalsModificationKind
+        :keyword table_level_sharing_properties: Table level sharing specifications.
+        :paramtype table_level_sharing_properties:
+         ~azure.mgmt.synapse.models.TableLevelSharingProperties
+        """
+        super().__init__(**kwargs)
+        self.location = location
+        self.system_data = None
+        self.provisioning_state = None
+        self.database_name = database_name
+        self.kusto_pool_resource_id = kusto_pool_resource_id
+        self.attached_database_names = None
+        self.default_principals_modification_kind = default_principals_modification_kind
+        self.table_level_sharing_properties = table_level_sharing_properties
+
+
+class AttachedDatabaseConfigurationListResult(_serialization.Model):
+    """The list attached database configurations operation response.
+
+    :ivar value: The list of attached database configurations.
+    :vartype value: list[~azure.mgmt.synapse.models.AttachedDatabaseConfiguration]
+    """
+
+    _attribute_map = {
+        "value": {"key": "value", "type": "[AttachedDatabaseConfiguration]"},
+    }
+
+    def __init__(self, *, value: Optional[List["_models.AttachedDatabaseConfiguration"]] = None, **kwargs: Any) -> None:
+        """
+        :keyword value: The list of attached database configurations.
+        :paramtype value: list[~azure.mgmt.synapse.models.AttachedDatabaseConfiguration]
+        """
+        super().__init__(**kwargs)
+        self.value = value
+
+
+class AutoPauseProperties(_serialization.Model):
+    """Auto-pausing properties of a Big Data pool powered by Apache Spark.
+
+    :ivar delay_in_minutes: Number of minutes of idle time before the Big Data pool is
+     automatically paused.
+    :vartype delay_in_minutes: int
+    :ivar enabled: Whether auto-pausing is enabled for the Big Data pool.
+    :vartype enabled: bool
+    """
+
+    _attribute_map = {
+        "delay_in_minutes": {"key": "delayInMinutes", "type": "int"},
+        "enabled": {"key": "enabled", "type": "bool"},
+    }
+
+    def __init__(
+        self, *, delay_in_minutes: Optional[int] = None, enabled: Optional[bool] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword delay_in_minutes: Number of minutes of idle time before the Big Data pool is
+         automatically paused.
+        :paramtype delay_in_minutes: int
+        :keyword enabled: Whether auto-pausing is enabled for the Big Data pool.
+        :paramtype enabled: bool
+        """
+        super().__init__(**kwargs)
+        self.delay_in_minutes = delay_in_minutes
+        self.enabled = enabled
+
+
+class AutoScaleProperties(_serialization.Model):
+    """Auto-scaling properties of a Big Data pool powered by Apache Spark.
+
+    :ivar min_node_count: The minimum number of nodes the Big Data pool can support.
+    :vartype min_node_count: int
+    :ivar enabled: Whether automatic scaling is enabled for the Big Data pool.
+    :vartype enabled: bool
+    :ivar max_node_count: The maximum number of nodes the Big Data pool can support.
+    :vartype max_node_count: int
+    """
+
+    _attribute_map = {
+        "min_node_count": {"key": "minNodeCount", "type": "int"},
+        "enabled": {"key": "enabled", "type": "bool"},
+        "max_node_count": {"key": "maxNodeCount", "type": "int"},
+    }
+
+    def __init__(
+        self,
+        *,
+        min_node_count: Optional[int] = None,
+        enabled: Optional[bool] = None,
+        max_node_count: Optional[int] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword min_node_count: The minimum number of nodes the Big Data pool can support.
+        :paramtype min_node_count: int
+        :keyword enabled: Whether automatic scaling is enabled for the Big Data pool.
+        :paramtype enabled: bool
+        :keyword max_node_count: The maximum number of nodes the Big Data pool can support.
+        :paramtype max_node_count: int
+        """
+        super().__init__(**kwargs)
+        self.min_node_count = min_node_count
+        self.enabled = enabled
+        self.max_node_count = max_node_count
+
+
+class AvailableRpOperation(_serialization.Model):
+    """An operation that is available in this resource provider.
+
+    :ivar display: Display properties of the operation.
+    :vartype display: ~azure.mgmt.synapse.models.AvailableRpOperationDisplayInfo
+    :ivar is_data_action: Whether this operation is a data action.
+    :vartype is_data_action: str
+    :ivar name: Operation name.
+    :vartype name: str
+    :ivar origin: Operation origin.
+    :vartype origin: str
+    :ivar service_specification: Operation service specification.
+    :vartype service_specification: ~azure.mgmt.synapse.models.OperationMetaServiceSpecification
+    """
+
+    _attribute_map = {
+        "display": {"key": "display", "type": "AvailableRpOperationDisplayInfo"},
+        "is_data_action": {"key": "isDataAction", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "origin": {"key": "origin", "type": "str"},
+        "service_specification": {
+            "key": "properties.serviceSpecification",
+            "type": "OperationMetaServiceSpecification",
+        },
+    }
+
+    def __init__(
+        self,
+        *,
+        display: Optional["_models.AvailableRpOperationDisplayInfo"] = None,
+        is_data_action: Optional[str] = None,
+        name: Optional[str] = None,
+        origin: Optional[str] = None,
+        service_specification: Optional["_models.OperationMetaServiceSpecification"] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword display: Display properties of the operation.
+        :paramtype display: ~azure.mgmt.synapse.models.AvailableRpOperationDisplayInfo
+        :keyword is_data_action: Whether this operation is a data action.
+        :paramtype is_data_action: str
+        :keyword name: Operation name.
+        :paramtype name: str
+        :keyword origin: Operation origin.
+        :paramtype origin: str
+        :keyword service_specification: Operation service specification.
+        :paramtype service_specification: ~azure.mgmt.synapse.models.OperationMetaServiceSpecification
+        """
+        super().__init__(**kwargs)
+        self.display = display
+        self.is_data_action = is_data_action
+        self.name = name
+        self.origin = origin
+        self.service_specification = service_specification
+
+
+class AvailableRpOperationDisplayInfo(_serialization.Model):
+    """Description of an available operation.
+
+    :ivar description: Operation description.
+    :vartype description: str
+    :ivar resource: Resource type.
+    :vartype resource: str
+    :ivar provider: Resource provider name.
+    :vartype provider: str
+    :ivar operation: Operation name.
+    :vartype operation: str
+    """
+
+    _attribute_map = {
+        "description": {"key": "description", "type": "str"},
+        "resource": {"key": "resource", "type": "str"},
+        "provider": {"key": "provider", "type": "str"},
+        "operation": {"key": "operation", "type": "str"},
+    }
+
+    def __init__(
+        self,
+        *,
+        description: Optional[str] = None,
+        resource: Optional[str] = None,
+        provider: Optional[str] = None,
+        operation: Optional[str] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword description: Operation description.
+        :paramtype description: str
+        :keyword resource: Resource type.
+        :paramtype resource: str
+        :keyword provider: Resource provider name.
+        :paramtype provider: str
+        :keyword operation: Operation name.
+        :paramtype operation: str
+        """
+        super().__init__(**kwargs)
+        self.description = description
+        self.resource = resource
+        self.provider = provider
+        self.operation = operation
+
+
+class AzureADOnlyAuthentication(ProxyResource):
+    """Azure Active Directory Only Authentication Info.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    :ivar id: Fully qualified resource ID for the resource. Ex -
+     /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}.
+    :vartype id: str
+    :ivar name: The name of the resource.
+    :vartype name: str
+    :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
+     "Microsoft.Storage/storageAccounts".
+    :vartype type: str
+    :ivar azure_ad_only_authentication: Azure Active Directory only Authentication enabled.
+    :vartype azure_ad_only_authentication: bool
+    :ivar state: property configuration state. Known values are: "Consistent", "InConsistent", and
+     "Updating".
+    :vartype state: str or ~azure.mgmt.synapse.models.StateValue
+    :ivar creation_date: property configuration date.
+    :vartype creation_date: ~datetime.datetime
+    """
+
+    _validation = {
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "state": {"readonly": True},
+        "creation_date": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "azure_ad_only_authentication": {"key": "properties.azureADOnlyAuthentication", "type": "bool"},
+        "state": {"key": "properties.state", "type": "str"},
+        "creation_date": {"key": "properties.creationDate", "type": "iso-8601"},
+    }
+
+    def __init__(self, *, azure_ad_only_authentication: Optional[bool] = None, **kwargs: Any) -> None:
+        """
+        :keyword azure_ad_only_authentication: Azure Active Directory only Authentication enabled.
+        :paramtype azure_ad_only_authentication: bool
+        """
+        super().__init__(**kwargs)
+        self.azure_ad_only_authentication = azure_ad_only_authentication
+        self.state = None
+        self.creation_date = None
+
+
+class AzureADOnlyAuthenticationListResult(_serialization.Model):
+    """A list of active directory only authentications.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    :ivar value: Array of results.
+    :vartype value: list[~azure.mgmt.synapse.models.AzureADOnlyAuthentication]
+    :ivar next_link: Link to retrieve next page of results.
+    :vartype next_link: str
+    """
+
+    _validation = {
+        "value": {"readonly": True},
+        "next_link": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "value": {"key": "value", "type": "[AzureADOnlyAuthentication]"},
+        "next_link": {"key": "nextLink", "type": "str"},
+    }
+
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
+        self.value = None
+        self.next_link = None
+
+
+class AzureCapacity(_serialization.Model):
+    """Azure capacity definition.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :ivar scale_type: Scale type. Required. Known values are: "automatic", "manual", and "none".
+    :vartype scale_type: str or ~azure.mgmt.synapse.models.AzureScaleType
+    :ivar minimum: Minimum allowed capacity. Required.
+    :vartype minimum: int
+    :ivar maximum: Maximum allowed capacity. Required.
+    :vartype maximum: int
+    :ivar default: The default capacity that would be used. Required.
+    :vartype default: int
+    """
+
+    _validation = {
+        "scale_type": {"required": True},
+        "minimum": {"required": True},
+        "maximum": {"required": True},
+        "default": {"required": True},
+    }
+
+    _attribute_map = {
+        "scale_type": {"key": "scaleType", "type": "str"},
+        "minimum": {"key": "minimum", "type": "int"},
+        "maximum": {"key": "maximum", "type": "int"},
+        "default": {"key": "default", "type": "int"},
+    }
+
+    def __init__(
+        self,
+        *,
+        scale_type: Union[str, "_models.AzureScaleType"],
+        minimum: int,
+        maximum: int,
+        default: int,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword scale_type: Scale type. Required. Known values are: "automatic", "manual", and "none".
+        :paramtype scale_type: str or ~azure.mgmt.synapse.models.AzureScaleType
+        :keyword minimum: Minimum allowed capacity. Required.
+        :paramtype minimum: int
+        :keyword maximum: Maximum allowed capacity. Required.
+        :paramtype maximum: int
+        :keyword default: The default capacity that would be used. Required.
+        :paramtype default: int
+        """
+        super().__init__(**kwargs)
+        self.scale_type = scale_type
+        self.minimum = minimum
+        self.maximum = maximum
+        self.default = default
 
 
 class AzureEntityResource(Resource):
@@ -205,50 +536,136 @@ class AzureEntityResource(Resource):
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'etag': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "etag": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'etag': {'key': 'etag', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "etag": {"key": "etag", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(AzureEntityResource, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.etag = None
 
 
-class BigDataPoolPatchInfo(msrest.serialization.Model):
-    """Properties patch for a Big Data pool.
+class AzureResourceSku(_serialization.Model):
+    """Azure resource SKU definition.
 
-    :param tags: A set of tags. Updated tags for the Big Data pool.
-    :type tags: dict[str, str]
+    :ivar resource_type: Resource Namespace and Type.
+    :vartype resource_type: str
+    :ivar sku: The SKU details.
+    :vartype sku: ~azure.mgmt.synapse.models.AzureSku
+    :ivar capacity: The number of instances of the cluster.
+    :vartype capacity: ~azure.mgmt.synapse.models.AzureCapacity
     """
 
     _attribute_map = {
-        'tags': {'key': 'tags', 'type': '{str}'},
+        "resource_type": {"key": "resourceType", "type": "str"},
+        "sku": {"key": "sku", "type": "AzureSku"},
+        "capacity": {"key": "capacity", "type": "AzureCapacity"},
     }
 
     def __init__(
         self,
         *,
-        tags: Optional[Dict[str, str]] = None,
-        **kwargs
-    ):
-        super(BigDataPoolPatchInfo, self).__init__(**kwargs)
+        resource_type: Optional[str] = None,
+        sku: Optional["_models.AzureSku"] = None,
+        capacity: Optional["_models.AzureCapacity"] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword resource_type: Resource Namespace and Type.
+        :paramtype resource_type: str
+        :keyword sku: The SKU details.
+        :paramtype sku: ~azure.mgmt.synapse.models.AzureSku
+        :keyword capacity: The number of instances of the cluster.
+        :paramtype capacity: ~azure.mgmt.synapse.models.AzureCapacity
+        """
+        super().__init__(**kwargs)
+        self.resource_type = resource_type
+        self.sku = sku
+        self.capacity = capacity
+
+
+class AzureSku(_serialization.Model):
+    """Azure SKU definition.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :ivar name: SKU name. Required. Known values are: "Compute optimized" and "Storage optimized".
+    :vartype name: str or ~azure.mgmt.synapse.models.SkuName
+    :ivar capacity: The number of instances of the cluster.
+    :vartype capacity: int
+    :ivar size: SKU size. Required. Known values are: "Extra small", "Small", "Medium", and
+     "Large".
+    :vartype size: str or ~azure.mgmt.synapse.models.SkuSize
+    """
+
+    _validation = {
+        "name": {"required": True},
+        "size": {"required": True},
+    }
+
+    _attribute_map = {
+        "name": {"key": "name", "type": "str"},
+        "capacity": {"key": "capacity", "type": "int"},
+        "size": {"key": "size", "type": "str"},
+    }
+
+    def __init__(
+        self,
+        *,
+        name: Union[str, "_models.SkuName"],
+        size: Union[str, "_models.SkuSize"],
+        capacity: Optional[int] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword name: SKU name. Required. Known values are: "Compute optimized" and "Storage
+         optimized".
+        :paramtype name: str or ~azure.mgmt.synapse.models.SkuName
+        :keyword capacity: The number of instances of the cluster.
+        :paramtype capacity: int
+        :keyword size: SKU size. Required. Known values are: "Extra small", "Small", "Medium", and
+         "Large".
+        :paramtype size: str or ~azure.mgmt.synapse.models.SkuSize
+        """
+        super().__init__(**kwargs)
+        self.name = name
+        self.capacity = capacity
+        self.size = size
+
+
+class BigDataPoolPatchInfo(_serialization.Model):
+    """Properties patch for a Big Data pool.
+
+    :ivar tags: Updated tags for the Big Data pool.
+    :vartype tags: dict[str, str]
+    """
+
+    _attribute_map = {
+        "tags": {"key": "tags", "type": "{str}"},
+    }
+
+    def __init__(self, *, tags: Optional[Dict[str, str]] = None, **kwargs: Any) -> None:
+        """
+        :keyword tags: Updated tags for the Big Data pool.
+        :paramtype tags: dict[str, str]
+        """
+        super().__init__(**kwargs)
         self.tags = tags
 
 
 class TrackedResource(Resource):
-    """The resource model definition for an Azure Resource Manager tracked top level resource which has 'tags' and a 'location'.
+    """The resource model definition for an Azure Resource Manager tracked top level resource which
+    has 'tags' and a 'location'.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
@@ -262,40 +679,40 @@ class TrackedResource(Resource):
     :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
      "Microsoft.Storage/storageAccounts".
     :vartype type: str
-    :param tags: A set of tags. Resource tags.
-    :type tags: dict[str, str]
-    :param location: Required. The geo-location where the resource lives.
-    :type location: str
+    :ivar tags: Resource tags.
+    :vartype tags: dict[str, str]
+    :ivar location: The geo-location where the resource lives. Required.
+    :vartype location: str
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'location': {'required': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "location": {"required": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'tags': {'key': 'tags', 'type': '{str}'},
-        'location': {'key': 'location', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "tags": {"key": "tags", "type": "{str}"},
+        "location": {"key": "location", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        location: str,
-        tags: Optional[Dict[str, str]] = None,
-        **kwargs
-    ):
-        super(TrackedResource, self).__init__(**kwargs)
+    def __init__(self, *, location: str, tags: Optional[Dict[str, str]] = None, **kwargs: Any) -> None:
+        """
+        :keyword tags: Resource tags.
+        :paramtype tags: dict[str, str]
+        :keyword location: The geo-location where the resource lives. Required.
+        :paramtype location: str
+        """
+        super().__init__(**kwargs)
         self.tags = tags
         self.location = location
 
 
-class BigDataPoolResourceInfo(TrackedResource):
+class BigDataPoolResourceInfo(TrackedResource):  # pylint: disable=too-many-instance-attributes
     """A Big Data pool.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -310,114 +727,164 @@ class BigDataPoolResourceInfo(TrackedResource):
     :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
      "Microsoft.Storage/storageAccounts".
     :vartype type: str
-    :param tags: A set of tags. Resource tags.
-    :type tags: dict[str, str]
-    :param location: Required. The geo-location where the resource lives.
-    :type location: str
-    :param provisioning_state: The state of the Big Data pool.
-    :type provisioning_state: str
-    :param auto_scale: Auto-scaling properties.
-    :type auto_scale: ~azure.mgmt.synapse.models.AutoScaleProperties
-    :param creation_date: The time when the Big Data pool was created.
-    :type creation_date: ~datetime.datetime
-    :param auto_pause: Auto-pausing properties.
-    :type auto_pause: ~azure.mgmt.synapse.models.AutoPauseProperties
-    :param is_compute_isolation_enabled: Whether compute isolation is required or not.
-    :type is_compute_isolation_enabled: bool
-    :param session_level_packages_enabled: Whether session level packages enabled.
-    :type session_level_packages_enabled: bool
-    :param cache_size: The cache size.
-    :type cache_size: int
-    :param dynamic_executor_allocation: Dynamic Executor Allocation.
-    :type dynamic_executor_allocation: ~azure.mgmt.synapse.models.DynamicExecutorAllocation
-    :param spark_events_folder: The Spark events folder.
-    :type spark_events_folder: str
-    :param node_count: The number of nodes in the Big Data pool.
-    :type node_count: int
-    :param library_requirements: Library version requirements.
-    :type library_requirements: ~azure.mgmt.synapse.models.LibraryRequirements
-    :param custom_libraries: List of custom libraries/packages associated with the spark pool.
-    :type custom_libraries: list[~azure.mgmt.synapse.models.LibraryInfo]
-    :param spark_config_properties: Spark configuration file to specify additional properties.
-    :type spark_config_properties: ~azure.mgmt.synapse.models.LibraryRequirements
-    :param spark_version: The Apache Spark version.
-    :type spark_version: str
-    :param default_spark_log_folder: The default folder where Spark logs will be written.
-    :type default_spark_log_folder: str
-    :param node_size: The level of compute power that each node in the Big Data pool has. Possible
-     values include: "None", "Small", "Medium", "Large", "XLarge", "XXLarge", "XXXLarge".
-    :type node_size: str or ~azure.mgmt.synapse.models.NodeSize
-    :param node_size_family: The kind of nodes that the Big Data pool provides. Possible values
-     include: "None", "MemoryOptimized".
-    :type node_size_family: str or ~azure.mgmt.synapse.models.NodeSizeFamily
+    :ivar tags: Resource tags.
+    :vartype tags: dict[str, str]
+    :ivar location: The geo-location where the resource lives. Required.
+    :vartype location: str
+    :ivar provisioning_state: The state of the Big Data pool.
+    :vartype provisioning_state: str
+    :ivar auto_scale: Auto-scaling properties.
+    :vartype auto_scale: ~azure.mgmt.synapse.models.AutoScaleProperties
+    :ivar creation_date: The time when the Big Data pool was created.
+    :vartype creation_date: ~datetime.datetime
+    :ivar auto_pause: Auto-pausing properties.
+    :vartype auto_pause: ~azure.mgmt.synapse.models.AutoPauseProperties
+    :ivar is_compute_isolation_enabled: Whether compute isolation is required or not.
+    :vartype is_compute_isolation_enabled: bool
+    :ivar is_autotune_enabled: Whether autotune is required or not.
+    :vartype is_autotune_enabled: bool
+    :ivar session_level_packages_enabled: Whether session level packages enabled.
+    :vartype session_level_packages_enabled: bool
+    :ivar cache_size: The cache size.
+    :vartype cache_size: int
+    :ivar dynamic_executor_allocation: Dynamic Executor Allocation.
+    :vartype dynamic_executor_allocation: ~azure.mgmt.synapse.models.DynamicExecutorAllocation
+    :ivar spark_events_folder: The Spark events folder.
+    :vartype spark_events_folder: str
+    :ivar node_count: The number of nodes in the Big Data pool.
+    :vartype node_count: int
+    :ivar library_requirements: Library version requirements.
+    :vartype library_requirements: ~azure.mgmt.synapse.models.LibraryRequirements
+    :ivar custom_libraries: List of custom libraries/packages associated with the spark pool.
+    :vartype custom_libraries: list[~azure.mgmt.synapse.models.LibraryInfo]
+    :ivar spark_config_properties: Spark configuration file to specify additional properties.
+    :vartype spark_config_properties: ~azure.mgmt.synapse.models.SparkConfigProperties
+    :ivar spark_version: The Apache Spark version.
+    :vartype spark_version: str
+    :ivar default_spark_log_folder: The default folder where Spark logs will be written.
+    :vartype default_spark_log_folder: str
+    :ivar node_size: The level of compute power that each node in the Big Data pool has. Known
+     values are: "None", "Small", "Medium", "Large", "XLarge", "XXLarge", and "XXXLarge".
+    :vartype node_size: str or ~azure.mgmt.synapse.models.NodeSize
+    :ivar node_size_family: The kind of nodes that the Big Data pool provides. Known values are:
+     "None", "MemoryOptimized", "HardwareAcceleratedFPGA", and "HardwareAcceleratedGPU".
+    :vartype node_size_family: str or ~azure.mgmt.synapse.models.NodeSizeFamily
     :ivar last_succeeded_timestamp: The time when the Big Data pool was updated successfully.
     :vartype last_succeeded_timestamp: ~datetime.datetime
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'location': {'required': True},
-        'last_succeeded_timestamp': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "location": {"required": True},
+        "creation_date": {"readonly": True},
+        "last_succeeded_timestamp": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'tags': {'key': 'tags', 'type': '{str}'},
-        'location': {'key': 'location', 'type': 'str'},
-        'provisioning_state': {'key': 'properties.provisioningState', 'type': 'str'},
-        'auto_scale': {'key': 'properties.autoScale', 'type': 'AutoScaleProperties'},
-        'creation_date': {'key': 'properties.creationDate', 'type': 'iso-8601'},
-        'auto_pause': {'key': 'properties.autoPause', 'type': 'AutoPauseProperties'},
-        'is_compute_isolation_enabled': {'key': 'properties.isComputeIsolationEnabled', 'type': 'bool'},
-        'session_level_packages_enabled': {'key': 'properties.sessionLevelPackagesEnabled', 'type': 'bool'},
-        'cache_size': {'key': 'properties.cacheSize', 'type': 'int'},
-        'dynamic_executor_allocation': {'key': 'properties.dynamicExecutorAllocation', 'type': 'DynamicExecutorAllocation'},
-        'spark_events_folder': {'key': 'properties.sparkEventsFolder', 'type': 'str'},
-        'node_count': {'key': 'properties.nodeCount', 'type': 'int'},
-        'library_requirements': {'key': 'properties.libraryRequirements', 'type': 'LibraryRequirements'},
-        'custom_libraries': {'key': 'properties.customLibraries', 'type': '[LibraryInfo]'},
-        'spark_config_properties': {'key': 'properties.sparkConfigProperties', 'type': 'LibraryRequirements'},
-        'spark_version': {'key': 'properties.sparkVersion', 'type': 'str'},
-        'default_spark_log_folder': {'key': 'properties.defaultSparkLogFolder', 'type': 'str'},
-        'node_size': {'key': 'properties.nodeSize', 'type': 'str'},
-        'node_size_family': {'key': 'properties.nodeSizeFamily', 'type': 'str'},
-        'last_succeeded_timestamp': {'key': 'properties.lastSucceededTimestamp', 'type': 'iso-8601'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "tags": {"key": "tags", "type": "{str}"},
+        "location": {"key": "location", "type": "str"},
+        "provisioning_state": {"key": "properties.provisioningState", "type": "str"},
+        "auto_scale": {"key": "properties.autoScale", "type": "AutoScaleProperties"},
+        "creation_date": {"key": "properties.creationDate", "type": "iso-8601"},
+        "auto_pause": {"key": "properties.autoPause", "type": "AutoPauseProperties"},
+        "is_compute_isolation_enabled": {"key": "properties.isComputeIsolationEnabled", "type": "bool"},
+        "is_autotune_enabled": {"key": "properties.isAutotuneEnabled", "type": "bool"},
+        "session_level_packages_enabled": {"key": "properties.sessionLevelPackagesEnabled", "type": "bool"},
+        "cache_size": {"key": "properties.cacheSize", "type": "int"},
+        "dynamic_executor_allocation": {
+            "key": "properties.dynamicExecutorAllocation",
+            "type": "DynamicExecutorAllocation",
+        },
+        "spark_events_folder": {"key": "properties.sparkEventsFolder", "type": "str"},
+        "node_count": {"key": "properties.nodeCount", "type": "int"},
+        "library_requirements": {"key": "properties.libraryRequirements", "type": "LibraryRequirements"},
+        "custom_libraries": {"key": "properties.customLibraries", "type": "[LibraryInfo]"},
+        "spark_config_properties": {"key": "properties.sparkConfigProperties", "type": "SparkConfigProperties"},
+        "spark_version": {"key": "properties.sparkVersion", "type": "str"},
+        "default_spark_log_folder": {"key": "properties.defaultSparkLogFolder", "type": "str"},
+        "node_size": {"key": "properties.nodeSize", "type": "str"},
+        "node_size_family": {"key": "properties.nodeSizeFamily", "type": "str"},
+        "last_succeeded_timestamp": {"key": "properties.lastSucceededTimestamp", "type": "iso-8601"},
     }
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-locals
         self,
         *,
         location: str,
         tags: Optional[Dict[str, str]] = None,
         provisioning_state: Optional[str] = None,
-        auto_scale: Optional["AutoScaleProperties"] = None,
-        creation_date: Optional[datetime.datetime] = None,
-        auto_pause: Optional["AutoPauseProperties"] = None,
+        auto_scale: Optional["_models.AutoScaleProperties"] = None,
+        auto_pause: Optional["_models.AutoPauseProperties"] = None,
         is_compute_isolation_enabled: Optional[bool] = None,
+        is_autotune_enabled: Optional[bool] = None,
         session_level_packages_enabled: Optional[bool] = None,
         cache_size: Optional[int] = None,
-        dynamic_executor_allocation: Optional["DynamicExecutorAllocation"] = None,
+        dynamic_executor_allocation: Optional["_models.DynamicExecutorAllocation"] = None,
         spark_events_folder: Optional[str] = None,
         node_count: Optional[int] = None,
-        library_requirements: Optional["LibraryRequirements"] = None,
-        custom_libraries: Optional[List["LibraryInfo"]] = None,
-        spark_config_properties: Optional["LibraryRequirements"] = None,
+        library_requirements: Optional["_models.LibraryRequirements"] = None,
+        custom_libraries: Optional[List["_models.LibraryInfo"]] = None,
+        spark_config_properties: Optional["_models.SparkConfigProperties"] = None,
         spark_version: Optional[str] = None,
         default_spark_log_folder: Optional[str] = None,
-        node_size: Optional[Union[str, "NodeSize"]] = None,
-        node_size_family: Optional[Union[str, "NodeSizeFamily"]] = None,
-        **kwargs
-    ):
-        super(BigDataPoolResourceInfo, self).__init__(tags=tags, location=location, **kwargs)
+        node_size: Optional[Union[str, "_models.NodeSize"]] = None,
+        node_size_family: Optional[Union[str, "_models.NodeSizeFamily"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword tags: Resource tags.
+        :paramtype tags: dict[str, str]
+        :keyword location: The geo-location where the resource lives. Required.
+        :paramtype location: str
+        :keyword provisioning_state: The state of the Big Data pool.
+        :paramtype provisioning_state: str
+        :keyword auto_scale: Auto-scaling properties.
+        :paramtype auto_scale: ~azure.mgmt.synapse.models.AutoScaleProperties
+        :keyword auto_pause: Auto-pausing properties.
+        :paramtype auto_pause: ~azure.mgmt.synapse.models.AutoPauseProperties
+        :keyword is_compute_isolation_enabled: Whether compute isolation is required or not.
+        :paramtype is_compute_isolation_enabled: bool
+        :keyword is_autotune_enabled: Whether autotune is required or not.
+        :paramtype is_autotune_enabled: bool
+        :keyword session_level_packages_enabled: Whether session level packages enabled.
+        :paramtype session_level_packages_enabled: bool
+        :keyword cache_size: The cache size.
+        :paramtype cache_size: int
+        :keyword dynamic_executor_allocation: Dynamic Executor Allocation.
+        :paramtype dynamic_executor_allocation: ~azure.mgmt.synapse.models.DynamicExecutorAllocation
+        :keyword spark_events_folder: The Spark events folder.
+        :paramtype spark_events_folder: str
+        :keyword node_count: The number of nodes in the Big Data pool.
+        :paramtype node_count: int
+        :keyword library_requirements: Library version requirements.
+        :paramtype library_requirements: ~azure.mgmt.synapse.models.LibraryRequirements
+        :keyword custom_libraries: List of custom libraries/packages associated with the spark pool.
+        :paramtype custom_libraries: list[~azure.mgmt.synapse.models.LibraryInfo]
+        :keyword spark_config_properties: Spark configuration file to specify additional properties.
+        :paramtype spark_config_properties: ~azure.mgmt.synapse.models.SparkConfigProperties
+        :keyword spark_version: The Apache Spark version.
+        :paramtype spark_version: str
+        :keyword default_spark_log_folder: The default folder where Spark logs will be written.
+        :paramtype default_spark_log_folder: str
+        :keyword node_size: The level of compute power that each node in the Big Data pool has. Known
+         values are: "None", "Small", "Medium", "Large", "XLarge", "XXLarge", and "XXXLarge".
+        :paramtype node_size: str or ~azure.mgmt.synapse.models.NodeSize
+        :keyword node_size_family: The kind of nodes that the Big Data pool provides. Known values are:
+         "None", "MemoryOptimized", "HardwareAcceleratedFPGA", and "HardwareAcceleratedGPU".
+        :paramtype node_size_family: str or ~azure.mgmt.synapse.models.NodeSizeFamily
+        """
+        super().__init__(tags=tags, location=location, **kwargs)
         self.provisioning_state = provisioning_state
         self.auto_scale = auto_scale
-        self.creation_date = creation_date
+        self.creation_date = None
         self.auto_pause = auto_pause
         self.is_compute_isolation_enabled = is_compute_isolation_enabled
+        self.is_autotune_enabled = is_autotune_enabled
         self.session_level_packages_enabled = session_level_packages_enabled
         self.cache_size = cache_size
         self.dynamic_executor_allocation = dynamic_executor_allocation
@@ -433,76 +900,82 @@ class BigDataPoolResourceInfo(TrackedResource):
         self.last_succeeded_timestamp = None
 
 
-class BigDataPoolResourceInfoListResult(msrest.serialization.Model):
+class BigDataPoolResourceInfoListResult(_serialization.Model):
     """Collection of Big Data pool information.
 
-    :param next_link: Link to the next page of results.
-    :type next_link: str
-    :param value: List of Big Data pools.
-    :type value: list[~azure.mgmt.synapse.models.BigDataPoolResourceInfo]
+    :ivar next_link: Link to the next page of results.
+    :vartype next_link: str
+    :ivar value: List of Big Data pools.
+    :vartype value: list[~azure.mgmt.synapse.models.BigDataPoolResourceInfo]
     """
 
     _attribute_map = {
-        'next_link': {'key': 'nextLink', 'type': 'str'},
-        'value': {'key': 'value', 'type': '[BigDataPoolResourceInfo]'},
+        "next_link": {"key": "nextLink", "type": "str"},
+        "value": {"key": "value", "type": "[BigDataPoolResourceInfo]"},
     }
 
     def __init__(
         self,
         *,
         next_link: Optional[str] = None,
-        value: Optional[List["BigDataPoolResourceInfo"]] = None,
-        **kwargs
-    ):
-        super(BigDataPoolResourceInfoListResult, self).__init__(**kwargs)
+        value: Optional[List["_models.BigDataPoolResourceInfo"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword next_link: Link to the next page of results.
+        :paramtype next_link: str
+        :keyword value: List of Big Data pools.
+        :paramtype value: list[~azure.mgmt.synapse.models.BigDataPoolResourceInfo]
+        """
+        super().__init__(**kwargs)
         self.next_link = next_link
         self.value = value
 
 
-class CheckNameAvailabilityRequest(msrest.serialization.Model):
+class CheckNameAvailabilityRequest(_serialization.Model):
     """A request about whether a workspace name is available.
 
-    :param name: Workspace name.
-    :type name: str
-    :param type: Type: workspace.
-    :type type: str
+    :ivar name: Workspace name.
+    :vartype name: str
+    :ivar type: Type: workspace.
+    :vartype type: str
     """
 
     _attribute_map = {
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        name: Optional[str] = None,
-        type: Optional[str] = None,
-        **kwargs
-    ):
-        super(CheckNameAvailabilityRequest, self).__init__(**kwargs)
+    def __init__(self, *, name: Optional[str] = None, type: Optional[str] = None, **kwargs: Any) -> None:
+        """
+        :keyword name: Workspace name.
+        :paramtype name: str
+        :keyword type: Type: workspace.
+        :paramtype type: str
+        """
+        super().__init__(**kwargs)
         self.name = name
         self.type = type
 
 
-class CheckNameAvailabilityResponse(msrest.serialization.Model):
+class CheckNameAvailabilityResponse(_serialization.Model):
     """A response saying whether the workspace name is available.
 
-    :param message: Validation message.
-    :type message: str
-    :param available: Whether the workspace name is available.
-    :type available: bool
-    :param reason: Reason the workspace name is or is not available.
-    :type reason: str
-    :param name: Workspace name.
-    :type name: str
+    :ivar message: Validation message.
+    :vartype message: str
+    :ivar available: Whether the workspace name is available.
+    :vartype available: bool
+    :ivar reason: Reason the workspace name is or is not available.
+    :vartype reason: str
+    :ivar name: Workspace name.
+    :vartype name: str
     """
 
     _attribute_map = {
-        'message': {'key': 'message', 'type': 'str'},
-        'available': {'key': 'available', 'type': 'bool'},
-        'reason': {'key': 'reason', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
+        "message": {"key": "message", "type": "str"},
+        "available": {"key": "available", "type": "bool"},
+        "reason": {"key": "reason", "type": "str"},
+        "name": {"key": "name", "type": "str"},
     }
 
     def __init__(
@@ -512,214 +985,77 @@ class CheckNameAvailabilityResponse(msrest.serialization.Model):
         available: Optional[bool] = None,
         reason: Optional[str] = None,
         name: Optional[str] = None,
-        **kwargs
-    ):
-        super(CheckNameAvailabilityResponse, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword message: Validation message.
+        :paramtype message: str
+        :keyword available: Whether the workspace name is available.
+        :paramtype available: bool
+        :keyword reason: Reason the workspace name is or is not available.
+        :paramtype reason: str
+        :keyword name: Workspace name.
+        :paramtype name: str
+        """
+        super().__init__(**kwargs)
         self.message = message
         self.available = available
         self.reason = reason
         self.name = name
 
 
-class CustomSetupBase(msrest.serialization.Model):
-    """The base definition of the custom setup.
+class CheckNameResult(_serialization.Model):
+    """The result returned from a check name availability request.
 
-    You probably want to use the sub-classes and not this class directly. Known
-    sub-classes are: CmdkeySetup, ComponentSetup, EnvironmentVariableSetup.
-
-    All required parameters must be populated in order to send to Azure.
-
-    :param type: Required. The type of custom setup.Constant filled by server.
-    :type type: str
+    :ivar name_available: Specifies a Boolean value that indicates if the name is available.
+    :vartype name_available: bool
+    :ivar name: The name that was checked.
+    :vartype name: str
+    :ivar message: Message indicating an unavailable name due to a conflict, or a description of
+     the naming rules that are violated.
+    :vartype message: str
+    :ivar reason: Message providing the reason why the given name is invalid. Known values are:
+     "Invalid" and "AlreadyExists".
+    :vartype reason: str or ~azure.mgmt.synapse.models.Reason
     """
 
-    _validation = {
-        'type': {'required': True},
-    }
-
     _attribute_map = {
-        'type': {'key': 'type', 'type': 'str'},
-    }
-
-    _subtype_map = {
-        'type': {'CmdkeySetup': 'CmdkeySetup', 'ComponentSetup': 'ComponentSetup', 'EnvironmentVariableSetup': 'EnvironmentVariableSetup'}
-    }
-
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(CustomSetupBase, self).__init__(**kwargs)
-        self.type = None  # type: Optional[str]
-
-
-class CmdkeySetup(CustomSetupBase):
-    """The custom setup of running cmdkey commands.
-
-    All required parameters must be populated in order to send to Azure.
-
-    :param type: Required. The type of custom setup.Constant filled by server.
-    :type type: str
-    :param target_name: Required. The server name of data source access.
-    :type target_name: object
-    :param user_name: Required. The user name of data source access.
-    :type user_name: object
-    :param password: Required. The password of data source access.
-    :type password: ~azure.mgmt.synapse.models.SecretBase
-    """
-
-    _validation = {
-        'type': {'required': True},
-        'target_name': {'required': True},
-        'user_name': {'required': True},
-        'password': {'required': True},
-    }
-
-    _attribute_map = {
-        'type': {'key': 'type', 'type': 'str'},
-        'target_name': {'key': 'typeProperties.targetName', 'type': 'object'},
-        'user_name': {'key': 'typeProperties.userName', 'type': 'object'},
-        'password': {'key': 'typeProperties.password', 'type': 'SecretBase'},
+        "name_available": {"key": "nameAvailable", "type": "bool"},
+        "name": {"key": "name", "type": "str"},
+        "message": {"key": "message", "type": "str"},
+        "reason": {"key": "reason", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        target_name: object,
-        user_name: object,
-        password: "SecretBase",
-        **kwargs
-    ):
-        super(CmdkeySetup, self).__init__(**kwargs)
-        self.type = 'CmdkeySetup'  # type: str
-        self.target_name = target_name
-        self.user_name = user_name
-        self.password = password
+        name_available: Optional[bool] = None,
+        name: Optional[str] = None,
+        message: Optional[str] = None,
+        reason: Optional[Union[str, "_models.Reason"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword name_available: Specifies a Boolean value that indicates if the name is available.
+        :paramtype name_available: bool
+        :keyword name: The name that was checked.
+        :paramtype name: str
+        :keyword message: Message indicating an unavailable name due to a conflict, or a description of
+         the naming rules that are violated.
+        :paramtype message: str
+        :keyword reason: Message providing the reason why the given name is invalid. Known values are:
+         "Invalid" and "AlreadyExists".
+        :paramtype reason: str or ~azure.mgmt.synapse.models.Reason
+        """
+        super().__init__(**kwargs)
+        self.name_available = name_available
+        self.name = name
+        self.message = message
+        self.reason = reason
 
 
-class ComponentSetup(CustomSetupBase):
-    """The custom setup of installing 3rd party components.
-
-    All required parameters must be populated in order to send to Azure.
-
-    :param type: Required. The type of custom setup.Constant filled by server.
-    :type type: str
-    :param component_name: Required. The name of the 3rd party component.
-    :type component_name: str
-    :param license_key: The license key to activate the component.
-    :type license_key: ~azure.mgmt.synapse.models.SecretBase
-    """
-
-    _validation = {
-        'type': {'required': True},
-        'component_name': {'required': True},
-    }
-
-    _attribute_map = {
-        'type': {'key': 'type', 'type': 'str'},
-        'component_name': {'key': 'typeProperties.componentName', 'type': 'str'},
-        'license_key': {'key': 'typeProperties.licenseKey', 'type': 'SecretBase'},
-    }
-
-    def __init__(
-        self,
-        *,
-        component_name: str,
-        license_key: Optional["SecretBase"] = None,
-        **kwargs
-    ):
-        super(ComponentSetup, self).__init__(**kwargs)
-        self.type = 'ComponentSetup'  # type: str
-        self.component_name = component_name
-        self.license_key = license_key
-
-
-class CreateSqlPoolRestorePointDefinition(msrest.serialization.Model):
-    """Contains the information necessary to perform a create Sql pool restore point operation.
-
-    All required parameters must be populated in order to send to Azure.
-
-    :param restore_point_label: Required. The restore point label to apply.
-    :type restore_point_label: str
-    """
-
-    _validation = {
-        'restore_point_label': {'required': True},
-    }
-
-    _attribute_map = {
-        'restore_point_label': {'key': 'restorePointLabel', 'type': 'str'},
-    }
-
-    def __init__(
-        self,
-        *,
-        restore_point_label: str,
-        **kwargs
-    ):
-        super(CreateSqlPoolRestorePointDefinition, self).__init__(**kwargs)
-        self.restore_point_label = restore_point_label
-
-
-class CustomerManagedKeyDetails(msrest.serialization.Model):
-    """Details of the customer managed key associated with the workspace.
-
-    Variables are only populated by the server, and will be ignored when sending a request.
-
-    :ivar status: The customer managed key status on the workspace.
-    :vartype status: str
-    :param key: The key object of the workspace.
-    :type key: ~azure.mgmt.synapse.models.WorkspaceKeyDetails
-    """
-
-    _validation = {
-        'status': {'readonly': True},
-    }
-
-    _attribute_map = {
-        'status': {'key': 'status', 'type': 'str'},
-        'key': {'key': 'key', 'type': 'WorkspaceKeyDetails'},
-    }
-
-    def __init__(
-        self,
-        *,
-        key: Optional["WorkspaceKeyDetails"] = None,
-        **kwargs
-    ):
-        super(CustomerManagedKeyDetails, self).__init__(**kwargs)
-        self.status = None
-        self.key = key
-
-
-class DataLakeStorageAccountDetails(msrest.serialization.Model):
-    """Details of the data lake storage account associated with the workspace.
-
-    :param account_url: Account URL.
-    :type account_url: str
-    :param filesystem: Filesystem name.
-    :type filesystem: str
-    """
-
-    _attribute_map = {
-        'account_url': {'key': 'accountUrl', 'type': 'str'},
-        'filesystem': {'key': 'filesystem', 'type': 'str'},
-    }
-
-    def __init__(
-        self,
-        *,
-        account_url: Optional[str] = None,
-        filesystem: Optional[str] = None,
-        **kwargs
-    ):
-        super(DataLakeStorageAccountDetails, self).__init__(**kwargs)
-        self.account_url = account_url
-        self.filesystem = filesystem
-
-
-class ProxyResource(Resource):
-    """The resource model definition for a Azure Resource Manager proxy resource. It will not have tags and a location.
+class ClusterPrincipalAssignment(ProxyResource):  # pylint: disable=too-many-instance-attributes
+    """Class representing a cluster principal assignment.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
@@ -731,25 +1067,879 @@ class ProxyResource(Resource):
     :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
      "Microsoft.Storage/storageAccounts".
     :vartype type: str
+    :ivar system_data: Azure Resource Manager metadata containing createdBy and modifiedBy
+     information.
+    :vartype system_data: ~azure.mgmt.synapse.models.SystemData
+    :ivar principal_id: The principal ID assigned to the cluster principal. It can be a user email,
+     application ID, or security group name.
+    :vartype principal_id: str
+    :ivar role: Cluster principal role. Known values are: "AllDatabasesAdmin" and
+     "AllDatabasesViewer".
+    :vartype role: str or ~azure.mgmt.synapse.models.ClusterPrincipalRole
+    :ivar tenant_id: The tenant id of the principal.
+    :vartype tenant_id: str
+    :ivar principal_type: Principal type. Known values are: "App", "Group", and "User".
+    :vartype principal_type: str or ~azure.mgmt.synapse.models.PrincipalType
+    :ivar tenant_name: The tenant name of the principal.
+    :vartype tenant_name: str
+    :ivar principal_name: The principal name.
+    :vartype principal_name: str
+    :ivar provisioning_state: The provisioned state of the resource. Known values are: "Running",
+     "Creating", "Deleting", "Succeeded", "Failed", "Moving", and "Canceled".
+    :vartype provisioning_state: str or ~azure.mgmt.synapse.models.ResourceProvisioningState
+    :ivar aad_object_id: The service principal object id in AAD (Azure active directory).
+    :vartype aad_object_id: str
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "system_data": {"readonly": True},
+        "tenant_name": {"readonly": True},
+        "principal_name": {"readonly": True},
+        "provisioning_state": {"readonly": True},
+        "aad_object_id": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "system_data": {"key": "systemData", "type": "SystemData"},
+        "principal_id": {"key": "properties.principalId", "type": "str"},
+        "role": {"key": "properties.role", "type": "str"},
+        "tenant_id": {"key": "properties.tenantId", "type": "str"},
+        "principal_type": {"key": "properties.principalType", "type": "str"},
+        "tenant_name": {"key": "properties.tenantName", "type": "str"},
+        "principal_name": {"key": "properties.principalName", "type": "str"},
+        "provisioning_state": {"key": "properties.provisioningState", "type": "str"},
+        "aad_object_id": {"key": "properties.aadObjectId", "type": "str"},
     }
 
     def __init__(
         self,
-        **kwargs
-    ):
-        super(ProxyResource, self).__init__(**kwargs)
+        *,
+        principal_id: Optional[str] = None,
+        role: Optional[Union[str, "_models.ClusterPrincipalRole"]] = None,
+        tenant_id: Optional[str] = None,
+        principal_type: Optional[Union[str, "_models.PrincipalType"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword principal_id: The principal ID assigned to the cluster principal. It can be a user
+         email, application ID, or security group name.
+        :paramtype principal_id: str
+        :keyword role: Cluster principal role. Known values are: "AllDatabasesAdmin" and
+         "AllDatabasesViewer".
+        :paramtype role: str or ~azure.mgmt.synapse.models.ClusterPrincipalRole
+        :keyword tenant_id: The tenant id of the principal.
+        :paramtype tenant_id: str
+        :keyword principal_type: Principal type. Known values are: "App", "Group", and "User".
+        :paramtype principal_type: str or ~azure.mgmt.synapse.models.PrincipalType
+        """
+        super().__init__(**kwargs)
+        self.system_data = None
+        self.principal_id = principal_id
+        self.role = role
+        self.tenant_id = tenant_id
+        self.principal_type = principal_type
+        self.tenant_name = None
+        self.principal_name = None
+        self.provisioning_state = None
+        self.aad_object_id = None
+
+
+class ClusterPrincipalAssignmentCheckNameRequest(_serialization.Model):
+    """A principal assignment check name availability request.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :ivar name: Principal Assignment resource name. Required.
+    :vartype name: str
+    :ivar type: The type of resource, Microsoft.Synapse/workspaces/kustoPools/principalAssignments.
+     Required. Default value is "Microsoft.Synapse/workspaces/kustoPools/principalAssignments".
+    :vartype type: str
+    """
+
+    _validation = {
+        "name": {"required": True},
+        "type": {"required": True, "constant": True},
+    }
+
+    _attribute_map = {
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+    }
+
+    type = "Microsoft.Synapse/workspaces/kustoPools/principalAssignments"
+
+    def __init__(self, *, name: str, **kwargs: Any) -> None:
+        """
+        :keyword name: Principal Assignment resource name. Required.
+        :paramtype name: str
+        """
+        super().__init__(**kwargs)
+        self.name = name
+
+
+class ClusterPrincipalAssignmentListResult(_serialization.Model):
+    """The list Kusto cluster principal assignments operation response.
+
+    :ivar value: The list of Kusto cluster principal assignments.
+    :vartype value: list[~azure.mgmt.synapse.models.ClusterPrincipalAssignment]
+    """
+
+    _attribute_map = {
+        "value": {"key": "value", "type": "[ClusterPrincipalAssignment]"},
+    }
+
+    def __init__(self, *, value: Optional[List["_models.ClusterPrincipalAssignment"]] = None, **kwargs: Any) -> None:
+        """
+        :keyword value: The list of Kusto cluster principal assignments.
+        :paramtype value: list[~azure.mgmt.synapse.models.ClusterPrincipalAssignment]
+        """
+        super().__init__(**kwargs)
+        self.value = value
+
+
+class CustomSetupBase(_serialization.Model):
+    """The base definition of the custom setup.
+
+    You probably want to use the sub-classes and not this class directly. Known sub-classes are:
+    CmdkeySetup, ComponentSetup, EnvironmentVariableSetup
+
+    All required parameters must be populated in order to send to Azure.
+
+    :ivar type: The type of custom setup. Required.
+    :vartype type: str
+    """
+
+    _validation = {
+        "type": {"required": True},
+    }
+
+    _attribute_map = {
+        "type": {"key": "type", "type": "str"},
+    }
+
+    _subtype_map = {
+        "type": {
+            "CmdkeySetup": "CmdkeySetup",
+            "ComponentSetup": "ComponentSetup",
+            "EnvironmentVariableSetup": "EnvironmentVariableSetup",
+        }
+    }
+
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
+        self.type: Optional[str] = None
+
+
+class CmdkeySetup(CustomSetupBase):
+    """The custom setup of running cmdkey commands.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :ivar type: The type of custom setup. Required.
+    :vartype type: str
+    :ivar target_name: The server name of data source access. Required.
+    :vartype target_name: JSON
+    :ivar user_name: The user name of data source access. Required.
+    :vartype user_name: JSON
+    :ivar password: The password of data source access. Required.
+    :vartype password: ~azure.mgmt.synapse.models.SecretBase
+    """
+
+    _validation = {
+        "type": {"required": True},
+        "target_name": {"required": True},
+        "user_name": {"required": True},
+        "password": {"required": True},
+    }
+
+    _attribute_map = {
+        "type": {"key": "type", "type": "str"},
+        "target_name": {"key": "typeProperties.targetName", "type": "object"},
+        "user_name": {"key": "typeProperties.userName", "type": "object"},
+        "password": {"key": "typeProperties.password", "type": "SecretBase"},
+    }
+
+    def __init__(self, *, target_name: JSON, user_name: JSON, password: "_models.SecretBase", **kwargs: Any) -> None:
+        """
+        :keyword target_name: The server name of data source access. Required.
+        :paramtype target_name: JSON
+        :keyword user_name: The user name of data source access. Required.
+        :paramtype user_name: JSON
+        :keyword password: The password of data source access. Required.
+        :paramtype password: ~azure.mgmt.synapse.models.SecretBase
+        """
+        super().__init__(**kwargs)
+        self.type: str = "CmdkeySetup"
+        self.target_name = target_name
+        self.user_name = user_name
+        self.password = password
+
+
+class ComponentSetup(CustomSetupBase):
+    """The custom setup of installing 3rd party components.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :ivar type: The type of custom setup. Required.
+    :vartype type: str
+    :ivar component_name: The name of the 3rd party component. Required.
+    :vartype component_name: str
+    :ivar license_key: The license key to activate the component.
+    :vartype license_key: ~azure.mgmt.synapse.models.SecretBase
+    """
+
+    _validation = {
+        "type": {"required": True},
+        "component_name": {"required": True},
+    }
+
+    _attribute_map = {
+        "type": {"key": "type", "type": "str"},
+        "component_name": {"key": "typeProperties.componentName", "type": "str"},
+        "license_key": {"key": "typeProperties.licenseKey", "type": "SecretBase"},
+    }
+
+    def __init__(
+        self, *, component_name: str, license_key: Optional["_models.SecretBase"] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword component_name: The name of the 3rd party component. Required.
+        :paramtype component_name: str
+        :keyword license_key: The license key to activate the component.
+        :paramtype license_key: ~azure.mgmt.synapse.models.SecretBase
+        """
+        super().__init__(**kwargs)
+        self.type: str = "ComponentSetup"
+        self.component_name = component_name
+        self.license_key = license_key
+
+
+class CreateSqlPoolRestorePointDefinition(_serialization.Model):
+    """Contains the information necessary to perform a create Sql pool restore point operation.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :ivar restore_point_label: The restore point label to apply. Required.
+    :vartype restore_point_label: str
+    """
+
+    _validation = {
+        "restore_point_label": {"required": True},
+    }
+
+    _attribute_map = {
+        "restore_point_label": {"key": "restorePointLabel", "type": "str"},
+    }
+
+    def __init__(self, *, restore_point_label: str, **kwargs: Any) -> None:
+        """
+        :keyword restore_point_label: The restore point label to apply. Required.
+        :paramtype restore_point_label: str
+        """
+        super().__init__(**kwargs)
+        self.restore_point_label = restore_point_label
+
+
+class CspWorkspaceAdminProperties(_serialization.Model):
+    """Initial workspace AAD admin properties for a CSP subscription.
+
+    :ivar initial_workspace_admin_object_id: AAD object ID of initial workspace admin.
+    :vartype initial_workspace_admin_object_id: str
+    """
+
+    _attribute_map = {
+        "initial_workspace_admin_object_id": {"key": "initialWorkspaceAdminObjectId", "type": "str"},
+    }
+
+    def __init__(self, *, initial_workspace_admin_object_id: Optional[str] = None, **kwargs: Any) -> None:
+        """
+        :keyword initial_workspace_admin_object_id: AAD object ID of initial workspace admin.
+        :paramtype initial_workspace_admin_object_id: str
+        """
+        super().__init__(**kwargs)
+        self.initial_workspace_admin_object_id = initial_workspace_admin_object_id
+
+
+class CustomerManagedKeyDetails(_serialization.Model):
+    """Details of the customer managed key associated with the workspace.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    :ivar status: The customer managed key status on the workspace.
+    :vartype status: str
+    :ivar key: The key object of the workspace.
+    :vartype key: ~azure.mgmt.synapse.models.WorkspaceKeyDetails
+    :ivar kek_identity: Key encryption key.
+    :vartype kek_identity: ~azure.mgmt.synapse.models.KekIdentityProperties
+    """
+
+    _validation = {
+        "status": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "status": {"key": "status", "type": "str"},
+        "key": {"key": "key", "type": "WorkspaceKeyDetails"},
+        "kek_identity": {"key": "kekIdentity", "type": "KekIdentityProperties"},
+    }
+
+    def __init__(
+        self,
+        *,
+        key: Optional["_models.WorkspaceKeyDetails"] = None,
+        kek_identity: Optional["_models.KekIdentityProperties"] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword key: The key object of the workspace.
+        :paramtype key: ~azure.mgmt.synapse.models.WorkspaceKeyDetails
+        :keyword kek_identity: Key encryption key.
+        :paramtype kek_identity: ~azure.mgmt.synapse.models.KekIdentityProperties
+        """
+        super().__init__(**kwargs)
+        self.status = None
+        self.key = key
+        self.kek_identity = kek_identity
+
+
+class Database(ProxyResource):
+    """Class representing a Kusto database.
+
+    You probably want to use the sub-classes and not this class directly. Known sub-classes are:
+    ReadOnlyFollowingDatabase, ReadWriteDatabase
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :ivar id: Fully qualified resource ID for the resource. Ex -
+     /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}.
+    :vartype id: str
+    :ivar name: The name of the resource.
+    :vartype name: str
+    :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
+     "Microsoft.Storage/storageAccounts".
+    :vartype type: str
+    :ivar location: Resource location.
+    :vartype location: str
+    :ivar kind: Kind of the database. Required. Known values are: "ReadWrite" and
+     "ReadOnlyFollowing".
+    :vartype kind: str or ~azure.mgmt.synapse.models.Kind
+    :ivar system_data: Azure Resource Manager metadata containing createdBy and modifiedBy
+     information.
+    :vartype system_data: ~azure.mgmt.synapse.models.SystemData
+    """
+
+    _validation = {
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "kind": {"required": True},
+        "system_data": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "location": {"key": "location", "type": "str"},
+        "kind": {"key": "kind", "type": "str"},
+        "system_data": {"key": "systemData", "type": "SystemData"},
+    }
+
+    _subtype_map = {"kind": {"ReadOnlyFollowing": "ReadOnlyFollowingDatabase", "ReadWrite": "ReadWriteDatabase"}}
+
+    def __init__(self, *, location: Optional[str] = None, **kwargs: Any) -> None:
+        """
+        :keyword location: Resource location.
+        :paramtype location: str
+        """
+        super().__init__(**kwargs)
+        self.location = location
+        self.kind: Optional[str] = None
+        self.system_data = None
+
+
+class DatabaseCheckNameRequest(_serialization.Model):
+    """The result returned from a database check name availability request.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :ivar name: Resource name. Required.
+    :vartype name: str
+    :ivar type: The type of resource, for instance
+     Microsoft.Synapse/workspaces/kustoPools/databases. Required. Known values are:
+     "Microsoft.Synapse/workspaces/kustoPools/databases" and
+     "Microsoft.Synapse/workspaces/kustoPools/attachedDatabaseConfigurations".
+    :vartype type: str or ~azure.mgmt.synapse.models.Type
+    """
+
+    _validation = {
+        "name": {"required": True},
+        "type": {"required": True},
+    }
+
+    _attribute_map = {
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+    }
+
+    def __init__(self, *, name: str, type: Union[str, "_models.Type"], **kwargs: Any) -> None:
+        """
+        :keyword name: Resource name. Required.
+        :paramtype name: str
+        :keyword type: The type of resource, for instance
+         Microsoft.Synapse/workspaces/kustoPools/databases. Required. Known values are:
+         "Microsoft.Synapse/workspaces/kustoPools/databases" and
+         "Microsoft.Synapse/workspaces/kustoPools/attachedDatabaseConfigurations".
+        :paramtype type: str or ~azure.mgmt.synapse.models.Type
+        """
+        super().__init__(**kwargs)
+        self.name = name
+        self.type = type
+
+
+class DatabaseListResult(_serialization.Model):
+    """The list Kusto databases operation response.
+
+    :ivar value: The list of Kusto databases.
+    :vartype value: list[~azure.mgmt.synapse.models.Database]
+    """
+
+    _attribute_map = {
+        "value": {"key": "value", "type": "[Database]"},
+    }
+
+    def __init__(self, *, value: Optional[List["_models.Database"]] = None, **kwargs: Any) -> None:
+        """
+        :keyword value: The list of Kusto databases.
+        :paramtype value: list[~azure.mgmt.synapse.models.Database]
+        """
+        super().__init__(**kwargs)
+        self.value = value
+
+
+class DatabasePrincipalAssignment(ProxyResource):  # pylint: disable=too-many-instance-attributes
+    """Class representing a database principal assignment.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    :ivar id: Fully qualified resource ID for the resource. Ex -
+     /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}.
+    :vartype id: str
+    :ivar name: The name of the resource.
+    :vartype name: str
+    :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
+     "Microsoft.Storage/storageAccounts".
+    :vartype type: str
+    :ivar system_data: Azure Resource Manager metadata containing createdBy and modifiedBy
+     information.
+    :vartype system_data: ~azure.mgmt.synapse.models.SystemData
+    :ivar principal_id: The principal ID assigned to the database principal. It can be a user
+     email, application ID, or security group name.
+    :vartype principal_id: str
+    :ivar role: Database principal role. Known values are: "Admin", "Ingestor", "Monitor", "User",
+     "UnrestrictedViewer", and "Viewer".
+    :vartype role: str or ~azure.mgmt.synapse.models.DatabasePrincipalRole
+    :ivar tenant_id: The tenant id of the principal.
+    :vartype tenant_id: str
+    :ivar principal_type: Principal type. Known values are: "App", "Group", and "User".
+    :vartype principal_type: str or ~azure.mgmt.synapse.models.PrincipalType
+    :ivar tenant_name: The tenant name of the principal.
+    :vartype tenant_name: str
+    :ivar principal_name: The principal name.
+    :vartype principal_name: str
+    :ivar provisioning_state: The provisioned state of the resource. Known values are: "Running",
+     "Creating", "Deleting", "Succeeded", "Failed", "Moving", and "Canceled".
+    :vartype provisioning_state: str or ~azure.mgmt.synapse.models.ResourceProvisioningState
+    :ivar aad_object_id: The service principal object id in AAD (Azure active directory).
+    :vartype aad_object_id: str
+    """
+
+    _validation = {
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "system_data": {"readonly": True},
+        "tenant_name": {"readonly": True},
+        "principal_name": {"readonly": True},
+        "provisioning_state": {"readonly": True},
+        "aad_object_id": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "system_data": {"key": "systemData", "type": "SystemData"},
+        "principal_id": {"key": "properties.principalId", "type": "str"},
+        "role": {"key": "properties.role", "type": "str"},
+        "tenant_id": {"key": "properties.tenantId", "type": "str"},
+        "principal_type": {"key": "properties.principalType", "type": "str"},
+        "tenant_name": {"key": "properties.tenantName", "type": "str"},
+        "principal_name": {"key": "properties.principalName", "type": "str"},
+        "provisioning_state": {"key": "properties.provisioningState", "type": "str"},
+        "aad_object_id": {"key": "properties.aadObjectId", "type": "str"},
+    }
+
+    def __init__(
+        self,
+        *,
+        principal_id: Optional[str] = None,
+        role: Optional[Union[str, "_models.DatabasePrincipalRole"]] = None,
+        tenant_id: Optional[str] = None,
+        principal_type: Optional[Union[str, "_models.PrincipalType"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword principal_id: The principal ID assigned to the database principal. It can be a user
+         email, application ID, or security group name.
+        :paramtype principal_id: str
+        :keyword role: Database principal role. Known values are: "Admin", "Ingestor", "Monitor",
+         "User", "UnrestrictedViewer", and "Viewer".
+        :paramtype role: str or ~azure.mgmt.synapse.models.DatabasePrincipalRole
+        :keyword tenant_id: The tenant id of the principal.
+        :paramtype tenant_id: str
+        :keyword principal_type: Principal type. Known values are: "App", "Group", and "User".
+        :paramtype principal_type: str or ~azure.mgmt.synapse.models.PrincipalType
+        """
+        super().__init__(**kwargs)
+        self.system_data = None
+        self.principal_id = principal_id
+        self.role = role
+        self.tenant_id = tenant_id
+        self.principal_type = principal_type
+        self.tenant_name = None
+        self.principal_name = None
+        self.provisioning_state = None
+        self.aad_object_id = None
+
+
+class DatabasePrincipalAssignmentCheckNameRequest(_serialization.Model):
+    """A principal assignment check name availability request.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :ivar name: Principal Assignment resource name. Required.
+    :vartype name: str
+    :ivar type: The type of resource,
+     Microsoft.Synapse/workspaces/kustoPools/databases/principalAssignments. Required. Default value
+     is "Microsoft.Synapse/workspaces/kustoPools/databases/principalAssignments".
+    :vartype type: str
+    """
+
+    _validation = {
+        "name": {"required": True},
+        "type": {"required": True, "constant": True},
+    }
+
+    _attribute_map = {
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+    }
+
+    type = "Microsoft.Synapse/workspaces/kustoPools/databases/principalAssignments"
+
+    def __init__(self, *, name: str, **kwargs: Any) -> None:
+        """
+        :keyword name: Principal Assignment resource name. Required.
+        :paramtype name: str
+        """
+        super().__init__(**kwargs)
+        self.name = name
+
+
+class DatabasePrincipalAssignmentListResult(_serialization.Model):
+    """The list Kusto database principal assignments operation response.
+
+    :ivar value: The list of Kusto database principal assignments.
+    :vartype value: list[~azure.mgmt.synapse.models.DatabasePrincipalAssignment]
+    """
+
+    _attribute_map = {
+        "value": {"key": "value", "type": "[DatabasePrincipalAssignment]"},
+    }
+
+    def __init__(self, *, value: Optional[List["_models.DatabasePrincipalAssignment"]] = None, **kwargs: Any) -> None:
+        """
+        :keyword value: The list of Kusto database principal assignments.
+        :paramtype value: list[~azure.mgmt.synapse.models.DatabasePrincipalAssignment]
+        """
+        super().__init__(**kwargs)
+        self.value = value
+
+
+class DatabaseStatistics(_serialization.Model):
+    """A class that contains database statistics information.
+
+    :ivar size: The database size - the total size of compressed data and index in bytes.
+    :vartype size: float
+    """
+
+    _attribute_map = {
+        "size": {"key": "size", "type": "float"},
+    }
+
+    def __init__(self, *, size: Optional[float] = None, **kwargs: Any) -> None:
+        """
+        :keyword size: The database size - the total size of compressed data and index in bytes.
+        :paramtype size: float
+        """
+        super().__init__(**kwargs)
+        self.size = size
+
+
+class DataConnection(ProxyResource):
+    """Class representing a data connection.
+
+    You probably want to use the sub-classes and not this class directly. Known sub-classes are:
+    EventGridDataConnection, EventHubDataConnection, IotHubDataConnection
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :ivar id: Fully qualified resource ID for the resource. Ex -
+     /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}.
+    :vartype id: str
+    :ivar name: The name of the resource.
+    :vartype name: str
+    :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
+     "Microsoft.Storage/storageAccounts".
+    :vartype type: str
+    :ivar location: Resource location.
+    :vartype location: str
+    :ivar kind: Kind of the endpoint for the data connection. Required. Known values are:
+     "EventHub", "EventGrid", and "IotHub".
+    :vartype kind: str or ~azure.mgmt.synapse.models.DataConnectionKind
+    :ivar system_data: Azure Resource Manager metadata containing createdBy and modifiedBy
+     information.
+    :vartype system_data: ~azure.mgmt.synapse.models.SystemData
+    """
+
+    _validation = {
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "kind": {"required": True},
+        "system_data": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "location": {"key": "location", "type": "str"},
+        "kind": {"key": "kind", "type": "str"},
+        "system_data": {"key": "systemData", "type": "SystemData"},
+    }
+
+    _subtype_map = {
+        "kind": {
+            "EventGrid": "EventGridDataConnection",
+            "EventHub": "EventHubDataConnection",
+            "IotHub": "IotHubDataConnection",
+        }
+    }
+
+    def __init__(self, *, location: Optional[str] = None, **kwargs: Any) -> None:
+        """
+        :keyword location: Resource location.
+        :paramtype location: str
+        """
+        super().__init__(**kwargs)
+        self.location = location
+        self.kind: Optional[str] = None
+        self.system_data = None
+
+
+class DataConnectionCheckNameRequest(_serialization.Model):
+    """A data connection check name availability request.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :ivar name: Data Connection name. Required.
+    :vartype name: str
+    :ivar type: The type of resource,
+     Microsoft.Synapse/workspaces/kustoPools/databases/dataConnections. Required. Default value is
+     "Microsoft.Synapse/workspaces/kustoPools/databases/dataConnections".
+    :vartype type: str
+    """
+
+    _validation = {
+        "name": {"required": True},
+        "type": {"required": True, "constant": True},
+    }
+
+    _attribute_map = {
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+    }
+
+    type = "Microsoft.Synapse/workspaces/kustoPools/databases/dataConnections"
+
+    def __init__(self, *, name: str, **kwargs: Any) -> None:
+        """
+        :keyword name: Data Connection name. Required.
+        :paramtype name: str
+        """
+        super().__init__(**kwargs)
+        self.name = name
+
+
+class DataConnectionListResult(_serialization.Model):
+    """The list Kusto data connections operation response.
+
+    :ivar value: The list of Kusto data connections.
+    :vartype value: list[~azure.mgmt.synapse.models.DataConnection]
+    """
+
+    _attribute_map = {
+        "value": {"key": "value", "type": "[DataConnection]"},
+    }
+
+    def __init__(self, *, value: Optional[List["_models.DataConnection"]] = None, **kwargs: Any) -> None:
+        """
+        :keyword value: The list of Kusto data connections.
+        :paramtype value: list[~azure.mgmt.synapse.models.DataConnection]
+        """
+        super().__init__(**kwargs)
+        self.value = value
+
+
+class DataConnectionValidation(_serialization.Model):
+    """Class representing an data connection validation.
+
+    :ivar data_connection_name: The name of the data connection.
+    :vartype data_connection_name: str
+    :ivar properties: The data connection properties to validate.
+    :vartype properties: ~azure.mgmt.synapse.models.DataConnection
+    """
+
+    _attribute_map = {
+        "data_connection_name": {"key": "dataConnectionName", "type": "str"},
+        "properties": {"key": "properties", "type": "DataConnection"},
+    }
+
+    def __init__(
+        self,
+        *,
+        data_connection_name: Optional[str] = None,
+        properties: Optional["_models.DataConnection"] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword data_connection_name: The name of the data connection.
+        :paramtype data_connection_name: str
+        :keyword properties: The data connection properties to validate.
+        :paramtype properties: ~azure.mgmt.synapse.models.DataConnection
+        """
+        super().__init__(**kwargs)
+        self.data_connection_name = data_connection_name
+        self.properties = properties
+
+
+class DataConnectionValidationListResult(_serialization.Model):
+    """The list Kusto data connection validation result.
+
+    :ivar value: The list of Kusto data connection validation errors.
+    :vartype value: list[~azure.mgmt.synapse.models.DataConnectionValidationResult]
+    """
+
+    _attribute_map = {
+        "value": {"key": "value", "type": "[DataConnectionValidationResult]"},
+    }
+
+    def __init__(
+        self, *, value: Optional[List["_models.DataConnectionValidationResult"]] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword value: The list of Kusto data connection validation errors.
+        :paramtype value: list[~azure.mgmt.synapse.models.DataConnectionValidationResult]
+        """
+        super().__init__(**kwargs)
+        self.value = value
+
+
+class DataConnectionValidationResult(_serialization.Model):
+    """The result returned from a data connection validation request.
+
+    :ivar error_message: A message which indicates a problem in data connection validation.
+    :vartype error_message: str
+    """
+
+    _attribute_map = {
+        "error_message": {"key": "errorMessage", "type": "str"},
+    }
+
+    def __init__(self, *, error_message: Optional[str] = None, **kwargs: Any) -> None:
+        """
+        :keyword error_message: A message which indicates a problem in data connection validation.
+        :paramtype error_message: str
+        """
+        super().__init__(**kwargs)
+        self.error_message = error_message
+
+
+class DataLakeStorageAccountDetails(_serialization.Model):
+    """Details of the data lake storage account associated with the workspace.
+
+    :ivar account_url: Account URL.
+    :vartype account_url: str
+    :ivar filesystem: Filesystem name.
+    :vartype filesystem: str
+    :ivar resource_id: ARM resource Id of this storage account.
+    :vartype resource_id: str
+    :ivar create_managed_private_endpoint: Create managed private endpoint to this storage account
+     or not.
+    :vartype create_managed_private_endpoint: bool
+    """
+
+    _attribute_map = {
+        "account_url": {"key": "accountUrl", "type": "str"},
+        "filesystem": {"key": "filesystem", "type": "str"},
+        "resource_id": {"key": "resourceId", "type": "str"},
+        "create_managed_private_endpoint": {"key": "createManagedPrivateEndpoint", "type": "bool"},
+    }
+
+    def __init__(
+        self,
+        *,
+        account_url: Optional[str] = None,
+        filesystem: Optional[str] = None,
+        resource_id: Optional[str] = None,
+        create_managed_private_endpoint: Optional[bool] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword account_url: Account URL.
+        :paramtype account_url: str
+        :keyword filesystem: Filesystem name.
+        :paramtype filesystem: str
+        :keyword resource_id: ARM resource Id of this storage account.
+        :paramtype resource_id: str
+        :keyword create_managed_private_endpoint: Create managed private endpoint to this storage
+         account or not.
+        :paramtype create_managed_private_endpoint: bool
+        """
+        super().__init__(**kwargs)
+        self.account_url = account_url
+        self.filesystem = filesystem
+        self.resource_id = resource_id
+        self.create_managed_private_endpoint = create_managed_private_endpoint
 
 
 class DataMaskingPolicy(ProxyResource):
@@ -771,13 +1961,13 @@ class DataMaskingPolicy(ProxyResource):
     :vartype kind: str
     :ivar managed_by: Fully qualified resource ID of the sql pool.
     :vartype managed_by: str
-    :param data_masking_state: The state of the data masking policy. Possible values include:
-     "Disabled", "Enabled".
-    :type data_masking_state: str or ~azure.mgmt.synapse.models.DataMaskingState
-    :param exempt_principals: The list of the exempt principals. Specifies the semicolon-separated
+    :ivar data_masking_state: The state of the data masking policy. Known values are: "Disabled"
+     and "Enabled".
+    :vartype data_masking_state: str or ~azure.mgmt.synapse.models.DataMaskingState
+    :ivar exempt_principals: The list of the exempt principals. Specifies the semicolon-separated
      list of database users for which the data masking policy does not apply. The specified users
      receive data results without masking for all of the database queries.
-    :type exempt_principals: str
+    :vartype exempt_principals: str
     :ivar application_principals: The list of the application principals. This is a legacy
      parameter and is no longer used.
     :vartype application_principals: str
@@ -786,37 +1976,46 @@ class DataMaskingPolicy(ProxyResource):
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'location': {'readonly': True},
-        'kind': {'readonly': True},
-        'managed_by': {'readonly': True},
-        'application_principals': {'readonly': True},
-        'masking_level': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "location": {"readonly": True},
+        "kind": {"readonly": True},
+        "managed_by": {"readonly": True},
+        "application_principals": {"readonly": True},
+        "masking_level": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'location': {'key': 'location', 'type': 'str'},
-        'kind': {'key': 'kind', 'type': 'str'},
-        'managed_by': {'key': 'managedBy', 'type': 'str'},
-        'data_masking_state': {'key': 'properties.dataMaskingState', 'type': 'str'},
-        'exempt_principals': {'key': 'properties.exemptPrincipals', 'type': 'str'},
-        'application_principals': {'key': 'properties.applicationPrincipals', 'type': 'str'},
-        'masking_level': {'key': 'properties.maskingLevel', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "location": {"key": "location", "type": "str"},
+        "kind": {"key": "kind", "type": "str"},
+        "managed_by": {"key": "managedBy", "type": "str"},
+        "data_masking_state": {"key": "properties.dataMaskingState", "type": "str"},
+        "exempt_principals": {"key": "properties.exemptPrincipals", "type": "str"},
+        "application_principals": {"key": "properties.applicationPrincipals", "type": "str"},
+        "masking_level": {"key": "properties.maskingLevel", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        data_masking_state: Optional[Union[str, "DataMaskingState"]] = None,
+        data_masking_state: Optional[Union[str, "_models.DataMaskingState"]] = None,
         exempt_principals: Optional[str] = None,
-        **kwargs
-    ):
-        super(DataMaskingPolicy, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword data_masking_state: The state of the data masking policy. Known values are: "Disabled"
+         and "Enabled".
+        :paramtype data_masking_state: str or ~azure.mgmt.synapse.models.DataMaskingState
+        :keyword exempt_principals: The list of the exempt principals. Specifies the
+         semicolon-separated list of database users for which the data masking policy does not apply.
+         The specified users receive data results without masking for all of the database queries.
+        :paramtype exempt_principals: str
+        """
+        super().__init__(**kwargs)
         self.location = None
         self.kind = None
         self.managed_by = None
@@ -826,7 +2025,7 @@ class DataMaskingPolicy(ProxyResource):
         self.masking_level = None
 
 
-class DataMaskingRule(ProxyResource):
+class DataMaskingRule(ProxyResource):  # pylint: disable=too-many-instance-attributes
     """Represents a Sql pool data masking rule.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -845,86 +2044,120 @@ class DataMaskingRule(ProxyResource):
     :vartype kind: str
     :ivar id_properties_id: The rule Id.
     :vartype id_properties_id: str
-    :param alias_name: The alias name. This is a legacy parameter and is no longer used.
-    :type alias_name: str
-    :param rule_state: The rule state. Used to delete a rule. To delete an existing rule, specify
+    :ivar alias_name: The alias name. This is a legacy parameter and is no longer used.
+    :vartype alias_name: str
+    :ivar rule_state: The rule state. Used to delete a rule. To delete an existing rule, specify
      the schemaName, tableName, columnName, maskingFunction, and specify ruleState as disabled.
      However, if the rule doesn't already exist, the rule will be created with ruleState set to
-     enabled, regardless of the provided value of ruleState. Possible values include: "Disabled",
+     enabled, regardless of the provided value of ruleState. Known values are: "Disabled" and
      "Enabled".
-    :type rule_state: str or ~azure.mgmt.synapse.models.DataMaskingRuleState
-    :param schema_name: The schema name on which the data masking rule is applied.
-    :type schema_name: str
-    :param table_name: The table name on which the data masking rule is applied.
-    :type table_name: str
-    :param column_name: The column name on which the data masking rule is applied.
-    :type column_name: str
-    :param masking_function: The masking function that is used for the data masking rule. Possible
-     values include: "Default", "CCN", "Email", "Number", "SSN", "Text".
-    :type masking_function: str or ~azure.mgmt.synapse.models.DataMaskingFunction
-    :param number_from: The numberFrom property of the masking rule. Required if maskingFunction is
+    :vartype rule_state: str or ~azure.mgmt.synapse.models.DataMaskingRuleState
+    :ivar schema_name: The schema name on which the data masking rule is applied.
+    :vartype schema_name: str
+    :ivar table_name: The table name on which the data masking rule is applied.
+    :vartype table_name: str
+    :ivar column_name: The column name on which the data masking rule is applied.
+    :vartype column_name: str
+    :ivar masking_function: The masking function that is used for the data masking rule. Known
+     values are: "Default", "CCN", "Email", "Number", "SSN", and "Text".
+    :vartype masking_function: str or ~azure.mgmt.synapse.models.DataMaskingFunction
+    :ivar number_from: The numberFrom property of the masking rule. Required if maskingFunction is
      set to Number, otherwise this parameter will be ignored.
-    :type number_from: str
-    :param number_to: The numberTo property of the data masking rule. Required if maskingFunction
-     is set to Number, otherwise this parameter will be ignored.
-    :type number_to: str
-    :param prefix_size: If maskingFunction is set to Text, the number of characters to show
-     unmasked in the beginning of the string. Otherwise, this parameter will be ignored.
-    :type prefix_size: str
-    :param suffix_size: If maskingFunction is set to Text, the number of characters to show
-     unmasked at the end of the string. Otherwise, this parameter will be ignored.
-    :type suffix_size: str
-    :param replacement_string: If maskingFunction is set to Text, the character to use for masking
+    :vartype number_from: str
+    :ivar number_to: The numberTo property of the data masking rule. Required if maskingFunction is
+     set to Number, otherwise this parameter will be ignored.
+    :vartype number_to: str
+    :ivar prefix_size: If maskingFunction is set to Text, the number of characters to show unmasked
+     in the beginning of the string. Otherwise, this parameter will be ignored.
+    :vartype prefix_size: str
+    :ivar suffix_size: If maskingFunction is set to Text, the number of characters to show unmasked
+     at the end of the string. Otherwise, this parameter will be ignored.
+    :vartype suffix_size: str
+    :ivar replacement_string: If maskingFunction is set to Text, the character to use for masking
      the unexposed part of the string. Otherwise, this parameter will be ignored.
-    :type replacement_string: str
+    :vartype replacement_string: str
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'location': {'readonly': True},
-        'kind': {'readonly': True},
-        'id_properties_id': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "location": {"readonly": True},
+        "kind": {"readonly": True},
+        "id_properties_id": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'location': {'key': 'location', 'type': 'str'},
-        'kind': {'key': 'kind', 'type': 'str'},
-        'id_properties_id': {'key': 'properties.id', 'type': 'str'},
-        'alias_name': {'key': 'properties.aliasName', 'type': 'str'},
-        'rule_state': {'key': 'properties.ruleState', 'type': 'str'},
-        'schema_name': {'key': 'properties.schemaName', 'type': 'str'},
-        'table_name': {'key': 'properties.tableName', 'type': 'str'},
-        'column_name': {'key': 'properties.columnName', 'type': 'str'},
-        'masking_function': {'key': 'properties.maskingFunction', 'type': 'str'},
-        'number_from': {'key': 'properties.numberFrom', 'type': 'str'},
-        'number_to': {'key': 'properties.numberTo', 'type': 'str'},
-        'prefix_size': {'key': 'properties.prefixSize', 'type': 'str'},
-        'suffix_size': {'key': 'properties.suffixSize', 'type': 'str'},
-        'replacement_string': {'key': 'properties.replacementString', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "location": {"key": "location", "type": "str"},
+        "kind": {"key": "kind", "type": "str"},
+        "id_properties_id": {"key": "properties.id", "type": "str"},
+        "alias_name": {"key": "properties.aliasName", "type": "str"},
+        "rule_state": {"key": "properties.ruleState", "type": "str"},
+        "schema_name": {"key": "properties.schemaName", "type": "str"},
+        "table_name": {"key": "properties.tableName", "type": "str"},
+        "column_name": {"key": "properties.columnName", "type": "str"},
+        "masking_function": {"key": "properties.maskingFunction", "type": "str"},
+        "number_from": {"key": "properties.numberFrom", "type": "str"},
+        "number_to": {"key": "properties.numberTo", "type": "str"},
+        "prefix_size": {"key": "properties.prefixSize", "type": "str"},
+        "suffix_size": {"key": "properties.suffixSize", "type": "str"},
+        "replacement_string": {"key": "properties.replacementString", "type": "str"},
     }
 
     def __init__(
         self,
         *,
         alias_name: Optional[str] = None,
-        rule_state: Optional[Union[str, "DataMaskingRuleState"]] = None,
+        rule_state: Optional[Union[str, "_models.DataMaskingRuleState"]] = None,
         schema_name: Optional[str] = None,
         table_name: Optional[str] = None,
         column_name: Optional[str] = None,
-        masking_function: Optional[Union[str, "DataMaskingFunction"]] = None,
+        masking_function: Optional[Union[str, "_models.DataMaskingFunction"]] = None,
         number_from: Optional[str] = None,
         number_to: Optional[str] = None,
         prefix_size: Optional[str] = None,
         suffix_size: Optional[str] = None,
         replacement_string: Optional[str] = None,
-        **kwargs
-    ):
-        super(DataMaskingRule, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword alias_name: The alias name. This is a legacy parameter and is no longer used.
+        :paramtype alias_name: str
+        :keyword rule_state: The rule state. Used to delete a rule. To delete an existing rule, specify
+         the schemaName, tableName, columnName, maskingFunction, and specify ruleState as disabled.
+         However, if the rule doesn't already exist, the rule will be created with ruleState set to
+         enabled, regardless of the provided value of ruleState. Known values are: "Disabled" and
+         "Enabled".
+        :paramtype rule_state: str or ~azure.mgmt.synapse.models.DataMaskingRuleState
+        :keyword schema_name: The schema name on which the data masking rule is applied.
+        :paramtype schema_name: str
+        :keyword table_name: The table name on which the data masking rule is applied.
+        :paramtype table_name: str
+        :keyword column_name: The column name on which the data masking rule is applied.
+        :paramtype column_name: str
+        :keyword masking_function: The masking function that is used for the data masking rule. Known
+         values are: "Default", "CCN", "Email", "Number", "SSN", and "Text".
+        :paramtype masking_function: str or ~azure.mgmt.synapse.models.DataMaskingFunction
+        :keyword number_from: The numberFrom property of the masking rule. Required if maskingFunction
+         is set to Number, otherwise this parameter will be ignored.
+        :paramtype number_from: str
+        :keyword number_to: The numberTo property of the data masking rule. Required if maskingFunction
+         is set to Number, otherwise this parameter will be ignored.
+        :paramtype number_to: str
+        :keyword prefix_size: If maskingFunction is set to Text, the number of characters to show
+         unmasked in the beginning of the string. Otherwise, this parameter will be ignored.
+        :paramtype prefix_size: str
+        :keyword suffix_size: If maskingFunction is set to Text, the number of characters to show
+         unmasked at the end of the string. Otherwise, this parameter will be ignored.
+        :paramtype suffix_size: str
+        :keyword replacement_string: If maskingFunction is set to Text, the character to use for
+         masking the unexposed part of the string. Otherwise, this parameter will be ignored.
+        :paramtype replacement_string: str
+        """
+        super().__init__(**kwargs)
         self.location = None
         self.kind = None
         self.id_properties_id = None
@@ -941,24 +2174,23 @@ class DataMaskingRule(ProxyResource):
         self.replacement_string = replacement_string
 
 
-class DataMaskingRuleListResult(msrest.serialization.Model):
+class DataMaskingRuleListResult(_serialization.Model):
     """The response to a list data masking rules request.
 
-    :param value: The list of Sql pool data masking rules.
-    :type value: list[~azure.mgmt.synapse.models.DataMaskingRule]
+    :ivar value: The list of Sql pool data masking rules.
+    :vartype value: list[~azure.mgmt.synapse.models.DataMaskingRule]
     """
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[DataMaskingRule]'},
+        "value": {"key": "value", "type": "[DataMaskingRule]"},
     }
 
-    def __init__(
-        self,
-        *,
-        value: Optional[List["DataMaskingRule"]] = None,
-        **kwargs
-    ):
-        super(DataMaskingRuleListResult, self).__init__(**kwargs)
+    def __init__(self, *, value: Optional[List["_models.DataMaskingRule"]] = None, **kwargs: Any) -> None:
+        """
+        :keyword value: The list of Sql pool data masking rules.
+        :paramtype value: list[~azure.mgmt.synapse.models.DataMaskingRule]
+        """
+        super().__init__(**kwargs)
         self.value = value
 
 
@@ -980,75 +2212,182 @@ class DataWarehouseUserActivities(ProxyResource):
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'active_queries_count': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "active_queries_count": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'active_queries_count': {'key': 'properties.activeQueriesCount', 'type': 'int'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "active_queries_count": {"key": "properties.activeQueriesCount", "type": "int"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(DataWarehouseUserActivities, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.active_queries_count = None
 
 
-class DynamicExecutorAllocation(msrest.serialization.Model):
-    """Dynamic Executor Allocation Properties.
+class DedicatedSQLminimalTlsSettings(ProxyResource):
+    """Dedicated Sql Minimal Tls Settings Info.
 
-    :param enabled: Indicates whether Dynamic Executor Allocation is enabled or not.
-    :type enabled: bool
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    :ivar id: Fully qualified resource ID for the resource. Ex -
+     /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}.
+    :vartype id: str
+    :ivar name: The name of the resource.
+    :vartype name: str
+    :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
+     "Microsoft.Storage/storageAccounts".
+    :vartype type: str
+    :ivar location: Resource location.
+    :vartype location: str
+    :ivar minimal_tls_version: The minimal tls version of the sql server.
+    :vartype minimal_tls_version: str
+    """
+
+    _validation = {
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "location": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "location": {"key": "location", "type": "str"},
+        "minimal_tls_version": {"key": "properties.minimalTlsVersion", "type": "str"},
+    }
+
+    def __init__(self, *, minimal_tls_version: Optional[str] = None, **kwargs: Any) -> None:
+        """
+        :keyword minimal_tls_version: The minimal tls version of the sql server.
+        :paramtype minimal_tls_version: str
+        """
+        super().__init__(**kwargs)
+        self.location = None
+        self.minimal_tls_version = minimal_tls_version
+
+
+class DedicatedSQLminimalTlsSettingsListResult(_serialization.Model):
+    """A list of the server's dedicated sql minimal tls settings.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    :ivar value: Array of results.
+    :vartype value: list[~azure.mgmt.synapse.models.DedicatedSQLminimalTlsSettings]
+    :ivar next_link: Link to retrieve next page of results.
+    :vartype next_link: str
+    """
+
+    _validation = {
+        "value": {"readonly": True},
+        "next_link": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "value": {"key": "value", "type": "[DedicatedSQLminimalTlsSettings]"},
+        "next_link": {"key": "nextLink", "type": "str"},
+    }
+
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
+        self.value = None
+        self.next_link = None
+
+
+class DedicatedSQLminimalTlsSettingsPatchInfo(_serialization.Model):
+    """Dedicated SQL minimal tls settings patch info.
+
+    :ivar minimal_tls_version: minimal tls version.
+    :vartype minimal_tls_version: str
     """
 
     _attribute_map = {
-        'enabled': {'key': 'enabled', 'type': 'bool'},
+        "minimal_tls_version": {"key": "minimalTlsVersion", "type": "str"},
+    }
+
+    def __init__(self, *, minimal_tls_version: Optional[str] = None, **kwargs: Any) -> None:
+        """
+        :keyword minimal_tls_version: minimal tls version.
+        :paramtype minimal_tls_version: str
+        """
+        super().__init__(**kwargs)
+        self.minimal_tls_version = minimal_tls_version
+
+
+class DynamicExecutorAllocation(_serialization.Model):
+    """Dynamic Executor Allocation Properties.
+
+    :ivar enabled: Indicates whether Dynamic Executor Allocation is enabled or not.
+    :vartype enabled: bool
+    :ivar min_executors: The minimum number of executors alloted.
+    :vartype min_executors: int
+    :ivar max_executors: The maximum number of executors alloted.
+    :vartype max_executors: int
+    """
+
+    _attribute_map = {
+        "enabled": {"key": "enabled", "type": "bool"},
+        "min_executors": {"key": "minExecutors", "type": "int"},
+        "max_executors": {"key": "maxExecutors", "type": "int"},
     }
 
     def __init__(
         self,
         *,
         enabled: Optional[bool] = None,
-        **kwargs
-    ):
-        super(DynamicExecutorAllocation, self).__init__(**kwargs)
+        min_executors: Optional[int] = None,
+        max_executors: Optional[int] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword enabled: Indicates whether Dynamic Executor Allocation is enabled or not.
+        :paramtype enabled: bool
+        :keyword min_executors: The minimum number of executors alloted.
+        :paramtype min_executors: int
+        :keyword max_executors: The maximum number of executors alloted.
+        :paramtype max_executors: int
+        """
+        super().__init__(**kwargs)
         self.enabled = enabled
+        self.min_executors = min_executors
+        self.max_executors = max_executors
 
 
-class EncryptionDetails(msrest.serialization.Model):
+class EncryptionDetails(_serialization.Model):
     """Details of the encryption associated with the workspace.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
     :ivar double_encryption_enabled: Double Encryption enabled.
     :vartype double_encryption_enabled: bool
-    :param cmk: Customer Managed Key Details.
-    :type cmk: ~azure.mgmt.synapse.models.CustomerManagedKeyDetails
+    :ivar cmk: Customer Managed Key Details.
+    :vartype cmk: ~azure.mgmt.synapse.models.CustomerManagedKeyDetails
     """
 
     _validation = {
-        'double_encryption_enabled': {'readonly': True},
+        "double_encryption_enabled": {"readonly": True},
     }
 
     _attribute_map = {
-        'double_encryption_enabled': {'key': 'doubleEncryptionEnabled', 'type': 'bool'},
-        'cmk': {'key': 'cmk', 'type': 'CustomerManagedKeyDetails'},
+        "double_encryption_enabled": {"key": "doubleEncryptionEnabled", "type": "bool"},
+        "cmk": {"key": "cmk", "type": "CustomerManagedKeyDetails"},
     }
 
-    def __init__(
-        self,
-        *,
-        cmk: Optional["CustomerManagedKeyDetails"] = None,
-        **kwargs
-    ):
-        super(EncryptionDetails, self).__init__(**kwargs)
+    def __init__(self, *, cmk: Optional["_models.CustomerManagedKeyDetails"] = None, **kwargs: Any) -> None:
+        """
+        :keyword cmk: Customer Managed Key Details.
+        :paramtype cmk: ~azure.mgmt.synapse.models.CustomerManagedKeyDetails
+        """
+        super().__init__(**kwargs)
         self.double_encryption_enabled = None
         self.cmk = cmk
 
@@ -1073,11 +2412,11 @@ class EncryptionProtector(ProxyResource):
     :vartype location: str
     :ivar subregion: Subregion of the encryption protector.
     :vartype subregion: str
-    :param server_key_name: The name of the server key.
-    :type server_key_name: str
-    :param server_key_type: The encryption protector type like 'ServiceManaged', 'AzureKeyVault'.
-     Possible values include: "ServiceManaged", "AzureKeyVault".
-    :type server_key_type: str or ~azure.mgmt.synapse.models.ServerKeyType
+    :ivar server_key_name: The name of the server key.
+    :vartype server_key_name: str
+    :ivar server_key_type: The encryption protector type like 'ServiceManaged', 'AzureKeyVault'.
+     Known values are: "ServiceManaged" and "AzureKeyVault".
+    :vartype server_key_type: str or ~azure.mgmt.synapse.models.ServerKeyType
     :ivar uri: The URI of the server key.
     :vartype uri: str
     :ivar thumbprint: Thumbprint of the server key.
@@ -1085,37 +2424,44 @@ class EncryptionProtector(ProxyResource):
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'kind': {'readonly': True},
-        'location': {'readonly': True},
-        'subregion': {'readonly': True},
-        'uri': {'readonly': True},
-        'thumbprint': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "kind": {"readonly": True},
+        "location": {"readonly": True},
+        "subregion": {"readonly": True},
+        "uri": {"readonly": True},
+        "thumbprint": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'kind': {'key': 'kind', 'type': 'str'},
-        'location': {'key': 'location', 'type': 'str'},
-        'subregion': {'key': 'properties.subregion', 'type': 'str'},
-        'server_key_name': {'key': 'properties.serverKeyName', 'type': 'str'},
-        'server_key_type': {'key': 'properties.serverKeyType', 'type': 'str'},
-        'uri': {'key': 'properties.uri', 'type': 'str'},
-        'thumbprint': {'key': 'properties.thumbprint', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "kind": {"key": "kind", "type": "str"},
+        "location": {"key": "location", "type": "str"},
+        "subregion": {"key": "properties.subregion", "type": "str"},
+        "server_key_name": {"key": "properties.serverKeyName", "type": "str"},
+        "server_key_type": {"key": "properties.serverKeyType", "type": "str"},
+        "uri": {"key": "properties.uri", "type": "str"},
+        "thumbprint": {"key": "properties.thumbprint", "type": "str"},
     }
 
     def __init__(
         self,
         *,
         server_key_name: Optional[str] = None,
-        server_key_type: Optional[Union[str, "ServerKeyType"]] = None,
-        **kwargs
-    ):
-        super(EncryptionProtector, self).__init__(**kwargs)
+        server_key_type: Optional[Union[str, "_models.ServerKeyType"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword server_key_name: The name of the server key.
+        :paramtype server_key_name: str
+        :keyword server_key_type: The encryption protector type like 'ServiceManaged', 'AzureKeyVault'.
+         Known values are: "ServiceManaged" and "AzureKeyVault".
+        :paramtype server_key_type: str or ~azure.mgmt.synapse.models.ServerKeyType
+        """
+        super().__init__(**kwargs)
         self.kind = None
         self.location = None
         self.subregion = None
@@ -1125,7 +2471,7 @@ class EncryptionProtector(ProxyResource):
         self.thumbprint = None
 
 
-class EncryptionProtectorListResult(msrest.serialization.Model):
+class EncryptionProtectorListResult(_serialization.Model):
     """A list of server encryption protectors.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -1137,47 +2483,52 @@ class EncryptionProtectorListResult(msrest.serialization.Model):
     """
 
     _validation = {
-        'value': {'readonly': True},
-        'next_link': {'readonly': True},
+        "value": {"readonly": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[EncryptionProtector]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[EncryptionProtector]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(EncryptionProtectorListResult, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.value = None
         self.next_link = None
 
 
-class EntityReference(msrest.serialization.Model):
+class EntityReference(_serialization.Model):
     """The entity reference.
 
-    :param type: The type of this referenced entity. Possible values include:
-     "IntegrationRuntimeReference", "LinkedServiceReference".
-    :type type: str or ~azure.mgmt.synapse.models.IntegrationRuntimeEntityReferenceType
-    :param reference_name: The name of this referenced entity.
-    :type reference_name: str
+    :ivar type: The type of this referenced entity. Known values are: "IntegrationRuntimeReference"
+     and "LinkedServiceReference".
+    :vartype type: str or ~azure.mgmt.synapse.models.IntegrationRuntimeEntityReferenceType
+    :ivar reference_name: The name of this referenced entity.
+    :vartype reference_name: str
     """
 
     _attribute_map = {
-        'type': {'key': 'type', 'type': 'str'},
-        'reference_name': {'key': 'referenceName', 'type': 'str'},
+        "type": {"key": "type", "type": "str"},
+        "reference_name": {"key": "referenceName", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        type: Optional[Union[str, "IntegrationRuntimeEntityReferenceType"]] = None,
+        type: Optional[Union[str, "_models.IntegrationRuntimeEntityReferenceType"]] = None,
         reference_name: Optional[str] = None,
-        **kwargs
-    ):
-        super(EntityReference, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword type: The type of this referenced entity. Known values are:
+         "IntegrationRuntimeReference" and "LinkedServiceReference".
+        :paramtype type: str or ~azure.mgmt.synapse.models.IntegrationRuntimeEntityReferenceType
+        :keyword reference_name: The name of this referenced entity.
+        :paramtype reference_name: str
+        """
+        super().__init__(**kwargs)
         self.type = type
         self.reference_name = reference_name
 
@@ -1187,40 +2538,40 @@ class EnvironmentVariableSetup(CustomSetupBase):
 
     All required parameters must be populated in order to send to Azure.
 
-    :param type: Required. The type of custom setup.Constant filled by server.
-    :type type: str
-    :param variable_name: Required. The name of the environment variable.
-    :type variable_name: str
-    :param variable_value: Required. The value of the environment variable.
-    :type variable_value: str
+    :ivar type: The type of custom setup. Required.
+    :vartype type: str
+    :ivar variable_name: The name of the environment variable. Required.
+    :vartype variable_name: str
+    :ivar variable_value: The value of the environment variable. Required.
+    :vartype variable_value: str
     """
 
     _validation = {
-        'type': {'required': True},
-        'variable_name': {'required': True},
-        'variable_value': {'required': True},
+        "type": {"required": True},
+        "variable_name": {"required": True},
+        "variable_value": {"required": True},
     }
 
     _attribute_map = {
-        'type': {'key': 'type', 'type': 'str'},
-        'variable_name': {'key': 'typeProperties.variableName', 'type': 'str'},
-        'variable_value': {'key': 'typeProperties.variableValue', 'type': 'str'},
+        "type": {"key": "type", "type": "str"},
+        "variable_name": {"key": "typeProperties.variableName", "type": "str"},
+        "variable_value": {"key": "typeProperties.variableValue", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        variable_name: str,
-        variable_value: str,
-        **kwargs
-    ):
-        super(EnvironmentVariableSetup, self).__init__(**kwargs)
-        self.type = 'EnvironmentVariableSetup'  # type: str
+    def __init__(self, *, variable_name: str, variable_value: str, **kwargs: Any) -> None:
+        """
+        :keyword variable_name: The name of the environment variable. Required.
+        :paramtype variable_name: str
+        :keyword variable_value: The value of the environment variable. Required.
+        :paramtype variable_value: str
+        """
+        super().__init__(**kwargs)
+        self.type: str = "EnvironmentVariableSetup"
         self.variable_name = variable_name
         self.variable_value = variable_value
 
 
-class ErrorAdditionalInfo(msrest.serialization.Model):
+class ErrorAdditionalInfo(_serialization.Model):
     """The resource management error additional info.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -1228,29 +2579,27 @@ class ErrorAdditionalInfo(msrest.serialization.Model):
     :ivar type: The additional info type.
     :vartype type: str
     :ivar info: The additional info.
-    :vartype info: object
+    :vartype info: JSON
     """
 
     _validation = {
-        'type': {'readonly': True},
-        'info': {'readonly': True},
+        "type": {"readonly": True},
+        "info": {"readonly": True},
     }
 
     _attribute_map = {
-        'type': {'key': 'type', 'type': 'str'},
-        'info': {'key': 'info', 'type': 'object'},
+        "type": {"key": "type", "type": "str"},
+        "info": {"key": "info", "type": "object"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(ErrorAdditionalInfo, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.type = None
         self.info = None
 
 
-class ErrorDetail(msrest.serialization.Model):
+class ErrorDetail(_serialization.Model):
     """The error detail.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -1268,26 +2617,24 @@ class ErrorDetail(msrest.serialization.Model):
     """
 
     _validation = {
-        'code': {'readonly': True},
-        'message': {'readonly': True},
-        'target': {'readonly': True},
-        'details': {'readonly': True},
-        'additional_info': {'readonly': True},
+        "code": {"readonly": True},
+        "message": {"readonly": True},
+        "target": {"readonly": True},
+        "details": {"readonly": True},
+        "additional_info": {"readonly": True},
     }
 
     _attribute_map = {
-        'code': {'key': 'code', 'type': 'str'},
-        'message': {'key': 'message', 'type': 'str'},
-        'target': {'key': 'target', 'type': 'str'},
-        'details': {'key': 'details', 'type': '[ErrorDetail]'},
-        'additional_info': {'key': 'additionalInfo', 'type': '[ErrorAdditionalInfo]'},
+        "code": {"key": "code", "type": "str"},
+        "message": {"key": "message", "type": "str"},
+        "target": {"key": "target", "type": "str"},
+        "details": {"key": "details", "type": "[ErrorDetail]"},
+        "additional_info": {"key": "additionalInfo", "type": "[ErrorAdditionalInfo]"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(ErrorDetail, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.code = None
         self.message = None
         self.target = None
@@ -1295,28 +2642,337 @@ class ErrorDetail(msrest.serialization.Model):
         self.additional_info = None
 
 
-class ErrorResponse(msrest.serialization.Model):
-    """Common error response for all Azure Resource Manager APIs to return error details for failed operations. (This also follows the OData error response format.).
+class ErrorResponse(_serialization.Model):
+    """Common error response for all Azure Resource Manager APIs to return error details for failed
+    operations. (This also follows the OData error response format.).
 
-    :param error: The error object.
-    :type error: ~azure.mgmt.synapse.models.ErrorDetail
+    :ivar error: The error object.
+    :vartype error: ~azure.mgmt.synapse.models.ErrorDetail
     """
 
     _attribute_map = {
-        'error': {'key': 'error', 'type': 'ErrorDetail'},
+        "error": {"key": "error", "type": "ErrorDetail"},
+    }
+
+    def __init__(self, *, error: Optional["_models.ErrorDetail"] = None, **kwargs: Any) -> None:
+        """
+        :keyword error: The error object.
+        :paramtype error: ~azure.mgmt.synapse.models.ErrorDetail
+        """
+        super().__init__(**kwargs)
+        self.error = error
+
+
+class ErrorResponseAutoGenerated(_serialization.Model):
+    """Common error response for all Azure Resource Manager APIs to return error details for failed
+    operations. (This also follows the OData error response format.).
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    :ivar code: The error code.
+    :vartype code: str
+    :ivar message: The error message.
+    :vartype message: str
+    :ivar target: The error target.
+    :vartype target: str
+    :ivar details: The error details.
+    :vartype details: list[~azure.mgmt.synapse.models.ErrorResponseAutoGenerated]
+    :ivar additional_info: The error additional info.
+    :vartype additional_info: list[~azure.mgmt.synapse.models.ErrorAdditionalInfo]
+    """
+
+    _validation = {
+        "code": {"readonly": True},
+        "message": {"readonly": True},
+        "target": {"readonly": True},
+        "details": {"readonly": True},
+        "additional_info": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "code": {"key": "code", "type": "str"},
+        "message": {"key": "message", "type": "str"},
+        "target": {"key": "target", "type": "str"},
+        "details": {"key": "details", "type": "[ErrorResponseAutoGenerated]"},
+        "additional_info": {"key": "additionalInfo", "type": "[ErrorAdditionalInfo]"},
+    }
+
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
+        self.code = None
+        self.message = None
+        self.target = None
+        self.details = None
+        self.additional_info = None
+
+
+class EventGridDataConnection(DataConnection):  # pylint: disable=too-many-instance-attributes
+    """Class representing an Event Grid data connection.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :ivar id: Fully qualified resource ID for the resource. Ex -
+     /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}.
+    :vartype id: str
+    :ivar name: The name of the resource.
+    :vartype name: str
+    :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
+     "Microsoft.Storage/storageAccounts".
+    :vartype type: str
+    :ivar location: Resource location.
+    :vartype location: str
+    :ivar kind: Kind of the endpoint for the data connection. Required. Known values are:
+     "EventHub", "EventGrid", and "IotHub".
+    :vartype kind: str or ~azure.mgmt.synapse.models.DataConnectionKind
+    :ivar system_data: Azure Resource Manager metadata containing createdBy and modifiedBy
+     information.
+    :vartype system_data: ~azure.mgmt.synapse.models.SystemData
+    :ivar storage_account_resource_id: The resource ID of the storage account where the data
+     resides.
+    :vartype storage_account_resource_id: str
+    :ivar event_hub_resource_id: The resource ID where the event grid is configured to send events.
+    :vartype event_hub_resource_id: str
+    :ivar consumer_group: The event hub consumer group.
+    :vartype consumer_group: str
+    :ivar table_name: The table where the data should be ingested. Optionally the table information
+     can be added to each message.
+    :vartype table_name: str
+    :ivar mapping_rule_name: The mapping rule to be used to ingest the data. Optionally the mapping
+     information can be added to each message.
+    :vartype mapping_rule_name: str
+    :ivar data_format: The data format of the message. Optionally the data format can be added to
+     each message. Known values are: "MULTIJSON", "JSON", "CSV", "TSV", "SCSV", "SOHSV", "PSV",
+     "TXT", "RAW", "SINGLEJSON", "AVRO", "TSVE", "PARQUET", "ORC", "APACHEAVRO", and "W3CLOGFILE".
+    :vartype data_format: str or ~azure.mgmt.synapse.models.EventGridDataFormat
+    :ivar ignore_first_record: A Boolean value that, if set to true, indicates that ingestion
+     should ignore the first record of every file.
+    :vartype ignore_first_record: bool
+    :ivar blob_storage_event_type: The name of blob storage event type to process. Known values
+     are: "Microsoft.Storage.BlobCreated" and "Microsoft.Storage.BlobRenamed".
+    :vartype blob_storage_event_type: str or ~azure.mgmt.synapse.models.BlobStorageEventType
+    :ivar provisioning_state: The provisioned state of the resource. Known values are: "Running",
+     "Creating", "Deleting", "Succeeded", "Failed", "Moving", and "Canceled".
+    :vartype provisioning_state: str or ~azure.mgmt.synapse.models.ResourceProvisioningState
+    """
+
+    _validation = {
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "kind": {"required": True},
+        "system_data": {"readonly": True},
+        "provisioning_state": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "location": {"key": "location", "type": "str"},
+        "kind": {"key": "kind", "type": "str"},
+        "system_data": {"key": "systemData", "type": "SystemData"},
+        "storage_account_resource_id": {"key": "properties.storageAccountResourceId", "type": "str"},
+        "event_hub_resource_id": {"key": "properties.eventHubResourceId", "type": "str"},
+        "consumer_group": {"key": "properties.consumerGroup", "type": "str"},
+        "table_name": {"key": "properties.tableName", "type": "str"},
+        "mapping_rule_name": {"key": "properties.mappingRuleName", "type": "str"},
+        "data_format": {"key": "properties.dataFormat", "type": "str"},
+        "ignore_first_record": {"key": "properties.ignoreFirstRecord", "type": "bool"},
+        "blob_storage_event_type": {"key": "properties.blobStorageEventType", "type": "str"},
+        "provisioning_state": {"key": "properties.provisioningState", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        error: Optional["ErrorDetail"] = None,
-        **kwargs
-    ):
-        super(ErrorResponse, self).__init__(**kwargs)
-        self.error = error
+        location: Optional[str] = None,
+        storage_account_resource_id: Optional[str] = None,
+        event_hub_resource_id: Optional[str] = None,
+        consumer_group: Optional[str] = None,
+        table_name: Optional[str] = None,
+        mapping_rule_name: Optional[str] = None,
+        data_format: Optional[Union[str, "_models.EventGridDataFormat"]] = None,
+        ignore_first_record: Optional[bool] = None,
+        blob_storage_event_type: Optional[Union[str, "_models.BlobStorageEventType"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword location: Resource location.
+        :paramtype location: str
+        :keyword storage_account_resource_id: The resource ID of the storage account where the data
+         resides.
+        :paramtype storage_account_resource_id: str
+        :keyword event_hub_resource_id: The resource ID where the event grid is configured to send
+         events.
+        :paramtype event_hub_resource_id: str
+        :keyword consumer_group: The event hub consumer group.
+        :paramtype consumer_group: str
+        :keyword table_name: The table where the data should be ingested. Optionally the table
+         information can be added to each message.
+        :paramtype table_name: str
+        :keyword mapping_rule_name: The mapping rule to be used to ingest the data. Optionally the
+         mapping information can be added to each message.
+        :paramtype mapping_rule_name: str
+        :keyword data_format: The data format of the message. Optionally the data format can be added
+         to each message. Known values are: "MULTIJSON", "JSON", "CSV", "TSV", "SCSV", "SOHSV", "PSV",
+         "TXT", "RAW", "SINGLEJSON", "AVRO", "TSVE", "PARQUET", "ORC", "APACHEAVRO", and "W3CLOGFILE".
+        :paramtype data_format: str or ~azure.mgmt.synapse.models.EventGridDataFormat
+        :keyword ignore_first_record: A Boolean value that, if set to true, indicates that ingestion
+         should ignore the first record of every file.
+        :paramtype ignore_first_record: bool
+        :keyword blob_storage_event_type: The name of blob storage event type to process. Known values
+         are: "Microsoft.Storage.BlobCreated" and "Microsoft.Storage.BlobRenamed".
+        :paramtype blob_storage_event_type: str or ~azure.mgmt.synapse.models.BlobStorageEventType
+        """
+        super().__init__(location=location, **kwargs)
+        self.kind: str = "EventGrid"
+        self.storage_account_resource_id = storage_account_resource_id
+        self.event_hub_resource_id = event_hub_resource_id
+        self.consumer_group = consumer_group
+        self.table_name = table_name
+        self.mapping_rule_name = mapping_rule_name
+        self.data_format = data_format
+        self.ignore_first_record = ignore_first_record
+        self.blob_storage_event_type = blob_storage_event_type
+        self.provisioning_state = None
 
 
-class ExtendedServerBlobAuditingPolicy(ProxyResource):
+class EventHubDataConnection(DataConnection):  # pylint: disable=too-many-instance-attributes
+    """Class representing an event hub data connection.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :ivar id: Fully qualified resource ID for the resource. Ex -
+     /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}.
+    :vartype id: str
+    :ivar name: The name of the resource.
+    :vartype name: str
+    :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
+     "Microsoft.Storage/storageAccounts".
+    :vartype type: str
+    :ivar location: Resource location.
+    :vartype location: str
+    :ivar kind: Kind of the endpoint for the data connection. Required. Known values are:
+     "EventHub", "EventGrid", and "IotHub".
+    :vartype kind: str or ~azure.mgmt.synapse.models.DataConnectionKind
+    :ivar system_data: Azure Resource Manager metadata containing createdBy and modifiedBy
+     information.
+    :vartype system_data: ~azure.mgmt.synapse.models.SystemData
+    :ivar event_hub_resource_id: The resource ID of the event hub to be used to create a data
+     connection.
+    :vartype event_hub_resource_id: str
+    :ivar consumer_group: The event hub consumer group.
+    :vartype consumer_group: str
+    :ivar table_name: The table where the data should be ingested. Optionally the table information
+     can be added to each message.
+    :vartype table_name: str
+    :ivar mapping_rule_name: The mapping rule to be used to ingest the data. Optionally the mapping
+     information can be added to each message.
+    :vartype mapping_rule_name: str
+    :ivar data_format: The data format of the message. Optionally the data format can be added to
+     each message. Known values are: "MULTIJSON", "JSON", "CSV", "TSV", "SCSV", "SOHSV", "PSV",
+     "TXT", "RAW", "SINGLEJSON", "AVRO", "TSVE", "PARQUET", "ORC", "APACHEAVRO", and "W3CLOGFILE".
+    :vartype data_format: str or ~azure.mgmt.synapse.models.EventHubDataFormat
+    :ivar event_system_properties: System properties of the event hub.
+    :vartype event_system_properties: list[str]
+    :ivar compression: The event hub messages compression type. Known values are: "None" and
+     "GZip".
+    :vartype compression: str or ~azure.mgmt.synapse.models.Compression
+    :ivar provisioning_state: The provisioned state of the resource. Known values are: "Running",
+     "Creating", "Deleting", "Succeeded", "Failed", "Moving", and "Canceled".
+    :vartype provisioning_state: str or ~azure.mgmt.synapse.models.ResourceProvisioningState
+    :ivar managed_identity_resource_id: The resource ID of a managed identity (system or user
+     assigned) to be used to authenticate with event hub.
+    :vartype managed_identity_resource_id: str
+    """
+
+    _validation = {
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "kind": {"required": True},
+        "system_data": {"readonly": True},
+        "provisioning_state": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "location": {"key": "location", "type": "str"},
+        "kind": {"key": "kind", "type": "str"},
+        "system_data": {"key": "systemData", "type": "SystemData"},
+        "event_hub_resource_id": {"key": "properties.eventHubResourceId", "type": "str"},
+        "consumer_group": {"key": "properties.consumerGroup", "type": "str"},
+        "table_name": {"key": "properties.tableName", "type": "str"},
+        "mapping_rule_name": {"key": "properties.mappingRuleName", "type": "str"},
+        "data_format": {"key": "properties.dataFormat", "type": "str"},
+        "event_system_properties": {"key": "properties.eventSystemProperties", "type": "[str]"},
+        "compression": {"key": "properties.compression", "type": "str"},
+        "provisioning_state": {"key": "properties.provisioningState", "type": "str"},
+        "managed_identity_resource_id": {"key": "properties.managedIdentityResourceId", "type": "str"},
+    }
+
+    def __init__(
+        self,
+        *,
+        location: Optional[str] = None,
+        event_hub_resource_id: Optional[str] = None,
+        consumer_group: Optional[str] = None,
+        table_name: Optional[str] = None,
+        mapping_rule_name: Optional[str] = None,
+        data_format: Optional[Union[str, "_models.EventHubDataFormat"]] = None,
+        event_system_properties: Optional[List[str]] = None,
+        compression: Optional[Union[str, "_models.Compression"]] = None,
+        managed_identity_resource_id: Optional[str] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword location: Resource location.
+        :paramtype location: str
+        :keyword event_hub_resource_id: The resource ID of the event hub to be used to create a data
+         connection.
+        :paramtype event_hub_resource_id: str
+        :keyword consumer_group: The event hub consumer group.
+        :paramtype consumer_group: str
+        :keyword table_name: The table where the data should be ingested. Optionally the table
+         information can be added to each message.
+        :paramtype table_name: str
+        :keyword mapping_rule_name: The mapping rule to be used to ingest the data. Optionally the
+         mapping information can be added to each message.
+        :paramtype mapping_rule_name: str
+        :keyword data_format: The data format of the message. Optionally the data format can be added
+         to each message. Known values are: "MULTIJSON", "JSON", "CSV", "TSV", "SCSV", "SOHSV", "PSV",
+         "TXT", "RAW", "SINGLEJSON", "AVRO", "TSVE", "PARQUET", "ORC", "APACHEAVRO", and "W3CLOGFILE".
+        :paramtype data_format: str or ~azure.mgmt.synapse.models.EventHubDataFormat
+        :keyword event_system_properties: System properties of the event hub.
+        :paramtype event_system_properties: list[str]
+        :keyword compression: The event hub messages compression type. Known values are: "None" and
+         "GZip".
+        :paramtype compression: str or ~azure.mgmt.synapse.models.Compression
+        :keyword managed_identity_resource_id: The resource ID of a managed identity (system or user
+         assigned) to be used to authenticate with event hub.
+        :paramtype managed_identity_resource_id: str
+        """
+        super().__init__(location=location, **kwargs)
+        self.kind: str = "EventHub"
+        self.event_hub_resource_id = event_hub_resource_id
+        self.consumer_group = consumer_group
+        self.table_name = table_name
+        self.mapping_rule_name = mapping_rule_name
+        self.data_format = data_format
+        self.event_system_properties = event_system_properties
+        self.compression = compression
+        self.provisioning_state = None
+        self.managed_identity_resource_id = managed_identity_resource_id
+
+
+class ExtendedServerBlobAuditingPolicy(ProxyResource):  # pylint: disable=too-many-instance-attributes
     """An extended server blob auditing policy.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -1329,48 +2985,47 @@ class ExtendedServerBlobAuditingPolicy(ProxyResource):
     :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
      "Microsoft.Storage/storageAccounts".
     :vartype type: str
-    :param predicate_expression: Specifies condition of where clause when creating an audit.
-    :type predicate_expression: str
-    :param state: Specifies the state of the policy. If state is Enabled, storageEndpoint or
-     isAzureMonitorTargetEnabled are required. Possible values include: "Enabled", "Disabled".
-    :type state: str or ~azure.mgmt.synapse.models.BlobAuditingPolicyState
-    :param storage_endpoint: Specifies the blob storage endpoint (e.g.
+    :ivar predicate_expression: Specifies condition of where clause when creating an audit.
+    :vartype predicate_expression: str
+    :ivar state: Specifies the state of the policy. If state is Enabled, storageEndpoint or
+     isAzureMonitorTargetEnabled are required. Known values are: "Enabled" and "Disabled".
+    :vartype state: str or ~azure.mgmt.synapse.models.BlobAuditingPolicyState
+    :ivar storage_endpoint: Specifies the blob storage endpoint (e.g.
      https://MyAccount.blob.core.windows.net). If state is Enabled, storageEndpoint or
      isAzureMonitorTargetEnabled is required.
-    :type storage_endpoint: str
-    :param storage_account_access_key: Specifies the identifier key of the auditing storage
-     account.
+    :vartype storage_endpoint: str
+    :ivar storage_account_access_key: Specifies the identifier key of the auditing storage account.
      If state is Enabled and storageEndpoint is specified, not specifying the
      storageAccountAccessKey will use SQL server system-assigned managed identity to access the
      storage.
      Prerequisites for using managed identity authentication:
-    
-    
+
+
      #. Assign SQL Server a system-assigned managed identity in Azure Active Directory (AAD).
      #. Grant SQL Server identity access to the storage account by adding 'Storage Blob Data
      Contributor' RBAC role to the server identity.
         For more information, see `Auditing to storage using Managed Identity authentication
      <https://go.microsoft.com/fwlink/?linkid=2114355>`_.
-    :type storage_account_access_key: str
-    :param retention_days: Specifies the number of days to keep in the audit logs in the storage
+    :vartype storage_account_access_key: str
+    :ivar retention_days: Specifies the number of days to keep in the audit logs in the storage
      account.
-    :type retention_days: int
-    :param audit_actions_and_groups: Specifies the Actions-Groups and Actions to audit.
-    
+    :vartype retention_days: int
+    :ivar audit_actions_and_groups: Specifies the Actions-Groups and Actions to audit.
+
      The recommended set of action groups to use is the following combination - this will audit all
      the queries and stored procedures executed against the database, as well as successful and
      failed logins:
-    
+
      BATCH_COMPLETED_GROUP,
      SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP,
      FAILED_DATABASE_AUTHENTICATION_GROUP.
-    
+
      This above combination is also the set that is configured by default when enabling auditing
      from the Azure portal.
-    
+
      The supported action groups to audit are (note: choose only specific groups that cover your
      auditing needs. Using unnecessary groups could lead to very large quantities of audit records):
-    
+
      APPLICATION_ROLE_CHANGE_PASSWORD_GROUP
      BACKUP_RESTORE_GROUP
      DATABASE_LOGOUT_GROUP
@@ -1391,15 +3046,14 @@ class ExtendedServerBlobAuditingPolicy(ProxyResource):
      USER_CHANGE_PASSWORD_GROUP
      BATCH_STARTED_GROUP
      BATCH_COMPLETED_GROUP
-    
+
      These are groups that cover all sql statements and stored procedures executed against the
      database, and should not be used in combination with other groups as this will result in
      duplicate audit logs.
-    
-     For more information, see `Database-Level Audit Action Groups <https://docs.microsoft.com/en-
-     us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-
-     actions#database-level-audit-action-groups>`_.
-    
+
+     For more information, see `Database-Level Audit Action Groups
+     <https://docs.microsoft.com/en-us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-actions#database-level-audit-action-groups>`_.
+
      For Database auditing policy, specific Actions can also be specified (note that Actions cannot
      be specified for Server auditing policy). The supported actions to audit are:
      SELECT
@@ -1409,79 +3063,94 @@ class ExtendedServerBlobAuditingPolicy(ProxyResource):
      EXECUTE
      RECEIVE
      REFERENCES
-    
+
      The general form for defining an action to be audited is:
      {action} ON {object} BY {principal}
-    
+
      Note that :code:`<object>` in the above format can refer to an object like a table, view, or
      stored procedure, or an entire database or schema. For the latter cases, the forms
      DATABASE::{db_name} and SCHEMA::{schema_name} are used, respectively.
-    
+
      For example:
      SELECT on dbo.myTable by public
      SELECT on DATABASE::myDatabase by public
      SELECT on SCHEMA::mySchema by public
-    
-     For more information, see `Database-Level Audit Actions <https://docs.microsoft.com/en-
-     us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-
-     actions#database-level-audit-actions>`_.
-    :type audit_actions_and_groups: list[str]
-    :param storage_account_subscription_id: Specifies the blob storage subscription Id.
-    :type storage_account_subscription_id: str
-    :param is_storage_secondary_key_in_use: Specifies whether storageAccountAccessKey value is the
+
+     For more information, see `Database-Level Audit Actions
+     <https://docs.microsoft.com/en-us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-actions#database-level-audit-actions>`_.
+    :vartype audit_actions_and_groups: list[str]
+    :ivar storage_account_subscription_id: Specifies the blob storage subscription Id.
+    :vartype storage_account_subscription_id: str
+    :ivar is_storage_secondary_key_in_use: Specifies whether storageAccountAccessKey value is the
      storage's secondary key.
-    :type is_storage_secondary_key_in_use: bool
-    :param is_azure_monitor_target_enabled: Specifies whether audit events are sent to Azure
+    :vartype is_storage_secondary_key_in_use: bool
+    :ivar is_azure_monitor_target_enabled: Specifies whether audit events are sent to Azure
      Monitor.
      In order to send the events to Azure Monitor, specify 'state' as 'Enabled' and
      'isAzureMonitorTargetEnabled' as true.
-    
+
      When using REST API to configure auditing, Diagnostic Settings with 'SQLSecurityAuditEvents'
      diagnostic logs category on the database should be also created.
      Note that for server level audit you should use the 'master' database as {databaseName}.
-    
+
      Diagnostic Settings URI format:
      PUT
-     https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/providers/microsoft.insights/diagnosticSettings/{settingsName}?api-
-     version=2017-05-01-preview
-    
+     https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/providers/microsoft.insights/diagnosticSettings/{settingsName}?api-version=2017-05-01-preview
+
      For more information, see `Diagnostic Settings REST API
      <https://go.microsoft.com/fwlink/?linkid=2033207>`_
      or `Diagnostic Settings PowerShell <https://go.microsoft.com/fwlink/?linkid=2033043>`_.
-    :type is_azure_monitor_target_enabled: bool
-    :param queue_delay_ms: Specifies the amount of time in milliseconds that can elapse before
-     audit actions are forced to be processed.
+    :vartype is_azure_monitor_target_enabled: bool
+    :ivar queue_delay_ms: Specifies the amount of time in milliseconds that can elapse before audit
+     actions are forced to be processed.
      The default minimum value is 1000 (1 second). The maximum is 2,147,483,647.
-    :type queue_delay_ms: int
+    :vartype queue_delay_ms: int
+    :ivar is_devops_audit_enabled: Specifies the state of devops audit. If state is Enabled, devops
+     logs will be sent to Azure Monitor.
+     In order to send the events to Azure Monitor, specify 'State' as 'Enabled',
+     'IsAzureMonitorTargetEnabled' as true and 'IsDevopsAuditEnabled' as true
+
+     When using REST API to configure auditing, Diagnostic Settings with 'DevOpsOperationsAudit'
+     diagnostic logs category on the master database should also be created.
+
+     Diagnostic Settings URI format:
+     PUT
+     https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Sql/servers/{serverName}/databases/master/providers/microsoft.insights/diagnosticSettings/{settingsName}?api-version=2017-05-01-preview
+
+     For more information, see `Diagnostic Settings REST API
+     <https://go.microsoft.com/fwlink/?linkid=2033207>`_
+     or `Diagnostic Settings PowerShell <https://go.microsoft.com/fwlink/?linkid=2033043>`_.
+    :vartype is_devops_audit_enabled: bool
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'predicate_expression': {'key': 'properties.predicateExpression', 'type': 'str'},
-        'state': {'key': 'properties.state', 'type': 'str'},
-        'storage_endpoint': {'key': 'properties.storageEndpoint', 'type': 'str'},
-        'storage_account_access_key': {'key': 'properties.storageAccountAccessKey', 'type': 'str'},
-        'retention_days': {'key': 'properties.retentionDays', 'type': 'int'},
-        'audit_actions_and_groups': {'key': 'properties.auditActionsAndGroups', 'type': '[str]'},
-        'storage_account_subscription_id': {'key': 'properties.storageAccountSubscriptionId', 'type': 'str'},
-        'is_storage_secondary_key_in_use': {'key': 'properties.isStorageSecondaryKeyInUse', 'type': 'bool'},
-        'is_azure_monitor_target_enabled': {'key': 'properties.isAzureMonitorTargetEnabled', 'type': 'bool'},
-        'queue_delay_ms': {'key': 'properties.queueDelayMs', 'type': 'int'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "predicate_expression": {"key": "properties.predicateExpression", "type": "str"},
+        "state": {"key": "properties.state", "type": "str"},
+        "storage_endpoint": {"key": "properties.storageEndpoint", "type": "str"},
+        "storage_account_access_key": {"key": "properties.storageAccountAccessKey", "type": "str"},
+        "retention_days": {"key": "properties.retentionDays", "type": "int"},
+        "audit_actions_and_groups": {"key": "properties.auditActionsAndGroups", "type": "[str]"},
+        "storage_account_subscription_id": {"key": "properties.storageAccountSubscriptionId", "type": "str"},
+        "is_storage_secondary_key_in_use": {"key": "properties.isStorageSecondaryKeyInUse", "type": "bool"},
+        "is_azure_monitor_target_enabled": {"key": "properties.isAzureMonitorTargetEnabled", "type": "bool"},
+        "queue_delay_ms": {"key": "properties.queueDelayMs", "type": "int"},
+        "is_devops_audit_enabled": {"key": "properties.isDevopsAuditEnabled", "type": "bool"},
     }
 
     def __init__(
         self,
         *,
         predicate_expression: Optional[str] = None,
-        state: Optional[Union[str, "BlobAuditingPolicyState"]] = None,
+        state: Optional[Union[str, "_models.BlobAuditingPolicyState"]] = None,
         storage_endpoint: Optional[str] = None,
         storage_account_access_key: Optional[str] = None,
         retention_days: Optional[int] = None,
@@ -1490,9 +3159,149 @@ class ExtendedServerBlobAuditingPolicy(ProxyResource):
         is_storage_secondary_key_in_use: Optional[bool] = None,
         is_azure_monitor_target_enabled: Optional[bool] = None,
         queue_delay_ms: Optional[int] = None,
-        **kwargs
-    ):
-        super(ExtendedServerBlobAuditingPolicy, self).__init__(**kwargs)
+        is_devops_audit_enabled: Optional[bool] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword predicate_expression: Specifies condition of where clause when creating an audit.
+        :paramtype predicate_expression: str
+        :keyword state: Specifies the state of the policy. If state is Enabled, storageEndpoint or
+         isAzureMonitorTargetEnabled are required. Known values are: "Enabled" and "Disabled".
+        :paramtype state: str or ~azure.mgmt.synapse.models.BlobAuditingPolicyState
+        :keyword storage_endpoint: Specifies the blob storage endpoint (e.g.
+         https://MyAccount.blob.core.windows.net). If state is Enabled, storageEndpoint or
+         isAzureMonitorTargetEnabled is required.
+        :paramtype storage_endpoint: str
+        :keyword storage_account_access_key: Specifies the identifier key of the auditing storage
+         account.
+         If state is Enabled and storageEndpoint is specified, not specifying the
+         storageAccountAccessKey will use SQL server system-assigned managed identity to access the
+         storage.
+         Prerequisites for using managed identity authentication:
+
+
+         #. Assign SQL Server a system-assigned managed identity in Azure Active Directory (AAD).
+         #. Grant SQL Server identity access to the storage account by adding 'Storage Blob Data
+         Contributor' RBAC role to the server identity.
+            For more information, see `Auditing to storage using Managed Identity authentication
+         <https://go.microsoft.com/fwlink/?linkid=2114355>`_.
+        :paramtype storage_account_access_key: str
+        :keyword retention_days: Specifies the number of days to keep in the audit logs in the storage
+         account.
+        :paramtype retention_days: int
+        :keyword audit_actions_and_groups: Specifies the Actions-Groups and Actions to audit.
+
+         The recommended set of action groups to use is the following combination - this will audit all
+         the queries and stored procedures executed against the database, as well as successful and
+         failed logins:
+
+         BATCH_COMPLETED_GROUP,
+         SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP,
+         FAILED_DATABASE_AUTHENTICATION_GROUP.
+
+         This above combination is also the set that is configured by default when enabling auditing
+         from the Azure portal.
+
+         The supported action groups to audit are (note: choose only specific groups that cover your
+         auditing needs. Using unnecessary groups could lead to very large quantities of audit records):
+
+         APPLICATION_ROLE_CHANGE_PASSWORD_GROUP
+         BACKUP_RESTORE_GROUP
+         DATABASE_LOGOUT_GROUP
+         DATABASE_OBJECT_CHANGE_GROUP
+         DATABASE_OBJECT_OWNERSHIP_CHANGE_GROUP
+         DATABASE_OBJECT_PERMISSION_CHANGE_GROUP
+         DATABASE_OPERATION_GROUP
+         DATABASE_PERMISSION_CHANGE_GROUP
+         DATABASE_PRINCIPAL_CHANGE_GROUP
+         DATABASE_PRINCIPAL_IMPERSONATION_GROUP
+         DATABASE_ROLE_MEMBER_CHANGE_GROUP
+         FAILED_DATABASE_AUTHENTICATION_GROUP
+         SCHEMA_OBJECT_ACCESS_GROUP
+         SCHEMA_OBJECT_CHANGE_GROUP
+         SCHEMA_OBJECT_OWNERSHIP_CHANGE_GROUP
+         SCHEMA_OBJECT_PERMISSION_CHANGE_GROUP
+         SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP
+         USER_CHANGE_PASSWORD_GROUP
+         BATCH_STARTED_GROUP
+         BATCH_COMPLETED_GROUP
+
+         These are groups that cover all sql statements and stored procedures executed against the
+         database, and should not be used in combination with other groups as this will result in
+         duplicate audit logs.
+
+         For more information, see `Database-Level Audit Action Groups
+         <https://docs.microsoft.com/en-us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-actions#database-level-audit-action-groups>`_.
+
+         For Database auditing policy, specific Actions can also be specified (note that Actions cannot
+         be specified for Server auditing policy). The supported actions to audit are:
+         SELECT
+         UPDATE
+         INSERT
+         DELETE
+         EXECUTE
+         RECEIVE
+         REFERENCES
+
+         The general form for defining an action to be audited is:
+         {action} ON {object} BY {principal}
+
+         Note that :code:`<object>` in the above format can refer to an object like a table, view, or
+         stored procedure, or an entire database or schema. For the latter cases, the forms
+         DATABASE::{db_name} and SCHEMA::{schema_name} are used, respectively.
+
+         For example:
+         SELECT on dbo.myTable by public
+         SELECT on DATABASE::myDatabase by public
+         SELECT on SCHEMA::mySchema by public
+
+         For more information, see `Database-Level Audit Actions
+         <https://docs.microsoft.com/en-us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-actions#database-level-audit-actions>`_.
+        :paramtype audit_actions_and_groups: list[str]
+        :keyword storage_account_subscription_id: Specifies the blob storage subscription Id.
+        :paramtype storage_account_subscription_id: str
+        :keyword is_storage_secondary_key_in_use: Specifies whether storageAccountAccessKey value is
+         the storage's secondary key.
+        :paramtype is_storage_secondary_key_in_use: bool
+        :keyword is_azure_monitor_target_enabled: Specifies whether audit events are sent to Azure
+         Monitor.
+         In order to send the events to Azure Monitor, specify 'state' as 'Enabled' and
+         'isAzureMonitorTargetEnabled' as true.
+
+         When using REST API to configure auditing, Diagnostic Settings with 'SQLSecurityAuditEvents'
+         diagnostic logs category on the database should be also created.
+         Note that for server level audit you should use the 'master' database as {databaseName}.
+
+         Diagnostic Settings URI format:
+         PUT
+         https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/providers/microsoft.insights/diagnosticSettings/{settingsName}?api-version=2017-05-01-preview
+
+         For more information, see `Diagnostic Settings REST API
+         <https://go.microsoft.com/fwlink/?linkid=2033207>`_
+         or `Diagnostic Settings PowerShell <https://go.microsoft.com/fwlink/?linkid=2033043>`_.
+        :paramtype is_azure_monitor_target_enabled: bool
+        :keyword queue_delay_ms: Specifies the amount of time in milliseconds that can elapse before
+         audit actions are forced to be processed.
+         The default minimum value is 1000 (1 second). The maximum is 2,147,483,647.
+        :paramtype queue_delay_ms: int
+        :keyword is_devops_audit_enabled: Specifies the state of devops audit. If state is Enabled,
+         devops logs will be sent to Azure Monitor.
+         In order to send the events to Azure Monitor, specify 'State' as 'Enabled',
+         'IsAzureMonitorTargetEnabled' as true and 'IsDevopsAuditEnabled' as true
+
+         When using REST API to configure auditing, Diagnostic Settings with 'DevOpsOperationsAudit'
+         diagnostic logs category on the master database should also be created.
+
+         Diagnostic Settings URI format:
+         PUT
+         https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Sql/servers/{serverName}/databases/master/providers/microsoft.insights/diagnosticSettings/{settingsName}?api-version=2017-05-01-preview
+
+         For more information, see `Diagnostic Settings REST API
+         <https://go.microsoft.com/fwlink/?linkid=2033207>`_
+         or `Diagnostic Settings PowerShell <https://go.microsoft.com/fwlink/?linkid=2033043>`_.
+        :paramtype is_devops_audit_enabled: bool
+        """
+        super().__init__(**kwargs)
         self.predicate_expression = predicate_expression
         self.state = state
         self.storage_endpoint = storage_endpoint
@@ -1503,9 +3312,10 @@ class ExtendedServerBlobAuditingPolicy(ProxyResource):
         self.is_storage_secondary_key_in_use = is_storage_secondary_key_in_use
         self.is_azure_monitor_target_enabled = is_azure_monitor_target_enabled
         self.queue_delay_ms = queue_delay_ms
+        self.is_devops_audit_enabled = is_devops_audit_enabled
 
 
-class ExtendedServerBlobAuditingPolicyListResult(msrest.serialization.Model):
+class ExtendedServerBlobAuditingPolicyListResult(_serialization.Model):
     """A list of server extended auditing settings.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -1517,25 +3327,23 @@ class ExtendedServerBlobAuditingPolicyListResult(msrest.serialization.Model):
     """
 
     _validation = {
-        'value': {'readonly': True},
-        'next_link': {'readonly': True},
+        "value": {"readonly": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[ExtendedServerBlobAuditingPolicy]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[ExtendedServerBlobAuditingPolicy]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(ExtendedServerBlobAuditingPolicyListResult, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.value = None
         self.next_link = None
 
 
-class ExtendedSqlPoolBlobAuditingPolicy(ProxyResource):
+class ExtendedSqlPoolBlobAuditingPolicy(ProxyResource):  # pylint: disable=too-many-instance-attributes
     """An extended Sql pool blob auditing policy.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -1548,48 +3356,47 @@ class ExtendedSqlPoolBlobAuditingPolicy(ProxyResource):
     :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
      "Microsoft.Storage/storageAccounts".
     :vartype type: str
-    :param predicate_expression: Specifies condition of where clause when creating an audit.
-    :type predicate_expression: str
-    :param state: Specifies the state of the policy. If state is Enabled, storageEndpoint or
-     isAzureMonitorTargetEnabled are required. Possible values include: "Enabled", "Disabled".
-    :type state: str or ~azure.mgmt.synapse.models.BlobAuditingPolicyState
-    :param storage_endpoint: Specifies the blob storage endpoint (e.g.
+    :ivar predicate_expression: Specifies condition of where clause when creating an audit.
+    :vartype predicate_expression: str
+    :ivar state: Specifies the state of the policy. If state is Enabled, storageEndpoint or
+     isAzureMonitorTargetEnabled are required. Known values are: "Enabled" and "Disabled".
+    :vartype state: str or ~azure.mgmt.synapse.models.BlobAuditingPolicyState
+    :ivar storage_endpoint: Specifies the blob storage endpoint (e.g.
      https://MyAccount.blob.core.windows.net). If state is Enabled, storageEndpoint or
      isAzureMonitorTargetEnabled is required.
-    :type storage_endpoint: str
-    :param storage_account_access_key: Specifies the identifier key of the auditing storage
-     account.
+    :vartype storage_endpoint: str
+    :ivar storage_account_access_key: Specifies the identifier key of the auditing storage account.
      If state is Enabled and storageEndpoint is specified, not specifying the
      storageAccountAccessKey will use SQL server system-assigned managed identity to access the
      storage.
      Prerequisites for using managed identity authentication:
-    
-    
+
+
      #. Assign SQL Server a system-assigned managed identity in Azure Active Directory (AAD).
      #. Grant SQL Server identity access to the storage account by adding 'Storage Blob Data
      Contributor' RBAC role to the server identity.
         For more information, see `Auditing to storage using Managed Identity authentication
      <https://go.microsoft.com/fwlink/?linkid=2114355>`_.
-    :type storage_account_access_key: str
-    :param retention_days: Specifies the number of days to keep in the audit logs in the storage
+    :vartype storage_account_access_key: str
+    :ivar retention_days: Specifies the number of days to keep in the audit logs in the storage
      account.
-    :type retention_days: int
-    :param audit_actions_and_groups: Specifies the Actions-Groups and Actions to audit.
-    
+    :vartype retention_days: int
+    :ivar audit_actions_and_groups: Specifies the Actions-Groups and Actions to audit.
+
      The recommended set of action groups to use is the following combination - this will audit all
      the queries and stored procedures executed against the database, as well as successful and
      failed logins:
-    
+
      BATCH_COMPLETED_GROUP,
      SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP,
      FAILED_DATABASE_AUTHENTICATION_GROUP.
-    
+
      This above combination is also the set that is configured by default when enabling auditing
      from the Azure portal.
-    
+
      The supported action groups to audit are (note: choose only specific groups that cover your
      auditing needs. Using unnecessary groups could lead to very large quantities of audit records):
-    
+
      APPLICATION_ROLE_CHANGE_PASSWORD_GROUP
      BACKUP_RESTORE_GROUP
      DATABASE_LOGOUT_GROUP
@@ -1610,15 +3417,14 @@ class ExtendedSqlPoolBlobAuditingPolicy(ProxyResource):
      USER_CHANGE_PASSWORD_GROUP
      BATCH_STARTED_GROUP
      BATCH_COMPLETED_GROUP
-    
+
      These are groups that cover all sql statements and stored procedures executed against the
      database, and should not be used in combination with other groups as this will result in
      duplicate audit logs.
-    
-     For more information, see `Database-Level Audit Action Groups <https://docs.microsoft.com/en-
-     us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-
-     actions#database-level-audit-action-groups>`_.
-    
+
+     For more information, see `Database-Level Audit Action Groups
+     <https://docs.microsoft.com/en-us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-actions#database-level-audit-action-groups>`_.
+
      For Database auditing policy, specific Actions can also be specified (note that Actions cannot
      be specified for Server auditing policy). The supported actions to audit are:
      SELECT
@@ -1628,79 +3434,77 @@ class ExtendedSqlPoolBlobAuditingPolicy(ProxyResource):
      EXECUTE
      RECEIVE
      REFERENCES
-    
+
      The general form for defining an action to be audited is:
      {action} ON {object} BY {principal}
-    
+
      Note that :code:`<object>` in the above format can refer to an object like a table, view, or
      stored procedure, or an entire database or schema. For the latter cases, the forms
      DATABASE::{db_name} and SCHEMA::{schema_name} are used, respectively.
-    
+
      For example:
      SELECT on dbo.myTable by public
      SELECT on DATABASE::myDatabase by public
      SELECT on SCHEMA::mySchema by public
-    
-     For more information, see `Database-Level Audit Actions <https://docs.microsoft.com/en-
-     us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-
-     actions#database-level-audit-actions>`_.
-    :type audit_actions_and_groups: list[str]
-    :param storage_account_subscription_id: Specifies the blob storage subscription Id.
-    :type storage_account_subscription_id: str
-    :param is_storage_secondary_key_in_use: Specifies whether storageAccountAccessKey value is the
+
+     For more information, see `Database-Level Audit Actions
+     <https://docs.microsoft.com/en-us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-actions#database-level-audit-actions>`_.
+    :vartype audit_actions_and_groups: list[str]
+    :ivar storage_account_subscription_id: Specifies the blob storage subscription Id.
+    :vartype storage_account_subscription_id: str
+    :ivar is_storage_secondary_key_in_use: Specifies whether storageAccountAccessKey value is the
      storage's secondary key.
-    :type is_storage_secondary_key_in_use: bool
-    :param is_azure_monitor_target_enabled: Specifies whether audit events are sent to Azure
+    :vartype is_storage_secondary_key_in_use: bool
+    :ivar is_azure_monitor_target_enabled: Specifies whether audit events are sent to Azure
      Monitor.
      In order to send the events to Azure Monitor, specify 'state' as 'Enabled' and
      'isAzureMonitorTargetEnabled' as true.
-    
+
      When using REST API to configure auditing, Diagnostic Settings with 'SQLSecurityAuditEvents'
      diagnostic logs category on the database should be also created.
      Note that for server level audit you should use the 'master' database as {databaseName}.
-    
+
      Diagnostic Settings URI format:
      PUT
-     https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/providers/microsoft.insights/diagnosticSettings/{settingsName}?api-
-     version=2017-05-01-preview
-    
+     https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/providers/microsoft.insights/diagnosticSettings/{settingsName}?api-version=2017-05-01-preview
+
      For more information, see `Diagnostic Settings REST API
      <https://go.microsoft.com/fwlink/?linkid=2033207>`_
      or `Diagnostic Settings PowerShell <https://go.microsoft.com/fwlink/?linkid=2033043>`_.
-    :type is_azure_monitor_target_enabled: bool
-    :param queue_delay_ms: Specifies the amount of time in milliseconds that can elapse before
-     audit actions are forced to be processed.
+    :vartype is_azure_monitor_target_enabled: bool
+    :ivar queue_delay_ms: Specifies the amount of time in milliseconds that can elapse before audit
+     actions are forced to be processed.
      The default minimum value is 1000 (1 second). The maximum is 2,147,483,647.
-    :type queue_delay_ms: int
+    :vartype queue_delay_ms: int
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'predicate_expression': {'key': 'properties.predicateExpression', 'type': 'str'},
-        'state': {'key': 'properties.state', 'type': 'str'},
-        'storage_endpoint': {'key': 'properties.storageEndpoint', 'type': 'str'},
-        'storage_account_access_key': {'key': 'properties.storageAccountAccessKey', 'type': 'str'},
-        'retention_days': {'key': 'properties.retentionDays', 'type': 'int'},
-        'audit_actions_and_groups': {'key': 'properties.auditActionsAndGroups', 'type': '[str]'},
-        'storage_account_subscription_id': {'key': 'properties.storageAccountSubscriptionId', 'type': 'str'},
-        'is_storage_secondary_key_in_use': {'key': 'properties.isStorageSecondaryKeyInUse', 'type': 'bool'},
-        'is_azure_monitor_target_enabled': {'key': 'properties.isAzureMonitorTargetEnabled', 'type': 'bool'},
-        'queue_delay_ms': {'key': 'properties.queueDelayMs', 'type': 'int'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "predicate_expression": {"key": "properties.predicateExpression", "type": "str"},
+        "state": {"key": "properties.state", "type": "str"},
+        "storage_endpoint": {"key": "properties.storageEndpoint", "type": "str"},
+        "storage_account_access_key": {"key": "properties.storageAccountAccessKey", "type": "str"},
+        "retention_days": {"key": "properties.retentionDays", "type": "int"},
+        "audit_actions_and_groups": {"key": "properties.auditActionsAndGroups", "type": "[str]"},
+        "storage_account_subscription_id": {"key": "properties.storageAccountSubscriptionId", "type": "str"},
+        "is_storage_secondary_key_in_use": {"key": "properties.isStorageSecondaryKeyInUse", "type": "bool"},
+        "is_azure_monitor_target_enabled": {"key": "properties.isAzureMonitorTargetEnabled", "type": "bool"},
+        "queue_delay_ms": {"key": "properties.queueDelayMs", "type": "int"},
     }
 
     def __init__(
         self,
         *,
         predicate_expression: Optional[str] = None,
-        state: Optional[Union[str, "BlobAuditingPolicyState"]] = None,
+        state: Optional[Union[str, "_models.BlobAuditingPolicyState"]] = None,
         storage_endpoint: Optional[str] = None,
         storage_account_access_key: Optional[str] = None,
         retention_days: Optional[int] = None,
@@ -1709,9 +3513,132 @@ class ExtendedSqlPoolBlobAuditingPolicy(ProxyResource):
         is_storage_secondary_key_in_use: Optional[bool] = None,
         is_azure_monitor_target_enabled: Optional[bool] = None,
         queue_delay_ms: Optional[int] = None,
-        **kwargs
-    ):
-        super(ExtendedSqlPoolBlobAuditingPolicy, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword predicate_expression: Specifies condition of where clause when creating an audit.
+        :paramtype predicate_expression: str
+        :keyword state: Specifies the state of the policy. If state is Enabled, storageEndpoint or
+         isAzureMonitorTargetEnabled are required. Known values are: "Enabled" and "Disabled".
+        :paramtype state: str or ~azure.mgmt.synapse.models.BlobAuditingPolicyState
+        :keyword storage_endpoint: Specifies the blob storage endpoint (e.g.
+         https://MyAccount.blob.core.windows.net). If state is Enabled, storageEndpoint or
+         isAzureMonitorTargetEnabled is required.
+        :paramtype storage_endpoint: str
+        :keyword storage_account_access_key: Specifies the identifier key of the auditing storage
+         account.
+         If state is Enabled and storageEndpoint is specified, not specifying the
+         storageAccountAccessKey will use SQL server system-assigned managed identity to access the
+         storage.
+         Prerequisites for using managed identity authentication:
+
+
+         #. Assign SQL Server a system-assigned managed identity in Azure Active Directory (AAD).
+         #. Grant SQL Server identity access to the storage account by adding 'Storage Blob Data
+         Contributor' RBAC role to the server identity.
+            For more information, see `Auditing to storage using Managed Identity authentication
+         <https://go.microsoft.com/fwlink/?linkid=2114355>`_.
+        :paramtype storage_account_access_key: str
+        :keyword retention_days: Specifies the number of days to keep in the audit logs in the storage
+         account.
+        :paramtype retention_days: int
+        :keyword audit_actions_and_groups: Specifies the Actions-Groups and Actions to audit.
+
+         The recommended set of action groups to use is the following combination - this will audit all
+         the queries and stored procedures executed against the database, as well as successful and
+         failed logins:
+
+         BATCH_COMPLETED_GROUP,
+         SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP,
+         FAILED_DATABASE_AUTHENTICATION_GROUP.
+
+         This above combination is also the set that is configured by default when enabling auditing
+         from the Azure portal.
+
+         The supported action groups to audit are (note: choose only specific groups that cover your
+         auditing needs. Using unnecessary groups could lead to very large quantities of audit records):
+
+         APPLICATION_ROLE_CHANGE_PASSWORD_GROUP
+         BACKUP_RESTORE_GROUP
+         DATABASE_LOGOUT_GROUP
+         DATABASE_OBJECT_CHANGE_GROUP
+         DATABASE_OBJECT_OWNERSHIP_CHANGE_GROUP
+         DATABASE_OBJECT_PERMISSION_CHANGE_GROUP
+         DATABASE_OPERATION_GROUP
+         DATABASE_PERMISSION_CHANGE_GROUP
+         DATABASE_PRINCIPAL_CHANGE_GROUP
+         DATABASE_PRINCIPAL_IMPERSONATION_GROUP
+         DATABASE_ROLE_MEMBER_CHANGE_GROUP
+         FAILED_DATABASE_AUTHENTICATION_GROUP
+         SCHEMA_OBJECT_ACCESS_GROUP
+         SCHEMA_OBJECT_CHANGE_GROUP
+         SCHEMA_OBJECT_OWNERSHIP_CHANGE_GROUP
+         SCHEMA_OBJECT_PERMISSION_CHANGE_GROUP
+         SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP
+         USER_CHANGE_PASSWORD_GROUP
+         BATCH_STARTED_GROUP
+         BATCH_COMPLETED_GROUP
+
+         These are groups that cover all sql statements and stored procedures executed against the
+         database, and should not be used in combination with other groups as this will result in
+         duplicate audit logs.
+
+         For more information, see `Database-Level Audit Action Groups
+         <https://docs.microsoft.com/en-us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-actions#database-level-audit-action-groups>`_.
+
+         For Database auditing policy, specific Actions can also be specified (note that Actions cannot
+         be specified for Server auditing policy). The supported actions to audit are:
+         SELECT
+         UPDATE
+         INSERT
+         DELETE
+         EXECUTE
+         RECEIVE
+         REFERENCES
+
+         The general form for defining an action to be audited is:
+         {action} ON {object} BY {principal}
+
+         Note that :code:`<object>` in the above format can refer to an object like a table, view, or
+         stored procedure, or an entire database or schema. For the latter cases, the forms
+         DATABASE::{db_name} and SCHEMA::{schema_name} are used, respectively.
+
+         For example:
+         SELECT on dbo.myTable by public
+         SELECT on DATABASE::myDatabase by public
+         SELECT on SCHEMA::mySchema by public
+
+         For more information, see `Database-Level Audit Actions
+         <https://docs.microsoft.com/en-us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-actions#database-level-audit-actions>`_.
+        :paramtype audit_actions_and_groups: list[str]
+        :keyword storage_account_subscription_id: Specifies the blob storage subscription Id.
+        :paramtype storage_account_subscription_id: str
+        :keyword is_storage_secondary_key_in_use: Specifies whether storageAccountAccessKey value is
+         the storage's secondary key.
+        :paramtype is_storage_secondary_key_in_use: bool
+        :keyword is_azure_monitor_target_enabled: Specifies whether audit events are sent to Azure
+         Monitor.
+         In order to send the events to Azure Monitor, specify 'state' as 'Enabled' and
+         'isAzureMonitorTargetEnabled' as true.
+
+         When using REST API to configure auditing, Diagnostic Settings with 'SQLSecurityAuditEvents'
+         diagnostic logs category on the database should be also created.
+         Note that for server level audit you should use the 'master' database as {databaseName}.
+
+         Diagnostic Settings URI format:
+         PUT
+         https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/providers/microsoft.insights/diagnosticSettings/{settingsName}?api-version=2017-05-01-preview
+
+         For more information, see `Diagnostic Settings REST API
+         <https://go.microsoft.com/fwlink/?linkid=2033207>`_
+         or `Diagnostic Settings PowerShell <https://go.microsoft.com/fwlink/?linkid=2033043>`_.
+        :paramtype is_azure_monitor_target_enabled: bool
+        :keyword queue_delay_ms: Specifies the amount of time in milliseconds that can elapse before
+         audit actions are forced to be processed.
+         The default minimum value is 1000 (1 second). The maximum is 2,147,483,647.
+        :paramtype queue_delay_ms: int
+        """
+        super().__init__(**kwargs)
         self.predicate_expression = predicate_expression
         self.state = state
         self.storage_endpoint = storage_endpoint
@@ -1724,7 +3651,7 @@ class ExtendedSqlPoolBlobAuditingPolicy(ProxyResource):
         self.queue_delay_ms = queue_delay_ms
 
 
-class ExtendedSqlPoolBlobAuditingPolicyListResult(msrest.serialization.Model):
+class ExtendedSqlPoolBlobAuditingPolicyListResult(_serialization.Model):
     """A list of sql pool extended auditing settings.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -1736,22 +3663,87 @@ class ExtendedSqlPoolBlobAuditingPolicyListResult(msrest.serialization.Model):
     """
 
     _validation = {
-        'value': {'readonly': True},
-        'next_link': {'readonly': True},
+        "value": {"readonly": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[ExtendedSqlPoolBlobAuditingPolicy]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[ExtendedSqlPoolBlobAuditingPolicy]"},
+        "next_link": {"key": "nextLink", "type": "str"},
+    }
+
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
+        self.value = None
+        self.next_link = None
+
+
+class FollowerDatabaseDefinition(_serialization.Model):
+    """A class representing follower database request.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :ivar kusto_pool_resource_id: Resource id of the cluster that follows a database owned by this
+     cluster. Required.
+    :vartype kusto_pool_resource_id: str
+    :ivar attached_database_configuration_name: Resource name of the attached database
+     configuration in the follower cluster. Required.
+    :vartype attached_database_configuration_name: str
+    :ivar database_name: The database name owned by this cluster that was followed. * in case
+     following all databases.
+    :vartype database_name: str
+    """
+
+    _validation = {
+        "kusto_pool_resource_id": {"required": True},
+        "attached_database_configuration_name": {"required": True},
+        "database_name": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "kusto_pool_resource_id": {"key": "clusterResourceId", "type": "str"},
+        "attached_database_configuration_name": {"key": "attachedDatabaseConfigurationName", "type": "str"},
+        "database_name": {"key": "databaseName", "type": "str"},
     }
 
     def __init__(
-        self,
-        **kwargs
-    ):
-        super(ExtendedSqlPoolBlobAuditingPolicyListResult, self).__init__(**kwargs)
-        self.value = None
-        self.next_link = None
+        self, *, kusto_pool_resource_id: str, attached_database_configuration_name: str, **kwargs: Any
+    ) -> None:
+        """
+        :keyword kusto_pool_resource_id: Resource id of the cluster that follows a database owned by
+         this cluster. Required.
+        :paramtype kusto_pool_resource_id: str
+        :keyword attached_database_configuration_name: Resource name of the attached database
+         configuration in the follower cluster. Required.
+        :paramtype attached_database_configuration_name: str
+        """
+        super().__init__(**kwargs)
+        self.kusto_pool_resource_id = kusto_pool_resource_id
+        self.attached_database_configuration_name = attached_database_configuration_name
+        self.database_name = None
+
+
+class FollowerDatabaseListResult(_serialization.Model):
+    """The list Kusto database principals operation response.
+
+    :ivar value: The list of follower database result.
+    :vartype value: list[~azure.mgmt.synapse.models.FollowerDatabaseDefinition]
+    """
+
+    _attribute_map = {
+        "value": {"key": "value", "type": "[FollowerDatabaseDefinition]"},
+    }
+
+    def __init__(self, *, value: Optional[List["_models.FollowerDatabaseDefinition"]] = None, **kwargs: Any) -> None:
+        """
+        :keyword value: The list of follower database result.
+        :paramtype value: list[~azure.mgmt.synapse.models.FollowerDatabaseDefinition]
+        """
+        super().__init__(**kwargs)
+        self.value = value
 
 
 class GeoBackupPolicy(ProxyResource):
@@ -1773,210 +3765,234 @@ class GeoBackupPolicy(ProxyResource):
     :vartype kind: str
     :ivar location: Backup policy location.
     :vartype location: str
-    :param state: Required. The state of the geo backup policy. Possible values include:
-     "Disabled", "Enabled".
-    :type state: str or ~azure.mgmt.synapse.models.GeoBackupPolicyState
+    :ivar state: The state of the geo backup policy. Required. Known values are: "Disabled" and
+     "Enabled".
+    :vartype state: str or ~azure.mgmt.synapse.models.GeoBackupPolicyState
     :ivar storage_type: The storage type of the geo backup policy.
     :vartype storage_type: str
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'kind': {'readonly': True},
-        'location': {'readonly': True},
-        'state': {'required': True},
-        'storage_type': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "kind": {"readonly": True},
+        "location": {"readonly": True},
+        "state": {"required": True},
+        "storage_type": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'kind': {'key': 'kind', 'type': 'str'},
-        'location': {'key': 'location', 'type': 'str'},
-        'state': {'key': 'properties.state', 'type': 'str'},
-        'storage_type': {'key': 'properties.storageType', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "kind": {"key": "kind", "type": "str"},
+        "location": {"key": "location", "type": "str"},
+        "state": {"key": "properties.state", "type": "str"},
+        "storage_type": {"key": "properties.storageType", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        state: Union[str, "GeoBackupPolicyState"],
-        **kwargs
-    ):
-        super(GeoBackupPolicy, self).__init__(**kwargs)
+    def __init__(self, *, state: Union[str, "_models.GeoBackupPolicyState"], **kwargs: Any) -> None:
+        """
+        :keyword state: The state of the geo backup policy. Required. Known values are: "Disabled" and
+         "Enabled".
+        :paramtype state: str or ~azure.mgmt.synapse.models.GeoBackupPolicyState
+        """
+        super().__init__(**kwargs)
         self.kind = None
         self.location = None
         self.state = state
         self.storage_type = None
 
 
-class GeoBackupPolicyListResult(msrest.serialization.Model):
+class GeoBackupPolicyListResult(_serialization.Model):
     """The response to a list geo backup policies request.
 
-    :param value: The list of geo backup policies.
-    :type value: list[~azure.mgmt.synapse.models.GeoBackupPolicy]
+    :ivar value: The list of geo backup policies.
+    :vartype value: list[~azure.mgmt.synapse.models.GeoBackupPolicy]
     """
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[GeoBackupPolicy]'},
+        "value": {"key": "value", "type": "[GeoBackupPolicy]"},
     }
 
-    def __init__(
-        self,
-        *,
-        value: Optional[List["GeoBackupPolicy"]] = None,
-        **kwargs
-    ):
-        super(GeoBackupPolicyListResult, self).__init__(**kwargs)
+    def __init__(self, *, value: Optional[List["_models.GeoBackupPolicy"]] = None, **kwargs: Any) -> None:
+        """
+        :keyword value: The list of geo backup policies.
+        :paramtype value: list[~azure.mgmt.synapse.models.GeoBackupPolicy]
+        """
+        super().__init__(**kwargs)
         self.value = value
 
 
-class GetSsisObjectMetadataRequest(msrest.serialization.Model):
+class GetSsisObjectMetadataRequest(_serialization.Model):
     """The request payload of get SSIS object metadata.
 
-    :param metadata_path: Metadata path.
-    :type metadata_path: str
+    :ivar metadata_path: Metadata path.
+    :vartype metadata_path: str
     """
 
     _attribute_map = {
-        'metadata_path': {'key': 'metadataPath', 'type': 'str'},
+        "metadata_path": {"key": "metadataPath", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        metadata_path: Optional[str] = None,
-        **kwargs
-    ):
-        super(GetSsisObjectMetadataRequest, self).__init__(**kwargs)
+    def __init__(self, *, metadata_path: Optional[str] = None, **kwargs: Any) -> None:
+        """
+        :keyword metadata_path: Metadata path.
+        :paramtype metadata_path: str
+        """
+        super().__init__(**kwargs)
         self.metadata_path = metadata_path
 
 
-class IntegrationRuntime(msrest.serialization.Model):
+class IntegrationRuntime(_serialization.Model):
     """Azure Synapse nested object which serves as a compute resource for activities.
 
-    You probably want to use the sub-classes and not this class directly. Known
-    sub-classes are: ManagedIntegrationRuntime, SelfHostedIntegrationRuntime.
+    You probably want to use the sub-classes and not this class directly. Known sub-classes are:
+    ManagedIntegrationRuntime, SelfHostedIntegrationRuntime
 
     All required parameters must be populated in order to send to Azure.
 
-    :param additional_properties: Unmatched properties from the message are deserialized to this
+    :ivar additional_properties: Unmatched properties from the message are deserialized to this
      collection.
-    :type additional_properties: dict[str, object]
-    :param type: Required. Type of integration runtime.Constant filled by server.  Possible values
-     include: "Managed", "SelfHosted".
-    :type type: str or ~azure.mgmt.synapse.models.IntegrationRuntimeType
-    :param description: Integration runtime description.
-    :type description: str
+    :vartype additional_properties: dict[str, JSON]
+    :ivar type: Type of integration runtime. Required. Known values are: "Managed" and
+     "SelfHosted".
+    :vartype type: str or ~azure.mgmt.synapse.models.IntegrationRuntimeType
+    :ivar description: Integration runtime description.
+    :vartype description: str
     """
 
     _validation = {
-        'type': {'required': True},
+        "type": {"required": True},
     }
 
     _attribute_map = {
-        'additional_properties': {'key': '', 'type': '{object}'},
-        'type': {'key': 'type', 'type': 'str'},
-        'description': {'key': 'description', 'type': 'str'},
+        "additional_properties": {"key": "", "type": "{object}"},
+        "type": {"key": "type", "type": "str"},
+        "description": {"key": "description", "type": "str"},
     }
 
-    _subtype_map = {
-        'type': {'Managed': 'ManagedIntegrationRuntime', 'SelfHosted': 'SelfHostedIntegrationRuntime'}
-    }
+    _subtype_map = {"type": {"Managed": "ManagedIntegrationRuntime", "SelfHosted": "SelfHostedIntegrationRuntime"}}
 
     def __init__(
         self,
         *,
-        additional_properties: Optional[Dict[str, object]] = None,
+        additional_properties: Optional[Dict[str, JSON]] = None,
         description: Optional[str] = None,
-        **kwargs
-    ):
-        super(IntegrationRuntime, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword additional_properties: Unmatched properties from the message are deserialized to this
+         collection.
+        :paramtype additional_properties: dict[str, JSON]
+        :keyword description: Integration runtime description.
+        :paramtype description: str
+        """
+        super().__init__(**kwargs)
         self.additional_properties = additional_properties
-        self.type = 'IntegrationRuntime'  # type: str
+        self.type: Optional[str] = None
         self.description = description
 
 
-class IntegrationRuntimeAuthKeys(msrest.serialization.Model):
+class IntegrationRuntimeAuthKeys(_serialization.Model):
     """The integration runtime authentication keys.
 
-    :param auth_key1: The primary integration runtime authentication key.
-    :type auth_key1: str
-    :param auth_key2: The secondary integration runtime authentication key.
-    :type auth_key2: str
+    :ivar auth_key1: The primary integration runtime authentication key.
+    :vartype auth_key1: str
+    :ivar auth_key2: The secondary integration runtime authentication key.
+    :vartype auth_key2: str
     """
 
     _attribute_map = {
-        'auth_key1': {'key': 'authKey1', 'type': 'str'},
-        'auth_key2': {'key': 'authKey2', 'type': 'str'},
+        "auth_key1": {"key": "authKey1", "type": "str"},
+        "auth_key2": {"key": "authKey2", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        auth_key1: Optional[str] = None,
-        auth_key2: Optional[str] = None,
-        **kwargs
-    ):
-        super(IntegrationRuntimeAuthKeys, self).__init__(**kwargs)
+    def __init__(self, *, auth_key1: Optional[str] = None, auth_key2: Optional[str] = None, **kwargs: Any) -> None:
+        """
+        :keyword auth_key1: The primary integration runtime authentication key.
+        :paramtype auth_key1: str
+        :keyword auth_key2: The secondary integration runtime authentication key.
+        :paramtype auth_key2: str
+        """
+        super().__init__(**kwargs)
         self.auth_key1 = auth_key1
         self.auth_key2 = auth_key2
 
 
-class IntegrationRuntimeComputeProperties(msrest.serialization.Model):
+class IntegrationRuntimeComputeProperties(_serialization.Model):
     """The compute resource properties for managed integration runtime.
 
-    :param additional_properties: Unmatched properties from the message are deserialized to this
+    :ivar additional_properties: Unmatched properties from the message are deserialized to this
      collection.
-    :type additional_properties: dict[str, object]
-    :param location: The location for managed integration runtime. The supported regions could be
-     found on https://docs.microsoft.com/en-us/azure/data-factory/data-factory-data-movement-
-     activities.
-    :type location: str
-    :param node_size: The node size requirement to managed integration runtime.
-    :type node_size: str
-    :param number_of_nodes: The required number of nodes for managed integration runtime.
-    :type number_of_nodes: int
-    :param max_parallel_executions_per_node: Maximum parallel executions count per node for managed
+    :vartype additional_properties: dict[str, JSON]
+    :ivar location: The location for managed integration runtime. The supported regions could be
+     found on
+     https://docs.microsoft.com/en-us/azure/data-factory/data-factory-data-movement-activities.
+    :vartype location: str
+    :ivar node_size: The node size requirement to managed integration runtime.
+    :vartype node_size: str
+    :ivar number_of_nodes: The required number of nodes for managed integration runtime.
+    :vartype number_of_nodes: int
+    :ivar max_parallel_executions_per_node: Maximum parallel executions count per node for managed
      integration runtime.
-    :type max_parallel_executions_per_node: int
-    :param data_flow_properties: Data flow properties for managed integration runtime.
-    :type data_flow_properties: ~azure.mgmt.synapse.models.IntegrationRuntimeDataFlowProperties
-    :param v_net_properties: VNet properties for managed integration runtime.
-    :type v_net_properties: ~azure.mgmt.synapse.models.IntegrationRuntimeVNetProperties
+    :vartype max_parallel_executions_per_node: int
+    :ivar data_flow_properties: Data flow properties for managed integration runtime.
+    :vartype data_flow_properties: ~azure.mgmt.synapse.models.IntegrationRuntimeDataFlowProperties
+    :ivar v_net_properties: VNet properties for managed integration runtime.
+    :vartype v_net_properties: ~azure.mgmt.synapse.models.IntegrationRuntimeVNetProperties
     """
 
     _validation = {
-        'number_of_nodes': {'minimum': 1},
-        'max_parallel_executions_per_node': {'minimum': 1},
+        "number_of_nodes": {"minimum": 1},
+        "max_parallel_executions_per_node": {"minimum": 1},
     }
 
     _attribute_map = {
-        'additional_properties': {'key': '', 'type': '{object}'},
-        'location': {'key': 'location', 'type': 'str'},
-        'node_size': {'key': 'nodeSize', 'type': 'str'},
-        'number_of_nodes': {'key': 'numberOfNodes', 'type': 'int'},
-        'max_parallel_executions_per_node': {'key': 'maxParallelExecutionsPerNode', 'type': 'int'},
-        'data_flow_properties': {'key': 'dataFlowProperties', 'type': 'IntegrationRuntimeDataFlowProperties'},
-        'v_net_properties': {'key': 'vNetProperties', 'type': 'IntegrationRuntimeVNetProperties'},
+        "additional_properties": {"key": "", "type": "{object}"},
+        "location": {"key": "location", "type": "str"},
+        "node_size": {"key": "nodeSize", "type": "str"},
+        "number_of_nodes": {"key": "numberOfNodes", "type": "int"},
+        "max_parallel_executions_per_node": {"key": "maxParallelExecutionsPerNode", "type": "int"},
+        "data_flow_properties": {"key": "dataFlowProperties", "type": "IntegrationRuntimeDataFlowProperties"},
+        "v_net_properties": {"key": "vNetProperties", "type": "IntegrationRuntimeVNetProperties"},
     }
 
     def __init__(
         self,
         *,
-        additional_properties: Optional[Dict[str, object]] = None,
+        additional_properties: Optional[Dict[str, JSON]] = None,
         location: Optional[str] = None,
         node_size: Optional[str] = None,
         number_of_nodes: Optional[int] = None,
         max_parallel_executions_per_node: Optional[int] = None,
-        data_flow_properties: Optional["IntegrationRuntimeDataFlowProperties"] = None,
-        v_net_properties: Optional["IntegrationRuntimeVNetProperties"] = None,
-        **kwargs
-    ):
-        super(IntegrationRuntimeComputeProperties, self).__init__(**kwargs)
+        data_flow_properties: Optional["_models.IntegrationRuntimeDataFlowProperties"] = None,
+        v_net_properties: Optional["_models.IntegrationRuntimeVNetProperties"] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword additional_properties: Unmatched properties from the message are deserialized to this
+         collection.
+        :paramtype additional_properties: dict[str, JSON]
+        :keyword location: The location for managed integration runtime. The supported regions could be
+         found on
+         https://docs.microsoft.com/en-us/azure/data-factory/data-factory-data-movement-activities.
+        :paramtype location: str
+        :keyword node_size: The node size requirement to managed integration runtime.
+        :paramtype node_size: str
+        :keyword number_of_nodes: The required number of nodes for managed integration runtime.
+        :paramtype number_of_nodes: int
+        :keyword max_parallel_executions_per_node: Maximum parallel executions count per node for
+         managed integration runtime.
+        :paramtype max_parallel_executions_per_node: int
+        :keyword data_flow_properties: Data flow properties for managed integration runtime.
+        :paramtype data_flow_properties:
+         ~azure.mgmt.synapse.models.IntegrationRuntimeDataFlowProperties
+        :keyword v_net_properties: VNet properties for managed integration runtime.
+        :paramtype v_net_properties: ~azure.mgmt.synapse.models.IntegrationRuntimeVNetProperties
+        """
+        super().__init__(**kwargs)
         self.additional_properties = additional_properties
         self.location = location
         self.node_size = node_size
@@ -1986,14 +4002,14 @@ class IntegrationRuntimeComputeProperties(msrest.serialization.Model):
         self.v_net_properties = v_net_properties
 
 
-class IntegrationRuntimeConnectionInfo(msrest.serialization.Model):
+class IntegrationRuntimeConnectionInfo(_serialization.Model):
     """Connection information for encrypting the on-premises data source credentials.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
-    :param additional_properties: Unmatched properties from the message are deserialized to this
+    :ivar additional_properties: Unmatched properties from the message are deserialized to this
      collection.
-    :type additional_properties: dict[str, object]
+    :vartype additional_properties: dict[str, JSON]
     :ivar service_token: The token generated in service. Callers use this token to authenticate to
      integration runtime.
     :vartype service_token: str
@@ -2012,31 +4028,31 @@ class IntegrationRuntimeConnectionInfo(msrest.serialization.Model):
     """
 
     _validation = {
-        'service_token': {'readonly': True},
-        'identity_cert_thumbprint': {'readonly': True},
-        'host_service_uri': {'readonly': True},
-        'version': {'readonly': True},
-        'public_key': {'readonly': True},
-        'is_identity_cert_exprired': {'readonly': True},
+        "service_token": {"readonly": True},
+        "identity_cert_thumbprint": {"readonly": True},
+        "host_service_uri": {"readonly": True},
+        "version": {"readonly": True},
+        "public_key": {"readonly": True},
+        "is_identity_cert_exprired": {"readonly": True},
     }
 
     _attribute_map = {
-        'additional_properties': {'key': '', 'type': '{object}'},
-        'service_token': {'key': 'serviceToken', 'type': 'str'},
-        'identity_cert_thumbprint': {'key': 'identityCertThumbprint', 'type': 'str'},
-        'host_service_uri': {'key': 'hostServiceUri', 'type': 'str'},
-        'version': {'key': 'version', 'type': 'str'},
-        'public_key': {'key': 'publicKey', 'type': 'str'},
-        'is_identity_cert_exprired': {'key': 'isIdentityCertExprired', 'type': 'bool'},
+        "additional_properties": {"key": "", "type": "{object}"},
+        "service_token": {"key": "serviceToken", "type": "str"},
+        "identity_cert_thumbprint": {"key": "identityCertThumbprint", "type": "str"},
+        "host_service_uri": {"key": "hostServiceUri", "type": "str"},
+        "version": {"key": "version", "type": "str"},
+        "public_key": {"key": "publicKey", "type": "str"},
+        "is_identity_cert_exprired": {"key": "isIdentityCertExprired", "type": "bool"},
     }
 
-    def __init__(
-        self,
-        *,
-        additional_properties: Optional[Dict[str, object]] = None,
-        **kwargs
-    ):
-        super(IntegrationRuntimeConnectionInfo, self).__init__(**kwargs)
+    def __init__(self, *, additional_properties: Optional[Dict[str, JSON]] = None, **kwargs: Any) -> None:
+        """
+        :keyword additional_properties: Unmatched properties from the message are deserialized to this
+         collection.
+        :paramtype additional_properties: dict[str, JSON]
+        """
+        super().__init__(**kwargs)
         self.additional_properties = additional_properties
         self.service_token = None
         self.identity_cert_thumbprint = None
@@ -2046,167 +4062,261 @@ class IntegrationRuntimeConnectionInfo(msrest.serialization.Model):
         self.is_identity_cert_exprired = None
 
 
-class IntegrationRuntimeCustomSetupScriptProperties(msrest.serialization.Model):
+class IntegrationRuntimeCustomSetupScriptProperties(_serialization.Model):
     """Custom setup script properties for a managed dedicated integration runtime.
 
-    :param blob_container_uri: The URI of the Azure blob container that contains the custom setup
+    :ivar blob_container_uri: The URI of the Azure blob container that contains the custom setup
      script.
-    :type blob_container_uri: str
-    :param sas_token: The SAS token of the Azure blob container.
-    :type sas_token: ~azure.mgmt.synapse.models.SecureString
+    :vartype blob_container_uri: str
+    :ivar sas_token: The SAS token of the Azure blob container.
+    :vartype sas_token: ~azure.mgmt.synapse.models.SecureString
     """
 
     _attribute_map = {
-        'blob_container_uri': {'key': 'blobContainerUri', 'type': 'str'},
-        'sas_token': {'key': 'sasToken', 'type': 'SecureString'},
+        "blob_container_uri": {"key": "blobContainerUri", "type": "str"},
+        "sas_token": {"key": "sasToken", "type": "SecureString"},
     }
 
     def __init__(
         self,
         *,
         blob_container_uri: Optional[str] = None,
-        sas_token: Optional["SecureString"] = None,
-        **kwargs
-    ):
-        super(IntegrationRuntimeCustomSetupScriptProperties, self).__init__(**kwargs)
+        sas_token: Optional["_models.SecureString"] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword blob_container_uri: The URI of the Azure blob container that contains the custom setup
+         script.
+        :paramtype blob_container_uri: str
+        :keyword sas_token: The SAS token of the Azure blob container.
+        :paramtype sas_token: ~azure.mgmt.synapse.models.SecureString
+        """
+        super().__init__(**kwargs)
         self.blob_container_uri = blob_container_uri
         self.sas_token = sas_token
 
 
-class IntegrationRuntimeDataFlowProperties(msrest.serialization.Model):
+class IntegrationRuntimeDataFlowProperties(_serialization.Model):
     """Data flow properties for managed integration runtime.
 
-    :param additional_properties: Unmatched properties from the message are deserialized to this
+    :ivar additional_properties: Unmatched properties from the message are deserialized to this
      collection.
-    :type additional_properties: dict[str, object]
-    :param compute_type: Compute type of the cluster which will execute data flow job. Possible
-     values include: "General", "MemoryOptimized", "ComputeOptimized".
-    :type compute_type: str or ~azure.mgmt.synapse.models.DataFlowComputeType
-    :param core_count: Core count of the cluster which will execute data flow job. Supported values
+    :vartype additional_properties: dict[str, JSON]
+    :ivar compute_type: Compute type of the cluster which will execute data flow job. Known values
+     are: "General", "MemoryOptimized", and "ComputeOptimized".
+    :vartype compute_type: str or ~azure.mgmt.synapse.models.DataFlowComputeType
+    :ivar core_count: Core count of the cluster which will execute data flow job. Supported values
      are: 8, 16, 32, 48, 80, 144 and 272.
-    :type core_count: int
-    :param time_to_live: Time to live (in minutes) setting of the cluster which will execute data
+    :vartype core_count: int
+    :ivar time_to_live: Time to live (in minutes) setting of the cluster which will execute data
      flow job.
-    :type time_to_live: int
+    :vartype time_to_live: int
+    :ivar cleanup: Cluster will not be recycled and it will be used in next data flow activity run
+     until TTL (time to live) is reached if this is set as false. Default is true.
+    :vartype cleanup: bool
     """
 
     _validation = {
-        'time_to_live': {'minimum': 0},
+        "time_to_live": {"minimum": 0},
     }
 
     _attribute_map = {
-        'additional_properties': {'key': '', 'type': '{object}'},
-        'compute_type': {'key': 'computeType', 'type': 'str'},
-        'core_count': {'key': 'coreCount', 'type': 'int'},
-        'time_to_live': {'key': 'timeToLive', 'type': 'int'},
+        "additional_properties": {"key": "", "type": "{object}"},
+        "compute_type": {"key": "computeType", "type": "str"},
+        "core_count": {"key": "coreCount", "type": "int"},
+        "time_to_live": {"key": "timeToLive", "type": "int"},
+        "cleanup": {"key": "cleanup", "type": "bool"},
     }
 
     def __init__(
         self,
         *,
-        additional_properties: Optional[Dict[str, object]] = None,
-        compute_type: Optional[Union[str, "DataFlowComputeType"]] = None,
+        additional_properties: Optional[Dict[str, JSON]] = None,
+        compute_type: Optional[Union[str, "_models.DataFlowComputeType"]] = None,
         core_count: Optional[int] = None,
         time_to_live: Optional[int] = None,
-        **kwargs
-    ):
-        super(IntegrationRuntimeDataFlowProperties, self).__init__(**kwargs)
+        cleanup: Optional[bool] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword additional_properties: Unmatched properties from the message are deserialized to this
+         collection.
+        :paramtype additional_properties: dict[str, JSON]
+        :keyword compute_type: Compute type of the cluster which will execute data flow job. Known
+         values are: "General", "MemoryOptimized", and "ComputeOptimized".
+        :paramtype compute_type: str or ~azure.mgmt.synapse.models.DataFlowComputeType
+        :keyword core_count: Core count of the cluster which will execute data flow job. Supported
+         values are: 8, 16, 32, 48, 80, 144 and 272.
+        :paramtype core_count: int
+        :keyword time_to_live: Time to live (in minutes) setting of the cluster which will execute data
+         flow job.
+        :paramtype time_to_live: int
+        :keyword cleanup: Cluster will not be recycled and it will be used in next data flow activity
+         run until TTL (time to live) is reached if this is set as false. Default is true.
+        :paramtype cleanup: bool
+        """
+        super().__init__(**kwargs)
         self.additional_properties = additional_properties
         self.compute_type = compute_type
         self.core_count = core_count
         self.time_to_live = time_to_live
+        self.cleanup = cleanup
 
 
-class IntegrationRuntimeDataProxyProperties(msrest.serialization.Model):
+class IntegrationRuntimeDataProxyProperties(_serialization.Model):
     """Data proxy properties for a managed dedicated integration runtime.
 
-    :param connect_via: The self-hosted integration runtime reference.
-    :type connect_via: ~azure.mgmt.synapse.models.EntityReference
-    :param staging_linked_service: The staging linked service reference.
-    :type staging_linked_service: ~azure.mgmt.synapse.models.EntityReference
-    :param path: The path to contain the staged data in the Blob storage.
-    :type path: str
+    :ivar connect_via: The self-hosted integration runtime reference.
+    :vartype connect_via: ~azure.mgmt.synapse.models.EntityReference
+    :ivar staging_linked_service: The staging linked service reference.
+    :vartype staging_linked_service: ~azure.mgmt.synapse.models.EntityReference
+    :ivar path: The path to contain the staged data in the Blob storage.
+    :vartype path: str
     """
 
     _attribute_map = {
-        'connect_via': {'key': 'connectVia', 'type': 'EntityReference'},
-        'staging_linked_service': {'key': 'stagingLinkedService', 'type': 'EntityReference'},
-        'path': {'key': 'path', 'type': 'str'},
+        "connect_via": {"key": "connectVia", "type": "EntityReference"},
+        "staging_linked_service": {"key": "stagingLinkedService", "type": "EntityReference"},
+        "path": {"key": "path", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        connect_via: Optional["EntityReference"] = None,
-        staging_linked_service: Optional["EntityReference"] = None,
+        connect_via: Optional["_models.EntityReference"] = None,
+        staging_linked_service: Optional["_models.EntityReference"] = None,
         path: Optional[str] = None,
-        **kwargs
-    ):
-        super(IntegrationRuntimeDataProxyProperties, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword connect_via: The self-hosted integration runtime reference.
+        :paramtype connect_via: ~azure.mgmt.synapse.models.EntityReference
+        :keyword staging_linked_service: The staging linked service reference.
+        :paramtype staging_linked_service: ~azure.mgmt.synapse.models.EntityReference
+        :keyword path: The path to contain the staged data in the Blob storage.
+        :paramtype path: str
+        """
+        super().__init__(**kwargs)
         self.connect_via = connect_via
         self.staging_linked_service = staging_linked_service
         self.path = path
 
 
-class IntegrationRuntimeListResponse(msrest.serialization.Model):
-    """A list of integration runtime resources.
+class IntegrationRuntimeEnableinteractivequery(_serialization.Model):
+    """Integration Runtime Operation Status Properties.
 
-    All required parameters must be populated in order to send to Azure.
-
-    :param value: Required. List of integration runtimes.
-    :type value: list[~azure.mgmt.synapse.models.IntegrationRuntimeResource]
-    :param next_link: The link to the next page of results, if any remaining results exist.
-    :type next_link: str
+    :ivar status: EnableInteractivequery status of  Integrationruntimes. Known values are:
+     "InProgress", "Succeeded", and "Failed".
+    :vartype status: str or ~azure.mgmt.synapse.models.WorkspaceStatus
+    :ivar name: The operation name.
+    :vartype name: str
+    :ivar properties: The operation properties.
+    :vartype properties: JSON
+    :ivar error: The operation error message.
+    :vartype error: str
     """
 
-    _validation = {
-        'value': {'required': True},
-    }
-
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[IntegrationRuntimeResource]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "status": {"key": "status", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "properties": {"key": "properties", "type": "object"},
+        "error": {"key": "error", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        value: List["IntegrationRuntimeResource"],
-        next_link: Optional[str] = None,
-        **kwargs
-    ):
-        super(IntegrationRuntimeListResponse, self).__init__(**kwargs)
+        status: Optional[Union[str, "_models.WorkspaceStatus"]] = None,
+        name: Optional[str] = None,
+        properties: Optional[JSON] = None,
+        error: Optional[str] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword status: EnableInteractivequery status of  Integrationruntimes. Known values are:
+         "InProgress", "Succeeded", and "Failed".
+        :paramtype status: str or ~azure.mgmt.synapse.models.WorkspaceStatus
+        :keyword name: The operation name.
+        :paramtype name: str
+        :keyword properties: The operation properties.
+        :paramtype properties: JSON
+        :keyword error: The operation error message.
+        :paramtype error: str
+        """
+        super().__init__(**kwargs)
+        self.status = status
+        self.name = name
+        self.properties = properties
+        self.error = error
+
+
+class IntegrationRuntimeListResponse(_serialization.Model):
+    """A list of integration runtime resources.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :ivar value: List of integration runtimes. Required.
+    :vartype value: list[~azure.mgmt.synapse.models.IntegrationRuntimeResource]
+    :ivar next_link: The link to the next page of results, if any remaining results exist.
+    :vartype next_link: str
+    """
+
+    _validation = {
+        "value": {"required": True},
+    }
+
+    _attribute_map = {
+        "value": {"key": "value", "type": "[IntegrationRuntimeResource]"},
+        "next_link": {"key": "nextLink", "type": "str"},
+    }
+
+    def __init__(
+        self, *, value: List["_models.IntegrationRuntimeResource"], next_link: Optional[str] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword value: List of integration runtimes. Required.
+        :paramtype value: list[~azure.mgmt.synapse.models.IntegrationRuntimeResource]
+        :keyword next_link: The link to the next page of results, if any remaining results exist.
+        :paramtype next_link: str
+        """
+        super().__init__(**kwargs)
         self.value = value
         self.next_link = next_link
 
 
-class IntegrationRuntimeMonitoringData(msrest.serialization.Model):
+class IntegrationRuntimeMonitoringData(_serialization.Model):
     """Get monitoring data response.
 
-    :param name: Integration runtime name.
-    :type name: str
-    :param nodes: Integration runtime node monitoring data.
-    :type nodes: list[~azure.mgmt.synapse.models.IntegrationRuntimeNodeMonitoringData]
+    :ivar name: Integration runtime name.
+    :vartype name: str
+    :ivar nodes: Integration runtime node monitoring data.
+    :vartype nodes: list[~azure.mgmt.synapse.models.IntegrationRuntimeNodeMonitoringData]
     """
 
     _attribute_map = {
-        'name': {'key': 'name', 'type': 'str'},
-        'nodes': {'key': 'nodes', 'type': '[IntegrationRuntimeNodeMonitoringData]'},
+        "name": {"key": "name", "type": "str"},
+        "nodes": {"key": "nodes", "type": "[IntegrationRuntimeNodeMonitoringData]"},
     }
 
     def __init__(
         self,
         *,
         name: Optional[str] = None,
-        nodes: Optional[List["IntegrationRuntimeNodeMonitoringData"]] = None,
-        **kwargs
-    ):
-        super(IntegrationRuntimeMonitoringData, self).__init__(**kwargs)
+        nodes: Optional[List["_models.IntegrationRuntimeNodeMonitoringData"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword name: Integration runtime name.
+        :paramtype name: str
+        :keyword nodes: Integration runtime node monitoring data.
+        :paramtype nodes: list[~azure.mgmt.synapse.models.IntegrationRuntimeNodeMonitoringData]
+        """
+        super().__init__(**kwargs)
         self.name = name
         self.nodes = nodes
 
 
-class IntegrationRuntimeNodeIpAddress(msrest.serialization.Model):
+class IntegrationRuntimeNodeIpAddress(_serialization.Model):
     """The IP address of self-hosted integration runtime node.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -2216,29 +4326,27 @@ class IntegrationRuntimeNodeIpAddress(msrest.serialization.Model):
     """
 
     _validation = {
-        'ip_address': {'readonly': True},
+        "ip_address": {"readonly": True},
     }
 
     _attribute_map = {
-        'ip_address': {'key': 'ipAddress', 'type': 'str'},
+        "ip_address": {"key": "ipAddress", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(IntegrationRuntimeNodeIpAddress, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.ip_address = None
 
 
-class IntegrationRuntimeNodeMonitoringData(msrest.serialization.Model):
+class IntegrationRuntimeNodeMonitoringData(_serialization.Model):
     """Monitoring data for integration runtime node.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
-    :param additional_properties: Unmatched properties from the message are deserialized to this
+    :ivar additional_properties: Unmatched properties from the message are deserialized to this
      collection.
-    :type additional_properties: dict[str, object]
+    :vartype additional_properties: dict[str, JSON]
     :ivar node_name: Name of the integration runtime node.
     :vartype node_name: str
     :ivar available_memory_in_mb: Available memory (MB) on the integration runtime node.
@@ -2259,35 +4367,35 @@ class IntegrationRuntimeNodeMonitoringData(msrest.serialization.Model):
     """
 
     _validation = {
-        'node_name': {'readonly': True},
-        'available_memory_in_mb': {'readonly': True},
-        'cpu_utilization': {'readonly': True},
-        'concurrent_jobs_limit': {'readonly': True},
-        'concurrent_jobs_running': {'readonly': True},
-        'max_concurrent_jobs': {'readonly': True},
-        'sent_bytes': {'readonly': True},
-        'received_bytes': {'readonly': True},
+        "node_name": {"readonly": True},
+        "available_memory_in_mb": {"readonly": True},
+        "cpu_utilization": {"readonly": True},
+        "concurrent_jobs_limit": {"readonly": True},
+        "concurrent_jobs_running": {"readonly": True},
+        "max_concurrent_jobs": {"readonly": True},
+        "sent_bytes": {"readonly": True},
+        "received_bytes": {"readonly": True},
     }
 
     _attribute_map = {
-        'additional_properties': {'key': '', 'type': '{object}'},
-        'node_name': {'key': 'nodeName', 'type': 'str'},
-        'available_memory_in_mb': {'key': 'availableMemoryInMB', 'type': 'int'},
-        'cpu_utilization': {'key': 'cpuUtilization', 'type': 'int'},
-        'concurrent_jobs_limit': {'key': 'concurrentJobsLimit', 'type': 'int'},
-        'concurrent_jobs_running': {'key': 'concurrentJobsRunning', 'type': 'int'},
-        'max_concurrent_jobs': {'key': 'maxConcurrentJobs', 'type': 'int'},
-        'sent_bytes': {'key': 'sentBytes', 'type': 'float'},
-        'received_bytes': {'key': 'receivedBytes', 'type': 'float'},
+        "additional_properties": {"key": "", "type": "{object}"},
+        "node_name": {"key": "nodeName", "type": "str"},
+        "available_memory_in_mb": {"key": "availableMemoryInMB", "type": "int"},
+        "cpu_utilization": {"key": "cpuUtilization", "type": "int"},
+        "concurrent_jobs_limit": {"key": "concurrentJobsLimit", "type": "int"},
+        "concurrent_jobs_running": {"key": "concurrentJobsRunning", "type": "int"},
+        "max_concurrent_jobs": {"key": "maxConcurrentJobs", "type": "int"},
+        "sent_bytes": {"key": "sentBytes", "type": "float"},
+        "received_bytes": {"key": "receivedBytes", "type": "float"},
     }
 
-    def __init__(
-        self,
-        *,
-        additional_properties: Optional[Dict[str, object]] = None,
-        **kwargs
-    ):
-        super(IntegrationRuntimeNodeMonitoringData, self).__init__(**kwargs)
+    def __init__(self, *, additional_properties: Optional[Dict[str, JSON]] = None, **kwargs: Any) -> None:
+        """
+        :keyword additional_properties: Unmatched properties from the message are deserialized to this
+         collection.
+        :paramtype additional_properties: dict[str, JSON]
+        """
+        super().__init__(**kwargs)
         self.additional_properties = additional_properties
         self.node_name = None
         self.available_memory_in_mb = None
@@ -2299,25 +4407,193 @@ class IntegrationRuntimeNodeMonitoringData(msrest.serialization.Model):
         self.received_bytes = None
 
 
-class IntegrationRuntimeRegenerateKeyParameters(msrest.serialization.Model):
-    """Parameters to regenerate the authentication key.
+class IntegrationRuntimeOperationStatus(_serialization.Model):
+    """Integration Runtime Operation Status Properties.
 
-    :param key_name: The name of the authentication key to regenerate. Possible values include:
-     "authKey1", "authKey2".
-    :type key_name: str or ~azure.mgmt.synapse.models.IntegrationRuntimeAuthKeyName
+    :ivar status: status of Start Integrationruntimes. Known values are: "InProgress", "Succeeded",
+     and "Failed".
+    :vartype status: str or ~azure.mgmt.synapse.models.WorkspaceStatus
+    :ivar name: The operation name.
+    :vartype name: str
+    :ivar properties: The operation properties.
+    :vartype properties: JSON
+    :ivar error: The operation error message.
+    :vartype error: str
     """
 
     _attribute_map = {
-        'key_name': {'key': 'keyName', 'type': 'str'},
+        "status": {"key": "status", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "properties": {"key": "properties", "type": "object"},
+        "error": {"key": "error", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        key_name: Optional[Union[str, "IntegrationRuntimeAuthKeyName"]] = None,
-        **kwargs
-    ):
-        super(IntegrationRuntimeRegenerateKeyParameters, self).__init__(**kwargs)
+        status: Optional[Union[str, "_models.WorkspaceStatus"]] = None,
+        name: Optional[str] = None,
+        properties: Optional[JSON] = None,
+        error: Optional[str] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword status: status of Start Integrationruntimes. Known values are: "InProgress",
+         "Succeeded", and "Failed".
+        :paramtype status: str or ~azure.mgmt.synapse.models.WorkspaceStatus
+        :keyword name: The operation name.
+        :paramtype name: str
+        :keyword properties: The operation properties.
+        :paramtype properties: JSON
+        :keyword error: The operation error message.
+        :paramtype error: str
+        """
+        super().__init__(**kwargs)
+        self.status = status
+        self.name = name
+        self.properties = properties
+        self.error = error
+
+
+class IntegrationRuntimeOutboundNetworkDependenciesCategoryEndpoint(_serialization.Model):
+    """Azure-SSIS integration runtime outbound network dependency endpoints for one category.
+
+    :ivar category: The category of outbound network dependency.
+    :vartype category: str
+    :ivar endpoints: The endpoints for outbound network dependency.
+    :vartype endpoints:
+     list[~azure.mgmt.synapse.models.IntegrationRuntimeOutboundNetworkDependenciesEndpoint]
+    """
+
+    _attribute_map = {
+        "category": {"key": "category", "type": "str"},
+        "endpoints": {"key": "endpoints", "type": "[IntegrationRuntimeOutboundNetworkDependenciesEndpoint]"},
+    }
+
+    def __init__(
+        self,
+        *,
+        category: Optional[str] = None,
+        endpoints: Optional[List["_models.IntegrationRuntimeOutboundNetworkDependenciesEndpoint"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword category: The category of outbound network dependency.
+        :paramtype category: str
+        :keyword endpoints: The endpoints for outbound network dependency.
+        :paramtype endpoints:
+         list[~azure.mgmt.synapse.models.IntegrationRuntimeOutboundNetworkDependenciesEndpoint]
+        """
+        super().__init__(**kwargs)
+        self.category = category
+        self.endpoints = endpoints
+
+
+class IntegrationRuntimeOutboundNetworkDependenciesEndpoint(_serialization.Model):
+    """The endpoint for Azure-SSIS integration runtime outbound network dependency.
+
+    :ivar domain_name: The domain name of endpoint.
+    :vartype domain_name: str
+    :ivar endpoint_details: The details of endpoint.
+    :vartype endpoint_details:
+     list[~azure.mgmt.synapse.models.IntegrationRuntimeOutboundNetworkDependenciesEndpointDetails]
+    """
+
+    _attribute_map = {
+        "domain_name": {"key": "domainName", "type": "str"},
+        "endpoint_details": {
+            "key": "endpointDetails",
+            "type": "[IntegrationRuntimeOutboundNetworkDependenciesEndpointDetails]",
+        },
+    }
+
+    def __init__(
+        self,
+        *,
+        domain_name: Optional[str] = None,
+        endpoint_details: Optional[List["_models.IntegrationRuntimeOutboundNetworkDependenciesEndpointDetails"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword domain_name: The domain name of endpoint.
+        :paramtype domain_name: str
+        :keyword endpoint_details: The details of endpoint.
+        :paramtype endpoint_details:
+         list[~azure.mgmt.synapse.models.IntegrationRuntimeOutboundNetworkDependenciesEndpointDetails]
+        """
+        super().__init__(**kwargs)
+        self.domain_name = domain_name
+        self.endpoint_details = endpoint_details
+
+
+class IntegrationRuntimeOutboundNetworkDependenciesEndpointDetails(_serialization.Model):
+    """The details of Azure-SSIS integration runtime outbound network dependency endpoint.
+
+    :ivar port: The port of endpoint.
+    :vartype port: int
+    """
+
+    _attribute_map = {
+        "port": {"key": "port", "type": "int"},
+    }
+
+    def __init__(self, *, port: Optional[int] = None, **kwargs: Any) -> None:
+        """
+        :keyword port: The port of endpoint.
+        :paramtype port: int
+        """
+        super().__init__(**kwargs)
+        self.port = port
+
+
+class IntegrationRuntimeOutboundNetworkDependenciesEndpointsResponse(_serialization.Model):
+    """Azure-SSIS integration runtime outbound network dependency endpoints.
+
+    :ivar value: The list of outbound network dependency endpoints.
+    :vartype value:
+     list[~azure.mgmt.synapse.models.IntegrationRuntimeOutboundNetworkDependenciesCategoryEndpoint]
+    """
+
+    _attribute_map = {
+        "value": {"key": "value", "type": "[IntegrationRuntimeOutboundNetworkDependenciesCategoryEndpoint]"},
+    }
+
+    def __init__(
+        self,
+        *,
+        value: Optional[List["_models.IntegrationRuntimeOutboundNetworkDependenciesCategoryEndpoint"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword value: The list of outbound network dependency endpoints.
+        :paramtype value:
+         list[~azure.mgmt.synapse.models.IntegrationRuntimeOutboundNetworkDependenciesCategoryEndpoint]
+        """
+        super().__init__(**kwargs)
+        self.value = value
+
+
+class IntegrationRuntimeRegenerateKeyParameters(_serialization.Model):
+    """Parameters to regenerate the authentication key.
+
+    :ivar key_name: The name of the authentication key to regenerate. Known values are: "authKey1"
+     and "authKey2".
+    :vartype key_name: str or ~azure.mgmt.synapse.models.IntegrationRuntimeAuthKeyName
+    """
+
+    _attribute_map = {
+        "key_name": {"key": "keyName", "type": "str"},
+    }
+
+    def __init__(
+        self, *, key_name: Optional[Union[str, "_models.IntegrationRuntimeAuthKeyName"]] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword key_name: The name of the authentication key to regenerate. Known values are:
+         "authKey1" and "authKey2".
+        :paramtype key_name: str or ~azure.mgmt.synapse.models.IntegrationRuntimeAuthKeyName
+        """
+        super().__init__(**kwargs)
         self.key_name = key_name
 
 
@@ -2339,24 +4615,22 @@ class SubResource(AzureEntityResource):
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'etag': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "etag": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'etag': {'key': 'etag', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "etag": {"key": "etag", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(SubResource, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
 
 
 class IntegrationRuntimeResource(SubResource):
@@ -2376,79 +4650,100 @@ class IntegrationRuntimeResource(SubResource):
     :vartype type: str
     :ivar etag: Resource Etag.
     :vartype etag: str
-    :param properties: Required. Integration runtime properties.
-    :type properties: ~azure.mgmt.synapse.models.IntegrationRuntime
+    :ivar type_properties_type: Type of integration runtime. Required. Known values are: "Managed"
+     and "SelfHosted".
+    :vartype type_properties_type: str or ~azure.mgmt.synapse.models.IntegrationRuntimeType
+    :ivar description: Integration runtime description.
+    :vartype description: str
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'etag': {'readonly': True},
-        'properties': {'required': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "etag": {"readonly": True},
+        "type_properties_type": {"required": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'etag': {'key': 'etag', 'type': 'str'},
-        'properties': {'key': 'properties', 'type': 'IntegrationRuntime'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "etag": {"key": "etag", "type": "str"},
+        "type_properties_type": {"key": "properties.type", "type": "str"},
+        "description": {"key": "properties.description", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        properties: "IntegrationRuntime",
-        **kwargs
-    ):
-        super(IntegrationRuntimeResource, self).__init__(**kwargs)
-        self.properties = properties
+    def __init__(self, *, description: Optional[str] = None, **kwargs: Any) -> None:
+        """
+        :keyword description: Integration runtime description.
+        :paramtype description: str
+        """
+        super().__init__(**kwargs)
+        self.type_properties_type: Optional[str] = None
+        self.description = description
 
 
-class IntegrationRuntimeSsisCatalogInfo(msrest.serialization.Model):
+class IntegrationRuntimeSsisCatalogInfo(_serialization.Model):
     """Catalog information for managed dedicated integration runtime.
 
-    :param additional_properties: Unmatched properties from the message are deserialized to this
+    :ivar additional_properties: Unmatched properties from the message are deserialized to this
      collection.
-    :type additional_properties: dict[str, object]
-    :param catalog_server_endpoint: The catalog database server URL.
-    :type catalog_server_endpoint: str
-    :param catalog_admin_user_name: The administrator user name of catalog database.
-    :type catalog_admin_user_name: str
-    :param catalog_admin_password: The password of the administrator user account of the catalog
+    :vartype additional_properties: dict[str, JSON]
+    :ivar catalog_server_endpoint: The catalog database server URL.
+    :vartype catalog_server_endpoint: str
+    :ivar catalog_admin_user_name: The administrator user name of catalog database.
+    :vartype catalog_admin_user_name: str
+    :ivar catalog_admin_password: The password of the administrator user account of the catalog
      database.
-    :type catalog_admin_password: ~azure.mgmt.synapse.models.SecureString
-    :param catalog_pricing_tier: The pricing tier for the catalog database. The valid values could
-     be found in https://azure.microsoft.com/en-us/pricing/details/sql-database/. Possible values
-     include: "Basic", "Standard", "Premium", "PremiumRS".
-    :type catalog_pricing_tier: str or
+    :vartype catalog_admin_password: ~azure.mgmt.synapse.models.SecureString
+    :ivar catalog_pricing_tier: The pricing tier for the catalog database. The valid values could
+     be found in https://azure.microsoft.com/en-us/pricing/details/sql-database/. Known values are:
+     "Basic", "Standard", "Premium", and "PremiumRS".
+    :vartype catalog_pricing_tier: str or
      ~azure.mgmt.synapse.models.IntegrationRuntimeSsisCatalogPricingTier
     """
 
     _validation = {
-        'catalog_admin_user_name': {'max_length': 128, 'min_length': 1},
+        "catalog_admin_user_name": {"max_length": 128, "min_length": 1},
     }
 
     _attribute_map = {
-        'additional_properties': {'key': '', 'type': '{object}'},
-        'catalog_server_endpoint': {'key': 'catalogServerEndpoint', 'type': 'str'},
-        'catalog_admin_user_name': {'key': 'catalogAdminUserName', 'type': 'str'},
-        'catalog_admin_password': {'key': 'catalogAdminPassword', 'type': 'SecureString'},
-        'catalog_pricing_tier': {'key': 'catalogPricingTier', 'type': 'str'},
+        "additional_properties": {"key": "", "type": "{object}"},
+        "catalog_server_endpoint": {"key": "catalogServerEndpoint", "type": "str"},
+        "catalog_admin_user_name": {"key": "catalogAdminUserName", "type": "str"},
+        "catalog_admin_password": {"key": "catalogAdminPassword", "type": "SecureString"},
+        "catalog_pricing_tier": {"key": "catalogPricingTier", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        additional_properties: Optional[Dict[str, object]] = None,
+        additional_properties: Optional[Dict[str, JSON]] = None,
         catalog_server_endpoint: Optional[str] = None,
         catalog_admin_user_name: Optional[str] = None,
-        catalog_admin_password: Optional["SecureString"] = None,
-        catalog_pricing_tier: Optional[Union[str, "IntegrationRuntimeSsisCatalogPricingTier"]] = None,
-        **kwargs
-    ):
-        super(IntegrationRuntimeSsisCatalogInfo, self).__init__(**kwargs)
+        catalog_admin_password: Optional["_models.SecureString"] = None,
+        catalog_pricing_tier: Optional[Union[str, "_models.IntegrationRuntimeSsisCatalogPricingTier"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword additional_properties: Unmatched properties from the message are deserialized to this
+         collection.
+        :paramtype additional_properties: dict[str, JSON]
+        :keyword catalog_server_endpoint: The catalog database server URL.
+        :paramtype catalog_server_endpoint: str
+        :keyword catalog_admin_user_name: The administrator user name of catalog database.
+        :paramtype catalog_admin_user_name: str
+        :keyword catalog_admin_password: The password of the administrator user account of the catalog
+         database.
+        :paramtype catalog_admin_password: ~azure.mgmt.synapse.models.SecureString
+        :keyword catalog_pricing_tier: The pricing tier for the catalog database. The valid values
+         could be found in https://azure.microsoft.com/en-us/pricing/details/sql-database/. Known values
+         are: "Basic", "Standard", "Premium", and "PremiumRS".
+        :paramtype catalog_pricing_tier: str or
+         ~azure.mgmt.synapse.models.IntegrationRuntimeSsisCatalogPricingTier
+        """
+        super().__init__(**kwargs)
         self.additional_properties = additional_properties
         self.catalog_server_endpoint = catalog_server_endpoint
         self.catalog_admin_user_name = catalog_admin_user_name
@@ -2456,55 +4751,82 @@ class IntegrationRuntimeSsisCatalogInfo(msrest.serialization.Model):
         self.catalog_pricing_tier = catalog_pricing_tier
 
 
-class IntegrationRuntimeSsisProperties(msrest.serialization.Model):
+class IntegrationRuntimeSsisProperties(_serialization.Model):
     """SSIS properties for managed integration runtime.
 
-    :param additional_properties: Unmatched properties from the message are deserialized to this
+    :ivar additional_properties: Unmatched properties from the message are deserialized to this
      collection.
-    :type additional_properties: dict[str, object]
-    :param catalog_info: Catalog information for managed dedicated integration runtime.
-    :type catalog_info: ~azure.mgmt.synapse.models.IntegrationRuntimeSsisCatalogInfo
-    :param license_type: License type for bringing your own license scenario. Possible values
-     include: "BasePrice", "LicenseIncluded".
-    :type license_type: str or ~azure.mgmt.synapse.models.IntegrationRuntimeLicenseType
-    :param custom_setup_script_properties: Custom setup script properties for a managed dedicated
+    :vartype additional_properties: dict[str, JSON]
+    :ivar catalog_info: Catalog information for managed dedicated integration runtime.
+    :vartype catalog_info: ~azure.mgmt.synapse.models.IntegrationRuntimeSsisCatalogInfo
+    :ivar license_type: License type for bringing your own license scenario. Known values are:
+     "BasePrice" and "LicenseIncluded".
+    :vartype license_type: str or ~azure.mgmt.synapse.models.IntegrationRuntimeLicenseType
+    :ivar custom_setup_script_properties: Custom setup script properties for a managed dedicated
      integration runtime.
-    :type custom_setup_script_properties:
+    :vartype custom_setup_script_properties:
      ~azure.mgmt.synapse.models.IntegrationRuntimeCustomSetupScriptProperties
-    :param data_proxy_properties: Data proxy properties for a managed dedicated integration
-     runtime.
-    :type data_proxy_properties: ~azure.mgmt.synapse.models.IntegrationRuntimeDataProxyProperties
-    :param edition: The edition for the SSIS Integration Runtime. Possible values include:
-     "Standard", "Enterprise".
-    :type edition: str or ~azure.mgmt.synapse.models.IntegrationRuntimeEdition
-    :param express_custom_setup_properties: Custom setup without script properties for a SSIS
+    :ivar data_proxy_properties: Data proxy properties for a managed dedicated integration runtime.
+    :vartype data_proxy_properties:
+     ~azure.mgmt.synapse.models.IntegrationRuntimeDataProxyProperties
+    :ivar edition: The edition for the SSIS Integration Runtime. Known values are: "Standard" and
+     "Enterprise".
+    :vartype edition: str or ~azure.mgmt.synapse.models.IntegrationRuntimeEdition
+    :ivar express_custom_setup_properties: Custom setup without script properties for a SSIS
      integration runtime.
-    :type express_custom_setup_properties: list[~azure.mgmt.synapse.models.CustomSetupBase]
+    :vartype express_custom_setup_properties: list[~azure.mgmt.synapse.models.CustomSetupBase]
     """
 
     _attribute_map = {
-        'additional_properties': {'key': '', 'type': '{object}'},
-        'catalog_info': {'key': 'catalogInfo', 'type': 'IntegrationRuntimeSsisCatalogInfo'},
-        'license_type': {'key': 'licenseType', 'type': 'str'},
-        'custom_setup_script_properties': {'key': 'customSetupScriptProperties', 'type': 'IntegrationRuntimeCustomSetupScriptProperties'},
-        'data_proxy_properties': {'key': 'dataProxyProperties', 'type': 'IntegrationRuntimeDataProxyProperties'},
-        'edition': {'key': 'edition', 'type': 'str'},
-        'express_custom_setup_properties': {'key': 'expressCustomSetupProperties', 'type': '[CustomSetupBase]'},
+        "additional_properties": {"key": "", "type": "{object}"},
+        "catalog_info": {"key": "catalogInfo", "type": "IntegrationRuntimeSsisCatalogInfo"},
+        "license_type": {"key": "licenseType", "type": "str"},
+        "custom_setup_script_properties": {
+            "key": "customSetupScriptProperties",
+            "type": "IntegrationRuntimeCustomSetupScriptProperties",
+        },
+        "data_proxy_properties": {"key": "dataProxyProperties", "type": "IntegrationRuntimeDataProxyProperties"},
+        "edition": {"key": "edition", "type": "str"},
+        "express_custom_setup_properties": {"key": "expressCustomSetupProperties", "type": "[CustomSetupBase]"},
     }
 
     def __init__(
         self,
         *,
-        additional_properties: Optional[Dict[str, object]] = None,
-        catalog_info: Optional["IntegrationRuntimeSsisCatalogInfo"] = None,
-        license_type: Optional[Union[str, "IntegrationRuntimeLicenseType"]] = None,
-        custom_setup_script_properties: Optional["IntegrationRuntimeCustomSetupScriptProperties"] = None,
-        data_proxy_properties: Optional["IntegrationRuntimeDataProxyProperties"] = None,
-        edition: Optional[Union[str, "IntegrationRuntimeEdition"]] = None,
-        express_custom_setup_properties: Optional[List["CustomSetupBase"]] = None,
-        **kwargs
-    ):
-        super(IntegrationRuntimeSsisProperties, self).__init__(**kwargs)
+        additional_properties: Optional[Dict[str, JSON]] = None,
+        catalog_info: Optional["_models.IntegrationRuntimeSsisCatalogInfo"] = None,
+        license_type: Optional[Union[str, "_models.IntegrationRuntimeLicenseType"]] = None,
+        custom_setup_script_properties: Optional["_models.IntegrationRuntimeCustomSetupScriptProperties"] = None,
+        data_proxy_properties: Optional["_models.IntegrationRuntimeDataProxyProperties"] = None,
+        edition: Optional[Union[str, "_models.IntegrationRuntimeEdition"]] = None,
+        express_custom_setup_properties: Optional[List["_models.CustomSetupBase"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword additional_properties: Unmatched properties from the message are deserialized to this
+         collection.
+        :paramtype additional_properties: dict[str, JSON]
+        :keyword catalog_info: Catalog information for managed dedicated integration runtime.
+        :paramtype catalog_info: ~azure.mgmt.synapse.models.IntegrationRuntimeSsisCatalogInfo
+        :keyword license_type: License type for bringing your own license scenario. Known values are:
+         "BasePrice" and "LicenseIncluded".
+        :paramtype license_type: str or ~azure.mgmt.synapse.models.IntegrationRuntimeLicenseType
+        :keyword custom_setup_script_properties: Custom setup script properties for a managed dedicated
+         integration runtime.
+        :paramtype custom_setup_script_properties:
+         ~azure.mgmt.synapse.models.IntegrationRuntimeCustomSetupScriptProperties
+        :keyword data_proxy_properties: Data proxy properties for a managed dedicated integration
+         runtime.
+        :paramtype data_proxy_properties:
+         ~azure.mgmt.synapse.models.IntegrationRuntimeDataProxyProperties
+        :keyword edition: The edition for the SSIS Integration Runtime. Known values are: "Standard"
+         and "Enterprise".
+        :paramtype edition: str or ~azure.mgmt.synapse.models.IntegrationRuntimeEdition
+        :keyword express_custom_setup_properties: Custom setup without script properties for a SSIS
+         integration runtime.
+        :paramtype express_custom_setup_properties: list[~azure.mgmt.synapse.models.CustomSetupBase]
+        """
+        super().__init__(**kwargs)
         self.additional_properties = additional_properties
         self.catalog_info = catalog_info
         self.license_type = license_type
@@ -2514,61 +4836,61 @@ class IntegrationRuntimeSsisProperties(msrest.serialization.Model):
         self.express_custom_setup_properties = express_custom_setup_properties
 
 
-class IntegrationRuntimeStatus(msrest.serialization.Model):
+class IntegrationRuntimeStatus(_serialization.Model):
     """Integration runtime status.
 
-    You probably want to use the sub-classes and not this class directly. Known
-    sub-classes are: ManagedIntegrationRuntimeStatus, SelfHostedIntegrationRuntimeStatus.
+    You probably want to use the sub-classes and not this class directly. Known sub-classes are:
+    ManagedIntegrationRuntimeStatus, SelfHostedIntegrationRuntimeStatus
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param additional_properties: Unmatched properties from the message are deserialized to this
+    :ivar additional_properties: Unmatched properties from the message are deserialized to this
      collection.
-    :type additional_properties: dict[str, object]
-    :param type: Required. Type of integration runtime.Constant filled by server.  Possible values
-     include: "Managed", "SelfHosted".
-    :type type: str or ~azure.mgmt.synapse.models.IntegrationRuntimeType
+    :vartype additional_properties: dict[str, JSON]
+    :ivar type: Type of integration runtime. Required. Known values are: "Managed" and
+     "SelfHosted".
+    :vartype type: str or ~azure.mgmt.synapse.models.IntegrationRuntimeType
     :ivar data_factory_name: The workspace name which the integration runtime belong to.
     :vartype data_factory_name: str
-    :ivar state: The state of integration runtime. Possible values include: "Initial", "Stopped",
-     "Started", "Starting", "Stopping", "NeedRegistration", "Online", "Limited", "Offline",
+    :ivar state: The state of integration runtime. Known values are: "Initial", "Stopped",
+     "Started", "Starting", "Stopping", "NeedRegistration", "Online", "Limited", "Offline", and
      "AccessDenied".
     :vartype state: str or ~azure.mgmt.synapse.models.IntegrationRuntimeState
     """
 
     _validation = {
-        'type': {'required': True},
-        'data_factory_name': {'readonly': True},
-        'state': {'readonly': True},
+        "type": {"required": True},
+        "data_factory_name": {"readonly": True},
+        "state": {"readonly": True},
     }
 
     _attribute_map = {
-        'additional_properties': {'key': '', 'type': '{object}'},
-        'type': {'key': 'type', 'type': 'str'},
-        'data_factory_name': {'key': 'dataFactoryName', 'type': 'str'},
-        'state': {'key': 'state', 'type': 'str'},
+        "additional_properties": {"key": "", "type": "{object}"},
+        "type": {"key": "type", "type": "str"},
+        "data_factory_name": {"key": "dataFactoryName", "type": "str"},
+        "state": {"key": "state", "type": "str"},
     }
 
     _subtype_map = {
-        'type': {'Managed': 'ManagedIntegrationRuntimeStatus', 'SelfHosted': 'SelfHostedIntegrationRuntimeStatus'}
+        "type": {"Managed": "ManagedIntegrationRuntimeStatus", "SelfHosted": "SelfHostedIntegrationRuntimeStatus"}
     }
 
-    def __init__(
-        self,
-        *,
-        additional_properties: Optional[Dict[str, object]] = None,
-        **kwargs
-    ):
-        super(IntegrationRuntimeStatus, self).__init__(**kwargs)
+    def __init__(self, *, additional_properties: Optional[Dict[str, JSON]] = None, **kwargs: Any) -> None:
+        """
+        :keyword additional_properties: Unmatched properties from the message are deserialized to this
+         collection.
+        :paramtype additional_properties: dict[str, JSON]
+        """
+        super().__init__(**kwargs)
         self.additional_properties = additional_properties
-        self.type = 'IntegrationRuntimeStatus'  # type: str
+        self.type: Optional[str] = None
         self.data_factory_name = None
         self.state = None
 
 
-class IntegrationRuntimeStatusResponse(msrest.serialization.Model):
+class IntegrationRuntimeStatusResponse(_serialization.Model):
     """Integration runtime status response.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -2577,67 +4899,265 @@ class IntegrationRuntimeStatusResponse(msrest.serialization.Model):
 
     :ivar name: The integration runtime name.
     :vartype name: str
-    :param properties: Required. Integration runtime properties.
-    :type properties: ~azure.mgmt.synapse.models.IntegrationRuntimeStatus
+    :ivar type: Type of integration runtime. Required. Known values are: "Managed" and
+     "SelfHosted".
+    :vartype type: str or ~azure.mgmt.synapse.models.IntegrationRuntimeType
+    :ivar data_factory_name: The workspace name which the integration runtime belong to.
+    :vartype data_factory_name: str
+    :ivar state: The state of integration runtime. Known values are: "Initial", "Stopped",
+     "Started", "Starting", "Stopping", "NeedRegistration", "Online", "Limited", "Offline", and
+     "AccessDenied".
+    :vartype state: str or ~azure.mgmt.synapse.models.IntegrationRuntimeState
     """
 
     _validation = {
-        'name': {'readonly': True},
-        'properties': {'required': True},
+        "name": {"readonly": True},
+        "type": {"required": True},
+        "data_factory_name": {"readonly": True},
+        "state": {"readonly": True},
     }
 
     _attribute_map = {
-        'name': {'key': 'name', 'type': 'str'},
-        'properties': {'key': 'properties', 'type': 'IntegrationRuntimeStatus'},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "properties.type", "type": "str"},
+        "data_factory_name": {"key": "properties.dataFactoryName", "type": "str"},
+        "state": {"key": "properties.state", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        properties: "IntegrationRuntimeStatus",
-        **kwargs
-    ):
-        super(IntegrationRuntimeStatusResponse, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.name = None
-        self.properties = properties
+        self.type: Optional[str] = None
+        self.data_factory_name = None
+        self.state = None
 
 
-class IntegrationRuntimeVNetProperties(msrest.serialization.Model):
-    """VNet properties for managed integration runtime.
+class IntegrationRuntimeStopOperationStatus(_serialization.Model):
+    """Integration Runtime Operation Status Properties.
 
-    :param additional_properties: Unmatched properties from the message are deserialized to this
-     collection.
-    :type additional_properties: dict[str, object]
-    :param v_net_id: The ID of the VNet that this integration runtime will join.
-    :type v_net_id: str
-    :param subnet: The name of the subnet this integration runtime will join.
-    :type subnet: str
-    :param public_i_ps: Resource IDs of the public IP addresses that this integration runtime will
-     use.
-    :type public_i_ps: list[str]
+    :ivar status: status of Start Integrationruntimes. Known values are: "InProgress", "Succeeded",
+     and "Failed".
+    :vartype status: str or ~azure.mgmt.synapse.models.WorkspaceStatus
+    :ivar name: The operation name.
+    :vartype name: str
+    :ivar properties: The operation properties.
+    :vartype properties: JSON
+    :ivar error: The operation error message.
+    :vartype error: str
     """
 
     _attribute_map = {
-        'additional_properties': {'key': '', 'type': '{object}'},
-        'v_net_id': {'key': 'vNetId', 'type': 'str'},
-        'subnet': {'key': 'subnet', 'type': 'str'},
-        'public_i_ps': {'key': 'publicIPs', 'type': '[str]'},
+        "status": {"key": "status", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "properties": {"key": "properties", "type": "object"},
+        "error": {"key": "error", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        additional_properties: Optional[Dict[str, object]] = None,
+        status: Optional[Union[str, "_models.WorkspaceStatus"]] = None,
+        name: Optional[str] = None,
+        properties: Optional[JSON] = None,
+        error: Optional[str] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword status: status of Start Integrationruntimes. Known values are: "InProgress",
+         "Succeeded", and "Failed".
+        :paramtype status: str or ~azure.mgmt.synapse.models.WorkspaceStatus
+        :keyword name: The operation name.
+        :paramtype name: str
+        :keyword properties: The operation properties.
+        :paramtype properties: JSON
+        :keyword error: The operation error message.
+        :paramtype error: str
+        """
+        super().__init__(**kwargs)
+        self.status = status
+        self.name = name
+        self.properties = properties
+        self.error = error
+
+
+class IntegrationRuntimeVNetProperties(_serialization.Model):
+    """VNet properties for managed integration runtime.
+
+    :ivar additional_properties: Unmatched properties from the message are deserialized to this
+     collection.
+    :vartype additional_properties: dict[str, JSON]
+    :ivar v_net_id: The ID of the VNet that this integration runtime will join.
+    :vartype v_net_id: str
+    :ivar subnet: The name of the subnet this integration runtime will join.
+    :vartype subnet: str
+    :ivar public_i_ps: Resource IDs of the public IP addresses that this integration runtime will
+     use.
+    :vartype public_i_ps: list[str]
+    :ivar subnet_id: The ID of subnet, to which this Azure-SSIS integration runtime will be joined.
+    :vartype subnet_id: str
+    """
+
+    _attribute_map = {
+        "additional_properties": {"key": "", "type": "{object}"},
+        "v_net_id": {"key": "vNetId", "type": "str"},
+        "subnet": {"key": "subnet", "type": "str"},
+        "public_i_ps": {"key": "publicIPs", "type": "[str]"},
+        "subnet_id": {"key": "subnetId", "type": "str"},
+    }
+
+    def __init__(
+        self,
+        *,
+        additional_properties: Optional[Dict[str, JSON]] = None,
         v_net_id: Optional[str] = None,
         subnet: Optional[str] = None,
         public_i_ps: Optional[List[str]] = None,
-        **kwargs
-    ):
-        super(IntegrationRuntimeVNetProperties, self).__init__(**kwargs)
+        subnet_id: Optional[str] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword additional_properties: Unmatched properties from the message are deserialized to this
+         collection.
+        :paramtype additional_properties: dict[str, JSON]
+        :keyword v_net_id: The ID of the VNet that this integration runtime will join.
+        :paramtype v_net_id: str
+        :keyword subnet: The name of the subnet this integration runtime will join.
+        :paramtype subnet: str
+        :keyword public_i_ps: Resource IDs of the public IP addresses that this integration runtime
+         will use.
+        :paramtype public_i_ps: list[str]
+        :keyword subnet_id: The ID of subnet, to which this Azure-SSIS integration runtime will be
+         joined.
+        :paramtype subnet_id: str
+        """
+        super().__init__(**kwargs)
         self.additional_properties = additional_properties
         self.v_net_id = v_net_id
         self.subnet = subnet
         self.public_i_ps = public_i_ps
+        self.subnet_id = subnet_id
+
+
+class IotHubDataConnection(DataConnection):  # pylint: disable=too-many-instance-attributes
+    """Class representing an iot hub data connection.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :ivar id: Fully qualified resource ID for the resource. Ex -
+     /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}.
+    :vartype id: str
+    :ivar name: The name of the resource.
+    :vartype name: str
+    :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
+     "Microsoft.Storage/storageAccounts".
+    :vartype type: str
+    :ivar location: Resource location.
+    :vartype location: str
+    :ivar kind: Kind of the endpoint for the data connection. Required. Known values are:
+     "EventHub", "EventGrid", and "IotHub".
+    :vartype kind: str or ~azure.mgmt.synapse.models.DataConnectionKind
+    :ivar system_data: Azure Resource Manager metadata containing createdBy and modifiedBy
+     information.
+    :vartype system_data: ~azure.mgmt.synapse.models.SystemData
+    :ivar iot_hub_resource_id: The resource ID of the Iot hub to be used to create a data
+     connection.
+    :vartype iot_hub_resource_id: str
+    :ivar consumer_group: The iot hub consumer group.
+    :vartype consumer_group: str
+    :ivar table_name: The table where the data should be ingested. Optionally the table information
+     can be added to each message.
+    :vartype table_name: str
+    :ivar mapping_rule_name: The mapping rule to be used to ingest the data. Optionally the mapping
+     information can be added to each message.
+    :vartype mapping_rule_name: str
+    :ivar data_format: The data format of the message. Optionally the data format can be added to
+     each message. Known values are: "MULTIJSON", "JSON", "CSV", "TSV", "SCSV", "SOHSV", "PSV",
+     "TXT", "RAW", "SINGLEJSON", "AVRO", "TSVE", "PARQUET", "ORC", "APACHEAVRO", and "W3CLOGFILE".
+    :vartype data_format: str or ~azure.mgmt.synapse.models.IotHubDataFormat
+    :ivar event_system_properties: System properties of the iot hub.
+    :vartype event_system_properties: list[str]
+    :ivar shared_access_policy_name: The name of the share access policy.
+    :vartype shared_access_policy_name: str
+    :ivar provisioning_state: The provisioned state of the resource. Known values are: "Running",
+     "Creating", "Deleting", "Succeeded", "Failed", "Moving", and "Canceled".
+    :vartype provisioning_state: str or ~azure.mgmt.synapse.models.ResourceProvisioningState
+    """
+
+    _validation = {
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "kind": {"required": True},
+        "system_data": {"readonly": True},
+        "provisioning_state": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "location": {"key": "location", "type": "str"},
+        "kind": {"key": "kind", "type": "str"},
+        "system_data": {"key": "systemData", "type": "SystemData"},
+        "iot_hub_resource_id": {"key": "properties.iotHubResourceId", "type": "str"},
+        "consumer_group": {"key": "properties.consumerGroup", "type": "str"},
+        "table_name": {"key": "properties.tableName", "type": "str"},
+        "mapping_rule_name": {"key": "properties.mappingRuleName", "type": "str"},
+        "data_format": {"key": "properties.dataFormat", "type": "str"},
+        "event_system_properties": {"key": "properties.eventSystemProperties", "type": "[str]"},
+        "shared_access_policy_name": {"key": "properties.sharedAccessPolicyName", "type": "str"},
+        "provisioning_state": {"key": "properties.provisioningState", "type": "str"},
+    }
+
+    def __init__(
+        self,
+        *,
+        location: Optional[str] = None,
+        iot_hub_resource_id: Optional[str] = None,
+        consumer_group: Optional[str] = None,
+        table_name: Optional[str] = None,
+        mapping_rule_name: Optional[str] = None,
+        data_format: Optional[Union[str, "_models.IotHubDataFormat"]] = None,
+        event_system_properties: Optional[List[str]] = None,
+        shared_access_policy_name: Optional[str] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword location: Resource location.
+        :paramtype location: str
+        :keyword iot_hub_resource_id: The resource ID of the Iot hub to be used to create a data
+         connection.
+        :paramtype iot_hub_resource_id: str
+        :keyword consumer_group: The iot hub consumer group.
+        :paramtype consumer_group: str
+        :keyword table_name: The table where the data should be ingested. Optionally the table
+         information can be added to each message.
+        :paramtype table_name: str
+        :keyword mapping_rule_name: The mapping rule to be used to ingest the data. Optionally the
+         mapping information can be added to each message.
+        :paramtype mapping_rule_name: str
+        :keyword data_format: The data format of the message. Optionally the data format can be added
+         to each message. Known values are: "MULTIJSON", "JSON", "CSV", "TSV", "SCSV", "SOHSV", "PSV",
+         "TXT", "RAW", "SINGLEJSON", "AVRO", "TSVE", "PARQUET", "ORC", "APACHEAVRO", and "W3CLOGFILE".
+        :paramtype data_format: str or ~azure.mgmt.synapse.models.IotHubDataFormat
+        :keyword event_system_properties: System properties of the iot hub.
+        :paramtype event_system_properties: list[str]
+        :keyword shared_access_policy_name: The name of the share access policy.
+        :paramtype shared_access_policy_name: str
+        """
+        super().__init__(location=location, **kwargs)
+        self.kind: str = "IotHub"
+        self.iot_hub_resource_id = iot_hub_resource_id
+        self.consumer_group = consumer_group
+        self.table_name = table_name
+        self.mapping_rule_name = mapping_rule_name
+        self.data_format = data_format
+        self.event_system_properties = event_system_properties
+        self.shared_access_policy_name = shared_access_policy_name
+        self.provisioning_state = None
 
 
 class IpFirewallRuleInfo(ProxyResource):
@@ -2653,107 +5173,153 @@ class IpFirewallRuleInfo(ProxyResource):
     :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
      "Microsoft.Storage/storageAccounts".
     :vartype type: str
-    :param end_ip_address: The end IP address of the firewall rule. Must be IPv4 format. Must be
+    :ivar end_ip_address: The end IP address of the firewall rule. Must be IPv4 format. Must be
      greater than or equal to startIpAddress.
-    :type end_ip_address: str
-    :ivar provisioning_state: Resource provisioning state. Possible values include: "Provisioning",
-     "Succeeded", "Deleting", "Failed", "DeleteError".
+    :vartype end_ip_address: str
+    :ivar provisioning_state: Resource provisioning state. Known values are: "Provisioning",
+     "Succeeded", "Deleting", "Failed", and "DeleteError".
     :vartype provisioning_state: str or ~azure.mgmt.synapse.models.ProvisioningState
-    :param start_ip_address: The start IP address of the firewall rule. Must be IPv4 format.
-    :type start_ip_address: str
+    :ivar start_ip_address: The start IP address of the firewall rule. Must be IPv4 format.
+    :vartype start_ip_address: str
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'provisioning_state': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "provisioning_state": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'end_ip_address': {'key': 'properties.endIpAddress', 'type': 'str'},
-        'provisioning_state': {'key': 'properties.provisioningState', 'type': 'str'},
-        'start_ip_address': {'key': 'properties.startIpAddress', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "end_ip_address": {"key": "properties.endIpAddress", "type": "str"},
+        "provisioning_state": {"key": "properties.provisioningState", "type": "str"},
+        "start_ip_address": {"key": "properties.startIpAddress", "type": "str"},
     }
 
     def __init__(
-        self,
-        *,
-        end_ip_address: Optional[str] = None,
-        start_ip_address: Optional[str] = None,
-        **kwargs
-    ):
-        super(IpFirewallRuleInfo, self).__init__(**kwargs)
+        self, *, end_ip_address: Optional[str] = None, start_ip_address: Optional[str] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword end_ip_address: The end IP address of the firewall rule. Must be IPv4 format. Must be
+         greater than or equal to startIpAddress.
+        :paramtype end_ip_address: str
+        :keyword start_ip_address: The start IP address of the firewall rule. Must be IPv4 format.
+        :paramtype start_ip_address: str
+        """
+        super().__init__(**kwargs)
         self.end_ip_address = end_ip_address
         self.provisioning_state = None
         self.start_ip_address = start_ip_address
 
 
-class IpFirewallRuleInfoListResult(msrest.serialization.Model):
+class IpFirewallRuleInfoListResult(_serialization.Model):
     """List of IP firewall rules.
 
-    :param next_link: Link to next page of results.
-    :type next_link: str
-    :param value: List of IP firewall rules.
-    :type value: list[~azure.mgmt.synapse.models.IpFirewallRuleInfo]
+    :ivar next_link: Link to next page of results.
+    :vartype next_link: str
+    :ivar value: List of IP firewall rules.
+    :vartype value: list[~azure.mgmt.synapse.models.IpFirewallRuleInfo]
     """
 
     _attribute_map = {
-        'next_link': {'key': 'nextLink', 'type': 'str'},
-        'value': {'key': 'value', 'type': '[IpFirewallRuleInfo]'},
+        "next_link": {"key": "nextLink", "type": "str"},
+        "value": {"key": "value", "type": "[IpFirewallRuleInfo]"},
     }
 
     def __init__(
         self,
         *,
         next_link: Optional[str] = None,
-        value: Optional[List["IpFirewallRuleInfo"]] = None,
-        **kwargs
-    ):
-        super(IpFirewallRuleInfoListResult, self).__init__(**kwargs)
+        value: Optional[List["_models.IpFirewallRuleInfo"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword next_link: Link to next page of results.
+        :paramtype next_link: str
+        :keyword value: List of IP firewall rules.
+        :paramtype value: list[~azure.mgmt.synapse.models.IpFirewallRuleInfo]
+        """
+        super().__init__(**kwargs)
         self.next_link = next_link
         self.value = value
 
 
-class IpFirewallRuleProperties(msrest.serialization.Model):
+class IpFirewallRuleProperties(_serialization.Model):
     """IP firewall rule properties.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
-    :param end_ip_address: The end IP address of the firewall rule. Must be IPv4 format. Must be
+    :ivar end_ip_address: The end IP address of the firewall rule. Must be IPv4 format. Must be
      greater than or equal to startIpAddress.
-    :type end_ip_address: str
-    :ivar provisioning_state: Resource provisioning state. Possible values include: "Provisioning",
-     "Succeeded", "Deleting", "Failed", "DeleteError".
+    :vartype end_ip_address: str
+    :ivar provisioning_state: Resource provisioning state. Known values are: "Provisioning",
+     "Succeeded", "Deleting", "Failed", and "DeleteError".
     :vartype provisioning_state: str or ~azure.mgmt.synapse.models.ProvisioningState
-    :param start_ip_address: The start IP address of the firewall rule. Must be IPv4 format.
-    :type start_ip_address: str
+    :ivar start_ip_address: The start IP address of the firewall rule. Must be IPv4 format.
+    :vartype start_ip_address: str
     """
 
     _validation = {
-        'provisioning_state': {'readonly': True},
+        "provisioning_state": {"readonly": True},
     }
 
     _attribute_map = {
-        'end_ip_address': {'key': 'endIpAddress', 'type': 'str'},
-        'provisioning_state': {'key': 'provisioningState', 'type': 'str'},
-        'start_ip_address': {'key': 'startIpAddress', 'type': 'str'},
+        "end_ip_address": {"key": "endIpAddress", "type": "str"},
+        "provisioning_state": {"key": "provisioningState", "type": "str"},
+        "start_ip_address": {"key": "startIpAddress", "type": "str"},
+    }
+
+    def __init__(
+        self, *, end_ip_address: Optional[str] = None, start_ip_address: Optional[str] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword end_ip_address: The end IP address of the firewall rule. Must be IPv4 format. Must be
+         greater than or equal to startIpAddress.
+        :paramtype end_ip_address: str
+        :keyword start_ip_address: The start IP address of the firewall rule. Must be IPv4 format.
+        :paramtype start_ip_address: str
+        """
+        super().__init__(**kwargs)
+        self.end_ip_address = end_ip_address
+        self.provisioning_state = None
+        self.start_ip_address = start_ip_address
+
+
+class KekIdentityProperties(_serialization.Model):
+    """Key encryption key properties.
+
+    :ivar user_assigned_identity: User assigned identity resource Id.
+    :vartype user_assigned_identity: str
+    :ivar use_system_assigned_identity: Boolean specifying whether to use system assigned identity
+     or not.
+    :vartype use_system_assigned_identity: any
+    """
+
+    _attribute_map = {
+        "user_assigned_identity": {"key": "userAssignedIdentity", "type": "str"},
+        "use_system_assigned_identity": {"key": "useSystemAssignedIdentity", "type": "object"},
     }
 
     def __init__(
         self,
         *,
-        end_ip_address: Optional[str] = None,
-        start_ip_address: Optional[str] = None,
-        **kwargs
-    ):
-        super(IpFirewallRuleProperties, self).__init__(**kwargs)
-        self.end_ip_address = end_ip_address
-        self.provisioning_state = None
-        self.start_ip_address = start_ip_address
+        user_assigned_identity: Optional[str] = None,
+        use_system_assigned_identity: Optional[Any] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword user_assigned_identity: User assigned identity resource Id.
+        :paramtype user_assigned_identity: str
+        :keyword use_system_assigned_identity: Boolean specifying whether to use system assigned
+         identity or not.
+        :paramtype use_system_assigned_identity: any
+        """
+        super().__init__(**kwargs)
+        self.user_assigned_identity = user_assigned_identity
+        self.use_system_assigned_identity = use_system_assigned_identity
 
 
 class Key(ProxyResource):
@@ -2769,79 +5335,487 @@ class Key(ProxyResource):
     :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
      "Microsoft.Storage/storageAccounts".
     :vartype type: str
-    :param is_active_cmk: Used to activate the workspace after a customer managed key is provided.
-    :type is_active_cmk: bool
-    :param key_vault_url: The Key Vault Url of the workspace key.
-    :type key_vault_url: str
+    :ivar is_active_cmk: Used to activate the workspace after a customer managed key is provided.
+    :vartype is_active_cmk: bool
+    :ivar key_vault_url: The Key Vault Url of the workspace key.
+    :vartype key_vault_url: str
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'is_active_cmk': {'key': 'properties.isActiveCMK', 'type': 'bool'},
-        'key_vault_url': {'key': 'properties.keyVaultUrl', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "is_active_cmk": {"key": "properties.isActiveCMK", "type": "bool"},
+        "key_vault_url": {"key": "properties.keyVaultUrl", "type": "str"},
     }
 
     def __init__(
-        self,
-        *,
-        is_active_cmk: Optional[bool] = None,
-        key_vault_url: Optional[str] = None,
-        **kwargs
-    ):
-        super(Key, self).__init__(**kwargs)
+        self, *, is_active_cmk: Optional[bool] = None, key_vault_url: Optional[str] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword is_active_cmk: Used to activate the workspace after a customer managed key is
+         provided.
+        :paramtype is_active_cmk: bool
+        :keyword key_vault_url: The Key Vault Url of the workspace key.
+        :paramtype key_vault_url: str
+        """
+        super().__init__(**kwargs)
         self.is_active_cmk = is_active_cmk
         self.key_vault_url = key_vault_url
 
 
-class KeyInfoListResult(msrest.serialization.Model):
+class KeyInfoListResult(_serialization.Model):
     """List of keys.
 
-    :param next_link: Link to the next page of results.
-    :type next_link: str
-    :param value: List of keys.
-    :type value: list[~azure.mgmt.synapse.models.Key]
+    :ivar next_link: Link to the next page of results.
+    :vartype next_link: str
+    :ivar value: List of keys.
+    :vartype value: list[~azure.mgmt.synapse.models.Key]
     """
 
     _attribute_map = {
-        'next_link': {'key': 'nextLink', 'type': 'str'},
-        'value': {'key': 'value', 'type': '[Key]'},
+        "next_link": {"key": "nextLink", "type": "str"},
+        "value": {"key": "value", "type": "[Key]"},
+    }
+
+    def __init__(
+        self, *, next_link: Optional[str] = None, value: Optional[List["_models.Key"]] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword next_link: Link to the next page of results.
+        :paramtype next_link: str
+        :keyword value: List of keys.
+        :paramtype value: list[~azure.mgmt.synapse.models.Key]
+        """
+        super().__init__(**kwargs)
+        self.next_link = next_link
+        self.value = value
+
+
+class KustoPool(TrackedResource):  # pylint: disable=too-many-instance-attributes
+    """Class representing a Kusto kusto pool.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :ivar id: Fully qualified resource ID for the resource. Ex -
+     /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}.
+    :vartype id: str
+    :ivar name: The name of the resource.
+    :vartype name: str
+    :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
+     "Microsoft.Storage/storageAccounts".
+    :vartype type: str
+    :ivar tags: Resource tags.
+    :vartype tags: dict[str, str]
+    :ivar location: The geo-location where the resource lives. Required.
+    :vartype location: str
+    :ivar sku: The SKU of the kusto pool. Required.
+    :vartype sku: ~azure.mgmt.synapse.models.AzureSku
+    :ivar etag: A unique read-only string that changes whenever the resource is updated.
+    :vartype etag: str
+    :ivar system_data: Azure Resource Manager metadata containing createdBy and modifiedBy
+     information.
+    :vartype system_data: ~azure.mgmt.synapse.models.SystemData
+    :ivar state: The state of the resource. Known values are: "Creating", "Unavailable", "Running",
+     "Deleting", "Deleted", "Stopping", "Stopped", "Starting", and "Updating".
+    :vartype state: str or ~azure.mgmt.synapse.models.State
+    :ivar provisioning_state: The provisioned state of the resource. Known values are: "Running",
+     "Creating", "Deleting", "Succeeded", "Failed", "Moving", and "Canceled".
+    :vartype provisioning_state: str or ~azure.mgmt.synapse.models.ResourceProvisioningState
+    :ivar uri: The Kusto Pool URI.
+    :vartype uri: str
+    :ivar data_ingestion_uri: The Kusto Pool data ingestion URI.
+    :vartype data_ingestion_uri: str
+    :ivar state_reason: The reason for the Kusto Pool's current state.
+    :vartype state_reason: str
+    :ivar optimized_autoscale: Optimized auto scale definition.
+    :vartype optimized_autoscale: ~azure.mgmt.synapse.models.OptimizedAutoscale
+    :ivar enable_streaming_ingest: A boolean value that indicates if the streaming ingest is
+     enabled.
+    :vartype enable_streaming_ingest: bool
+    :ivar enable_purge: A boolean value that indicates if the purge operations are enabled.
+    :vartype enable_purge: bool
+    :ivar language_extensions: List of the Kusto Pool's language extensions.
+    :vartype language_extensions: ~azure.mgmt.synapse.models.LanguageExtensionsList
+    :ivar workspace_uid: The workspace unique identifier.
+    :vartype workspace_uid: str
+    """
+
+    _validation = {
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "location": {"required": True},
+        "sku": {"required": True},
+        "etag": {"readonly": True},
+        "system_data": {"readonly": True},
+        "state": {"readonly": True},
+        "provisioning_state": {"readonly": True},
+        "uri": {"readonly": True},
+        "data_ingestion_uri": {"readonly": True},
+        "state_reason": {"readonly": True},
+        "language_extensions": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "tags": {"key": "tags", "type": "{str}"},
+        "location": {"key": "location", "type": "str"},
+        "sku": {"key": "sku", "type": "AzureSku"},
+        "etag": {"key": "etag", "type": "str"},
+        "system_data": {"key": "systemData", "type": "SystemData"},
+        "state": {"key": "properties.state", "type": "str"},
+        "provisioning_state": {"key": "properties.provisioningState", "type": "str"},
+        "uri": {"key": "properties.uri", "type": "str"},
+        "data_ingestion_uri": {"key": "properties.dataIngestionUri", "type": "str"},
+        "state_reason": {"key": "properties.stateReason", "type": "str"},
+        "optimized_autoscale": {"key": "properties.optimizedAutoscale", "type": "OptimizedAutoscale"},
+        "enable_streaming_ingest": {"key": "properties.enableStreamingIngest", "type": "bool"},
+        "enable_purge": {"key": "properties.enablePurge", "type": "bool"},
+        "language_extensions": {"key": "properties.languageExtensions", "type": "LanguageExtensionsList"},
+        "workspace_uid": {"key": "properties.workspaceUID", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        next_link: Optional[str] = None,
-        value: Optional[List["Key"]] = None,
-        **kwargs
-    ):
-        super(KeyInfoListResult, self).__init__(**kwargs)
-        self.next_link = next_link
+        location: str,
+        sku: "_models.AzureSku",
+        tags: Optional[Dict[str, str]] = None,
+        optimized_autoscale: Optional["_models.OptimizedAutoscale"] = None,
+        enable_streaming_ingest: bool = False,
+        enable_purge: bool = False,
+        workspace_uid: Optional[str] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword tags: Resource tags.
+        :paramtype tags: dict[str, str]
+        :keyword location: The geo-location where the resource lives. Required.
+        :paramtype location: str
+        :keyword sku: The SKU of the kusto pool. Required.
+        :paramtype sku: ~azure.mgmt.synapse.models.AzureSku
+        :keyword optimized_autoscale: Optimized auto scale definition.
+        :paramtype optimized_autoscale: ~azure.mgmt.synapse.models.OptimizedAutoscale
+        :keyword enable_streaming_ingest: A boolean value that indicates if the streaming ingest is
+         enabled.
+        :paramtype enable_streaming_ingest: bool
+        :keyword enable_purge: A boolean value that indicates if the purge operations are enabled.
+        :paramtype enable_purge: bool
+        :keyword workspace_uid: The workspace unique identifier.
+        :paramtype workspace_uid: str
+        """
+        super().__init__(tags=tags, location=location, **kwargs)
+        self.sku = sku
+        self.etag = None
+        self.system_data = None
+        self.state = None
+        self.provisioning_state = None
+        self.uri = None
+        self.data_ingestion_uri = None
+        self.state_reason = None
+        self.optimized_autoscale = optimized_autoscale
+        self.enable_streaming_ingest = enable_streaming_ingest
+        self.enable_purge = enable_purge
+        self.language_extensions = None
+        self.workspace_uid = workspace_uid
+
+
+class KustoPoolCheckNameRequest(_serialization.Model):
+    """The object sent for a kusto pool check name availability request.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :ivar name: Kusto Pool name. Required.
+    :vartype name: str
+    :ivar type: The type of resource, Microsoft.Synapse/workspaces/kustoPools. Required. Default
+     value is "Microsoft.Synapse/workspaces/kustoPools".
+    :vartype type: str
+    """
+
+    _validation = {
+        "name": {"required": True},
+        "type": {"required": True, "constant": True},
+    }
+
+    _attribute_map = {
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+    }
+
+    type = "Microsoft.Synapse/workspaces/kustoPools"
+
+    def __init__(self, *, name: str, **kwargs: Any) -> None:
+        """
+        :keyword name: Kusto Pool name. Required.
+        :paramtype name: str
+        """
+        super().__init__(**kwargs)
+        self.name = name
+
+
+class KustoPoolListResult(_serialization.Model):
+    """The list Kusto pools operation response.
+
+    :ivar value: The list of Kusto pools.
+    :vartype value: list[~azure.mgmt.synapse.models.KustoPool]
+    """
+
+    _attribute_map = {
+        "value": {"key": "value", "type": "[KustoPool]"},
+    }
+
+    def __init__(self, *, value: Optional[List["_models.KustoPool"]] = None, **kwargs: Any) -> None:
+        """
+        :keyword value: The list of Kusto pools.
+        :paramtype value: list[~azure.mgmt.synapse.models.KustoPool]
+        """
+        super().__init__(**kwargs)
         self.value = value
 
 
-class LibraryInfo(msrest.serialization.Model):
+class KustoPoolPrivateLinkResources(ProxyResource):
+    """Class representing a Private Link Resources.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    :ivar id: Fully qualified resource ID for the resource. Ex -
+     /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}.
+    :vartype id: str
+    :ivar name: The name of the resource.
+    :vartype name: str
+    :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
+     "Microsoft.Storage/storageAccounts".
+    :vartype type: str
+    :ivar system_data: Azure Resource Manager metadata containing createdBy and modifiedBy
+     information.
+    :vartype system_data: ~azure.mgmt.synapse.models.SystemData
+    :ivar group_id: The Private link resources GroupId.
+    :vartype group_id: str
+    :ivar required_members: The private link resource required member names.
+    :vartype required_members: list[str]
+    :ivar required_zone_names: The private link resource required zone names.
+    :vartype required_zone_names: list[str]
+    :ivar provisioning_state: The provisioned state of the resource. Known values are: "Running",
+     "Creating", "Deleting", "Succeeded", "Failed", "Moving", and "Canceled".
+    :vartype provisioning_state: str or ~azure.mgmt.synapse.models.ResourceProvisioningState
+    """
+
+    _validation = {
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "system_data": {"readonly": True},
+        "group_id": {"readonly": True},
+        "required_members": {"readonly": True},
+        "required_zone_names": {"readonly": True},
+        "provisioning_state": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "system_data": {"key": "systemData", "type": "SystemData"},
+        "group_id": {"key": "properties.groupId", "type": "str"},
+        "required_members": {"key": "properties.requiredMembers", "type": "[str]"},
+        "required_zone_names": {"key": "properties.requiredZoneNames", "type": "[str]"},
+        "provisioning_state": {"key": "properties.provisioningState", "type": "str"},
+    }
+
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
+        self.system_data = None
+        self.group_id = None
+        self.required_members = None
+        self.required_zone_names = None
+        self.provisioning_state = None
+
+
+class KustoPoolUpdate(Resource):  # pylint: disable=too-many-instance-attributes
+    """Class representing an update to a Kusto kusto pool.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    :ivar id: Fully qualified resource ID for the resource. Ex -
+     /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}.
+    :vartype id: str
+    :ivar name: The name of the resource.
+    :vartype name: str
+    :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
+     "Microsoft.Storage/storageAccounts".
+    :vartype type: str
+    :ivar tags: Resource tags.
+    :vartype tags: dict[str, str]
+    :ivar sku: The SKU of the kusto pool.
+    :vartype sku: ~azure.mgmt.synapse.models.AzureSku
+    :ivar state: The state of the resource. Known values are: "Creating", "Unavailable", "Running",
+     "Deleting", "Deleted", "Stopping", "Stopped", "Starting", and "Updating".
+    :vartype state: str or ~azure.mgmt.synapse.models.State
+    :ivar provisioning_state: The provisioned state of the resource. Known values are: "Running",
+     "Creating", "Deleting", "Succeeded", "Failed", "Moving", and "Canceled".
+    :vartype provisioning_state: str or ~azure.mgmt.synapse.models.ResourceProvisioningState
+    :ivar uri: The Kusto Pool URI.
+    :vartype uri: str
+    :ivar data_ingestion_uri: The Kusto Pool data ingestion URI.
+    :vartype data_ingestion_uri: str
+    :ivar state_reason: The reason for the Kusto Pool's current state.
+    :vartype state_reason: str
+    :ivar optimized_autoscale: Optimized auto scale definition.
+    :vartype optimized_autoscale: ~azure.mgmt.synapse.models.OptimizedAutoscale
+    :ivar enable_streaming_ingest: A boolean value that indicates if the streaming ingest is
+     enabled.
+    :vartype enable_streaming_ingest: bool
+    :ivar enable_purge: A boolean value that indicates if the purge operations are enabled.
+    :vartype enable_purge: bool
+    :ivar language_extensions: List of the Kusto Pool's language extensions.
+    :vartype language_extensions: ~azure.mgmt.synapse.models.LanguageExtensionsList
+    :ivar workspace_uid: The workspace unique identifier.
+    :vartype workspace_uid: str
+    """
+
+    _validation = {
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "state": {"readonly": True},
+        "provisioning_state": {"readonly": True},
+        "uri": {"readonly": True},
+        "data_ingestion_uri": {"readonly": True},
+        "state_reason": {"readonly": True},
+        "language_extensions": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "tags": {"key": "tags", "type": "{str}"},
+        "sku": {"key": "sku", "type": "AzureSku"},
+        "state": {"key": "properties.state", "type": "str"},
+        "provisioning_state": {"key": "properties.provisioningState", "type": "str"},
+        "uri": {"key": "properties.uri", "type": "str"},
+        "data_ingestion_uri": {"key": "properties.dataIngestionUri", "type": "str"},
+        "state_reason": {"key": "properties.stateReason", "type": "str"},
+        "optimized_autoscale": {"key": "properties.optimizedAutoscale", "type": "OptimizedAutoscale"},
+        "enable_streaming_ingest": {"key": "properties.enableStreamingIngest", "type": "bool"},
+        "enable_purge": {"key": "properties.enablePurge", "type": "bool"},
+        "language_extensions": {"key": "properties.languageExtensions", "type": "LanguageExtensionsList"},
+        "workspace_uid": {"key": "properties.workspaceUID", "type": "str"},
+    }
+
+    def __init__(
+        self,
+        *,
+        tags: Optional[Dict[str, str]] = None,
+        sku: Optional["_models.AzureSku"] = None,
+        optimized_autoscale: Optional["_models.OptimizedAutoscale"] = None,
+        enable_streaming_ingest: bool = False,
+        enable_purge: bool = False,
+        workspace_uid: Optional[str] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword tags: Resource tags.
+        :paramtype tags: dict[str, str]
+        :keyword sku: The SKU of the kusto pool.
+        :paramtype sku: ~azure.mgmt.synapse.models.AzureSku
+        :keyword optimized_autoscale: Optimized auto scale definition.
+        :paramtype optimized_autoscale: ~azure.mgmt.synapse.models.OptimizedAutoscale
+        :keyword enable_streaming_ingest: A boolean value that indicates if the streaming ingest is
+         enabled.
+        :paramtype enable_streaming_ingest: bool
+        :keyword enable_purge: A boolean value that indicates if the purge operations are enabled.
+        :paramtype enable_purge: bool
+        :keyword workspace_uid: The workspace unique identifier.
+        :paramtype workspace_uid: str
+        """
+        super().__init__(**kwargs)
+        self.tags = tags
+        self.sku = sku
+        self.state = None
+        self.provisioning_state = None
+        self.uri = None
+        self.data_ingestion_uri = None
+        self.state_reason = None
+        self.optimized_autoscale = optimized_autoscale
+        self.enable_streaming_ingest = enable_streaming_ingest
+        self.enable_purge = enable_purge
+        self.language_extensions = None
+        self.workspace_uid = workspace_uid
+
+
+class LanguageExtension(_serialization.Model):
+    """The language extension object.
+
+    :ivar language_extension_name: The language extension name. Known values are: "PYTHON" and "R".
+    :vartype language_extension_name: str or ~azure.mgmt.synapse.models.LanguageExtensionName
+    """
+
+    _attribute_map = {
+        "language_extension_name": {"key": "languageExtensionName", "type": "str"},
+    }
+
+    def __init__(
+        self, *, language_extension_name: Optional[Union[str, "_models.LanguageExtensionName"]] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword language_extension_name: The language extension name. Known values are: "PYTHON" and
+         "R".
+        :paramtype language_extension_name: str or ~azure.mgmt.synapse.models.LanguageExtensionName
+        """
+        super().__init__(**kwargs)
+        self.language_extension_name = language_extension_name
+
+
+class LanguageExtensionsList(_serialization.Model):
+    """The list of language extension objects.
+
+    :ivar value: The list of language extensions.
+    :vartype value: list[~azure.mgmt.synapse.models.LanguageExtension]
+    """
+
+    _attribute_map = {
+        "value": {"key": "value", "type": "[LanguageExtension]"},
+    }
+
+    def __init__(self, *, value: Optional[List["_models.LanguageExtension"]] = None, **kwargs: Any) -> None:
+        """
+        :keyword value: The list of language extensions.
+        :paramtype value: list[~azure.mgmt.synapse.models.LanguageExtension]
+        """
+        super().__init__(**kwargs)
+        self.value = value
+
+
+class LibraryInfo(_serialization.Model):
     """Library/package information of a Big Data pool powered by Apache Spark.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
-    :param name: Name of the library.
-    :type name: str
-    :param path: Storage blob path of library.
-    :type path: str
-    :param container_name: Storage blob container name.
-    :type container_name: str
+    :ivar name: Name of the library.
+    :vartype name: str
+    :ivar path: Storage blob path of library.
+    :vartype path: str
+    :ivar container_name: Storage blob container name.
+    :vartype container_name: str
     :ivar uploaded_timestamp: The last update time of the library.
     :vartype uploaded_timestamp: ~datetime.datetime
-    :param type: Type of the library.
-    :type type: str
+    :ivar type: Type of the library.
+    :vartype type: str
     :ivar provisioning_status: Provisioning status of the library/package.
     :vartype provisioning_status: str
     :ivar creator_id: Creator Id of the library/package.
@@ -2849,19 +5823,18 @@ class LibraryInfo(msrest.serialization.Model):
     """
 
     _validation = {
-        'uploaded_timestamp': {'readonly': True},
-        'provisioning_status': {'readonly': True},
-        'creator_id': {'readonly': True},
+        "provisioning_status": {"readonly": True},
+        "creator_id": {"readonly": True},
     }
 
     _attribute_map = {
-        'name': {'key': 'name', 'type': 'str'},
-        'path': {'key': 'path', 'type': 'str'},
-        'container_name': {'key': 'containerName', 'type': 'str'},
-        'uploaded_timestamp': {'key': 'uploadedTimestamp', 'type': 'iso-8601'},
-        'type': {'key': 'type', 'type': 'str'},
-        'provisioning_status': {'key': 'provisioningStatus', 'type': 'str'},
-        'creator_id': {'key': 'creatorId', 'type': 'str'},
+        "name": {"key": "name", "type": "str"},
+        "path": {"key": "path", "type": "str"},
+        "container_name": {"key": "containerName", "type": "str"},
+        "uploaded_timestamp": {"key": "uploadedTimestamp", "type": "iso-8601"},
+        "type": {"key": "type", "type": "str"},
+        "provisioning_status": {"key": "provisioningStatus", "type": "str"},
+        "creator_id": {"key": "creatorId", "type": "str"},
     }
 
     def __init__(
@@ -2870,88 +5843,103 @@ class LibraryInfo(msrest.serialization.Model):
         name: Optional[str] = None,
         path: Optional[str] = None,
         container_name: Optional[str] = None,
+        uploaded_timestamp: Optional[datetime.datetime] = None,
         type: Optional[str] = None,
-        **kwargs
-    ):
-        super(LibraryInfo, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword name: Name of the library.
+        :paramtype name: str
+        :keyword path: Storage blob path of library.
+        :paramtype path: str
+        :keyword container_name: Storage blob container name.
+        :paramtype container_name: str
+        :keyword uploaded_timestamp: The last update time of the library.
+        :paramtype uploaded_timestamp: ~datetime.datetime
+        :keyword type: Type of the library.
+        :paramtype type: str
+        """
+        super().__init__(**kwargs)
         self.name = name
         self.path = path
         self.container_name = container_name
-        self.uploaded_timestamp = None
+        self.uploaded_timestamp = uploaded_timestamp
         self.type = type
         self.provisioning_status = None
         self.creator_id = None
 
 
-class LibraryListResponse(msrest.serialization.Model):
+class LibraryListResponse(_serialization.Model):
     """A list of Library resources.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param value: Required. List of Library.
-    :type value: list[~azure.mgmt.synapse.models.LibraryResource]
-    :param next_link: The link to the next page of results, if any remaining results exist.
-    :type next_link: str
+    :ivar value: List of Library. Required.
+    :vartype value: list[~azure.mgmt.synapse.models.LibraryResource]
+    :ivar next_link: The link to the next page of results, if any remaining results exist.
+    :vartype next_link: str
     """
 
     _validation = {
-        'value': {'required': True},
+        "value": {"required": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[LibraryResource]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[LibraryResource]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
     def __init__(
-        self,
-        *,
-        value: List["LibraryResource"],
-        next_link: Optional[str] = None,
-        **kwargs
-    ):
-        super(LibraryListResponse, self).__init__(**kwargs)
+        self, *, value: List["_models.LibraryResource"], next_link: Optional[str] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword value: List of Library. Required.
+        :paramtype value: list[~azure.mgmt.synapse.models.LibraryResource]
+        :keyword next_link: The link to the next page of results, if any remaining results exist.
+        :paramtype next_link: str
+        """
+        super().__init__(**kwargs)
         self.value = value
         self.next_link = next_link
 
 
-class LibraryRequirements(msrest.serialization.Model):
+class LibraryRequirements(_serialization.Model):
     """Library requirements for a Big Data pool powered by Apache Spark.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
     :ivar time: The last update time of the library requirements file.
     :vartype time: ~datetime.datetime
-    :param content: The library requirements.
-    :type content: str
-    :param filename: The filename of the library requirements file.
-    :type filename: str
+    :ivar content: The library requirements.
+    :vartype content: str
+    :ivar filename: The filename of the library requirements file.
+    :vartype filename: str
     """
 
     _validation = {
-        'time': {'readonly': True},
+        "time": {"readonly": True},
     }
 
     _attribute_map = {
-        'time': {'key': 'time', 'type': 'iso-8601'},
-        'content': {'key': 'content', 'type': 'str'},
-        'filename': {'key': 'filename', 'type': 'str'},
+        "time": {"key": "time", "type": "iso-8601"},
+        "content": {"key": "content", "type": "str"},
+        "filename": {"key": "filename", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        content: Optional[str] = None,
-        filename: Optional[str] = None,
-        **kwargs
-    ):
-        super(LibraryRequirements, self).__init__(**kwargs)
+    def __init__(self, *, content: Optional[str] = None, filename: Optional[str] = None, **kwargs: Any) -> None:
+        """
+        :keyword content: The library requirements.
+        :paramtype content: str
+        :keyword filename: The filename of the library requirements file.
+        :paramtype filename: str
+        """
+        super().__init__(**kwargs)
         self.time = None
         self.content = content
         self.filename = filename
 
 
-class LibraryResource(SubResource):
+class LibraryResource(SubResource):  # pylint: disable=too-many-instance-attributes
     """Library response details.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -2966,16 +5954,16 @@ class LibraryResource(SubResource):
     :vartype type: str
     :ivar etag: Resource Etag.
     :vartype etag: str
-    :param name_properties_name: Name of the library.
-    :type name_properties_name: str
-    :param path: Storage blob path of library.
-    :type path: str
-    :param container_name: Storage blob container name.
-    :type container_name: str
+    :ivar name_properties_name: Name of the library.
+    :vartype name_properties_name: str
+    :ivar path: Storage blob path of library.
+    :vartype path: str
+    :ivar container_name: Storage blob container name.
+    :vartype container_name: str
     :ivar uploaded_timestamp: The last update time of the library.
     :vartype uploaded_timestamp: ~datetime.datetime
-    :param type_properties_type: Type of the library.
-    :type type_properties_type: str
+    :ivar type_properties_type: Type of the library.
+    :vartype type_properties_type: str
     :ivar provisioning_status: Provisioning status of the library/package.
     :vartype provisioning_status: str
     :ivar creator_id: Creator Id of the library/package.
@@ -2983,27 +5971,26 @@ class LibraryResource(SubResource):
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'etag': {'readonly': True},
-        'uploaded_timestamp': {'readonly': True},
-        'provisioning_status': {'readonly': True},
-        'creator_id': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "etag": {"readonly": True},
+        "provisioning_status": {"readonly": True},
+        "creator_id": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'etag': {'key': 'etag', 'type': 'str'},
-        'name_properties_name': {'key': 'properties.name', 'type': 'str'},
-        'path': {'key': 'properties.path', 'type': 'str'},
-        'container_name': {'key': 'properties.containerName', 'type': 'str'},
-        'uploaded_timestamp': {'key': 'properties.uploadedTimestamp', 'type': 'iso-8601'},
-        'type_properties_type': {'key': 'properties.type', 'type': 'str'},
-        'provisioning_status': {'key': 'properties.provisioningStatus', 'type': 'str'},
-        'creator_id': {'key': 'properties.creatorId', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "etag": {"key": "etag", "type": "str"},
+        "name_properties_name": {"key": "properties.name", "type": "str"},
+        "path": {"key": "properties.path", "type": "str"},
+        "container_name": {"key": "properties.containerName", "type": "str"},
+        "uploaded_timestamp": {"key": "properties.uploadedTimestamp", "type": "iso-8601"},
+        "type_properties_type": {"key": "properties.type", "type": "str"},
+        "provisioning_status": {"key": "properties.provisioningStatus", "type": "str"},
+        "creator_id": {"key": "properties.creatorId", "type": "str"},
     }
 
     def __init__(
@@ -3012,20 +5999,33 @@ class LibraryResource(SubResource):
         name_properties_name: Optional[str] = None,
         path: Optional[str] = None,
         container_name: Optional[str] = None,
+        uploaded_timestamp: Optional[datetime.datetime] = None,
         type_properties_type: Optional[str] = None,
-        **kwargs
-    ):
-        super(LibraryResource, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword name_properties_name: Name of the library.
+        :paramtype name_properties_name: str
+        :keyword path: Storage blob path of library.
+        :paramtype path: str
+        :keyword container_name: Storage blob container name.
+        :paramtype container_name: str
+        :keyword uploaded_timestamp: The last update time of the library.
+        :paramtype uploaded_timestamp: ~datetime.datetime
+        :keyword type_properties_type: Type of the library.
+        :paramtype type_properties_type: str
+        """
+        super().__init__(**kwargs)
         self.name_properties_name = name_properties_name
         self.path = path
         self.container_name = container_name
-        self.uploaded_timestamp = None
+        self.uploaded_timestamp = uploaded_timestamp
         self.type_properties_type = type_properties_type
         self.provisioning_status = None
         self.creator_id = None
 
 
-class LinkedIntegrationRuntime(msrest.serialization.Model):
+class LinkedIntegrationRuntime(_serialization.Model):
     """The linked integration runtime information.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -3045,26 +6045,24 @@ class LinkedIntegrationRuntime(msrest.serialization.Model):
     """
 
     _validation = {
-        'name': {'readonly': True},
-        'subscription_id': {'readonly': True},
-        'data_factory_name': {'readonly': True},
-        'data_factory_location': {'readonly': True},
-        'create_time': {'readonly': True},
+        "name": {"readonly": True},
+        "subscription_id": {"readonly": True},
+        "data_factory_name": {"readonly": True},
+        "data_factory_location": {"readonly": True},
+        "create_time": {"readonly": True},
     }
 
     _attribute_map = {
-        'name': {'key': 'name', 'type': 'str'},
-        'subscription_id': {'key': 'subscriptionId', 'type': 'str'},
-        'data_factory_name': {'key': 'dataFactoryName', 'type': 'str'},
-        'data_factory_location': {'key': 'dataFactoryLocation', 'type': 'str'},
-        'create_time': {'key': 'createTime', 'type': 'iso-8601'},
+        "name": {"key": "name", "type": "str"},
+        "subscription_id": {"key": "subscriptionId", "type": "str"},
+        "data_factory_name": {"key": "dataFactoryName", "type": "str"},
+        "data_factory_location": {"key": "dataFactoryLocation", "type": "str"},
+        "create_time": {"key": "createTime", "type": "iso-8601"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(LinkedIntegrationRuntime, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.name = None
         self.subscription_id = None
         self.data_factory_name = None
@@ -3072,37 +6070,37 @@ class LinkedIntegrationRuntime(msrest.serialization.Model):
         self.create_time = None
 
 
-class LinkedIntegrationRuntimeType(msrest.serialization.Model):
+class LinkedIntegrationRuntimeType(_serialization.Model):
     """The base definition of a linked integration runtime.
 
-    You probably want to use the sub-classes and not this class directly. Known
-    sub-classes are: LinkedIntegrationRuntimeKeyAuthorization, LinkedIntegrationRuntimeRbacAuthorization.
+    You probably want to use the sub-classes and not this class directly. Known sub-classes are:
+    LinkedIntegrationRuntimeKeyAuthorization, LinkedIntegrationRuntimeRbacAuthorization
 
     All required parameters must be populated in order to send to Azure.
 
-    :param authorization_type: Required. The authorization type for integration runtime
-     sharing.Constant filled by server.
-    :type authorization_type: str
+    :ivar authorization_type: The authorization type for integration runtime sharing. Required.
+    :vartype authorization_type: str
     """
 
     _validation = {
-        'authorization_type': {'required': True},
+        "authorization_type": {"required": True},
     }
 
     _attribute_map = {
-        'authorization_type': {'key': 'authorizationType', 'type': 'str'},
+        "authorization_type": {"key": "authorizationType", "type": "str"},
     }
 
     _subtype_map = {
-        'authorization_type': {'Key': 'LinkedIntegrationRuntimeKeyAuthorization', 'RBAC': 'LinkedIntegrationRuntimeRbacAuthorization'}
+        "authorization_type": {
+            "Key": "LinkedIntegrationRuntimeKeyAuthorization",
+            "RBAC": "LinkedIntegrationRuntimeRbacAuthorization",
+        }
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(LinkedIntegrationRuntimeType, self).__init__(**kwargs)
-        self.authorization_type = None  # type: Optional[str]
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
+        self.authorization_type: Optional[str] = None
 
 
 class LinkedIntegrationRuntimeKeyAuthorization(LinkedIntegrationRuntimeType):
@@ -3110,31 +6108,29 @@ class LinkedIntegrationRuntimeKeyAuthorization(LinkedIntegrationRuntimeType):
 
     All required parameters must be populated in order to send to Azure.
 
-    :param authorization_type: Required. The authorization type for integration runtime
-     sharing.Constant filled by server.
-    :type authorization_type: str
-    :param key: Required. The key used for authorization.
-    :type key: ~azure.mgmt.synapse.models.SecureString
+    :ivar authorization_type: The authorization type for integration runtime sharing. Required.
+    :vartype authorization_type: str
+    :ivar key: The key used for authorization. Required.
+    :vartype key: ~azure.mgmt.synapse.models.SecureString
     """
 
     _validation = {
-        'authorization_type': {'required': True},
-        'key': {'required': True},
+        "authorization_type": {"required": True},
+        "key": {"required": True},
     }
 
     _attribute_map = {
-        'authorization_type': {'key': 'authorizationType', 'type': 'str'},
-        'key': {'key': 'key', 'type': 'SecureString'},
+        "authorization_type": {"key": "authorizationType", "type": "str"},
+        "key": {"key": "key", "type": "SecureString"},
     }
 
-    def __init__(
-        self,
-        *,
-        key: "SecureString",
-        **kwargs
-    ):
-        super(LinkedIntegrationRuntimeKeyAuthorization, self).__init__(**kwargs)
-        self.authorization_type = 'Key'  # type: str
+    def __init__(self, *, key: "_models.SecureString", **kwargs: Any) -> None:
+        """
+        :keyword key: The key used for authorization. Required.
+        :paramtype key: ~azure.mgmt.synapse.models.SecureString
+        """
+        super().__init__(**kwargs)
+        self.authorization_type: str = "Key"
         self.key = key
 
 
@@ -3143,35 +6139,54 @@ class LinkedIntegrationRuntimeRbacAuthorization(LinkedIntegrationRuntimeType):
 
     All required parameters must be populated in order to send to Azure.
 
-    :param authorization_type: Required. The authorization type for integration runtime
-     sharing.Constant filled by server.
-    :type authorization_type: str
-    :param resource_id: Required. The resource identifier of the integration runtime to be shared.
-    :type resource_id: str
+    :ivar authorization_type: The authorization type for integration runtime sharing. Required.
+    :vartype authorization_type: str
+    :ivar resource_id: The resource identifier of the integration runtime to be shared. Required.
+    :vartype resource_id: str
     """
 
     _validation = {
-        'authorization_type': {'required': True},
-        'resource_id': {'required': True},
+        "authorization_type": {"required": True},
+        "resource_id": {"required": True},
     }
 
     _attribute_map = {
-        'authorization_type': {'key': 'authorizationType', 'type': 'str'},
-        'resource_id': {'key': 'resourceId', 'type': 'str'},
+        "authorization_type": {"key": "authorizationType", "type": "str"},
+        "resource_id": {"key": "resourceId", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        resource_id: str,
-        **kwargs
-    ):
-        super(LinkedIntegrationRuntimeRbacAuthorization, self).__init__(**kwargs)
-        self.authorization_type = 'RBAC'  # type: str
+    def __init__(self, *, resource_id: str, **kwargs: Any) -> None:
+        """
+        :keyword resource_id: The resource identifier of the integration runtime to be shared.
+         Required.
+        :paramtype resource_id: str
+        """
+        super().__init__(**kwargs)
+        self.authorization_type: str = "RBAC"
         self.resource_id = resource_id
 
 
-class ListSqlPoolSecurityAlertPolicies(msrest.serialization.Model):
+class ListResourceSkusResult(_serialization.Model):
+    """List of available SKUs for a Kusto Pool.
+
+    :ivar value: The collection of available SKUs for an existing resource.
+    :vartype value: list[~azure.mgmt.synapse.models.AzureResourceSku]
+    """
+
+    _attribute_map = {
+        "value": {"key": "value", "type": "[AzureResourceSku]"},
+    }
+
+    def __init__(self, *, value: Optional[List["_models.AzureResourceSku"]] = None, **kwargs: Any) -> None:
+        """
+        :keyword value: The collection of available SKUs for an existing resource.
+        :paramtype value: list[~azure.mgmt.synapse.models.AzureResourceSku]
+        """
+        super().__init__(**kwargs)
+        self.value = value
+
+
+class ListSqlPoolSecurityAlertPolicies(_serialization.Model):
     """A list of SQL pool security alert policies.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -3183,20 +6198,18 @@ class ListSqlPoolSecurityAlertPolicies(msrest.serialization.Model):
     """
 
     _validation = {
-        'value': {'readonly': True},
-        'next_link': {'readonly': True},
+        "value": {"readonly": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[SqlPoolSecurityAlertPolicy]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[SqlPoolSecurityAlertPolicy]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(ListSqlPoolSecurityAlertPolicies, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.value = None
         self.next_link = None
 
@@ -3214,56 +6227,81 @@ class MaintenanceWindowOptions(ProxyResource):
     :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
      "Microsoft.Storage/storageAccounts".
     :vartype type: str
-    :param is_enabled: Whether maintenance windows are enabled for the database.
-    :type is_enabled: bool
-    :param maintenance_window_cycles: Available maintenance cycles e.g. {Saturday, 0, 48\ *60},
+    :ivar is_enabled: Whether maintenance windows are enabled for the database.
+    :vartype is_enabled: bool
+    :ivar maintenance_window_cycles: Available maintenance cycles e.g. {Saturday, 0, 48\ *60},
      {Wednesday, 0, 24*\ 60}.
-    :type maintenance_window_cycles: list[~azure.mgmt.synapse.models.MaintenanceWindowTimeRange]
-    :param min_duration_in_minutes: Minimum duration of maintenance window.
-    :type min_duration_in_minutes: int
-    :param default_duration_in_minutes: Default duration for maintenance window.
-    :type default_duration_in_minutes: int
-    :param min_cycles: Minimum number of maintenance windows cycles to be set on the database.
-    :type min_cycles: int
-    :param time_granularity_in_minutes: Time granularity in minutes for maintenance windows.
-    :type time_granularity_in_minutes: int
-    :param allow_multiple_maintenance_windows_per_cycle: Whether we allow multiple maintenance
+    :vartype maintenance_window_cycles: list[~azure.mgmt.synapse.models.MaintenanceWindowTimeRange]
+    :ivar min_duration_in_minutes: Minimum duration of maintenance window.
+    :vartype min_duration_in_minutes: int
+    :ivar default_duration_in_minutes: Default duration for maintenance window.
+    :vartype default_duration_in_minutes: int
+    :ivar min_cycles: Minimum number of maintenance windows cycles to be set on the database.
+    :vartype min_cycles: int
+    :ivar time_granularity_in_minutes: Time granularity in minutes for maintenance windows.
+    :vartype time_granularity_in_minutes: int
+    :ivar allow_multiple_maintenance_windows_per_cycle: Whether we allow multiple maintenance
      windows per cycle.
-    :type allow_multiple_maintenance_windows_per_cycle: bool
+    :vartype allow_multiple_maintenance_windows_per_cycle: bool
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'is_enabled': {'key': 'properties.isEnabled', 'type': 'bool'},
-        'maintenance_window_cycles': {'key': 'properties.maintenanceWindowCycles', 'type': '[MaintenanceWindowTimeRange]'},
-        'min_duration_in_minutes': {'key': 'properties.minDurationInMinutes', 'type': 'int'},
-        'default_duration_in_minutes': {'key': 'properties.defaultDurationInMinutes', 'type': 'int'},
-        'min_cycles': {'key': 'properties.minCycles', 'type': 'int'},
-        'time_granularity_in_minutes': {'key': 'properties.timeGranularityInMinutes', 'type': 'int'},
-        'allow_multiple_maintenance_windows_per_cycle': {'key': 'properties.allowMultipleMaintenanceWindowsPerCycle', 'type': 'bool'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "is_enabled": {"key": "properties.isEnabled", "type": "bool"},
+        "maintenance_window_cycles": {
+            "key": "properties.maintenanceWindowCycles",
+            "type": "[MaintenanceWindowTimeRange]",
+        },
+        "min_duration_in_minutes": {"key": "properties.minDurationInMinutes", "type": "int"},
+        "default_duration_in_minutes": {"key": "properties.defaultDurationInMinutes", "type": "int"},
+        "min_cycles": {"key": "properties.minCycles", "type": "int"},
+        "time_granularity_in_minutes": {"key": "properties.timeGranularityInMinutes", "type": "int"},
+        "allow_multiple_maintenance_windows_per_cycle": {
+            "key": "properties.allowMultipleMaintenanceWindowsPerCycle",
+            "type": "bool",
+        },
     }
 
     def __init__(
         self,
         *,
         is_enabled: Optional[bool] = None,
-        maintenance_window_cycles: Optional[List["MaintenanceWindowTimeRange"]] = None,
+        maintenance_window_cycles: Optional[List["_models.MaintenanceWindowTimeRange"]] = None,
         min_duration_in_minutes: Optional[int] = None,
         default_duration_in_minutes: Optional[int] = None,
         min_cycles: Optional[int] = None,
         time_granularity_in_minutes: Optional[int] = None,
         allow_multiple_maintenance_windows_per_cycle: Optional[bool] = None,
-        **kwargs
-    ):
-        super(MaintenanceWindowOptions, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword is_enabled: Whether maintenance windows are enabled for the database.
+        :paramtype is_enabled: bool
+        :keyword maintenance_window_cycles: Available maintenance cycles e.g. {Saturday, 0, 48\ *60},
+         {Wednesday, 0, 24*\ 60}.
+        :paramtype maintenance_window_cycles:
+         list[~azure.mgmt.synapse.models.MaintenanceWindowTimeRange]
+        :keyword min_duration_in_minutes: Minimum duration of maintenance window.
+        :paramtype min_duration_in_minutes: int
+        :keyword default_duration_in_minutes: Default duration for maintenance window.
+        :paramtype default_duration_in_minutes: int
+        :keyword min_cycles: Minimum number of maintenance windows cycles to be set on the database.
+        :paramtype min_cycles: int
+        :keyword time_granularity_in_minutes: Time granularity in minutes for maintenance windows.
+        :paramtype time_granularity_in_minutes: int
+        :keyword allow_multiple_maintenance_windows_per_cycle: Whether we allow multiple maintenance
+         windows per cycle.
+        :paramtype allow_multiple_maintenance_windows_per_cycle: bool
+        """
+        super().__init__(**kwargs)
         self.is_enabled = is_enabled
         self.maintenance_window_cycles = maintenance_window_cycles
         self.min_duration_in_minutes = min_duration_in_minutes
@@ -3286,66 +6324,76 @@ class MaintenanceWindows(ProxyResource):
     :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
      "Microsoft.Storage/storageAccounts".
     :vartype type: str
-    :param time_ranges:
-    :type time_ranges: list[~azure.mgmt.synapse.models.MaintenanceWindowTimeRange]
+    :ivar time_ranges:
+    :vartype time_ranges: list[~azure.mgmt.synapse.models.MaintenanceWindowTimeRange]
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'time_ranges': {'key': 'properties.timeRanges', 'type': '[MaintenanceWindowTimeRange]'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "time_ranges": {"key": "properties.timeRanges", "type": "[MaintenanceWindowTimeRange]"},
     }
 
     def __init__(
-        self,
-        *,
-        time_ranges: Optional[List["MaintenanceWindowTimeRange"]] = None,
-        **kwargs
-    ):
-        super(MaintenanceWindows, self).__init__(**kwargs)
+        self, *, time_ranges: Optional[List["_models.MaintenanceWindowTimeRange"]] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword time_ranges:
+        :paramtype time_ranges: list[~azure.mgmt.synapse.models.MaintenanceWindowTimeRange]
+        """
+        super().__init__(**kwargs)
         self.time_ranges = time_ranges
 
 
-class MaintenanceWindowTimeRange(msrest.serialization.Model):
+class MaintenanceWindowTimeRange(_serialization.Model):
     """Maintenance window time range.
 
-    :param day_of_week: Day of maintenance window. Possible values include: "Sunday", "Monday",
-     "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday".
-    :type day_of_week: str or ~azure.mgmt.synapse.models.DayOfWeek
-    :param start_time: Start time minutes offset from 12am.
-    :type start_time: str
-    :param duration: Duration of maintenance window in minutes.
-    :type duration: str
+    :ivar day_of_week: Day of maintenance window. Known values are: "Sunday", "Monday", "Tuesday",
+     "Wednesday", "Thursday", "Friday", and "Saturday".
+    :vartype day_of_week: str or ~azure.mgmt.synapse.models.DayOfWeek
+    :ivar start_time: Start time minutes offset from 12am.
+    :vartype start_time: str
+    :ivar duration: Duration of maintenance window in minutes.
+    :vartype duration: str
     """
 
     _attribute_map = {
-        'day_of_week': {'key': 'dayOfWeek', 'type': 'str'},
-        'start_time': {'key': 'startTime', 'type': 'str'},
-        'duration': {'key': 'duration', 'type': 'str'},
+        "day_of_week": {"key": "dayOfWeek", "type": "str"},
+        "start_time": {"key": "startTime", "type": "str"},
+        "duration": {"key": "duration", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        day_of_week: Optional[Union[str, "DayOfWeek"]] = None,
+        day_of_week: Optional[Union[str, "_models.DayOfWeek"]] = None,
         start_time: Optional[str] = None,
         duration: Optional[str] = None,
-        **kwargs
-    ):
-        super(MaintenanceWindowTimeRange, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword day_of_week: Day of maintenance window. Known values are: "Sunday", "Monday",
+         "Tuesday", "Wednesday", "Thursday", "Friday", and "Saturday".
+        :paramtype day_of_week: str or ~azure.mgmt.synapse.models.DayOfWeek
+        :keyword start_time: Start time minutes offset from 12am.
+        :paramtype start_time: str
+        :keyword duration: Duration of maintenance window in minutes.
+        :paramtype duration: str
+        """
+        super().__init__(**kwargs)
         self.day_of_week = day_of_week
         self.start_time = start_time
         self.duration = duration
 
 
-class ManagedIdentity(msrest.serialization.Model):
+class ManagedIdentity(_serialization.Model):
     """The workspace managed identity.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -3354,32 +6402,46 @@ class ManagedIdentity(msrest.serialization.Model):
     :vartype principal_id: str
     :ivar tenant_id: The tenant ID of the workspace managed identity.
     :vartype tenant_id: str
-    :param type: The type of managed identity for the workspace. Possible values include: "None",
-     "SystemAssigned".
-    :type type: str or ~azure.mgmt.synapse.models.ResourceIdentityType
+    :ivar type: The type of managed identity for the workspace. Known values are: "None",
+     "SystemAssigned", and "SystemAssigned,UserAssigned".
+    :vartype type: str or ~azure.mgmt.synapse.models.ResourceIdentityType
+    :ivar user_assigned_identities: The user assigned managed identities.
+    :vartype user_assigned_identities: dict[str,
+     ~azure.mgmt.synapse.models.UserAssignedManagedIdentity]
     """
 
     _validation = {
-        'principal_id': {'readonly': True},
-        'tenant_id': {'readonly': True},
+        "principal_id": {"readonly": True},
+        "tenant_id": {"readonly": True},
     }
 
     _attribute_map = {
-        'principal_id': {'key': 'principalId', 'type': 'str'},
-        'tenant_id': {'key': 'tenantId', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
+        "principal_id": {"key": "principalId", "type": "str"},
+        "tenant_id": {"key": "tenantId", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "user_assigned_identities": {"key": "userAssignedIdentities", "type": "{UserAssignedManagedIdentity}"},
     }
 
     def __init__(
         self,
         *,
-        type: Optional[Union[str, "ResourceIdentityType"]] = None,
-        **kwargs
-    ):
-        super(ManagedIdentity, self).__init__(**kwargs)
+        type: Optional[Union[str, "_models.ResourceIdentityType"]] = None,
+        user_assigned_identities: Optional[Dict[str, "_models.UserAssignedManagedIdentity"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword type: The type of managed identity for the workspace. Known values are: "None",
+         "SystemAssigned", and "SystemAssigned,UserAssigned".
+        :paramtype type: str or ~azure.mgmt.synapse.models.ResourceIdentityType
+        :keyword user_assigned_identities: The user assigned managed identities.
+        :paramtype user_assigned_identities: dict[str,
+         ~azure.mgmt.synapse.models.UserAssignedManagedIdentity]
+        """
+        super().__init__(**kwargs)
         self.principal_id = None
         self.tenant_id = None
         self.type = type
+        self.user_assigned_identities = user_assigned_identities
 
 
 class ManagedIdentitySqlControlSettingsModel(ProxyResource):
@@ -3395,131 +6457,174 @@ class ManagedIdentitySqlControlSettingsModel(ProxyResource):
     :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
      "Microsoft.Storage/storageAccounts".
     :vartype type: str
-    :param grant_sql_control_to_managed_identity: Grant sql control to managed identity.
-    :type grant_sql_control_to_managed_identity:
+    :ivar grant_sql_control_to_managed_identity: Grant sql control to managed identity.
+    :vartype grant_sql_control_to_managed_identity:
      ~azure.mgmt.synapse.models.ManagedIdentitySqlControlSettingsModelPropertiesGrantSqlControlToManagedIdentity
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'grant_sql_control_to_managed_identity': {'key': 'properties.grantSqlControlToManagedIdentity', 'type': 'ManagedIdentitySqlControlSettingsModelPropertiesGrantSqlControlToManagedIdentity'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "grant_sql_control_to_managed_identity": {
+            "key": "properties.grantSqlControlToManagedIdentity",
+            "type": "ManagedIdentitySqlControlSettingsModelPropertiesGrantSqlControlToManagedIdentity",
+        },
     }
 
     def __init__(
         self,
         *,
-        grant_sql_control_to_managed_identity: Optional["ManagedIdentitySqlControlSettingsModelPropertiesGrantSqlControlToManagedIdentity"] = None,
-        **kwargs
-    ):
-        super(ManagedIdentitySqlControlSettingsModel, self).__init__(**kwargs)
+        grant_sql_control_to_managed_identity: Optional[
+            "_models.ManagedIdentitySqlControlSettingsModelPropertiesGrantSqlControlToManagedIdentity"
+        ] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword grant_sql_control_to_managed_identity: Grant sql control to managed identity.
+        :paramtype grant_sql_control_to_managed_identity:
+         ~azure.mgmt.synapse.models.ManagedIdentitySqlControlSettingsModelPropertiesGrantSqlControlToManagedIdentity
+        """
+        super().__init__(**kwargs)
         self.grant_sql_control_to_managed_identity = grant_sql_control_to_managed_identity
 
 
-class ManagedIdentitySqlControlSettingsModelPropertiesGrantSqlControlToManagedIdentity(msrest.serialization.Model):
+class ManagedIdentitySqlControlSettingsModelPropertiesGrantSqlControlToManagedIdentity(_serialization.Model):
     """Grant sql control to managed identity.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
-    :param desired_state: Desired state. Possible values include: "Enabled", "Disabled".
-    :type desired_state: str or
-     ~azure.mgmt.synapse.models.ManagedIdentitySqlControlSettingsModelPropertiesGrantSqlControlToManagedIdentityDesiredState
-    :ivar actual_state: Actual state. Possible values include: "Enabling", "Enabled", "Disabling",
-     "Disabled", "Unknown".
-    :vartype actual_state: str or
-     ~azure.mgmt.synapse.models.ManagedIdentitySqlControlSettingsModelPropertiesGrantSqlControlToManagedIdentityActualState
+    :ivar desired_state: Desired state. Known values are: "Enabled" and "Disabled".
+    :vartype desired_state: str or ~azure.mgmt.synapse.models.DesiredState
+    :ivar actual_state: Actual state. Known values are: "Enabling", "Enabled", "Disabling",
+     "Disabled", and "Unknown".
+    :vartype actual_state: str or ~azure.mgmt.synapse.models.ActualState
     """
 
     _validation = {
-        'actual_state': {'readonly': True},
+        "actual_state": {"readonly": True},
     }
 
     _attribute_map = {
-        'desired_state': {'key': 'desiredState', 'type': 'str'},
-        'actual_state': {'key': 'actualState', 'type': 'str'},
+        "desired_state": {"key": "desiredState", "type": "str"},
+        "actual_state": {"key": "actualState", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        desired_state: Optional[Union[str, "ManagedIdentitySqlControlSettingsModelPropertiesGrantSqlControlToManagedIdentityDesiredState"]] = None,
-        **kwargs
-    ):
-        super(ManagedIdentitySqlControlSettingsModelPropertiesGrantSqlControlToManagedIdentity, self).__init__(**kwargs)
+    def __init__(self, *, desired_state: Optional[Union[str, "_models.DesiredState"]] = None, **kwargs: Any) -> None:
+        """
+        :keyword desired_state: Desired state. Known values are: "Enabled" and "Disabled".
+        :paramtype desired_state: str or ~azure.mgmt.synapse.models.DesiredState
+        """
+        super().__init__(**kwargs)
         self.desired_state = desired_state
         self.actual_state = None
 
 
 class ManagedIntegrationRuntime(IntegrationRuntime):
-    """Managed integration runtime, including managed elastic and managed dedicated integration runtimes.
+    """Managed integration runtime, including managed elastic and managed dedicated integration
+    runtimes.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param additional_properties: Unmatched properties from the message are deserialized to this
+    :ivar additional_properties: Unmatched properties from the message are deserialized to this
      collection.
-    :type additional_properties: dict[str, object]
-    :param type: Required. Type of integration runtime.Constant filled by server.  Possible values
-     include: "Managed", "SelfHosted".
-    :type type: str or ~azure.mgmt.synapse.models.IntegrationRuntimeType
-    :param description: Integration runtime description.
-    :type description: str
+    :vartype additional_properties: dict[str, JSON]
+    :ivar type: Type of integration runtime. Required. Known values are: "Managed" and
+     "SelfHosted".
+    :vartype type: str or ~azure.mgmt.synapse.models.IntegrationRuntimeType
+    :ivar description: Integration runtime description.
+    :vartype description: str
     :ivar state: Integration runtime state, only valid for managed dedicated integration runtime.
-     Possible values include: "Initial", "Stopped", "Started", "Starting", "Stopping",
-     "NeedRegistration", "Online", "Limited", "Offline", "AccessDenied".
+     Known values are: "Initial", "Stopped", "Started", "Starting", "Stopping", "NeedRegistration",
+     "Online", "Limited", "Offline", and "AccessDenied".
     :vartype state: str or ~azure.mgmt.synapse.models.IntegrationRuntimeState
-    :param compute_properties: The compute resource for managed integration runtime.
-    :type compute_properties: ~azure.mgmt.synapse.models.IntegrationRuntimeComputeProperties
-    :param ssis_properties: SSIS properties for managed integration runtime.
-    :type ssis_properties: ~azure.mgmt.synapse.models.IntegrationRuntimeSsisProperties
+    :ivar reference_name: The reference name of the managed virtual network.
+    :vartype reference_name: str
+    :ivar type_managed_virtual_network_type: The type of the managed virtual network.
+    :vartype type_managed_virtual_network_type: str
+    :ivar id: The id of the managed virtual network.
+    :vartype id: str
+    :ivar compute_properties: The compute resource for managed integration runtime.
+    :vartype compute_properties: ~azure.mgmt.synapse.models.IntegrationRuntimeComputeProperties
+    :ivar ssis_properties: SSIS properties for managed integration runtime.
+    :vartype ssis_properties: ~azure.mgmt.synapse.models.IntegrationRuntimeSsisProperties
     """
 
     _validation = {
-        'type': {'required': True},
-        'state': {'readonly': True},
+        "type": {"required": True},
+        "state": {"readonly": True},
     }
 
     _attribute_map = {
-        'additional_properties': {'key': '', 'type': '{object}'},
-        'type': {'key': 'type', 'type': 'str'},
-        'description': {'key': 'description', 'type': 'str'},
-        'state': {'key': 'state', 'type': 'str'},
-        'compute_properties': {'key': 'typeProperties.computeProperties', 'type': 'IntegrationRuntimeComputeProperties'},
-        'ssis_properties': {'key': 'typeProperties.ssisProperties', 'type': 'IntegrationRuntimeSsisProperties'},
+        "additional_properties": {"key": "", "type": "{object}"},
+        "type": {"key": "type", "type": "str"},
+        "description": {"key": "description", "type": "str"},
+        "state": {"key": "state", "type": "str"},
+        "reference_name": {"key": "managedVirtualNetwork.referenceName", "type": "str"},
+        "type_managed_virtual_network_type": {"key": "managedVirtualNetwork.type", "type": "str"},
+        "id": {"key": "managedVirtualNetwork.id", "type": "str"},
+        "compute_properties": {
+            "key": "typeProperties.computeProperties",
+            "type": "IntegrationRuntimeComputeProperties",
+        },
+        "ssis_properties": {"key": "typeProperties.ssisProperties", "type": "IntegrationRuntimeSsisProperties"},
     }
 
     def __init__(
         self,
         *,
-        additional_properties: Optional[Dict[str, object]] = None,
+        additional_properties: Optional[Dict[str, JSON]] = None,
         description: Optional[str] = None,
-        compute_properties: Optional["IntegrationRuntimeComputeProperties"] = None,
-        ssis_properties: Optional["IntegrationRuntimeSsisProperties"] = None,
-        **kwargs
-    ):
-        super(ManagedIntegrationRuntime, self).__init__(additional_properties=additional_properties, description=description, **kwargs)
-        self.type = 'Managed'  # type: str
+        reference_name: Optional[str] = None,
+        type_managed_virtual_network_type: Optional[str] = None,
+        id: Optional[str] = None,  # pylint: disable=redefined-builtin
+        compute_properties: Optional["_models.IntegrationRuntimeComputeProperties"] = None,
+        ssis_properties: Optional["_models.IntegrationRuntimeSsisProperties"] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword additional_properties: Unmatched properties from the message are deserialized to this
+         collection.
+        :paramtype additional_properties: dict[str, JSON]
+        :keyword description: Integration runtime description.
+        :paramtype description: str
+        :keyword reference_name: The reference name of the managed virtual network.
+        :paramtype reference_name: str
+        :keyword type_managed_virtual_network_type: The type of the managed virtual network.
+        :paramtype type_managed_virtual_network_type: str
+        :keyword id: The id of the managed virtual network.
+        :paramtype id: str
+        :keyword compute_properties: The compute resource for managed integration runtime.
+        :paramtype compute_properties: ~azure.mgmt.synapse.models.IntegrationRuntimeComputeProperties
+        :keyword ssis_properties: SSIS properties for managed integration runtime.
+        :paramtype ssis_properties: ~azure.mgmt.synapse.models.IntegrationRuntimeSsisProperties
+        """
+        super().__init__(additional_properties=additional_properties, description=description, **kwargs)
+        self.type: str = "Managed"
         self.state = None
+        self.reference_name = reference_name
+        self.type_managed_virtual_network_type = type_managed_virtual_network_type
+        self.id = id
         self.compute_properties = compute_properties
         self.ssis_properties = ssis_properties
 
 
-class ManagedIntegrationRuntimeError(msrest.serialization.Model):
+class ManagedIntegrationRuntimeError(_serialization.Model):
     """Error definition for managed integration runtime.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
-    :param additional_properties: Unmatched properties from the message are deserialized to this
+    :ivar additional_properties: Unmatched properties from the message are deserialized to this
      collection.
-    :type additional_properties: dict[str, object]
+    :vartype additional_properties: dict[str, JSON]
     :ivar time: The time when the error occurred.
     :vartype time: ~datetime.datetime
     :ivar code: Error code.
@@ -3531,27 +6636,27 @@ class ManagedIntegrationRuntimeError(msrest.serialization.Model):
     """
 
     _validation = {
-        'time': {'readonly': True},
-        'code': {'readonly': True},
-        'parameters': {'readonly': True},
-        'message': {'readonly': True},
+        "time": {"readonly": True},
+        "code": {"readonly": True},
+        "parameters": {"readonly": True},
+        "message": {"readonly": True},
     }
 
     _attribute_map = {
-        'additional_properties': {'key': '', 'type': '{object}'},
-        'time': {'key': 'time', 'type': 'iso-8601'},
-        'code': {'key': 'code', 'type': 'str'},
-        'parameters': {'key': 'parameters', 'type': '[str]'},
-        'message': {'key': 'message', 'type': 'str'},
+        "additional_properties": {"key": "", "type": "{object}"},
+        "time": {"key": "time", "type": "iso-8601"},
+        "code": {"key": "code", "type": "str"},
+        "parameters": {"key": "parameters", "type": "[str]"},
+        "message": {"key": "message", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        additional_properties: Optional[Dict[str, object]] = None,
-        **kwargs
-    ):
-        super(ManagedIntegrationRuntimeError, self).__init__(**kwargs)
+    def __init__(self, *, additional_properties: Optional[Dict[str, JSON]] = None, **kwargs: Any) -> None:
+        """
+        :keyword additional_properties: Unmatched properties from the message are deserialized to this
+         collection.
+        :paramtype additional_properties: dict[str, JSON]
+        """
+        super().__init__(**kwargs)
         self.additional_properties = additional_properties
         self.time = None
         self.code = None
@@ -3559,57 +6664,64 @@ class ManagedIntegrationRuntimeError(msrest.serialization.Model):
         self.message = None
 
 
-class ManagedIntegrationRuntimeNode(msrest.serialization.Model):
+class ManagedIntegrationRuntimeNode(_serialization.Model):
     """Properties of integration runtime node.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
-    :param additional_properties: Unmatched properties from the message are deserialized to this
+    :ivar additional_properties: Unmatched properties from the message are deserialized to this
      collection.
-    :type additional_properties: dict[str, object]
+    :vartype additional_properties: dict[str, JSON]
     :ivar node_id: The managed integration runtime node id.
     :vartype node_id: str
-    :ivar status: The managed integration runtime node status. Possible values include: "Starting",
-     "Available", "Recycling", "Unavailable".
+    :ivar status: The managed integration runtime node status. Known values are: "Starting",
+     "Available", "Recycling", and "Unavailable".
     :vartype status: str or ~azure.mgmt.synapse.models.ManagedIntegrationRuntimeNodeStatus
-    :param errors: The errors that occurred on this integration runtime node.
-    :type errors: list[~azure.mgmt.synapse.models.ManagedIntegrationRuntimeError]
+    :ivar errors: The errors that occurred on this integration runtime node.
+    :vartype errors: list[~azure.mgmt.synapse.models.ManagedIntegrationRuntimeError]
     """
 
     _validation = {
-        'node_id': {'readonly': True},
-        'status': {'readonly': True},
+        "node_id": {"readonly": True},
+        "status": {"readonly": True},
     }
 
     _attribute_map = {
-        'additional_properties': {'key': '', 'type': '{object}'},
-        'node_id': {'key': 'nodeId', 'type': 'str'},
-        'status': {'key': 'status', 'type': 'str'},
-        'errors': {'key': 'errors', 'type': '[ManagedIntegrationRuntimeError]'},
+        "additional_properties": {"key": "", "type": "{object}"},
+        "node_id": {"key": "nodeId", "type": "str"},
+        "status": {"key": "status", "type": "str"},
+        "errors": {"key": "errors", "type": "[ManagedIntegrationRuntimeError]"},
     }
 
     def __init__(
         self,
         *,
-        additional_properties: Optional[Dict[str, object]] = None,
-        errors: Optional[List["ManagedIntegrationRuntimeError"]] = None,
-        **kwargs
-    ):
-        super(ManagedIntegrationRuntimeNode, self).__init__(**kwargs)
+        additional_properties: Optional[Dict[str, JSON]] = None,
+        errors: Optional[List["_models.ManagedIntegrationRuntimeError"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword additional_properties: Unmatched properties from the message are deserialized to this
+         collection.
+        :paramtype additional_properties: dict[str, JSON]
+        :keyword errors: The errors that occurred on this integration runtime node.
+        :paramtype errors: list[~azure.mgmt.synapse.models.ManagedIntegrationRuntimeError]
+        """
+        super().__init__(**kwargs)
         self.additional_properties = additional_properties
         self.node_id = None
         self.status = None
         self.errors = errors
 
 
-class ManagedIntegrationRuntimeOperationResult(msrest.serialization.Model):
+class ManagedIntegrationRuntimeOperationResult(_serialization.Model):
     """Properties of managed integration runtime operation result.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
-    :param additional_properties: Unmatched properties from the message are deserialized to this
+    :ivar additional_properties: Unmatched properties from the message are deserialized to this
      collection.
-    :type additional_properties: dict[str, object]
+    :vartype additional_properties: dict[str, JSON]
     :ivar type: The operation type. Could be start or stop.
     :vartype type: str
     :ivar start_time: The start time of the operation.
@@ -3625,31 +6737,31 @@ class ManagedIntegrationRuntimeOperationResult(msrest.serialization.Model):
     """
 
     _validation = {
-        'type': {'readonly': True},
-        'start_time': {'readonly': True},
-        'result': {'readonly': True},
-        'error_code': {'readonly': True},
-        'parameters': {'readonly': True},
-        'activity_id': {'readonly': True},
+        "type": {"readonly": True},
+        "start_time": {"readonly": True},
+        "result": {"readonly": True},
+        "error_code": {"readonly": True},
+        "parameters": {"readonly": True},
+        "activity_id": {"readonly": True},
     }
 
     _attribute_map = {
-        'additional_properties': {'key': '', 'type': '{object}'},
-        'type': {'key': 'type', 'type': 'str'},
-        'start_time': {'key': 'startTime', 'type': 'iso-8601'},
-        'result': {'key': 'result', 'type': 'str'},
-        'error_code': {'key': 'errorCode', 'type': 'str'},
-        'parameters': {'key': 'parameters', 'type': '[str]'},
-        'activity_id': {'key': 'activityId', 'type': 'str'},
+        "additional_properties": {"key": "", "type": "{object}"},
+        "type": {"key": "type", "type": "str"},
+        "start_time": {"key": "startTime", "type": "iso-8601"},
+        "result": {"key": "result", "type": "str"},
+        "error_code": {"key": "errorCode", "type": "str"},
+        "parameters": {"key": "parameters", "type": "[str]"},
+        "activity_id": {"key": "activityId", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        additional_properties: Optional[Dict[str, object]] = None,
-        **kwargs
-    ):
-        super(ManagedIntegrationRuntimeOperationResult, self).__init__(**kwargs)
+    def __init__(self, *, additional_properties: Optional[Dict[str, JSON]] = None, **kwargs: Any) -> None:
+        """
+        :keyword additional_properties: Unmatched properties from the message are deserialized to this
+         collection.
+        :paramtype additional_properties: dict[str, JSON]
+        """
+        super().__init__(**kwargs)
         self.additional_properties = additional_properties
         self.type = None
         self.start_time = None
@@ -3666,16 +6778,16 @@ class ManagedIntegrationRuntimeStatus(IntegrationRuntimeStatus):
 
     All required parameters must be populated in order to send to Azure.
 
-    :param additional_properties: Unmatched properties from the message are deserialized to this
+    :ivar additional_properties: Unmatched properties from the message are deserialized to this
      collection.
-    :type additional_properties: dict[str, object]
-    :param type: Required. Type of integration runtime.Constant filled by server.  Possible values
-     include: "Managed", "SelfHosted".
-    :type type: str or ~azure.mgmt.synapse.models.IntegrationRuntimeType
+    :vartype additional_properties: dict[str, JSON]
+    :ivar type: Type of integration runtime. Required. Known values are: "Managed" and
+     "SelfHosted".
+    :vartype type: str or ~azure.mgmt.synapse.models.IntegrationRuntimeType
     :ivar data_factory_name: The workspace name which the integration runtime belong to.
     :vartype data_factory_name: str
-    :ivar state: The state of integration runtime. Possible values include: "Initial", "Stopped",
-     "Started", "Starting", "Stopping", "NeedRegistration", "Online", "Limited", "Offline",
+    :ivar state: The state of integration runtime. Known values are: "Initial", "Stopped",
+     "Started", "Starting", "Stopping", "NeedRegistration", "Online", "Limited", "Offline", and
      "AccessDenied".
     :vartype state: str or ~azure.mgmt.synapse.models.IntegrationRuntimeState
     :ivar create_time: The time at which the integration runtime was created, in ISO8601 format.
@@ -3689,55 +6801,55 @@ class ManagedIntegrationRuntimeStatus(IntegrationRuntimeStatus):
     """
 
     _validation = {
-        'type': {'required': True},
-        'data_factory_name': {'readonly': True},
-        'state': {'readonly': True},
-        'create_time': {'readonly': True},
-        'nodes': {'readonly': True},
-        'other_errors': {'readonly': True},
-        'last_operation': {'readonly': True},
+        "type": {"required": True},
+        "data_factory_name": {"readonly": True},
+        "state": {"readonly": True},
+        "create_time": {"readonly": True},
+        "nodes": {"readonly": True},
+        "other_errors": {"readonly": True},
+        "last_operation": {"readonly": True},
     }
 
     _attribute_map = {
-        'additional_properties': {'key': '', 'type': '{object}'},
-        'type': {'key': 'type', 'type': 'str'},
-        'data_factory_name': {'key': 'dataFactoryName', 'type': 'str'},
-        'state': {'key': 'state', 'type': 'str'},
-        'create_time': {'key': 'typeProperties.createTime', 'type': 'iso-8601'},
-        'nodes': {'key': 'typeProperties.nodes', 'type': '[ManagedIntegrationRuntimeNode]'},
-        'other_errors': {'key': 'typeProperties.otherErrors', 'type': '[ManagedIntegrationRuntimeError]'},
-        'last_operation': {'key': 'typeProperties.lastOperation', 'type': 'ManagedIntegrationRuntimeOperationResult'},
+        "additional_properties": {"key": "", "type": "{object}"},
+        "type": {"key": "type", "type": "str"},
+        "data_factory_name": {"key": "dataFactoryName", "type": "str"},
+        "state": {"key": "state", "type": "str"},
+        "create_time": {"key": "typeProperties.createTime", "type": "iso-8601"},
+        "nodes": {"key": "typeProperties.nodes", "type": "[ManagedIntegrationRuntimeNode]"},
+        "other_errors": {"key": "typeProperties.otherErrors", "type": "[ManagedIntegrationRuntimeError]"},
+        "last_operation": {"key": "typeProperties.lastOperation", "type": "ManagedIntegrationRuntimeOperationResult"},
     }
 
-    def __init__(
-        self,
-        *,
-        additional_properties: Optional[Dict[str, object]] = None,
-        **kwargs
-    ):
-        super(ManagedIntegrationRuntimeStatus, self).__init__(additional_properties=additional_properties, **kwargs)
-        self.type = 'Managed'  # type: str
+    def __init__(self, *, additional_properties: Optional[Dict[str, JSON]] = None, **kwargs: Any) -> None:
+        """
+        :keyword additional_properties: Unmatched properties from the message are deserialized to this
+         collection.
+        :paramtype additional_properties: dict[str, JSON]
+        """
+        super().__init__(additional_properties=additional_properties, **kwargs)
+        self.type: str = "Managed"
         self.create_time = None
         self.nodes = None
         self.other_errors = None
         self.last_operation = None
 
 
-class ManagedVirtualNetworkSettings(msrest.serialization.Model):
+class ManagedVirtualNetworkSettings(_serialization.Model):
     """Managed Virtual Network Settings.
 
-    :param prevent_data_exfiltration: Prevent Data Exfiltration.
-    :type prevent_data_exfiltration: bool
-    :param linked_access_check_on_target_resource: Linked Access Check On Target Resource.
-    :type linked_access_check_on_target_resource: bool
-    :param allowed_aad_tenant_ids_for_linking: Allowed Aad Tenant Ids For Linking.
-    :type allowed_aad_tenant_ids_for_linking: list[str]
+    :ivar prevent_data_exfiltration: Prevent Data Exfiltration.
+    :vartype prevent_data_exfiltration: bool
+    :ivar linked_access_check_on_target_resource: Linked Access Check On Target Resource.
+    :vartype linked_access_check_on_target_resource: bool
+    :ivar allowed_aad_tenant_ids_for_linking: Allowed Aad Tenant Ids For Linking.
+    :vartype allowed_aad_tenant_ids_for_linking: list[str]
     """
 
     _attribute_map = {
-        'prevent_data_exfiltration': {'key': 'preventDataExfiltration', 'type': 'bool'},
-        'linked_access_check_on_target_resource': {'key': 'linkedAccessCheckOnTargetResource', 'type': 'bool'},
-        'allowed_aad_tenant_ids_for_linking': {'key': 'allowedAadTenantIdsForLinking', 'type': '[str]'},
+        "prevent_data_exfiltration": {"key": "preventDataExfiltration", "type": "bool"},
+        "linked_access_check_on_target_resource": {"key": "linkedAccessCheckOnTargetResource", "type": "bool"},
+        "allowed_aad_tenant_ids_for_linking": {"key": "allowedAadTenantIdsForLinking", "type": "[str]"},
     }
 
     def __init__(
@@ -3746,9 +6858,17 @@ class ManagedVirtualNetworkSettings(msrest.serialization.Model):
         prevent_data_exfiltration: Optional[bool] = None,
         linked_access_check_on_target_resource: Optional[bool] = None,
         allowed_aad_tenant_ids_for_linking: Optional[List[str]] = None,
-        **kwargs
-    ):
-        super(ManagedVirtualNetworkSettings, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword prevent_data_exfiltration: Prevent Data Exfiltration.
+        :paramtype prevent_data_exfiltration: bool
+        :keyword linked_access_check_on_target_resource: Linked Access Check On Target Resource.
+        :paramtype linked_access_check_on_target_resource: bool
+        :keyword allowed_aad_tenant_ids_for_linking: Allowed Aad Tenant Ids For Linking.
+        :paramtype allowed_aad_tenant_ids_for_linking: list[str]
+        """
+        super().__init__(**kwargs)
         self.prevent_data_exfiltration = prevent_data_exfiltration
         self.linked_access_check_on_target_resource = linked_access_check_on_target_resource
         self.allowed_aad_tenant_ids_for_linking = allowed_aad_tenant_ids_for_linking
@@ -3767,53 +6887,178 @@ class MetadataSyncConfig(ProxyResource):
     :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
      "Microsoft.Storage/storageAccounts".
     :vartype type: str
-    :param enabled: Indicates whether the metadata sync is enabled or disabled.
-    :type enabled: bool
-    :param sync_interval_in_minutes: The Sync Interval in minutes.
-    :type sync_interval_in_minutes: int
+    :ivar enabled: Indicates whether the metadata sync is enabled or disabled.
+    :vartype enabled: bool
+    :ivar sync_interval_in_minutes: The Sync Interval in minutes.
+    :vartype sync_interval_in_minutes: int
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'enabled': {'key': 'properties.enabled', 'type': 'bool'},
-        'sync_interval_in_minutes': {'key': 'properties.syncIntervalInMinutes', 'type': 'int'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "enabled": {"key": "properties.enabled", "type": "bool"},
+        "sync_interval_in_minutes": {"key": "properties.syncIntervalInMinutes", "type": "int"},
+    }
+
+    def __init__(
+        self, *, enabled: Optional[bool] = None, sync_interval_in_minutes: Optional[int] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword enabled: Indicates whether the metadata sync is enabled or disabled.
+        :paramtype enabled: bool
+        :keyword sync_interval_in_minutes: The Sync Interval in minutes.
+        :paramtype sync_interval_in_minutes: int
+        """
+        super().__init__(**kwargs)
+        self.enabled = enabled
+        self.sync_interval_in_minutes = sync_interval_in_minutes
+
+
+class Operation(_serialization.Model):
+    """A REST API operation.
+
+    :ivar name: This is of the format {provider}/{resource}/{operation}.
+    :vartype name: str
+    :ivar display: The object that describes the operation.
+    :vartype display: ~azure.mgmt.synapse.models.OperationDisplay
+    :ivar origin: The intended executor of the operation.
+    :vartype origin: str
+    :ivar properties: Properties of the operation.
+    :vartype properties: JSON
+    """
+
+    _attribute_map = {
+        "name": {"key": "name", "type": "str"},
+        "display": {"key": "display", "type": "OperationDisplay"},
+        "origin": {"key": "origin", "type": "str"},
+        "properties": {"key": "properties", "type": "object"},
     }
 
     def __init__(
         self,
         *,
-        enabled: Optional[bool] = None,
-        sync_interval_in_minutes: Optional[int] = None,
-        **kwargs
-    ):
-        super(MetadataSyncConfig, self).__init__(**kwargs)
-        self.enabled = enabled
-        self.sync_interval_in_minutes = sync_interval_in_minutes
+        name: Optional[str] = None,
+        display: Optional["_models.OperationDisplay"] = None,
+        origin: Optional[str] = None,
+        properties: Optional[JSON] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword name: This is of the format {provider}/{resource}/{operation}.
+        :paramtype name: str
+        :keyword display: The object that describes the operation.
+        :paramtype display: ~azure.mgmt.synapse.models.OperationDisplay
+        :keyword origin: The intended executor of the operation.
+        :paramtype origin: str
+        :keyword properties: Properties of the operation.
+        :paramtype properties: JSON
+        """
+        super().__init__(**kwargs)
+        self.name = name
+        self.display = display
+        self.origin = origin
+        self.properties = properties
 
 
-class OperationMetaLogSpecification(msrest.serialization.Model):
-    """What is this?.
+class OperationDisplay(_serialization.Model):
+    """The object that describes the operation.
 
-    :param display_name: Log display name.
-    :type display_name: str
-    :param blob_duration: Time range the log covers.
-    :type blob_duration: str
-    :param name: Log unique name.
-    :type name: str
+    :ivar provider: Friendly name of the resource provider.
+    :vartype provider: str
+    :ivar operation: For example: read, write, delete.
+    :vartype operation: str
+    :ivar resource: The resource type on which the operation is performed.
+    :vartype resource: str
+    :ivar description: The friendly name of the operation.
+    :vartype description: str
     """
 
     _attribute_map = {
-        'display_name': {'key': 'displayName', 'type': 'str'},
-        'blob_duration': {'key': 'blobDuration', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
+        "provider": {"key": "provider", "type": "str"},
+        "operation": {"key": "operation", "type": "str"},
+        "resource": {"key": "resource", "type": "str"},
+        "description": {"key": "description", "type": "str"},
+    }
+
+    def __init__(
+        self,
+        *,
+        provider: Optional[str] = None,
+        operation: Optional[str] = None,
+        resource: Optional[str] = None,
+        description: Optional[str] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword provider: Friendly name of the resource provider.
+        :paramtype provider: str
+        :keyword operation: For example: read, write, delete.
+        :paramtype operation: str
+        :keyword resource: The resource type on which the operation is performed.
+        :paramtype resource: str
+        :keyword description: The friendly name of the operation.
+        :paramtype description: str
+        """
+        super().__init__(**kwargs)
+        self.provider = provider
+        self.operation = operation
+        self.resource = resource
+        self.description = description
+
+
+class OperationListResult(_serialization.Model):
+    """Result of the request to list REST API operations. It contains a list of operations and a URL
+    nextLink to get the next set of results.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    :ivar value: The list of operations supported by the resource provider.
+    :vartype value: list[~azure.mgmt.synapse.models.Operation]
+    :ivar next_link: The URL to get the next set of operation list results if there are any.
+    :vartype next_link: str
+    """
+
+    _validation = {
+        "next_link": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "value": {"key": "value", "type": "[Operation]"},
+        "next_link": {"key": "nextLink", "type": "str"},
+    }
+
+    def __init__(self, *, value: Optional[List["_models.Operation"]] = None, **kwargs: Any) -> None:
+        """
+        :keyword value: The list of operations supported by the resource provider.
+        :paramtype value: list[~azure.mgmt.synapse.models.Operation]
+        """
+        super().__init__(**kwargs)
+        self.value = value
+        self.next_link = None
+
+
+class OperationMetaLogSpecification(_serialization.Model):
+    """What is this?.
+
+    :ivar display_name: Log display name.
+    :vartype display_name: str
+    :ivar blob_duration: Time range the log covers.
+    :vartype blob_duration: str
+    :ivar name: Log unique name.
+    :vartype name: str
+    """
+
+    _attribute_map = {
+        "display_name": {"key": "displayName", "type": "str"},
+        "blob_duration": {"key": "blobDuration", "type": "str"},
+        "name": {"key": "name", "type": "str"},
     }
 
     def __init__(
@@ -3822,29 +7067,37 @@ class OperationMetaLogSpecification(msrest.serialization.Model):
         display_name: Optional[str] = None,
         blob_duration: Optional[str] = None,
         name: Optional[str] = None,
-        **kwargs
-    ):
-        super(OperationMetaLogSpecification, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword display_name: Log display name.
+        :paramtype display_name: str
+        :keyword blob_duration: Time range the log covers.
+        :paramtype blob_duration: str
+        :keyword name: Log unique name.
+        :paramtype name: str
+        """
+        super().__init__(**kwargs)
         self.display_name = display_name
         self.blob_duration = blob_duration
         self.name = name
 
 
-class OperationMetaMetricDimensionSpecification(msrest.serialization.Model):
+class OperationMetaMetricDimensionSpecification(_serialization.Model):
     """What is this?.
 
-    :param display_name: Dimension display name.
-    :type display_name: str
-    :param name: Dimension unique name.
-    :type name: str
-    :param to_be_exported_for_shoebox: Whether this metric should be exported for Shoebox.
-    :type to_be_exported_for_shoebox: bool
+    :ivar display_name: Dimension display name.
+    :vartype display_name: str
+    :ivar name: Dimension unique name.
+    :vartype name: str
+    :ivar to_be_exported_for_shoebox: Whether this metric should be exported for Shoebox.
+    :vartype to_be_exported_for_shoebox: bool
     """
 
     _attribute_map = {
-        'display_name': {'key': 'displayName', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'to_be_exported_for_shoebox': {'key': 'toBeExportedForShoebox', 'type': 'bool'},
+        "display_name": {"key": "displayName", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "to_be_exported_for_shoebox": {"key": "toBeExportedForShoebox", "type": "bool"},
     }
 
     def __init__(
@@ -3853,54 +7106,62 @@ class OperationMetaMetricDimensionSpecification(msrest.serialization.Model):
         display_name: Optional[str] = None,
         name: Optional[str] = None,
         to_be_exported_for_shoebox: Optional[bool] = None,
-        **kwargs
-    ):
-        super(OperationMetaMetricDimensionSpecification, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword display_name: Dimension display name.
+        :paramtype display_name: str
+        :keyword name: Dimension unique name.
+        :paramtype name: str
+        :keyword to_be_exported_for_shoebox: Whether this metric should be exported for Shoebox.
+        :paramtype to_be_exported_for_shoebox: bool
+        """
+        super().__init__(**kwargs)
         self.display_name = display_name
         self.name = name
         self.to_be_exported_for_shoebox = to_be_exported_for_shoebox
 
 
-class OperationMetaMetricSpecification(msrest.serialization.Model):
+class OperationMetaMetricSpecification(_serialization.Model):  # pylint: disable=too-many-instance-attributes
     """What is this?.
 
-    :param source_mdm_namespace: The source MDM namespace.
-    :type source_mdm_namespace: str
-    :param display_name: Metric display name.
-    :type display_name: str
-    :param name: Metric unique name.
-    :type name: str
-    :param aggregation_type: Metric aggregation type.
-    :type aggregation_type: str
-    :param display_description: Metric description.
-    :type display_description: str
-    :param source_mdm_account: The source MDM account.
-    :type source_mdm_account: str
-    :param enable_regional_mdm_account: Whether the regional MDM account is enabled.
-    :type enable_regional_mdm_account: bool
-    :param unit: Metric units.
-    :type unit: str
-    :param dimensions: Metric dimensions.
-    :type dimensions: list[~azure.mgmt.synapse.models.OperationMetaMetricDimensionSpecification]
-    :param supports_instance_level_aggregation: Whether the metric supports instance-level
+    :ivar source_mdm_namespace: The source MDM namespace.
+    :vartype source_mdm_namespace: str
+    :ivar display_name: Metric display name.
+    :vartype display_name: str
+    :ivar name: Metric unique name.
+    :vartype name: str
+    :ivar aggregation_type: Metric aggregation type.
+    :vartype aggregation_type: str
+    :ivar display_description: Metric description.
+    :vartype display_description: str
+    :ivar source_mdm_account: The source MDM account.
+    :vartype source_mdm_account: str
+    :ivar enable_regional_mdm_account: Whether the regional MDM account is enabled.
+    :vartype enable_regional_mdm_account: bool
+    :ivar unit: Metric units.
+    :vartype unit: str
+    :ivar dimensions: Metric dimensions.
+    :vartype dimensions: list[~azure.mgmt.synapse.models.OperationMetaMetricDimensionSpecification]
+    :ivar supports_instance_level_aggregation: Whether the metric supports instance-level
      aggregation.
-    :type supports_instance_level_aggregation: bool
-    :param metric_filter_pattern: Metric filter.
-    :type metric_filter_pattern: str
+    :vartype supports_instance_level_aggregation: bool
+    :ivar metric_filter_pattern: Metric filter.
+    :vartype metric_filter_pattern: str
     """
 
     _attribute_map = {
-        'source_mdm_namespace': {'key': 'sourceMdmNamespace', 'type': 'str'},
-        'display_name': {'key': 'displayName', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'aggregation_type': {'key': 'aggregationType', 'type': 'str'},
-        'display_description': {'key': 'displayDescription', 'type': 'str'},
-        'source_mdm_account': {'key': 'sourceMdmAccount', 'type': 'str'},
-        'enable_regional_mdm_account': {'key': 'enableRegionalMdmAccount', 'type': 'bool'},
-        'unit': {'key': 'unit', 'type': 'str'},
-        'dimensions': {'key': 'dimensions', 'type': '[OperationMetaMetricDimensionSpecification]'},
-        'supports_instance_level_aggregation': {'key': 'supportsInstanceLevelAggregation', 'type': 'bool'},
-        'metric_filter_pattern': {'key': 'metricFilterPattern', 'type': 'str'},
+        "source_mdm_namespace": {"key": "sourceMdmNamespace", "type": "str"},
+        "display_name": {"key": "displayName", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "aggregation_type": {"key": "aggregationType", "type": "str"},
+        "display_description": {"key": "displayDescription", "type": "str"},
+        "source_mdm_account": {"key": "sourceMdmAccount", "type": "str"},
+        "enable_regional_mdm_account": {"key": "enableRegionalMdmAccount", "type": "bool"},
+        "unit": {"key": "unit", "type": "str"},
+        "dimensions": {"key": "dimensions", "type": "[OperationMetaMetricDimensionSpecification]"},
+        "supports_instance_level_aggregation": {"key": "supportsInstanceLevelAggregation", "type": "bool"},
+        "metric_filter_pattern": {"key": "metricFilterPattern", "type": "str"},
     }
 
     def __init__(
@@ -3914,12 +7175,38 @@ class OperationMetaMetricSpecification(msrest.serialization.Model):
         source_mdm_account: Optional[str] = None,
         enable_regional_mdm_account: Optional[bool] = None,
         unit: Optional[str] = None,
-        dimensions: Optional[List["OperationMetaMetricDimensionSpecification"]] = None,
+        dimensions: Optional[List["_models.OperationMetaMetricDimensionSpecification"]] = None,
         supports_instance_level_aggregation: Optional[bool] = None,
         metric_filter_pattern: Optional[str] = None,
-        **kwargs
-    ):
-        super(OperationMetaMetricSpecification, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword source_mdm_namespace: The source MDM namespace.
+        :paramtype source_mdm_namespace: str
+        :keyword display_name: Metric display name.
+        :paramtype display_name: str
+        :keyword name: Metric unique name.
+        :paramtype name: str
+        :keyword aggregation_type: Metric aggregation type.
+        :paramtype aggregation_type: str
+        :keyword display_description: Metric description.
+        :paramtype display_description: str
+        :keyword source_mdm_account: The source MDM account.
+        :paramtype source_mdm_account: str
+        :keyword enable_regional_mdm_account: Whether the regional MDM account is enabled.
+        :paramtype enable_regional_mdm_account: bool
+        :keyword unit: Metric units.
+        :paramtype unit: str
+        :keyword dimensions: Metric dimensions.
+        :paramtype dimensions:
+         list[~azure.mgmt.synapse.models.OperationMetaMetricDimensionSpecification]
+        :keyword supports_instance_level_aggregation: Whether the metric supports instance-level
+         aggregation.
+        :paramtype supports_instance_level_aggregation: bool
+        :keyword metric_filter_pattern: Metric filter.
+        :paramtype metric_filter_pattern: str
+        """
+        super().__init__(**kwargs)
         self.source_mdm_namespace = source_mdm_namespace
         self.display_name = display_name
         self.name = name
@@ -3933,79 +7220,106 @@ class OperationMetaMetricSpecification(msrest.serialization.Model):
         self.metric_filter_pattern = metric_filter_pattern
 
 
-class OperationMetaServiceSpecification(msrest.serialization.Model):
+class OperationMetaServiceSpecification(_serialization.Model):
     """What is this?.
 
-    :param metric_specifications: Service metric specifications.
-    :type metric_specifications: list[~azure.mgmt.synapse.models.OperationMetaMetricSpecification]
-    :param log_specifications: Service log specifications.
-    :type log_specifications: list[~azure.mgmt.synapse.models.OperationMetaLogSpecification]
+    :ivar metric_specifications: Service metric specifications.
+    :vartype metric_specifications:
+     list[~azure.mgmt.synapse.models.OperationMetaMetricSpecification]
+    :ivar log_specifications: Service log specifications.
+    :vartype log_specifications: list[~azure.mgmt.synapse.models.OperationMetaLogSpecification]
     """
 
     _attribute_map = {
-        'metric_specifications': {'key': 'metricSpecifications', 'type': '[OperationMetaMetricSpecification]'},
-        'log_specifications': {'key': 'logSpecifications', 'type': '[OperationMetaLogSpecification]'},
+        "metric_specifications": {"key": "metricSpecifications", "type": "[OperationMetaMetricSpecification]"},
+        "log_specifications": {"key": "logSpecifications", "type": "[OperationMetaLogSpecification]"},
     }
 
     def __init__(
         self,
         *,
-        metric_specifications: Optional[List["OperationMetaMetricSpecification"]] = None,
-        log_specifications: Optional[List["OperationMetaLogSpecification"]] = None,
-        **kwargs
-    ):
-        super(OperationMetaServiceSpecification, self).__init__(**kwargs)
+        metric_specifications: Optional[List["_models.OperationMetaMetricSpecification"]] = None,
+        log_specifications: Optional[List["_models.OperationMetaLogSpecification"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword metric_specifications: Service metric specifications.
+        :paramtype metric_specifications:
+         list[~azure.mgmt.synapse.models.OperationMetaMetricSpecification]
+        :keyword log_specifications: Service log specifications.
+        :paramtype log_specifications: list[~azure.mgmt.synapse.models.OperationMetaLogSpecification]
+        """
+        super().__init__(**kwargs)
         self.metric_specifications = metric_specifications
         self.log_specifications = log_specifications
 
 
-class OperationResource(msrest.serialization.Model):
+class OperationResource(_serialization.Model):
     """An operation.
 
-    :param id: Operation ID.
-    :type id: str
-    :param name: Operation name.
-    :type name: str
-    :param status: Operation status. Possible values include: "InProgress", "Succeeded", "Failed",
+    :ivar id: Operation ID.
+    :vartype id: str
+    :ivar name: Operation name.
+    :vartype name: str
+    :ivar status: Operation status. Known values are: "InProgress", "Succeeded", "Failed", and
      "Canceled".
-    :type status: str or ~azure.mgmt.synapse.models.OperationStatus
-    :param properties: Operation properties.
-    :type properties: object
-    :param error: Errors from the operation.
-    :type error: ~azure.mgmt.synapse.models.ErrorDetail
-    :param start_time: Operation start time.
-    :type start_time: ~datetime.datetime
-    :param end_time: Operation start time.
-    :type end_time: ~datetime.datetime
-    :param percent_complete: Completion percentage of the operation.
-    :type percent_complete: float
+    :vartype status: str or ~azure.mgmt.synapse.models.OperationStatus
+    :ivar properties: Operation properties.
+    :vartype properties: JSON
+    :ivar error: Errors from the operation.
+    :vartype error: ~azure.mgmt.synapse.models.ErrorDetail
+    :ivar start_time: Operation start time.
+    :vartype start_time: ~datetime.datetime
+    :ivar end_time: Operation start time.
+    :vartype end_time: ~datetime.datetime
+    :ivar percent_complete: Completion percentage of the operation.
+    :vartype percent_complete: float
     """
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'status': {'key': 'status', 'type': 'str'},
-        'properties': {'key': 'properties', 'type': 'object'},
-        'error': {'key': 'error', 'type': 'ErrorDetail'},
-        'start_time': {'key': 'startTime', 'type': 'iso-8601'},
-        'end_time': {'key': 'endTime', 'type': 'iso-8601'},
-        'percent_complete': {'key': 'percentComplete', 'type': 'float'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "status": {"key": "status", "type": "str"},
+        "properties": {"key": "properties", "type": "object"},
+        "error": {"key": "error", "type": "ErrorDetail"},
+        "start_time": {"key": "startTime", "type": "iso-8601"},
+        "end_time": {"key": "endTime", "type": "iso-8601"},
+        "percent_complete": {"key": "percentComplete", "type": "float"},
     }
 
     def __init__(
         self,
         *,
-        id: Optional[str] = None,
+        id: Optional[str] = None,  # pylint: disable=redefined-builtin
         name: Optional[str] = None,
-        status: Optional[Union[str, "OperationStatus"]] = None,
-        properties: Optional[object] = None,
-        error: Optional["ErrorDetail"] = None,
+        status: Optional[Union[str, "_models.OperationStatus"]] = None,
+        properties: Optional[JSON] = None,
+        error: Optional["_models.ErrorDetail"] = None,
         start_time: Optional[datetime.datetime] = None,
         end_time: Optional[datetime.datetime] = None,
         percent_complete: Optional[float] = None,
-        **kwargs
-    ):
-        super(OperationResource, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword id: Operation ID.
+        :paramtype id: str
+        :keyword name: Operation name.
+        :paramtype name: str
+        :keyword status: Operation status. Known values are: "InProgress", "Succeeded", "Failed", and
+         "Canceled".
+        :paramtype status: str or ~azure.mgmt.synapse.models.OperationStatus
+        :keyword properties: Operation properties.
+        :paramtype properties: JSON
+        :keyword error: Errors from the operation.
+        :paramtype error: ~azure.mgmt.synapse.models.ErrorDetail
+        :keyword start_time: Operation start time.
+        :paramtype start_time: ~datetime.datetime
+        :keyword end_time: Operation start time.
+        :paramtype end_time: ~datetime.datetime
+        :keyword percent_complete: Completion percentage of the operation.
+        :paramtype percent_complete: float
+        """
+        super().__init__(**kwargs)
         self.id = id
         self.name = name
         self.status = status
@@ -4016,7 +7330,56 @@ class OperationResource(msrest.serialization.Model):
         self.percent_complete = percent_complete
 
 
-class PrivateEndpoint(msrest.serialization.Model):
+class OptimizedAutoscale(_serialization.Model):
+    """A class that contains the optimized auto scale definition.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :ivar version: The version of the template defined, for instance 1. Required.
+    :vartype version: int
+    :ivar is_enabled: A boolean value that indicate if the optimized autoscale feature is enabled
+     or not. Required.
+    :vartype is_enabled: bool
+    :ivar minimum: Minimum allowed instances count. Required.
+    :vartype minimum: int
+    :ivar maximum: Maximum allowed instances count. Required.
+    :vartype maximum: int
+    """
+
+    _validation = {
+        "version": {"required": True},
+        "is_enabled": {"required": True},
+        "minimum": {"required": True},
+        "maximum": {"required": True},
+    }
+
+    _attribute_map = {
+        "version": {"key": "version", "type": "int"},
+        "is_enabled": {"key": "isEnabled", "type": "bool"},
+        "minimum": {"key": "minimum", "type": "int"},
+        "maximum": {"key": "maximum", "type": "int"},
+    }
+
+    def __init__(self, *, version: int, is_enabled: bool, minimum: int, maximum: int, **kwargs: Any) -> None:
+        """
+        :keyword version: The version of the template defined, for instance 1. Required.
+        :paramtype version: int
+        :keyword is_enabled: A boolean value that indicate if the optimized autoscale feature is
+         enabled or not. Required.
+        :paramtype is_enabled: bool
+        :keyword minimum: Minimum allowed instances count. Required.
+        :paramtype minimum: int
+        :keyword maximum: Maximum allowed instances count. Required.
+        :paramtype maximum: int
+        """
+        super().__init__(**kwargs)
+        self.version = version
+        self.is_enabled = is_enabled
+        self.minimum = minimum
+        self.maximum = maximum
+
+
+class PrivateEndpoint(_serialization.Model):
     """Private endpoint details.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -4026,18 +7389,16 @@ class PrivateEndpoint(msrest.serialization.Model):
     """
 
     _validation = {
-        'id': {'readonly': True},
+        "id": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(PrivateEndpoint, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.id = None
 
 
@@ -4054,67 +7415,84 @@ class PrivateEndpointConnection(ProxyResource):
     :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
      "Microsoft.Storage/storageAccounts".
     :vartype type: str
-    :param private_endpoint: The private endpoint which the connection belongs to.
-    :type private_endpoint: ~azure.mgmt.synapse.models.PrivateEndpoint
-    :param private_link_service_connection_state: Connection state of the private endpoint
+    :ivar private_endpoint: The private endpoint which the connection belongs to.
+    :vartype private_endpoint: ~azure.mgmt.synapse.models.PrivateEndpoint
+    :ivar private_link_service_connection_state: Connection state of the private endpoint
      connection.
-    :type private_link_service_connection_state:
+    :vartype private_link_service_connection_state:
      ~azure.mgmt.synapse.models.PrivateLinkServiceConnectionState
     :ivar provisioning_state: Provisioning state of the private endpoint connection.
     :vartype provisioning_state: str
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'provisioning_state': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "provisioning_state": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'private_endpoint': {'key': 'properties.privateEndpoint', 'type': 'PrivateEndpoint'},
-        'private_link_service_connection_state': {'key': 'properties.privateLinkServiceConnectionState', 'type': 'PrivateLinkServiceConnectionState'},
-        'provisioning_state': {'key': 'properties.provisioningState', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "private_endpoint": {"key": "properties.privateEndpoint", "type": "PrivateEndpoint"},
+        "private_link_service_connection_state": {
+            "key": "properties.privateLinkServiceConnectionState",
+            "type": "PrivateLinkServiceConnectionState",
+        },
+        "provisioning_state": {"key": "properties.provisioningState", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        private_endpoint: Optional["PrivateEndpoint"] = None,
-        private_link_service_connection_state: Optional["PrivateLinkServiceConnectionState"] = None,
-        **kwargs
-    ):
-        super(PrivateEndpointConnection, self).__init__(**kwargs)
+        private_endpoint: Optional["_models.PrivateEndpoint"] = None,
+        private_link_service_connection_state: Optional["_models.PrivateLinkServiceConnectionState"] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword private_endpoint: The private endpoint which the connection belongs to.
+        :paramtype private_endpoint: ~azure.mgmt.synapse.models.PrivateEndpoint
+        :keyword private_link_service_connection_state: Connection state of the private endpoint
+         connection.
+        :paramtype private_link_service_connection_state:
+         ~azure.mgmt.synapse.models.PrivateLinkServiceConnectionState
+        """
+        super().__init__(**kwargs)
         self.private_endpoint = private_endpoint
         self.private_link_service_connection_state = private_link_service_connection_state
         self.provisioning_state = None
 
 
-class PrivateEndpointConnectionForPrivateLinkHubBasicAutoGenerated(msrest.serialization.Model):
+class PrivateEndpointConnectionForPrivateLinkHubBasicAutoGenerated(_serialization.Model):
     """PrivateEndpointConnectionForPrivateLinkHubBasicAutoGenerated.
 
-    :param id:
-    :type id: str
-    :param properties: Properties of a private endpoint connection.
-    :type properties: ~azure.mgmt.synapse.models.PrivateEndpointConnectionProperties
+    :ivar id:
+    :vartype id: str
+    :ivar properties: Properties of a private endpoint connection.
+    :vartype properties: ~azure.mgmt.synapse.models.PrivateEndpointConnectionProperties
     """
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'properties': {'key': 'properties', 'type': 'PrivateEndpointConnectionProperties'},
+        "id": {"key": "id", "type": "str"},
+        "properties": {"key": "properties", "type": "PrivateEndpointConnectionProperties"},
     }
 
     def __init__(
         self,
         *,
-        id: Optional[str] = None,
-        properties: Optional["PrivateEndpointConnectionProperties"] = None,
-        **kwargs
-    ):
-        super(PrivateEndpointConnectionForPrivateLinkHubBasicAutoGenerated, self).__init__(**kwargs)
+        id: Optional[str] = None,  # pylint: disable=redefined-builtin
+        properties: Optional["_models.PrivateEndpointConnectionProperties"] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword id:
+        :paramtype id: str
+        :keyword properties: Properties of a private endpoint connection.
+        :paramtype properties: ~azure.mgmt.synapse.models.PrivateEndpointConnectionProperties
+        """
+        super().__init__(**kwargs)
         self.id = id
         self.properties = properties
 
@@ -4122,107 +7500,134 @@ class PrivateEndpointConnectionForPrivateLinkHubBasicAutoGenerated(msrest.serial
 class PrivateEndpointConnectionForPrivateLinkHub(PrivateEndpointConnectionForPrivateLinkHubBasicAutoGenerated):
     """PrivateEndpointConnectionForPrivateLinkHub.
 
-    :param id:
-    :type id: str
-    :param properties: Properties of a private endpoint connection.
-    :type properties: ~azure.mgmt.synapse.models.PrivateEndpointConnectionProperties
-    :param name:
-    :type name: str
-    :param type:
-    :type type: str
+    :ivar id:
+    :vartype id: str
+    :ivar properties: Properties of a private endpoint connection.
+    :vartype properties: ~azure.mgmt.synapse.models.PrivateEndpointConnectionProperties
+    :ivar name:
+    :vartype name: str
+    :ivar type:
+    :vartype type: str
     """
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'properties': {'key': 'properties', 'type': 'PrivateEndpointConnectionProperties'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "properties": {"key": "properties", "type": "PrivateEndpointConnectionProperties"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        id: Optional[str] = None,
-        properties: Optional["PrivateEndpointConnectionProperties"] = None,
+        id: Optional[str] = None,  # pylint: disable=redefined-builtin
+        properties: Optional["_models.PrivateEndpointConnectionProperties"] = None,
         name: Optional[str] = None,
         type: Optional[str] = None,
-        **kwargs
-    ):
-        super(PrivateEndpointConnectionForPrivateLinkHub, self).__init__(id=id, properties=properties, **kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword id:
+        :paramtype id: str
+        :keyword properties: Properties of a private endpoint connection.
+        :paramtype properties: ~azure.mgmt.synapse.models.PrivateEndpointConnectionProperties
+        :keyword name:
+        :paramtype name: str
+        :keyword type:
+        :paramtype type: str
+        """
+        super().__init__(id=id, properties=properties, **kwargs)
         self.name = name
         self.type = type
 
 
-class PrivateEndpointConnectionForPrivateLinkHubBasic(msrest.serialization.Model):
+class PrivateEndpointConnectionForPrivateLinkHubBasic(_serialization.Model):
     """Private Endpoint Connection For Private Link Hub - Basic.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
     :ivar id: identifier.
     :vartype id: str
-    :param private_endpoint: The private endpoint which the connection belongs to.
-    :type private_endpoint: ~azure.mgmt.synapse.models.PrivateEndpoint
-    :param private_link_service_connection_state: Connection state of the private endpoint
+    :ivar private_endpoint: The private endpoint which the connection belongs to.
+    :vartype private_endpoint: ~azure.mgmt.synapse.models.PrivateEndpoint
+    :ivar private_link_service_connection_state: Connection state of the private endpoint
      connection.
-    :type private_link_service_connection_state:
+    :vartype private_link_service_connection_state:
      ~azure.mgmt.synapse.models.PrivateLinkServiceConnectionState
     :ivar provisioning_state: Provisioning state of the private endpoint connection.
     :vartype provisioning_state: str
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'provisioning_state': {'readonly': True},
+        "id": {"readonly": True},
+        "provisioning_state": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'private_endpoint': {'key': 'properties.privateEndpoint', 'type': 'PrivateEndpoint'},
-        'private_link_service_connection_state': {'key': 'properties.privateLinkServiceConnectionState', 'type': 'PrivateLinkServiceConnectionState'},
-        'provisioning_state': {'key': 'properties.provisioningState', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "private_endpoint": {"key": "properties.privateEndpoint", "type": "PrivateEndpoint"},
+        "private_link_service_connection_state": {
+            "key": "properties.privateLinkServiceConnectionState",
+            "type": "PrivateLinkServiceConnectionState",
+        },
+        "provisioning_state": {"key": "properties.provisioningState", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        private_endpoint: Optional["PrivateEndpoint"] = None,
-        private_link_service_connection_state: Optional["PrivateLinkServiceConnectionState"] = None,
-        **kwargs
-    ):
-        super(PrivateEndpointConnectionForPrivateLinkHubBasic, self).__init__(**kwargs)
+        private_endpoint: Optional["_models.PrivateEndpoint"] = None,
+        private_link_service_connection_state: Optional["_models.PrivateLinkServiceConnectionState"] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword private_endpoint: The private endpoint which the connection belongs to.
+        :paramtype private_endpoint: ~azure.mgmt.synapse.models.PrivateEndpoint
+        :keyword private_link_service_connection_state: Connection state of the private endpoint
+         connection.
+        :paramtype private_link_service_connection_state:
+         ~azure.mgmt.synapse.models.PrivateLinkServiceConnectionState
+        """
+        super().__init__(**kwargs)
         self.id = None
         self.private_endpoint = private_endpoint
         self.private_link_service_connection_state = private_link_service_connection_state
         self.provisioning_state = None
 
 
-class PrivateEndpointConnectionForPrivateLinkHubResourceCollectionResponse(msrest.serialization.Model):
+class PrivateEndpointConnectionForPrivateLinkHubResourceCollectionResponse(_serialization.Model):
     """PrivateEndpointConnectionForPrivateLinkHubResourceCollectionResponse.
 
-    :param value:
-    :type value: list[~azure.mgmt.synapse.models.PrivateEndpointConnectionForPrivateLinkHub]
-    :param next_link:
-    :type next_link: str
+    :ivar value:
+    :vartype value: list[~azure.mgmt.synapse.models.PrivateEndpointConnectionForPrivateLinkHub]
+    :ivar next_link:
+    :vartype next_link: str
     """
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[PrivateEndpointConnectionForPrivateLinkHub]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[PrivateEndpointConnectionForPrivateLinkHub]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        value: Optional[List["PrivateEndpointConnectionForPrivateLinkHub"]] = None,
+        value: Optional[List["_models.PrivateEndpointConnectionForPrivateLinkHub"]] = None,
         next_link: Optional[str] = None,
-        **kwargs
-    ):
-        super(PrivateEndpointConnectionForPrivateLinkHubResourceCollectionResponse, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword value:
+        :paramtype value: list[~azure.mgmt.synapse.models.PrivateEndpointConnectionForPrivateLinkHub]
+        :keyword next_link:
+        :paramtype next_link: str
+        """
+        super().__init__(**kwargs)
         self.value = value
         self.next_link = next_link
 
 
-class PrivateEndpointConnectionList(msrest.serialization.Model):
+class PrivateEndpointConnectionList(_serialization.Model):
     """A list of private endpoint connections.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -4234,57 +7639,66 @@ class PrivateEndpointConnectionList(msrest.serialization.Model):
     """
 
     _validation = {
-        'value': {'readonly': True},
-        'next_link': {'readonly': True},
+        "value": {"readonly": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[PrivateEndpointConnection]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[PrivateEndpointConnection]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(PrivateEndpointConnectionList, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.value = None
         self.next_link = None
 
 
-class PrivateEndpointConnectionProperties(msrest.serialization.Model):
+class PrivateEndpointConnectionProperties(_serialization.Model):
     """Properties of a private endpoint connection.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
-    :param private_endpoint: The private endpoint which the connection belongs to.
-    :type private_endpoint: ~azure.mgmt.synapse.models.PrivateEndpoint
-    :param private_link_service_connection_state: Connection state of the private endpoint
+    :ivar private_endpoint: The private endpoint which the connection belongs to.
+    :vartype private_endpoint: ~azure.mgmt.synapse.models.PrivateEndpoint
+    :ivar private_link_service_connection_state: Connection state of the private endpoint
      connection.
-    :type private_link_service_connection_state:
+    :vartype private_link_service_connection_state:
      ~azure.mgmt.synapse.models.PrivateLinkServiceConnectionState
     :ivar provisioning_state: Provisioning state of the private endpoint connection.
     :vartype provisioning_state: str
     """
 
     _validation = {
-        'provisioning_state': {'readonly': True},
+        "provisioning_state": {"readonly": True},
     }
 
     _attribute_map = {
-        'private_endpoint': {'key': 'privateEndpoint', 'type': 'PrivateEndpoint'},
-        'private_link_service_connection_state': {'key': 'privateLinkServiceConnectionState', 'type': 'PrivateLinkServiceConnectionState'},
-        'provisioning_state': {'key': 'provisioningState', 'type': 'str'},
+        "private_endpoint": {"key": "privateEndpoint", "type": "PrivateEndpoint"},
+        "private_link_service_connection_state": {
+            "key": "privateLinkServiceConnectionState",
+            "type": "PrivateLinkServiceConnectionState",
+        },
+        "provisioning_state": {"key": "provisioningState", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        private_endpoint: Optional["PrivateEndpoint"] = None,
-        private_link_service_connection_state: Optional["PrivateLinkServiceConnectionState"] = None,
-        **kwargs
-    ):
-        super(PrivateEndpointConnectionProperties, self).__init__(**kwargs)
+        private_endpoint: Optional["_models.PrivateEndpoint"] = None,
+        private_link_service_connection_state: Optional["_models.PrivateLinkServiceConnectionState"] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword private_endpoint: The private endpoint which the connection belongs to.
+        :paramtype private_endpoint: ~azure.mgmt.synapse.models.PrivateEndpoint
+        :keyword private_link_service_connection_state: Connection state of the private endpoint
+         connection.
+        :paramtype private_link_service_connection_state:
+         ~azure.mgmt.synapse.models.PrivateLinkServiceConnectionState
+        """
+        super().__init__(**kwargs)
         self.private_endpoint = private_endpoint
         self.private_link_service_connection_state = private_link_service_connection_state
         self.provisioning_state = None
@@ -4305,33 +7719,36 @@ class PrivateLinkHub(TrackedResource):
     :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
      "Microsoft.Storage/storageAccounts".
     :vartype type: str
-    :param tags: A set of tags. Resource tags.
-    :type tags: dict[str, str]
-    :param location: Required. The geo-location where the resource lives.
-    :type location: str
-    :param provisioning_state: PrivateLinkHub provisioning state.
-    :type provisioning_state: str
+    :ivar tags: Resource tags.
+    :vartype tags: dict[str, str]
+    :ivar location: The geo-location where the resource lives. Required.
+    :vartype location: str
+    :ivar provisioning_state: PrivateLinkHub provisioning state.
+    :vartype provisioning_state: str
     :ivar private_endpoint_connections: List of private endpoint connections.
     :vartype private_endpoint_connections:
      list[~azure.mgmt.synapse.models.PrivateEndpointConnectionForPrivateLinkHubBasic]
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'location': {'required': True},
-        'private_endpoint_connections': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "location": {"required": True},
+        "private_endpoint_connections": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'tags': {'key': 'tags', 'type': '{str}'},
-        'location': {'key': 'location', 'type': 'str'},
-        'provisioning_state': {'key': 'properties.provisioningState', 'type': 'str'},
-        'private_endpoint_connections': {'key': 'properties.privateEndpointConnections', 'type': '[PrivateEndpointConnectionForPrivateLinkHubBasic]'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "tags": {"key": "tags", "type": "{str}"},
+        "location": {"key": "location", "type": "str"},
+        "provisioning_state": {"key": "properties.provisioningState", "type": "str"},
+        "private_endpoint_connections": {
+            "key": "properties.privateEndpointConnections",
+            "type": "[PrivateEndpointConnectionForPrivateLinkHubBasic]",
+        },
     }
 
     def __init__(
@@ -4340,57 +7757,66 @@ class PrivateLinkHub(TrackedResource):
         location: str,
         tags: Optional[Dict[str, str]] = None,
         provisioning_state: Optional[str] = None,
-        **kwargs
-    ):
-        super(PrivateLinkHub, self).__init__(tags=tags, location=location, **kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword tags: Resource tags.
+        :paramtype tags: dict[str, str]
+        :keyword location: The geo-location where the resource lives. Required.
+        :paramtype location: str
+        :keyword provisioning_state: PrivateLinkHub provisioning state.
+        :paramtype provisioning_state: str
+        """
+        super().__init__(tags=tags, location=location, **kwargs)
         self.provisioning_state = provisioning_state
         self.private_endpoint_connections = None
 
 
-class PrivateLinkHubInfoListResult(msrest.serialization.Model):
+class PrivateLinkHubInfoListResult(_serialization.Model):
     """List of privateLinkHubs.
 
-    :param next_link: Link to the next page of results.
-    :type next_link: str
-    :param value: List of privateLinkHubs.
-    :type value: list[~azure.mgmt.synapse.models.PrivateLinkHub]
+    :ivar next_link: Link to the next page of results.
+    :vartype next_link: str
+    :ivar value: List of privateLinkHubs.
+    :vartype value: list[~azure.mgmt.synapse.models.PrivateLinkHub]
     """
 
     _attribute_map = {
-        'next_link': {'key': 'nextLink', 'type': 'str'},
-        'value': {'key': 'value', 'type': '[PrivateLinkHub]'},
+        "next_link": {"key": "nextLink", "type": "str"},
+        "value": {"key": "value", "type": "[PrivateLinkHub]"},
     }
 
     def __init__(
-        self,
-        *,
-        next_link: Optional[str] = None,
-        value: Optional[List["PrivateLinkHub"]] = None,
-        **kwargs
-    ):
-        super(PrivateLinkHubInfoListResult, self).__init__(**kwargs)
+        self, *, next_link: Optional[str] = None, value: Optional[List["_models.PrivateLinkHub"]] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword next_link: Link to the next page of results.
+        :paramtype next_link: str
+        :keyword value: List of privateLinkHubs.
+        :paramtype value: list[~azure.mgmt.synapse.models.PrivateLinkHub]
+        """
+        super().__init__(**kwargs)
         self.next_link = next_link
         self.value = value
 
 
-class PrivateLinkHubPatchInfo(msrest.serialization.Model):
+class PrivateLinkHubPatchInfo(_serialization.Model):
     """PrivateLinkHub patch details.
 
-    :param tags: A set of tags. Resource tags.
-    :type tags: dict[str, str]
+    :ivar tags: Resource tags.
+    :vartype tags: dict[str, str]
     """
 
     _attribute_map = {
-        'tags': {'key': 'tags', 'type': '{str}'},
+        "tags": {"key": "tags", "type": "{str}"},
     }
 
-    def __init__(
-        self,
-        *,
-        tags: Optional[Dict[str, str]] = None,
-        **kwargs
-    ):
-        super(PrivateLinkHubPatchInfo, self).__init__(**kwargs)
+    def __init__(self, *, tags: Optional[Dict[str, str]] = None, **kwargs: Any) -> None:
+        """
+        :keyword tags: Resource tags.
+        :paramtype tags: dict[str, str]
+        """
+        super().__init__(**kwargs)
         self.tags = tags
 
 
@@ -4412,28 +7838,26 @@ class PrivateLinkResource(ProxyResource):
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'properties': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "properties": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'properties': {'key': 'properties', 'type': 'PrivateLinkResourceProperties'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "properties": {"key": "properties", "type": "PrivateLinkResourceProperties"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(PrivateLinkResource, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.properties = None
 
 
-class PrivateLinkResourceListResult(msrest.serialization.Model):
+class PrivateLinkResourceListResult(_serialization.Model):
     """A list of private link resources.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -4445,25 +7869,23 @@ class PrivateLinkResourceListResult(msrest.serialization.Model):
     """
 
     _validation = {
-        'value': {'readonly': True},
-        'next_link': {'readonly': True},
+        "value": {"readonly": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[PrivateLinkResource]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[PrivateLinkResource]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(PrivateLinkResourceListResult, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.value = None
         self.next_link = None
 
 
-class PrivateLinkResourceProperties(msrest.serialization.Model):
+class PrivateLinkResourceProperties(_serialization.Model):
     """Properties of a private link resource.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -4477,85 +7899,102 @@ class PrivateLinkResourceProperties(msrest.serialization.Model):
     """
 
     _validation = {
-        'group_id': {'readonly': True},
-        'required_members': {'readonly': True},
-        'required_zone_names': {'readonly': True},
+        "group_id": {"readonly": True},
+        "required_members": {"readonly": True},
+        "required_zone_names": {"readonly": True},
     }
 
     _attribute_map = {
-        'group_id': {'key': 'groupId', 'type': 'str'},
-        'required_members': {'key': 'requiredMembers', 'type': '[str]'},
-        'required_zone_names': {'key': 'requiredZoneNames', 'type': '[str]'},
+        "group_id": {"key": "groupId", "type": "str"},
+        "required_members": {"key": "requiredMembers", "type": "[str]"},
+        "required_zone_names": {"key": "requiredZoneNames", "type": "[str]"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(PrivateLinkResourceProperties, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.group_id = None
         self.required_members = None
         self.required_zone_names = None
 
 
-class PrivateLinkServiceConnectionState(msrest.serialization.Model):
+class PrivateLinkResources(_serialization.Model):
+    """The list Kusto Private Link Resources operation response.
+
+    :ivar value: The list of Kusto Private Link Resources.
+    :vartype value: list[~azure.mgmt.synapse.models.KustoPoolPrivateLinkResources]
+    """
+
+    _attribute_map = {
+        "value": {"key": "value", "type": "[KustoPoolPrivateLinkResources]"},
+    }
+
+    def __init__(self, *, value: Optional[List["_models.KustoPoolPrivateLinkResources"]] = None, **kwargs: Any) -> None:
+        """
+        :keyword value: The list of Kusto Private Link Resources.
+        :paramtype value: list[~azure.mgmt.synapse.models.KustoPoolPrivateLinkResources]
+        """
+        super().__init__(**kwargs)
+        self.value = value
+
+
+class PrivateLinkServiceConnectionState(_serialization.Model):
     """Connection state details of the private endpoint.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
-    :param status: The private link service connection status.
-    :type status: str
-    :param description: The private link service connection description.
-    :type description: str
+    :ivar status: The private link service connection status.
+    :vartype status: str
+    :ivar description: The private link service connection description.
+    :vartype description: str
     :ivar actions_required: The actions required for private link service connection.
     :vartype actions_required: str
     """
 
     _validation = {
-        'actions_required': {'readonly': True},
+        "actions_required": {"readonly": True},
     }
 
     _attribute_map = {
-        'status': {'key': 'status', 'type': 'str'},
-        'description': {'key': 'description', 'type': 'str'},
-        'actions_required': {'key': 'actionsRequired', 'type': 'str'},
+        "status": {"key": "status", "type": "str"},
+        "description": {"key": "description", "type": "str"},
+        "actions_required": {"key": "actionsRequired", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        status: Optional[str] = None,
-        description: Optional[str] = None,
-        **kwargs
-    ):
-        super(PrivateLinkServiceConnectionState, self).__init__(**kwargs)
+    def __init__(self, *, status: Optional[str] = None, description: Optional[str] = None, **kwargs: Any) -> None:
+        """
+        :keyword status: The private link service connection status.
+        :paramtype status: str
+        :keyword description: The private link service connection description.
+        :paramtype description: str
+        """
+        super().__init__(**kwargs)
         self.status = status
         self.description = description
         self.actions_required = None
 
 
-class PurviewConfiguration(msrest.serialization.Model):
+class PurviewConfiguration(_serialization.Model):
     """Purview Configuration.
 
-    :param purview_resource_id: Purview Resource ID.
-    :type purview_resource_id: str
+    :ivar purview_resource_id: Purview Resource ID.
+    :vartype purview_resource_id: str
     """
 
     _attribute_map = {
-        'purview_resource_id': {'key': 'purviewResourceId', 'type': 'str'},
+        "purview_resource_id": {"key": "purviewResourceId", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        purview_resource_id: Optional[str] = None,
-        **kwargs
-    ):
-        super(PurviewConfiguration, self).__init__(**kwargs)
+    def __init__(self, *, purview_resource_id: Optional[str] = None, **kwargs: Any) -> None:
+        """
+        :keyword purview_resource_id: Purview Resource ID.
+        :paramtype purview_resource_id: str
+        """
+        super().__init__(**kwargs)
         self.purview_resource_id = purview_resource_id
 
 
-class QueryInterval(msrest.serialization.Model):
+class QueryInterval(_serialization.Model):
     """A database query.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -4569,28 +8008,26 @@ class QueryInterval(msrest.serialization.Model):
     """
 
     _validation = {
-        'interval_start_time': {'readonly': True},
-        'execution_count': {'readonly': True},
-        'metrics': {'readonly': True},
+        "interval_start_time": {"readonly": True},
+        "execution_count": {"readonly": True},
+        "metrics": {"readonly": True},
     }
 
     _attribute_map = {
-        'interval_start_time': {'key': 'intervalStartTime', 'type': 'iso-8601'},
-        'execution_count': {'key': 'executionCount', 'type': 'int'},
-        'metrics': {'key': 'metrics', 'type': '[QueryMetric]'},
+        "interval_start_time": {"key": "intervalStartTime", "type": "iso-8601"},
+        "execution_count": {"key": "executionCount", "type": "int"},
+        "metrics": {"key": "metrics", "type": "[QueryMetric]"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(QueryInterval, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.interval_start_time = None
         self.execution_count = None
         self.metrics = None
 
 
-class QueryMetric(msrest.serialization.Model):
+class QueryMetric(_serialization.Model):
     """A database query.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -4599,39 +8036,36 @@ class QueryMetric(msrest.serialization.Model):
     :vartype name: str
     :ivar display_name: The name of the metric for display in user interface.
     :vartype display_name: str
-    :ivar unit: The unit of measurement. Possible values include: "percentage", "KB",
-     "microseconds".
+    :ivar unit: The unit of measurement. Known values are: "percentage", "KB", and "microseconds".
     :vartype unit: str or ~azure.mgmt.synapse.models.QueryMetricUnit
     :ivar value: The measured value.
     :vartype value: float
     """
 
     _validation = {
-        'name': {'readonly': True},
-        'display_name': {'readonly': True},
-        'unit': {'readonly': True},
-        'value': {'readonly': True},
+        "name": {"readonly": True},
+        "display_name": {"readonly": True},
+        "unit": {"readonly": True},
+        "value": {"readonly": True},
     }
 
     _attribute_map = {
-        'name': {'key': 'name', 'type': 'str'},
-        'display_name': {'key': 'displayName', 'type': 'str'},
-        'unit': {'key': 'unit', 'type': 'str'},
-        'value': {'key': 'value', 'type': 'float'},
+        "name": {"key": "name", "type": "str"},
+        "display_name": {"key": "displayName", "type": "str"},
+        "unit": {"key": "unit", "type": "str"},
+        "value": {"key": "value", "type": "float"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(QueryMetric, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.name = None
         self.display_name = None
         self.unit = None
         self.value = None
 
 
-class QueryStatistic(msrest.serialization.Model):
+class QueryStatistic(_serialization.Model):
     """A database query.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -4643,22 +8077,204 @@ class QueryStatistic(msrest.serialization.Model):
     """
 
     _validation = {
-        'query_id': {'readonly': True},
-        'intervals': {'readonly': True},
+        "query_id": {"readonly": True},
+        "intervals": {"readonly": True},
     }
 
     _attribute_map = {
-        'query_id': {'key': 'queryId', 'type': 'str'},
-        'intervals': {'key': 'intervals', 'type': '[QueryInterval]'},
+        "query_id": {"key": "queryId", "type": "str"},
+        "intervals": {"key": "intervals", "type": "[QueryInterval]"},
+    }
+
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
+        self.query_id = None
+        self.intervals = None
+
+
+class ReadOnlyFollowingDatabase(Database):  # pylint: disable=too-many-instance-attributes
+    """Class representing a read only following database.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :ivar id: Fully qualified resource ID for the resource. Ex -
+     /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}.
+    :vartype id: str
+    :ivar name: The name of the resource.
+    :vartype name: str
+    :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
+     "Microsoft.Storage/storageAccounts".
+    :vartype type: str
+    :ivar location: Resource location.
+    :vartype location: str
+    :ivar kind: Kind of the database. Required. Known values are: "ReadWrite" and
+     "ReadOnlyFollowing".
+    :vartype kind: str or ~azure.mgmt.synapse.models.Kind
+    :ivar system_data: Azure Resource Manager metadata containing createdBy and modifiedBy
+     information.
+    :vartype system_data: ~azure.mgmt.synapse.models.SystemData
+    :ivar provisioning_state: The provisioned state of the resource. Known values are: "Running",
+     "Creating", "Deleting", "Succeeded", "Failed", "Moving", and "Canceled".
+    :vartype provisioning_state: str or ~azure.mgmt.synapse.models.ResourceProvisioningState
+    :ivar soft_delete_period: The time the data should be kept before it stops being accessible to
+     queries in TimeSpan.
+    :vartype soft_delete_period: ~datetime.timedelta
+    :ivar hot_cache_period: The time the data should be kept in cache for fast queries in TimeSpan.
+    :vartype hot_cache_period: ~datetime.timedelta
+    :ivar statistics: The statistics of the database.
+    :vartype statistics: ~azure.mgmt.synapse.models.DatabaseStatistics
+    :ivar leader_cluster_resource_id: The name of the leader cluster.
+    :vartype leader_cluster_resource_id: str
+    :ivar attached_database_configuration_name: The name of the attached database configuration
+     cluster.
+    :vartype attached_database_configuration_name: str
+    :ivar principals_modification_kind: The principals modification kind of the database. Known
+     values are: "Union", "Replace", and "None".
+    :vartype principals_modification_kind: str or
+     ~azure.mgmt.synapse.models.PrincipalsModificationKind
+    """
+
+    _validation = {
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "kind": {"required": True},
+        "system_data": {"readonly": True},
+        "provisioning_state": {"readonly": True},
+        "soft_delete_period": {"readonly": True},
+        "statistics": {"readonly": True},
+        "leader_cluster_resource_id": {"readonly": True},
+        "attached_database_configuration_name": {"readonly": True},
+        "principals_modification_kind": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "location": {"key": "location", "type": "str"},
+        "kind": {"key": "kind", "type": "str"},
+        "system_data": {"key": "systemData", "type": "SystemData"},
+        "provisioning_state": {"key": "properties.provisioningState", "type": "str"},
+        "soft_delete_period": {"key": "properties.softDeletePeriod", "type": "duration"},
+        "hot_cache_period": {"key": "properties.hotCachePeriod", "type": "duration"},
+        "statistics": {"key": "properties.statistics", "type": "DatabaseStatistics"},
+        "leader_cluster_resource_id": {"key": "properties.leaderClusterResourceId", "type": "str"},
+        "attached_database_configuration_name": {"key": "properties.attachedDatabaseConfigurationName", "type": "str"},
+        "principals_modification_kind": {"key": "properties.principalsModificationKind", "type": "str"},
+    }
+
+    def __init__(
+        self, *, location: Optional[str] = None, hot_cache_period: Optional[datetime.timedelta] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword location: Resource location.
+        :paramtype location: str
+        :keyword hot_cache_period: The time the data should be kept in cache for fast queries in
+         TimeSpan.
+        :paramtype hot_cache_period: ~datetime.timedelta
+        """
+        super().__init__(location=location, **kwargs)
+        self.kind: str = "ReadOnlyFollowing"
+        self.provisioning_state = None
+        self.soft_delete_period = None
+        self.hot_cache_period = hot_cache_period
+        self.statistics = None
+        self.leader_cluster_resource_id = None
+        self.attached_database_configuration_name = None
+        self.principals_modification_kind = None
+
+
+class ReadWriteDatabase(Database):  # pylint: disable=too-many-instance-attributes
+    """Class representing a read write database.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :ivar id: Fully qualified resource ID for the resource. Ex -
+     /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}.
+    :vartype id: str
+    :ivar name: The name of the resource.
+    :vartype name: str
+    :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
+     "Microsoft.Storage/storageAccounts".
+    :vartype type: str
+    :ivar location: Resource location.
+    :vartype location: str
+    :ivar kind: Kind of the database. Required. Known values are: "ReadWrite" and
+     "ReadOnlyFollowing".
+    :vartype kind: str or ~azure.mgmt.synapse.models.Kind
+    :ivar system_data: Azure Resource Manager metadata containing createdBy and modifiedBy
+     information.
+    :vartype system_data: ~azure.mgmt.synapse.models.SystemData
+    :ivar provisioning_state: The provisioned state of the resource. Known values are: "Running",
+     "Creating", "Deleting", "Succeeded", "Failed", "Moving", and "Canceled".
+    :vartype provisioning_state: str or ~azure.mgmt.synapse.models.ResourceProvisioningState
+    :ivar soft_delete_period: The time the data should be kept before it stops being accessible to
+     queries in TimeSpan.
+    :vartype soft_delete_period: ~datetime.timedelta
+    :ivar hot_cache_period: The time the data should be kept in cache for fast queries in TimeSpan.
+    :vartype hot_cache_period: ~datetime.timedelta
+    :ivar statistics: The statistics of the database.
+    :vartype statistics: ~azure.mgmt.synapse.models.DatabaseStatistics
+    :ivar is_followed: Indicates whether the database is followed.
+    :vartype is_followed: bool
+    """
+
+    _validation = {
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "kind": {"required": True},
+        "system_data": {"readonly": True},
+        "provisioning_state": {"readonly": True},
+        "statistics": {"readonly": True},
+        "is_followed": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "location": {"key": "location", "type": "str"},
+        "kind": {"key": "kind", "type": "str"},
+        "system_data": {"key": "systemData", "type": "SystemData"},
+        "provisioning_state": {"key": "properties.provisioningState", "type": "str"},
+        "soft_delete_period": {"key": "properties.softDeletePeriod", "type": "duration"},
+        "hot_cache_period": {"key": "properties.hotCachePeriod", "type": "duration"},
+        "statistics": {"key": "properties.statistics", "type": "DatabaseStatistics"},
+        "is_followed": {"key": "properties.isFollowed", "type": "bool"},
     }
 
     def __init__(
         self,
-        **kwargs
-    ):
-        super(QueryStatistic, self).__init__(**kwargs)
-        self.query_id = None
-        self.intervals = None
+        *,
+        location: Optional[str] = None,
+        soft_delete_period: Optional[datetime.timedelta] = None,
+        hot_cache_period: Optional[datetime.timedelta] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword location: Resource location.
+        :paramtype location: str
+        :keyword soft_delete_period: The time the data should be kept before it stops being accessible
+         to queries in TimeSpan.
+        :paramtype soft_delete_period: ~datetime.timedelta
+        :keyword hot_cache_period: The time the data should be kept in cache for fast queries in
+         TimeSpan.
+        :paramtype hot_cache_period: ~datetime.timedelta
+        """
+        super().__init__(location=location, **kwargs)
+        self.kind: str = "ReadWrite"
+        self.provisioning_state = None
+        self.soft_delete_period = soft_delete_period
+        self.hot_cache_period = hot_cache_period
+        self.statistics = None
+        self.is_followed = None
 
 
 class RecommendedSensitivityLabelUpdate(ProxyResource):
@@ -4674,66 +8290,77 @@ class RecommendedSensitivityLabelUpdate(ProxyResource):
     :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
      "Microsoft.Storage/storageAccounts".
     :vartype type: str
-    :param op:  Possible values include: "enable", "disable".
-    :type op: str or ~azure.mgmt.synapse.models.RecommendedSensitivityLabelUpdateKind
-    :param schema: Schema name of the column to update.
-    :type schema: str
-    :param table: Table name of the column to update.
-    :type table: str
-    :param column: Column name to update.
-    :type column: str
+    :ivar op: Known values are: "enable" and "disable".
+    :vartype op: str or ~azure.mgmt.synapse.models.RecommendedSensitivityLabelUpdateKind
+    :ivar schema: Schema name of the column to update.
+    :vartype schema: str
+    :ivar table: Table name of the column to update.
+    :vartype table: str
+    :ivar column: Column name to update.
+    :vartype column: str
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'op': {'key': 'properties.op', 'type': 'str'},
-        'schema': {'key': 'properties.schema', 'type': 'str'},
-        'table': {'key': 'properties.table', 'type': 'str'},
-        'column': {'key': 'properties.column', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "op": {"key": "properties.op", "type": "str"},
+        "schema": {"key": "properties.schema", "type": "str"},
+        "table": {"key": "properties.table", "type": "str"},
+        "column": {"key": "properties.column", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        op: Optional[Union[str, "RecommendedSensitivityLabelUpdateKind"]] = None,
+        op: Optional[Union[str, "_models.RecommendedSensitivityLabelUpdateKind"]] = None,
         schema: Optional[str] = None,
         table: Optional[str] = None,
         column: Optional[str] = None,
-        **kwargs
-    ):
-        super(RecommendedSensitivityLabelUpdate, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword op: Known values are: "enable" and "disable".
+        :paramtype op: str or ~azure.mgmt.synapse.models.RecommendedSensitivityLabelUpdateKind
+        :keyword schema: Schema name of the column to update.
+        :paramtype schema: str
+        :keyword table: Table name of the column to update.
+        :paramtype table: str
+        :keyword column: Column name to update.
+        :paramtype column: str
+        """
+        super().__init__(**kwargs)
         self.op = op
         self.schema = schema
         self.table = table
         self.column = column
 
 
-class RecommendedSensitivityLabelUpdateList(msrest.serialization.Model):
+class RecommendedSensitivityLabelUpdateList(_serialization.Model):
     """A list of recommended sensitivity label update operations.
 
-    :param operations:
-    :type operations: list[~azure.mgmt.synapse.models.RecommendedSensitivityLabelUpdate]
+    :ivar operations:
+    :vartype operations: list[~azure.mgmt.synapse.models.RecommendedSensitivityLabelUpdate]
     """
 
     _attribute_map = {
-        'operations': {'key': 'operations', 'type': '[RecommendedSensitivityLabelUpdate]'},
+        "operations": {"key": "operations", "type": "[RecommendedSensitivityLabelUpdate]"},
     }
 
     def __init__(
-        self,
-        *,
-        operations: Optional[List["RecommendedSensitivityLabelUpdate"]] = None,
-        **kwargs
-    ):
-        super(RecommendedSensitivityLabelUpdateList, self).__init__(**kwargs)
+        self, *, operations: Optional[List["_models.RecommendedSensitivityLabelUpdate"]] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword operations:
+        :paramtype operations: list[~azure.mgmt.synapse.models.RecommendedSensitivityLabelUpdate]
+        """
+        super().__init__(**kwargs)
         self.operations = operations
 
 
@@ -4762,37 +8389,35 @@ class RecoverableSqlPool(ProxyResource):
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'edition': {'readonly': True},
-        'service_level_objective': {'readonly': True},
-        'elastic_pool_name': {'readonly': True},
-        'last_available_backup_date': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "edition": {"readonly": True},
+        "service_level_objective": {"readonly": True},
+        "elastic_pool_name": {"readonly": True},
+        "last_available_backup_date": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'edition': {'key': 'properties.edition', 'type': 'str'},
-        'service_level_objective': {'key': 'properties.serviceLevelObjective', 'type': 'str'},
-        'elastic_pool_name': {'key': 'properties.elasticPoolName', 'type': 'str'},
-        'last_available_backup_date': {'key': 'properties.lastAvailableBackupDate', 'type': 'iso-8601'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "edition": {"key": "properties.edition", "type": "str"},
+        "service_level_objective": {"key": "properties.serviceLevelObjective", "type": "str"},
+        "elastic_pool_name": {"key": "properties.elasticPoolName", "type": "str"},
+        "last_available_backup_date": {"key": "properties.lastAvailableBackupDate", "type": "iso-8601"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(RecoverableSqlPool, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.edition = None
         self.service_level_objective = None
         self.elastic_pool_name = None
         self.last_available_backup_date = None
 
 
-class RecoverableSqlPoolListResult(msrest.serialization.Model):
+class RecoverableSqlPoolListResult(_serialization.Model):
     """The response to a list recoverable sql pools request.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -4804,67 +8429,65 @@ class RecoverableSqlPoolListResult(msrest.serialization.Model):
     """
 
     _validation = {
-        'value': {'readonly': True},
-        'next_link': {'readonly': True},
+        "value": {"readonly": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[RecoverableSqlPool]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[RecoverableSqlPool]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(RecoverableSqlPoolListResult, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.value = None
         self.next_link = None
 
 
-class ReplaceAllFirewallRulesOperationResponse(msrest.serialization.Model):
+class ReplaceAllFirewallRulesOperationResponse(_serialization.Model):
     """An existing operation for replacing the firewall rules.
 
-    :param operation_id: The operation ID.
-    :type operation_id: str
+    :ivar operation_id: The operation ID.
+    :vartype operation_id: str
     """
 
     _attribute_map = {
-        'operation_id': {'key': 'operationId', 'type': 'str'},
+        "operation_id": {"key": "operationId", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        operation_id: Optional[str] = None,
-        **kwargs
-    ):
-        super(ReplaceAllFirewallRulesOperationResponse, self).__init__(**kwargs)
+    def __init__(self, *, operation_id: Optional[str] = None, **kwargs: Any) -> None:
+        """
+        :keyword operation_id: The operation ID.
+        :paramtype operation_id: str
+        """
+        super().__init__(**kwargs)
         self.operation_id = operation_id
 
 
-class ReplaceAllIpFirewallRulesRequest(msrest.serialization.Model):
+class ReplaceAllIpFirewallRulesRequest(_serialization.Model):
     """Replace all IP firewall rules request.
 
-    :param ip_firewall_rules: IP firewall rule properties.
-    :type ip_firewall_rules: dict[str, ~azure.mgmt.synapse.models.IpFirewallRuleProperties]
+    :ivar ip_firewall_rules: IP firewall rule properties.
+    :vartype ip_firewall_rules: dict[str, ~azure.mgmt.synapse.models.IpFirewallRuleProperties]
     """
 
     _attribute_map = {
-        'ip_firewall_rules': {'key': 'ipFirewallRules', 'type': '{IpFirewallRuleProperties}'},
+        "ip_firewall_rules": {"key": "ipFirewallRules", "type": "{IpFirewallRuleProperties}"},
     }
 
     def __init__(
-        self,
-        *,
-        ip_firewall_rules: Optional[Dict[str, "IpFirewallRuleProperties"]] = None,
-        **kwargs
-    ):
-        super(ReplaceAllIpFirewallRulesRequest, self).__init__(**kwargs)
+        self, *, ip_firewall_rules: Optional[Dict[str, "_models.IpFirewallRuleProperties"]] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword ip_firewall_rules: IP firewall rule properties.
+        :paramtype ip_firewall_rules: dict[str, ~azure.mgmt.synapse.models.IpFirewallRuleProperties]
+        """
+        super().__init__(**kwargs)
         self.ip_firewall_rules = ip_firewall_rules
 
 
-class ReplicationLink(ProxyResource):
+class ReplicationLink(ProxyResource):  # pylint: disable=too-many-instance-attributes
     """Represents a Sql pool replication link.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -4890,60 +8513,58 @@ class ReplicationLink(ProxyResource):
     :vartype partner_database: str
     :ivar partner_location: The Azure Region of the partner Sql pool.
     :vartype partner_location: str
-    :ivar role: The role of the Sql pool in the replication link. Possible values include:
-     "Primary", "Secondary", "NonReadableSecondary", "Source", "Copy".
+    :ivar role: The role of the Sql pool in the replication link. Known values are: "Primary",
+     "Secondary", "NonReadableSecondary", "Source", and "Copy".
     :vartype role: str or ~azure.mgmt.synapse.models.ReplicationRole
-    :ivar partner_role: The role of the partner Sql pool in the replication link. Possible values
-     include: "Primary", "Secondary", "NonReadableSecondary", "Source", "Copy".
+    :ivar partner_role: The role of the partner Sql pool in the replication link. Known values are:
+     "Primary", "Secondary", "NonReadableSecondary", "Source", and "Copy".
     :vartype partner_role: str or ~azure.mgmt.synapse.models.ReplicationRole
     :ivar start_time: The start time for the replication link.
     :vartype start_time: ~datetime.datetime
     :ivar percent_complete: The percentage of seeding complete for the replication link.
     :vartype percent_complete: int
-    :ivar replication_state: The replication state for the replication link. Possible values
-     include: "PENDING", "SEEDING", "CATCH_UP", "SUSPENDED".
+    :ivar replication_state: The replication state for the replication link. Known values are:
+     "PENDING", "SEEDING", "CATCH_UP", and "SUSPENDED".
     :vartype replication_state: str or ~azure.mgmt.synapse.models.ReplicationState
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'location': {'readonly': True},
-        'is_termination_allowed': {'readonly': True},
-        'replication_mode': {'readonly': True},
-        'partner_server': {'readonly': True},
-        'partner_database': {'readonly': True},
-        'partner_location': {'readonly': True},
-        'role': {'readonly': True},
-        'partner_role': {'readonly': True},
-        'start_time': {'readonly': True},
-        'percent_complete': {'readonly': True},
-        'replication_state': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "location": {"readonly": True},
+        "is_termination_allowed": {"readonly": True},
+        "replication_mode": {"readonly": True},
+        "partner_server": {"readonly": True},
+        "partner_database": {"readonly": True},
+        "partner_location": {"readonly": True},
+        "role": {"readonly": True},
+        "partner_role": {"readonly": True},
+        "start_time": {"readonly": True},
+        "percent_complete": {"readonly": True},
+        "replication_state": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'location': {'key': 'location', 'type': 'str'},
-        'is_termination_allowed': {'key': 'properties.isTerminationAllowed', 'type': 'bool'},
-        'replication_mode': {'key': 'properties.replicationMode', 'type': 'str'},
-        'partner_server': {'key': 'properties.partnerServer', 'type': 'str'},
-        'partner_database': {'key': 'properties.partnerDatabase', 'type': 'str'},
-        'partner_location': {'key': 'properties.partnerLocation', 'type': 'str'},
-        'role': {'key': 'properties.role', 'type': 'str'},
-        'partner_role': {'key': 'properties.partnerRole', 'type': 'str'},
-        'start_time': {'key': 'properties.startTime', 'type': 'iso-8601'},
-        'percent_complete': {'key': 'properties.percentComplete', 'type': 'int'},
-        'replication_state': {'key': 'properties.replicationState', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "location": {"key": "location", "type": "str"},
+        "is_termination_allowed": {"key": "properties.isTerminationAllowed", "type": "bool"},
+        "replication_mode": {"key": "properties.replicationMode", "type": "str"},
+        "partner_server": {"key": "properties.partnerServer", "type": "str"},
+        "partner_database": {"key": "properties.partnerDatabase", "type": "str"},
+        "partner_location": {"key": "properties.partnerLocation", "type": "str"},
+        "role": {"key": "properties.role", "type": "str"},
+        "partner_role": {"key": "properties.partnerRole", "type": "str"},
+        "start_time": {"key": "properties.startTime", "type": "iso-8601"},
+        "percent_complete": {"key": "properties.percentComplete", "type": "int"},
+        "replication_state": {"key": "properties.replicationState", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(ReplicationLink, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.location = None
         self.is_termination_allowed = None
         self.replication_mode = None
@@ -4957,65 +8578,63 @@ class ReplicationLink(ProxyResource):
         self.replication_state = None
 
 
-class ReplicationLinkListResult(msrest.serialization.Model):
+class ReplicationLinkListResult(_serialization.Model):
     """Represents the response to a List Sql pool replication link request.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
-    :param value: The list of Sql pool replication links housed in the Sql pool.
-    :type value: list[~azure.mgmt.synapse.models.ReplicationLink]
+    :ivar value: The list of Sql pool replication links housed in the Sql pool.
+    :vartype value: list[~azure.mgmt.synapse.models.ReplicationLink]
     :ivar next_link: Link to retrieve next page of results.
     :vartype next_link: str
     """
 
     _validation = {
-        'next_link': {'readonly': True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[ReplicationLink]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[ReplicationLink]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        value: Optional[List["ReplicationLink"]] = None,
-        **kwargs
-    ):
-        super(ReplicationLinkListResult, self).__init__(**kwargs)
+    def __init__(self, *, value: Optional[List["_models.ReplicationLink"]] = None, **kwargs: Any) -> None:
+        """
+        :keyword value: The list of Sql pool replication links housed in the Sql pool.
+        :paramtype value: list[~azure.mgmt.synapse.models.ReplicationLink]
+        """
+        super().__init__(**kwargs)
         self.value = value
         self.next_link = None
 
 
-class ResourceMoveDefinition(msrest.serialization.Model):
+class ResourceMoveDefinition(_serialization.Model):
     """Contains the information necessary to perform a resource move (rename).
 
     All required parameters must be populated in order to send to Azure.
 
-    :param id: Required. The target ID for the resource.
-    :type id: str
+    :ivar id: The target ID for the resource. Required.
+    :vartype id: str
     """
 
     _validation = {
-        'id': {'required': True},
+        "id": {"required": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        id: str,
-        **kwargs
-    ):
-        super(ResourceMoveDefinition, self).__init__(**kwargs)
+    def __init__(self, *, id: str, **kwargs: Any) -> None:  # pylint: disable=redefined-builtin
+        """
+        :keyword id: The target ID for the resource. Required.
+        :paramtype id: str
+        """
+        super().__init__(**kwargs)
         self.id = id
 
 
-class RestorableDroppedSqlPool(ProxyResource):
+class RestorableDroppedSqlPool(ProxyResource):  # pylint: disable=too-many-instance-attributes
     """A restorable dropped Sql pool.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -5049,40 +8668,38 @@ class RestorableDroppedSqlPool(ProxyResource):
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'location': {'readonly': True},
-        'database_name': {'readonly': True},
-        'edition': {'readonly': True},
-        'max_size_bytes': {'readonly': True},
-        'service_level_objective': {'readonly': True},
-        'elastic_pool_name': {'readonly': True},
-        'creation_date': {'readonly': True},
-        'deletion_date': {'readonly': True},
-        'earliest_restore_date': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "location": {"readonly": True},
+        "database_name": {"readonly": True},
+        "edition": {"readonly": True},
+        "max_size_bytes": {"readonly": True},
+        "service_level_objective": {"readonly": True},
+        "elastic_pool_name": {"readonly": True},
+        "creation_date": {"readonly": True},
+        "deletion_date": {"readonly": True},
+        "earliest_restore_date": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'location': {'key': 'location', 'type': 'str'},
-        'database_name': {'key': 'properties.databaseName', 'type': 'str'},
-        'edition': {'key': 'properties.edition', 'type': 'str'},
-        'max_size_bytes': {'key': 'properties.maxSizeBytes', 'type': 'str'},
-        'service_level_objective': {'key': 'properties.serviceLevelObjective', 'type': 'str'},
-        'elastic_pool_name': {'key': 'properties.elasticPoolName', 'type': 'str'},
-        'creation_date': {'key': 'properties.creationDate', 'type': 'iso-8601'},
-        'deletion_date': {'key': 'properties.deletionDate', 'type': 'iso-8601'},
-        'earliest_restore_date': {'key': 'properties.earliestRestoreDate', 'type': 'iso-8601'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "location": {"key": "location", "type": "str"},
+        "database_name": {"key": "properties.databaseName", "type": "str"},
+        "edition": {"key": "properties.edition", "type": "str"},
+        "max_size_bytes": {"key": "properties.maxSizeBytes", "type": "str"},
+        "service_level_objective": {"key": "properties.serviceLevelObjective", "type": "str"},
+        "elastic_pool_name": {"key": "properties.elasticPoolName", "type": "str"},
+        "creation_date": {"key": "properties.creationDate", "type": "iso-8601"},
+        "deletion_date": {"key": "properties.deletionDate", "type": "iso-8601"},
+        "earliest_restore_date": {"key": "properties.earliestRestoreDate", "type": "iso-8601"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(RestorableDroppedSqlPool, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.location = None
         self.database_name = None
         self.edition = None
@@ -5094,30 +8711,29 @@ class RestorableDroppedSqlPool(ProxyResource):
         self.earliest_restore_date = None
 
 
-class RestorableDroppedSqlPoolListResult(msrest.serialization.Model):
+class RestorableDroppedSqlPoolListResult(_serialization.Model):
     """The response to a list restorable dropped Sql pools request.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param value: Required. A list of restorable dropped Sql pools.
-    :type value: list[~azure.mgmt.synapse.models.RestorableDroppedSqlPool]
+    :ivar value: A list of restorable dropped Sql pools. Required.
+    :vartype value: list[~azure.mgmt.synapse.models.RestorableDroppedSqlPool]
     """
 
     _validation = {
-        'value': {'required': True},
+        "value": {"required": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[RestorableDroppedSqlPool]'},
+        "value": {"key": "value", "type": "[RestorableDroppedSqlPool]"},
     }
 
-    def __init__(
-        self,
-        *,
-        value: List["RestorableDroppedSqlPool"],
-        **kwargs
-    ):
-        super(RestorableDroppedSqlPoolListResult, self).__init__(**kwargs)
+    def __init__(self, *, value: List["_models.RestorableDroppedSqlPool"], **kwargs: Any) -> None:
+        """
+        :keyword value: A list of restorable dropped Sql pools. Required.
+        :paramtype value: list[~azure.mgmt.synapse.models.RestorableDroppedSqlPool]
+        """
+        super().__init__(**kwargs)
         self.value = value
 
 
@@ -5136,7 +8752,7 @@ class RestorePoint(ProxyResource):
     :vartype type: str
     :ivar location: Resource location.
     :vartype location: str
-    :ivar restore_point_type: The type of restore point. Possible values include: "CONTINUOUS",
+    :ivar restore_point_type: The type of restore point. Known values are: "CONTINUOUS" and
      "DISCRETE".
     :vartype restore_point_type: str or ~azure.mgmt.synapse.models.RestorePointType
     :ivar earliest_restore_date: The earliest time to which this database can be restored.
@@ -5148,32 +8764,30 @@ class RestorePoint(ProxyResource):
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'location': {'readonly': True},
-        'restore_point_type': {'readonly': True},
-        'earliest_restore_date': {'readonly': True},
-        'restore_point_creation_date': {'readonly': True},
-        'restore_point_label': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "location": {"readonly": True},
+        "restore_point_type": {"readonly": True},
+        "earliest_restore_date": {"readonly": True},
+        "restore_point_creation_date": {"readonly": True},
+        "restore_point_label": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'location': {'key': 'location', 'type': 'str'},
-        'restore_point_type': {'key': 'properties.restorePointType', 'type': 'str'},
-        'earliest_restore_date': {'key': 'properties.earliestRestoreDate', 'type': 'iso-8601'},
-        'restore_point_creation_date': {'key': 'properties.restorePointCreationDate', 'type': 'iso-8601'},
-        'restore_point_label': {'key': 'properties.restorePointLabel', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "location": {"key": "location", "type": "str"},
+        "restore_point_type": {"key": "properties.restorePointType", "type": "str"},
+        "earliest_restore_date": {"key": "properties.earliestRestoreDate", "type": "iso-8601"},
+        "restore_point_creation_date": {"key": "properties.restorePointCreationDate", "type": "iso-8601"},
+        "restore_point_label": {"key": "properties.restorePointLabel", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(RestorePoint, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.location = None
         self.restore_point_type = None
         self.earliest_restore_date = None
@@ -5181,7 +8795,7 @@ class RestorePoint(ProxyResource):
         self.restore_point_label = None
 
 
-class RestorePointListResult(msrest.serialization.Model):
+class RestorePointListResult(_serialization.Model):
     """A list of long term retention backups.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -5193,85 +8807,79 @@ class RestorePointListResult(msrest.serialization.Model):
     """
 
     _validation = {
-        'value': {'readonly': True},
-        'next_link': {'readonly': True},
+        "value": {"readonly": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[RestorePoint]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[RestorePoint]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(RestorePointListResult, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.value = None
         self.next_link = None
 
 
-class SecretBase(msrest.serialization.Model):
+class SecretBase(_serialization.Model):
     """The base definition of a secret type.
 
-    You probably want to use the sub-classes and not this class directly. Known
-    sub-classes are: SecureString.
+    You probably want to use the sub-classes and not this class directly. Known sub-classes are:
+    SecureString
 
     All required parameters must be populated in order to send to Azure.
 
-    :param type: Required. Type of the secret.Constant filled by server.
-    :type type: str
+    :ivar type: Type of the secret. Required.
+    :vartype type: str
     """
 
     _validation = {
-        'type': {'required': True},
+        "type": {"required": True},
     }
 
     _attribute_map = {
-        'type': {'key': 'type', 'type': 'str'},
+        "type": {"key": "type", "type": "str"},
     }
 
-    _subtype_map = {
-        'type': {'SecureString': 'SecureString'}
-    }
+    _subtype_map = {"type": {"SecureString": "SecureString"}}
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(SecretBase, self).__init__(**kwargs)
-        self.type = None  # type: Optional[str]
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
+        self.type: Optional[str] = None
 
 
 class SecureString(SecretBase):
-    """Azure Synapse secure string definition. The string value will be masked with asterisks '*' during Get or List API calls.
+    """Azure Synapse secure string definition. The string value will be masked with asterisks '*'
+    during Get or List API calls.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param type: Required. Type of the secret.Constant filled by server.
-    :type type: str
-    :param value: Required. Value of secure string.
-    :type value: str
+    :ivar type: Type of the secret. Required.
+    :vartype type: str
+    :ivar value: Value of secure string. Required.
+    :vartype value: str
     """
 
     _validation = {
-        'type': {'required': True},
-        'value': {'required': True},
+        "type": {"required": True},
+        "value": {"required": True},
     }
 
     _attribute_map = {
-        'type': {'key': 'type', 'type': 'str'},
-        'value': {'key': 'value', 'type': 'str'},
+        "type": {"key": "type", "type": "str"},
+        "value": {"key": "value", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        value: str,
-        **kwargs
-    ):
-        super(SecureString, self).__init__(**kwargs)
-        self.type = 'SecureString'  # type: str
+    def __init__(self, *, value: str, **kwargs: Any) -> None:
+        """
+        :keyword value: Value of secure string. Required.
+        :paramtype value: str
+        """
+        super().__init__(**kwargs)
+        self.type: str = "SecureString"
         self.value = value
 
 
@@ -5280,59 +8888,67 @@ class SelfHostedIntegrationRuntime(IntegrationRuntime):
 
     All required parameters must be populated in order to send to Azure.
 
-    :param additional_properties: Unmatched properties from the message are deserialized to this
+    :ivar additional_properties: Unmatched properties from the message are deserialized to this
      collection.
-    :type additional_properties: dict[str, object]
-    :param type: Required. Type of integration runtime.Constant filled by server.  Possible values
-     include: "Managed", "SelfHosted".
-    :type type: str or ~azure.mgmt.synapse.models.IntegrationRuntimeType
-    :param description: Integration runtime description.
-    :type description: str
-    :param linked_info: Linked integration runtime type from data factory.
-    :type linked_info: ~azure.mgmt.synapse.models.LinkedIntegrationRuntimeType
+    :vartype additional_properties: dict[str, JSON]
+    :ivar type: Type of integration runtime. Required. Known values are: "Managed" and
+     "SelfHosted".
+    :vartype type: str or ~azure.mgmt.synapse.models.IntegrationRuntimeType
+    :ivar description: Integration runtime description.
+    :vartype description: str
+    :ivar linked_info: Linked integration runtime type from data factory.
+    :vartype linked_info: ~azure.mgmt.synapse.models.LinkedIntegrationRuntimeType
     """
 
     _validation = {
-        'type': {'required': True},
+        "type": {"required": True},
     }
 
     _attribute_map = {
-        'additional_properties': {'key': '', 'type': '{object}'},
-        'type': {'key': 'type', 'type': 'str'},
-        'description': {'key': 'description', 'type': 'str'},
-        'linked_info': {'key': 'typeProperties.linkedInfo', 'type': 'LinkedIntegrationRuntimeType'},
+        "additional_properties": {"key": "", "type": "{object}"},
+        "type": {"key": "type", "type": "str"},
+        "description": {"key": "description", "type": "str"},
+        "linked_info": {"key": "typeProperties.linkedInfo", "type": "LinkedIntegrationRuntimeType"},
     }
 
     def __init__(
         self,
         *,
-        additional_properties: Optional[Dict[str, object]] = None,
+        additional_properties: Optional[Dict[str, JSON]] = None,
         description: Optional[str] = None,
-        linked_info: Optional["LinkedIntegrationRuntimeType"] = None,
-        **kwargs
-    ):
-        super(SelfHostedIntegrationRuntime, self).__init__(additional_properties=additional_properties, description=description, **kwargs)
-        self.type = 'SelfHosted'  # type: str
+        linked_info: Optional["_models.LinkedIntegrationRuntimeType"] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword additional_properties: Unmatched properties from the message are deserialized to this
+         collection.
+        :paramtype additional_properties: dict[str, JSON]
+        :keyword description: Integration runtime description.
+        :paramtype description: str
+        :keyword linked_info: Linked integration runtime type from data factory.
+        :paramtype linked_info: ~azure.mgmt.synapse.models.LinkedIntegrationRuntimeType
+        """
+        super().__init__(additional_properties=additional_properties, description=description, **kwargs)
+        self.type: str = "SelfHosted"
         self.linked_info = linked_info
 
 
-class SelfHostedIntegrationRuntimeNode(msrest.serialization.Model):
+class SelfHostedIntegrationRuntimeNode(_serialization.Model):  # pylint: disable=too-many-instance-attributes
     """Properties of Self-hosted integration runtime node.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
-    :param additional_properties: Unmatched properties from the message are deserialized to this
+    :ivar additional_properties: Unmatched properties from the message are deserialized to this
      collection.
-    :type additional_properties: dict[str, object]
+    :vartype additional_properties: dict[str, JSON]
     :ivar node_name: Name of the integration runtime node.
     :vartype node_name: str
     :ivar machine_name: Machine name of the integration runtime node.
     :vartype machine_name: str
     :ivar host_service_uri: URI for the host machine of the integration runtime.
     :vartype host_service_uri: str
-    :ivar status: Status of the integration runtime node. Possible values include:
-     "NeedRegistration", "Online", "Limited", "Offline", "Upgrading", "Initializing",
-     "InitializeFailed".
+    :ivar status: Status of the integration runtime node. Known values are: "NeedRegistration",
+     "Online", "Limited", "Offline", "Upgrading", "Initializing", and "InitializeFailed".
     :vartype status: str or ~azure.mgmt.synapse.models.SelfHostedIntegrationRuntimeNodeStatus
     :ivar capabilities: The integration runtime capabilities dictionary.
     :vartype capabilities: dict[str, str]
@@ -5352,8 +8968,8 @@ class SelfHostedIntegrationRuntimeNode(msrest.serialization.Model):
     :vartype last_start_time: ~datetime.datetime
     :ivar last_stop_time: The integration runtime node last stop time.
     :vartype last_stop_time: ~datetime.datetime
-    :ivar last_update_result: The result of the last integration runtime node update. Possible
-     values include: "None", "Succeed", "Fail".
+    :ivar last_update_result: The result of the last integration runtime node update. Known values
+     are: "None", "Succeed", and "Fail".
     :vartype last_update_result: str or ~azure.mgmt.synapse.models.IntegrationRuntimeUpdateResult
     :ivar last_start_update_time: The last time for the integration runtime node update start.
     :vartype last_start_update_time: ~datetime.datetime
@@ -5369,55 +8985,55 @@ class SelfHostedIntegrationRuntimeNode(msrest.serialization.Model):
     """
 
     _validation = {
-        'node_name': {'readonly': True},
-        'machine_name': {'readonly': True},
-        'host_service_uri': {'readonly': True},
-        'status': {'readonly': True},
-        'capabilities': {'readonly': True},
-        'version_status': {'readonly': True},
-        'version': {'readonly': True},
-        'register_time': {'readonly': True},
-        'last_connect_time': {'readonly': True},
-        'expiry_time': {'readonly': True},
-        'last_start_time': {'readonly': True},
-        'last_stop_time': {'readonly': True},
-        'last_update_result': {'readonly': True},
-        'last_start_update_time': {'readonly': True},
-        'last_end_update_time': {'readonly': True},
-        'is_active_dispatcher': {'readonly': True},
-        'concurrent_jobs_limit': {'readonly': True},
-        'max_concurrent_jobs': {'readonly': True},
+        "node_name": {"readonly": True},
+        "machine_name": {"readonly": True},
+        "host_service_uri": {"readonly": True},
+        "status": {"readonly": True},
+        "capabilities": {"readonly": True},
+        "version_status": {"readonly": True},
+        "version": {"readonly": True},
+        "register_time": {"readonly": True},
+        "last_connect_time": {"readonly": True},
+        "expiry_time": {"readonly": True},
+        "last_start_time": {"readonly": True},
+        "last_stop_time": {"readonly": True},
+        "last_update_result": {"readonly": True},
+        "last_start_update_time": {"readonly": True},
+        "last_end_update_time": {"readonly": True},
+        "is_active_dispatcher": {"readonly": True},
+        "concurrent_jobs_limit": {"readonly": True},
+        "max_concurrent_jobs": {"readonly": True},
     }
 
     _attribute_map = {
-        'additional_properties': {'key': '', 'type': '{object}'},
-        'node_name': {'key': 'nodeName', 'type': 'str'},
-        'machine_name': {'key': 'machineName', 'type': 'str'},
-        'host_service_uri': {'key': 'hostServiceUri', 'type': 'str'},
-        'status': {'key': 'status', 'type': 'str'},
-        'capabilities': {'key': 'capabilities', 'type': '{str}'},
-        'version_status': {'key': 'versionStatus', 'type': 'str'},
-        'version': {'key': 'version', 'type': 'str'},
-        'register_time': {'key': 'registerTime', 'type': 'iso-8601'},
-        'last_connect_time': {'key': 'lastConnectTime', 'type': 'iso-8601'},
-        'expiry_time': {'key': 'expiryTime', 'type': 'iso-8601'},
-        'last_start_time': {'key': 'lastStartTime', 'type': 'iso-8601'},
-        'last_stop_time': {'key': 'lastStopTime', 'type': 'iso-8601'},
-        'last_update_result': {'key': 'lastUpdateResult', 'type': 'str'},
-        'last_start_update_time': {'key': 'lastStartUpdateTime', 'type': 'iso-8601'},
-        'last_end_update_time': {'key': 'lastEndUpdateTime', 'type': 'iso-8601'},
-        'is_active_dispatcher': {'key': 'isActiveDispatcher', 'type': 'bool'},
-        'concurrent_jobs_limit': {'key': 'concurrentJobsLimit', 'type': 'int'},
-        'max_concurrent_jobs': {'key': 'maxConcurrentJobs', 'type': 'int'},
+        "additional_properties": {"key": "", "type": "{object}"},
+        "node_name": {"key": "nodeName", "type": "str"},
+        "machine_name": {"key": "machineName", "type": "str"},
+        "host_service_uri": {"key": "hostServiceUri", "type": "str"},
+        "status": {"key": "status", "type": "str"},
+        "capabilities": {"key": "capabilities", "type": "{str}"},
+        "version_status": {"key": "versionStatus", "type": "str"},
+        "version": {"key": "version", "type": "str"},
+        "register_time": {"key": "registerTime", "type": "iso-8601"},
+        "last_connect_time": {"key": "lastConnectTime", "type": "iso-8601"},
+        "expiry_time": {"key": "expiryTime", "type": "iso-8601"},
+        "last_start_time": {"key": "lastStartTime", "type": "iso-8601"},
+        "last_stop_time": {"key": "lastStopTime", "type": "iso-8601"},
+        "last_update_result": {"key": "lastUpdateResult", "type": "str"},
+        "last_start_update_time": {"key": "lastStartUpdateTime", "type": "iso-8601"},
+        "last_end_update_time": {"key": "lastEndUpdateTime", "type": "iso-8601"},
+        "is_active_dispatcher": {"key": "isActiveDispatcher", "type": "bool"},
+        "concurrent_jobs_limit": {"key": "concurrentJobsLimit", "type": "int"},
+        "max_concurrent_jobs": {"key": "maxConcurrentJobs", "type": "int"},
     }
 
-    def __init__(
-        self,
-        *,
-        additional_properties: Optional[Dict[str, object]] = None,
-        **kwargs
-    ):
-        super(SelfHostedIntegrationRuntimeNode, self).__init__(**kwargs)
+    def __init__(self, *, additional_properties: Optional[Dict[str, JSON]] = None, **kwargs: Any) -> None:
+        """
+        :keyword additional_properties: Unmatched properties from the message are deserialized to this
+         collection.
+        :paramtype additional_properties: dict[str, JSON]
+        """
+        super().__init__(**kwargs)
         self.additional_properties = additional_properties
         self.node_name = None
         self.machine_name = None
@@ -5439,23 +9055,23 @@ class SelfHostedIntegrationRuntimeNode(msrest.serialization.Model):
         self.max_concurrent_jobs = None
 
 
-class SelfHostedIntegrationRuntimeStatus(IntegrationRuntimeStatus):
+class SelfHostedIntegrationRuntimeStatus(IntegrationRuntimeStatus):  # pylint: disable=too-many-instance-attributes
     """Self-hosted integration runtime status.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param additional_properties: Unmatched properties from the message are deserialized to this
+    :ivar additional_properties: Unmatched properties from the message are deserialized to this
      collection.
-    :type additional_properties: dict[str, object]
-    :param type: Required. Type of integration runtime.Constant filled by server.  Possible values
-     include: "Managed", "SelfHosted".
-    :type type: str or ~azure.mgmt.synapse.models.IntegrationRuntimeType
+    :vartype additional_properties: dict[str, JSON]
+    :ivar type: Type of integration runtime. Required. Known values are: "Managed" and
+     "SelfHosted".
+    :vartype type: str or ~azure.mgmt.synapse.models.IntegrationRuntimeType
     :ivar data_factory_name: The workspace name which the integration runtime belong to.
     :vartype data_factory_name: str
-    :ivar state: The state of integration runtime. Possible values include: "Initial", "Stopped",
-     "Started", "Starting", "Stopping", "NeedRegistration", "Online", "Limited", "Offline",
+    :ivar state: The state of integration runtime. Known values are: "Initial", "Stopped",
+     "Started", "Starting", "Stopping", "NeedRegistration", "Online", "Limited", "Offline", and
      "AccessDenied".
     :vartype state: str or ~azure.mgmt.synapse.models.IntegrationRuntimeState
     :ivar create_time: The time at which the integration runtime was created, in ISO8601 format.
@@ -5466,14 +9082,14 @@ class SelfHostedIntegrationRuntimeStatus(IntegrationRuntimeStatus):
      mode.
     :vartype node_communication_channel_encryption_mode: str
     :ivar internal_channel_encryption: It is used to set the encryption mode for node-node
-     communication channel (when more than 2 self-hosted integration runtime nodes exist). Possible
-     values include: "NotSet", "SslEncrypted", "NotEncrypted".
+     communication channel (when more than 2 self-hosted integration runtime nodes exist). Known
+     values are: "NotSet", "SslEncrypted", and "NotEncrypted".
     :vartype internal_channel_encryption: str or
      ~azure.mgmt.synapse.models.IntegrationRuntimeInternalChannelEncryptionMode
     :ivar version: Version of the integration runtime.
     :vartype version: str
-    :param nodes: The list of nodes for this integration runtime.
-    :type nodes: list[~azure.mgmt.synapse.models.SelfHostedIntegrationRuntimeNode]
+    :ivar nodes: The list of nodes for this integration runtime.
+    :vartype nodes: list[~azure.mgmt.synapse.models.SelfHostedIntegrationRuntimeNode]
     :ivar scheduled_update_date: The date at which the integration runtime will be scheduled to
      update, in ISO8601 format.
     :vartype scheduled_update_date: ~datetime.datetime
@@ -5487,13 +9103,13 @@ class SelfHostedIntegrationRuntimeStatus(IntegrationRuntimeStatus):
     :ivar service_urls: The URLs for the services used in integration runtime backend service.
     :vartype service_urls: list[str]
     :ivar auto_update: Whether Self-hosted integration runtime auto update has been turned on.
-     Possible values include: "On", "Off".
+     Known values are: "On" and "Off".
     :vartype auto_update: str or ~azure.mgmt.synapse.models.IntegrationRuntimeAutoUpdate
     :ivar version_status: Status of the integration runtime version.
     :vartype version_status: str
-    :param links: The list of linked integration runtimes that are created to share with this
+    :ivar links: The list of linked integration runtimes that are created to share with this
      integration runtime.
-    :type links: list[~azure.mgmt.synapse.models.LinkedIntegrationRuntime]
+    :vartype links: list[~azure.mgmt.synapse.models.LinkedIntegrationRuntime]
     :ivar pushed_version: The version that the integration runtime is going to update to.
     :vartype pushed_version: str
     :ivar latest_version: The latest version on download center.
@@ -5501,63 +9117,88 @@ class SelfHostedIntegrationRuntimeStatus(IntegrationRuntimeStatus):
     :ivar auto_update_eta: The estimated time when the self-hosted integration runtime will be
      updated.
     :vartype auto_update_eta: ~datetime.datetime
+    :ivar service_region: The service region of the integration runtime.
+    :vartype service_region: str
+    :ivar newer_versions: The newer versions on download center.
+    :vartype newer_versions: list[str]
     """
 
     _validation = {
-        'type': {'required': True},
-        'data_factory_name': {'readonly': True},
-        'state': {'readonly': True},
-        'create_time': {'readonly': True},
-        'task_queue_id': {'readonly': True},
-        'node_communication_channel_encryption_mode': {'readonly': True},
-        'internal_channel_encryption': {'readonly': True},
-        'version': {'readonly': True},
-        'scheduled_update_date': {'readonly': True},
-        'update_delay_offset': {'readonly': True},
-        'local_time_zone_offset': {'readonly': True},
-        'capabilities': {'readonly': True},
-        'service_urls': {'readonly': True},
-        'auto_update': {'readonly': True},
-        'version_status': {'readonly': True},
-        'pushed_version': {'readonly': True},
-        'latest_version': {'readonly': True},
-        'auto_update_eta': {'readonly': True},
+        "type": {"required": True},
+        "data_factory_name": {"readonly": True},
+        "state": {"readonly": True},
+        "create_time": {"readonly": True},
+        "task_queue_id": {"readonly": True},
+        "node_communication_channel_encryption_mode": {"readonly": True},
+        "internal_channel_encryption": {"readonly": True},
+        "version": {"readonly": True},
+        "scheduled_update_date": {"readonly": True},
+        "update_delay_offset": {"readonly": True},
+        "local_time_zone_offset": {"readonly": True},
+        "capabilities": {"readonly": True},
+        "service_urls": {"readonly": True},
+        "auto_update": {"readonly": True},
+        "version_status": {"readonly": True},
+        "pushed_version": {"readonly": True},
+        "latest_version": {"readonly": True},
+        "auto_update_eta": {"readonly": True},
     }
 
     _attribute_map = {
-        'additional_properties': {'key': '', 'type': '{object}'},
-        'type': {'key': 'type', 'type': 'str'},
-        'data_factory_name': {'key': 'dataFactoryName', 'type': 'str'},
-        'state': {'key': 'state', 'type': 'str'},
-        'create_time': {'key': 'typeProperties.createTime', 'type': 'iso-8601'},
-        'task_queue_id': {'key': 'typeProperties.taskQueueId', 'type': 'str'},
-        'node_communication_channel_encryption_mode': {'key': 'typeProperties.nodeCommunicationChannelEncryptionMode', 'type': 'str'},
-        'internal_channel_encryption': {'key': 'typeProperties.internalChannelEncryption', 'type': 'str'},
-        'version': {'key': 'typeProperties.version', 'type': 'str'},
-        'nodes': {'key': 'typeProperties.nodes', 'type': '[SelfHostedIntegrationRuntimeNode]'},
-        'scheduled_update_date': {'key': 'typeProperties.scheduledUpdateDate', 'type': 'iso-8601'},
-        'update_delay_offset': {'key': 'typeProperties.updateDelayOffset', 'type': 'str'},
-        'local_time_zone_offset': {'key': 'typeProperties.localTimeZoneOffset', 'type': 'str'},
-        'capabilities': {'key': 'typeProperties.capabilities', 'type': '{str}'},
-        'service_urls': {'key': 'typeProperties.serviceUrls', 'type': '[str]'},
-        'auto_update': {'key': 'typeProperties.autoUpdate', 'type': 'str'},
-        'version_status': {'key': 'typeProperties.versionStatus', 'type': 'str'},
-        'links': {'key': 'typeProperties.links', 'type': '[LinkedIntegrationRuntime]'},
-        'pushed_version': {'key': 'typeProperties.pushedVersion', 'type': 'str'},
-        'latest_version': {'key': 'typeProperties.latestVersion', 'type': 'str'},
-        'auto_update_eta': {'key': 'typeProperties.autoUpdateETA', 'type': 'iso-8601'},
+        "additional_properties": {"key": "", "type": "{object}"},
+        "type": {"key": "type", "type": "str"},
+        "data_factory_name": {"key": "dataFactoryName", "type": "str"},
+        "state": {"key": "state", "type": "str"},
+        "create_time": {"key": "typeProperties.createTime", "type": "iso-8601"},
+        "task_queue_id": {"key": "typeProperties.taskQueueId", "type": "str"},
+        "node_communication_channel_encryption_mode": {
+            "key": "typeProperties.nodeCommunicationChannelEncryptionMode",
+            "type": "str",
+        },
+        "internal_channel_encryption": {"key": "typeProperties.internalChannelEncryption", "type": "str"},
+        "version": {"key": "typeProperties.version", "type": "str"},
+        "nodes": {"key": "typeProperties.nodes", "type": "[SelfHostedIntegrationRuntimeNode]"},
+        "scheduled_update_date": {"key": "typeProperties.scheduledUpdateDate", "type": "iso-8601"},
+        "update_delay_offset": {"key": "typeProperties.updateDelayOffset", "type": "str"},
+        "local_time_zone_offset": {"key": "typeProperties.localTimeZoneOffset", "type": "str"},
+        "capabilities": {"key": "typeProperties.capabilities", "type": "{str}"},
+        "service_urls": {"key": "typeProperties.serviceUrls", "type": "[str]"},
+        "auto_update": {"key": "typeProperties.autoUpdate", "type": "str"},
+        "version_status": {"key": "typeProperties.versionStatus", "type": "str"},
+        "links": {"key": "typeProperties.links", "type": "[LinkedIntegrationRuntime]"},
+        "pushed_version": {"key": "typeProperties.pushedVersion", "type": "str"},
+        "latest_version": {"key": "typeProperties.latestVersion", "type": "str"},
+        "auto_update_eta": {"key": "typeProperties.autoUpdateETA", "type": "iso-8601"},
+        "service_region": {"key": "typeProperties.serviceRegion", "type": "str"},
+        "newer_versions": {"key": "typeProperties.newerVersions", "type": "[str]"},
     }
 
     def __init__(
         self,
         *,
-        additional_properties: Optional[Dict[str, object]] = None,
-        nodes: Optional[List["SelfHostedIntegrationRuntimeNode"]] = None,
-        links: Optional[List["LinkedIntegrationRuntime"]] = None,
-        **kwargs
-    ):
-        super(SelfHostedIntegrationRuntimeStatus, self).__init__(additional_properties=additional_properties, **kwargs)
-        self.type = 'SelfHosted'  # type: str
+        additional_properties: Optional[Dict[str, JSON]] = None,
+        nodes: Optional[List["_models.SelfHostedIntegrationRuntimeNode"]] = None,
+        links: Optional[List["_models.LinkedIntegrationRuntime"]] = None,
+        service_region: Optional[str] = None,
+        newer_versions: Optional[List[str]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword additional_properties: Unmatched properties from the message are deserialized to this
+         collection.
+        :paramtype additional_properties: dict[str, JSON]
+        :keyword nodes: The list of nodes for this integration runtime.
+        :paramtype nodes: list[~azure.mgmt.synapse.models.SelfHostedIntegrationRuntimeNode]
+        :keyword links: The list of linked integration runtimes that are created to share with this
+         integration runtime.
+        :paramtype links: list[~azure.mgmt.synapse.models.LinkedIntegrationRuntime]
+        :keyword service_region: The service region of the integration runtime.
+        :paramtype service_region: str
+        :keyword newer_versions: The newer versions on download center.
+        :paramtype newer_versions: list[str]
+        """
+        super().__init__(additional_properties=additional_properties, **kwargs)
+        self.type: str = "SelfHosted"
         self.create_time = None
         self.task_queue_id = None
         self.node_communication_channel_encryption_mode = None
@@ -5575,9 +9216,11 @@ class SelfHostedIntegrationRuntimeStatus(IntegrationRuntimeStatus):
         self.pushed_version = None
         self.latest_version = None
         self.auto_update_eta = None
+        self.service_region = service_region
+        self.newer_versions = newer_versions
 
 
-class SensitivityLabel(ProxyResource):
+class SensitivityLabel(ProxyResource):  # pylint: disable=too-many-instance-attributes
     """A sensitivity label.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -5598,47 +9241,47 @@ class SensitivityLabel(ProxyResource):
     :vartype table_name: str
     :ivar column_name: The column name.
     :vartype column_name: str
-    :param label_name: The label name.
-    :type label_name: str
-    :param label_id: The label ID.
-    :type label_id: str
-    :param information_type: The information type.
-    :type information_type: str
-    :param information_type_id: The information type ID.
-    :type information_type_id: str
+    :ivar label_name: The label name.
+    :vartype label_name: str
+    :ivar label_id: The label ID.
+    :vartype label_id: str
+    :ivar information_type: The information type.
+    :vartype information_type: str
+    :ivar information_type_id: The information type ID.
+    :vartype information_type_id: str
     :ivar is_disabled: Is sensitivity recommendation disabled. Applicable for recommended
      sensitivity label only. Specifies whether the sensitivity recommendation on this column is
      disabled (dismissed) or not.
     :vartype is_disabled: bool
-    :param rank:  Possible values include: "None", "Low", "Medium", "High", "Critical".
-    :type rank: str or ~azure.mgmt.synapse.models.SensitivityLabelRank
+    :ivar rank: Known values are: "None", "Low", "Medium", "High", and "Critical".
+    :vartype rank: str or ~azure.mgmt.synapse.models.SensitivityLabelRank
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'managed_by': {'readonly': True},
-        'schema_name': {'readonly': True},
-        'table_name': {'readonly': True},
-        'column_name': {'readonly': True},
-        'is_disabled': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "managed_by": {"readonly": True},
+        "schema_name": {"readonly": True},
+        "table_name": {"readonly": True},
+        "column_name": {"readonly": True},
+        "is_disabled": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'managed_by': {'key': 'managedBy', 'type': 'str'},
-        'schema_name': {'key': 'properties.schemaName', 'type': 'str'},
-        'table_name': {'key': 'properties.tableName', 'type': 'str'},
-        'column_name': {'key': 'properties.columnName', 'type': 'str'},
-        'label_name': {'key': 'properties.labelName', 'type': 'str'},
-        'label_id': {'key': 'properties.labelId', 'type': 'str'},
-        'information_type': {'key': 'properties.informationType', 'type': 'str'},
-        'information_type_id': {'key': 'properties.informationTypeId', 'type': 'str'},
-        'is_disabled': {'key': 'properties.isDisabled', 'type': 'bool'},
-        'rank': {'key': 'properties.rank', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "managed_by": {"key": "managedBy", "type": "str"},
+        "schema_name": {"key": "properties.schemaName", "type": "str"},
+        "table_name": {"key": "properties.tableName", "type": "str"},
+        "column_name": {"key": "properties.columnName", "type": "str"},
+        "label_name": {"key": "properties.labelName", "type": "str"},
+        "label_id": {"key": "properties.labelId", "type": "str"},
+        "information_type": {"key": "properties.informationType", "type": "str"},
+        "information_type_id": {"key": "properties.informationTypeId", "type": "str"},
+        "is_disabled": {"key": "properties.isDisabled", "type": "bool"},
+        "rank": {"key": "properties.rank", "type": "str"},
     }
 
     def __init__(
@@ -5648,10 +9291,22 @@ class SensitivityLabel(ProxyResource):
         label_id: Optional[str] = None,
         information_type: Optional[str] = None,
         information_type_id: Optional[str] = None,
-        rank: Optional[Union[str, "SensitivityLabelRank"]] = None,
-        **kwargs
-    ):
-        super(SensitivityLabel, self).__init__(**kwargs)
+        rank: Optional[Union[str, "_models.SensitivityLabelRank"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword label_name: The label name.
+        :paramtype label_name: str
+        :keyword label_id: The label ID.
+        :paramtype label_id: str
+        :keyword information_type: The information type.
+        :paramtype information_type: str
+        :keyword information_type_id: The information type ID.
+        :paramtype information_type_id: str
+        :keyword rank: Known values are: "None", "Low", "Medium", "High", and "Critical".
+        :paramtype rank: str or ~azure.mgmt.synapse.models.SensitivityLabelRank
+        """
+        super().__init__(**kwargs)
         self.managed_by = None
         self.schema_name = None
         self.table_name = None
@@ -5664,7 +9319,7 @@ class SensitivityLabel(ProxyResource):
         self.rank = rank
 
 
-class SensitivityLabelListResult(msrest.serialization.Model):
+class SensitivityLabelListResult(_serialization.Model):
     """A list of sensitivity labels.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -5676,20 +9331,18 @@ class SensitivityLabelListResult(msrest.serialization.Model):
     """
 
     _validation = {
-        'value': {'readonly': True},
-        'next_link': {'readonly': True},
+        "value": {"readonly": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[SensitivityLabel]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[SensitivityLabel]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(SensitivityLabelListResult, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.value = None
         self.next_link = None
 
@@ -5707,46 +9360,58 @@ class SensitivityLabelUpdate(ProxyResource):
     :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
      "Microsoft.Storage/storageAccounts".
     :vartype type: str
-    :param op:  Possible values include: "set", "remove".
-    :type op: str or ~azure.mgmt.synapse.models.SensitivityLabelUpdateKind
-    :param schema: Schema name of the column to update.
-    :type schema: str
-    :param table: Table name of the column to update.
-    :type table: str
-    :param column: Column name to update.
-    :type column: str
-    :param sensitivity_label: The sensitivity label information to apply on a column.
-    :type sensitivity_label: ~azure.mgmt.synapse.models.SensitivityLabel
+    :ivar op: Known values are: "set" and "remove".
+    :vartype op: str or ~azure.mgmt.synapse.models.SensitivityLabelUpdateKind
+    :ivar schema: Schema name of the column to update.
+    :vartype schema: str
+    :ivar table: Table name of the column to update.
+    :vartype table: str
+    :ivar column: Column name to update.
+    :vartype column: str
+    :ivar sensitivity_label: The sensitivity label information to apply on a column.
+    :vartype sensitivity_label: ~azure.mgmt.synapse.models.SensitivityLabel
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'op': {'key': 'properties.op', 'type': 'str'},
-        'schema': {'key': 'properties.schema', 'type': 'str'},
-        'table': {'key': 'properties.table', 'type': 'str'},
-        'column': {'key': 'properties.column', 'type': 'str'},
-        'sensitivity_label': {'key': 'properties.sensitivityLabel', 'type': 'SensitivityLabel'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "op": {"key": "properties.op", "type": "str"},
+        "schema": {"key": "properties.schema", "type": "str"},
+        "table": {"key": "properties.table", "type": "str"},
+        "column": {"key": "properties.column", "type": "str"},
+        "sensitivity_label": {"key": "properties.sensitivityLabel", "type": "SensitivityLabel"},
     }
 
     def __init__(
         self,
         *,
-        op: Optional[Union[str, "SensitivityLabelUpdateKind"]] = None,
+        op: Optional[Union[str, "_models.SensitivityLabelUpdateKind"]] = None,
         schema: Optional[str] = None,
         table: Optional[str] = None,
         column: Optional[str] = None,
-        sensitivity_label: Optional["SensitivityLabel"] = None,
-        **kwargs
-    ):
-        super(SensitivityLabelUpdate, self).__init__(**kwargs)
+        sensitivity_label: Optional["_models.SensitivityLabel"] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword op: Known values are: "set" and "remove".
+        :paramtype op: str or ~azure.mgmt.synapse.models.SensitivityLabelUpdateKind
+        :keyword schema: Schema name of the column to update.
+        :paramtype schema: str
+        :keyword table: Table name of the column to update.
+        :paramtype table: str
+        :keyword column: Column name to update.
+        :paramtype column: str
+        :keyword sensitivity_label: The sensitivity label information to apply on a column.
+        :paramtype sensitivity_label: ~azure.mgmt.synapse.models.SensitivityLabel
+        """
+        super().__init__(**kwargs)
         self.op = op
         self.schema = schema
         self.table = table
@@ -5754,28 +9419,27 @@ class SensitivityLabelUpdate(ProxyResource):
         self.sensitivity_label = sensitivity_label
 
 
-class SensitivityLabelUpdateList(msrest.serialization.Model):
+class SensitivityLabelUpdateList(_serialization.Model):
     """A list of sensitivity label update operations.
 
-    :param operations:
-    :type operations: list[~azure.mgmt.synapse.models.SensitivityLabelUpdate]
+    :ivar operations:
+    :vartype operations: list[~azure.mgmt.synapse.models.SensitivityLabelUpdate]
     """
 
     _attribute_map = {
-        'operations': {'key': 'operations', 'type': '[SensitivityLabelUpdate]'},
+        "operations": {"key": "operations", "type": "[SensitivityLabelUpdate]"},
     }
 
-    def __init__(
-        self,
-        *,
-        operations: Optional[List["SensitivityLabelUpdate"]] = None,
-        **kwargs
-    ):
-        super(SensitivityLabelUpdateList, self).__init__(**kwargs)
+    def __init__(self, *, operations: Optional[List["_models.SensitivityLabelUpdate"]] = None, **kwargs: Any) -> None:
+        """
+        :keyword operations:
+        :paramtype operations: list[~azure.mgmt.synapse.models.SensitivityLabelUpdate]
+        """
+        super().__init__(**kwargs)
         self.operations = operations
 
 
-class ServerBlobAuditingPolicy(ProxyResource):
+class ServerBlobAuditingPolicy(ProxyResource):  # pylint: disable=too-many-instance-attributes
     """A server blob auditing policy.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -5788,46 +9452,45 @@ class ServerBlobAuditingPolicy(ProxyResource):
     :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
      "Microsoft.Storage/storageAccounts".
     :vartype type: str
-    :param state: Specifies the state of the policy. If state is Enabled, storageEndpoint or
-     isAzureMonitorTargetEnabled are required. Possible values include: "Enabled", "Disabled".
-    :type state: str or ~azure.mgmt.synapse.models.BlobAuditingPolicyState
-    :param storage_endpoint: Specifies the blob storage endpoint (e.g.
+    :ivar state: Specifies the state of the policy. If state is Enabled, storageEndpoint or
+     isAzureMonitorTargetEnabled are required. Known values are: "Enabled" and "Disabled".
+    :vartype state: str or ~azure.mgmt.synapse.models.BlobAuditingPolicyState
+    :ivar storage_endpoint: Specifies the blob storage endpoint (e.g.
      https://MyAccount.blob.core.windows.net). If state is Enabled, storageEndpoint or
      isAzureMonitorTargetEnabled is required.
-    :type storage_endpoint: str
-    :param storage_account_access_key: Specifies the identifier key of the auditing storage
-     account.
+    :vartype storage_endpoint: str
+    :ivar storage_account_access_key: Specifies the identifier key of the auditing storage account.
      If state is Enabled and storageEndpoint is specified, not specifying the
      storageAccountAccessKey will use SQL server system-assigned managed identity to access the
      storage.
      Prerequisites for using managed identity authentication:
-    
-    
+
+
      #. Assign SQL Server a system-assigned managed identity in Azure Active Directory (AAD).
      #. Grant SQL Server identity access to the storage account by adding 'Storage Blob Data
      Contributor' RBAC role to the server identity.
         For more information, see `Auditing to storage using Managed Identity authentication
      <https://go.microsoft.com/fwlink/?linkid=2114355>`_.
-    :type storage_account_access_key: str
-    :param retention_days: Specifies the number of days to keep in the audit logs in the storage
+    :vartype storage_account_access_key: str
+    :ivar retention_days: Specifies the number of days to keep in the audit logs in the storage
      account.
-    :type retention_days: int
-    :param audit_actions_and_groups: Specifies the Actions-Groups and Actions to audit.
-    
+    :vartype retention_days: int
+    :ivar audit_actions_and_groups: Specifies the Actions-Groups and Actions to audit.
+
      The recommended set of action groups to use is the following combination - this will audit all
      the queries and stored procedures executed against the database, as well as successful and
      failed logins:
-    
+
      BATCH_COMPLETED_GROUP,
      SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP,
      FAILED_DATABASE_AUTHENTICATION_GROUP.
-    
+
      This above combination is also the set that is configured by default when enabling auditing
      from the Azure portal.
-    
+
      The supported action groups to audit are (note: choose only specific groups that cover your
      auditing needs. Using unnecessary groups could lead to very large quantities of audit records):
-    
+
      APPLICATION_ROLE_CHANGE_PASSWORD_GROUP
      BACKUP_RESTORE_GROUP
      DATABASE_LOGOUT_GROUP
@@ -5848,15 +9511,14 @@ class ServerBlobAuditingPolicy(ProxyResource):
      USER_CHANGE_PASSWORD_GROUP
      BATCH_STARTED_GROUP
      BATCH_COMPLETED_GROUP
-    
+
      These are groups that cover all sql statements and stored procedures executed against the
      database, and should not be used in combination with other groups as this will result in
      duplicate audit logs.
-    
-     For more information, see `Database-Level Audit Action Groups <https://docs.microsoft.com/en-
-     us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-
-     actions#database-level-audit-action-groups>`_.
-    
+
+     For more information, see `Database-Level Audit Action Groups
+     <https://docs.microsoft.com/en-us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-actions#database-level-audit-action-groups>`_.
+
      For Database auditing policy, specific Actions can also be specified (note that Actions cannot
      be specified for Server auditing policy). The supported actions to audit are:
      SELECT
@@ -5866,77 +9528,92 @@ class ServerBlobAuditingPolicy(ProxyResource):
      EXECUTE
      RECEIVE
      REFERENCES
-    
+
      The general form for defining an action to be audited is:
      {action} ON {object} BY {principal}
-    
+
      Note that :code:`<object>` in the above format can refer to an object like a table, view, or
      stored procedure, or an entire database or schema. For the latter cases, the forms
      DATABASE::{db_name} and SCHEMA::{schema_name} are used, respectively.
-    
+
      For example:
      SELECT on dbo.myTable by public
      SELECT on DATABASE::myDatabase by public
      SELECT on SCHEMA::mySchema by public
-    
-     For more information, see `Database-Level Audit Actions <https://docs.microsoft.com/en-
-     us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-
-     actions#database-level-audit-actions>`_.
-    :type audit_actions_and_groups: list[str]
-    :param storage_account_subscription_id: Specifies the blob storage subscription Id.
-    :type storage_account_subscription_id: str
-    :param is_storage_secondary_key_in_use: Specifies whether storageAccountAccessKey value is the
+
+     For more information, see `Database-Level Audit Actions
+     <https://docs.microsoft.com/en-us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-actions#database-level-audit-actions>`_.
+    :vartype audit_actions_and_groups: list[str]
+    :ivar storage_account_subscription_id: Specifies the blob storage subscription Id.
+    :vartype storage_account_subscription_id: str
+    :ivar is_storage_secondary_key_in_use: Specifies whether storageAccountAccessKey value is the
      storage's secondary key.
-    :type is_storage_secondary_key_in_use: bool
-    :param is_azure_monitor_target_enabled: Specifies whether audit events are sent to Azure
+    :vartype is_storage_secondary_key_in_use: bool
+    :ivar is_azure_monitor_target_enabled: Specifies whether audit events are sent to Azure
      Monitor.
      In order to send the events to Azure Monitor, specify 'state' as 'Enabled' and
      'isAzureMonitorTargetEnabled' as true.
-    
+
      When using REST API to configure auditing, Diagnostic Settings with 'SQLSecurityAuditEvents'
      diagnostic logs category on the database should be also created.
      Note that for server level audit you should use the 'master' database as {databaseName}.
-    
+
      Diagnostic Settings URI format:
      PUT
-     https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/providers/microsoft.insights/diagnosticSettings/{settingsName}?api-
-     version=2017-05-01-preview
-    
+     https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/providers/microsoft.insights/diagnosticSettings/{settingsName}?api-version=2017-05-01-preview
+
      For more information, see `Diagnostic Settings REST API
      <https://go.microsoft.com/fwlink/?linkid=2033207>`_
      or `Diagnostic Settings PowerShell <https://go.microsoft.com/fwlink/?linkid=2033043>`_.
-    :type is_azure_monitor_target_enabled: bool
-    :param queue_delay_ms: Specifies the amount of time in milliseconds that can elapse before
-     audit actions are forced to be processed.
+    :vartype is_azure_monitor_target_enabled: bool
+    :ivar queue_delay_ms: Specifies the amount of time in milliseconds that can elapse before audit
+     actions are forced to be processed.
      The default minimum value is 1000 (1 second). The maximum is 2,147,483,647.
-    :type queue_delay_ms: int
+    :vartype queue_delay_ms: int
+    :ivar is_devops_audit_enabled: Specifies the state of devops audit. If state is Enabled, devops
+     logs will be sent to Azure Monitor.
+     In order to send the events to Azure Monitor, specify 'State' as 'Enabled',
+     'IsAzureMonitorTargetEnabled' as true and 'IsDevopsAuditEnabled' as true
+
+     When using REST API to configure auditing, Diagnostic Settings with 'DevOpsOperationsAudit'
+     diagnostic logs category on the master database should also be created.
+
+     Diagnostic Settings URI format:
+     PUT
+     https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Sql/servers/{serverName}/databases/master/providers/microsoft.insights/diagnosticSettings/{settingsName}?api-version=2017-05-01-preview
+
+     For more information, see `Diagnostic Settings REST API
+     <https://go.microsoft.com/fwlink/?linkid=2033207>`_
+     or `Diagnostic Settings PowerShell <https://go.microsoft.com/fwlink/?linkid=2033043>`_.
+    :vartype is_devops_audit_enabled: bool
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'state': {'key': 'properties.state', 'type': 'str'},
-        'storage_endpoint': {'key': 'properties.storageEndpoint', 'type': 'str'},
-        'storage_account_access_key': {'key': 'properties.storageAccountAccessKey', 'type': 'str'},
-        'retention_days': {'key': 'properties.retentionDays', 'type': 'int'},
-        'audit_actions_and_groups': {'key': 'properties.auditActionsAndGroups', 'type': '[str]'},
-        'storage_account_subscription_id': {'key': 'properties.storageAccountSubscriptionId', 'type': 'str'},
-        'is_storage_secondary_key_in_use': {'key': 'properties.isStorageSecondaryKeyInUse', 'type': 'bool'},
-        'is_azure_monitor_target_enabled': {'key': 'properties.isAzureMonitorTargetEnabled', 'type': 'bool'},
-        'queue_delay_ms': {'key': 'properties.queueDelayMs', 'type': 'int'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "state": {"key": "properties.state", "type": "str"},
+        "storage_endpoint": {"key": "properties.storageEndpoint", "type": "str"},
+        "storage_account_access_key": {"key": "properties.storageAccountAccessKey", "type": "str"},
+        "retention_days": {"key": "properties.retentionDays", "type": "int"},
+        "audit_actions_and_groups": {"key": "properties.auditActionsAndGroups", "type": "[str]"},
+        "storage_account_subscription_id": {"key": "properties.storageAccountSubscriptionId", "type": "str"},
+        "is_storage_secondary_key_in_use": {"key": "properties.isStorageSecondaryKeyInUse", "type": "bool"},
+        "is_azure_monitor_target_enabled": {"key": "properties.isAzureMonitorTargetEnabled", "type": "bool"},
+        "queue_delay_ms": {"key": "properties.queueDelayMs", "type": "int"},
+        "is_devops_audit_enabled": {"key": "properties.isDevopsAuditEnabled", "type": "bool"},
     }
 
     def __init__(
         self,
         *,
-        state: Optional[Union[str, "BlobAuditingPolicyState"]] = None,
+        state: Optional[Union[str, "_models.BlobAuditingPolicyState"]] = None,
         storage_endpoint: Optional[str] = None,
         storage_account_access_key: Optional[str] = None,
         retention_days: Optional[int] = None,
@@ -5945,9 +9622,147 @@ class ServerBlobAuditingPolicy(ProxyResource):
         is_storage_secondary_key_in_use: Optional[bool] = None,
         is_azure_monitor_target_enabled: Optional[bool] = None,
         queue_delay_ms: Optional[int] = None,
-        **kwargs
-    ):
-        super(ServerBlobAuditingPolicy, self).__init__(**kwargs)
+        is_devops_audit_enabled: Optional[bool] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword state: Specifies the state of the policy. If state is Enabled, storageEndpoint or
+         isAzureMonitorTargetEnabled are required. Known values are: "Enabled" and "Disabled".
+        :paramtype state: str or ~azure.mgmt.synapse.models.BlobAuditingPolicyState
+        :keyword storage_endpoint: Specifies the blob storage endpoint (e.g.
+         https://MyAccount.blob.core.windows.net). If state is Enabled, storageEndpoint or
+         isAzureMonitorTargetEnabled is required.
+        :paramtype storage_endpoint: str
+        :keyword storage_account_access_key: Specifies the identifier key of the auditing storage
+         account.
+         If state is Enabled and storageEndpoint is specified, not specifying the
+         storageAccountAccessKey will use SQL server system-assigned managed identity to access the
+         storage.
+         Prerequisites for using managed identity authentication:
+
+
+         #. Assign SQL Server a system-assigned managed identity in Azure Active Directory (AAD).
+         #. Grant SQL Server identity access to the storage account by adding 'Storage Blob Data
+         Contributor' RBAC role to the server identity.
+            For more information, see `Auditing to storage using Managed Identity authentication
+         <https://go.microsoft.com/fwlink/?linkid=2114355>`_.
+        :paramtype storage_account_access_key: str
+        :keyword retention_days: Specifies the number of days to keep in the audit logs in the storage
+         account.
+        :paramtype retention_days: int
+        :keyword audit_actions_and_groups: Specifies the Actions-Groups and Actions to audit.
+
+         The recommended set of action groups to use is the following combination - this will audit all
+         the queries and stored procedures executed against the database, as well as successful and
+         failed logins:
+
+         BATCH_COMPLETED_GROUP,
+         SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP,
+         FAILED_DATABASE_AUTHENTICATION_GROUP.
+
+         This above combination is also the set that is configured by default when enabling auditing
+         from the Azure portal.
+
+         The supported action groups to audit are (note: choose only specific groups that cover your
+         auditing needs. Using unnecessary groups could lead to very large quantities of audit records):
+
+         APPLICATION_ROLE_CHANGE_PASSWORD_GROUP
+         BACKUP_RESTORE_GROUP
+         DATABASE_LOGOUT_GROUP
+         DATABASE_OBJECT_CHANGE_GROUP
+         DATABASE_OBJECT_OWNERSHIP_CHANGE_GROUP
+         DATABASE_OBJECT_PERMISSION_CHANGE_GROUP
+         DATABASE_OPERATION_GROUP
+         DATABASE_PERMISSION_CHANGE_GROUP
+         DATABASE_PRINCIPAL_CHANGE_GROUP
+         DATABASE_PRINCIPAL_IMPERSONATION_GROUP
+         DATABASE_ROLE_MEMBER_CHANGE_GROUP
+         FAILED_DATABASE_AUTHENTICATION_GROUP
+         SCHEMA_OBJECT_ACCESS_GROUP
+         SCHEMA_OBJECT_CHANGE_GROUP
+         SCHEMA_OBJECT_OWNERSHIP_CHANGE_GROUP
+         SCHEMA_OBJECT_PERMISSION_CHANGE_GROUP
+         SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP
+         USER_CHANGE_PASSWORD_GROUP
+         BATCH_STARTED_GROUP
+         BATCH_COMPLETED_GROUP
+
+         These are groups that cover all sql statements and stored procedures executed against the
+         database, and should not be used in combination with other groups as this will result in
+         duplicate audit logs.
+
+         For more information, see `Database-Level Audit Action Groups
+         <https://docs.microsoft.com/en-us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-actions#database-level-audit-action-groups>`_.
+
+         For Database auditing policy, specific Actions can also be specified (note that Actions cannot
+         be specified for Server auditing policy). The supported actions to audit are:
+         SELECT
+         UPDATE
+         INSERT
+         DELETE
+         EXECUTE
+         RECEIVE
+         REFERENCES
+
+         The general form for defining an action to be audited is:
+         {action} ON {object} BY {principal}
+
+         Note that :code:`<object>` in the above format can refer to an object like a table, view, or
+         stored procedure, or an entire database or schema. For the latter cases, the forms
+         DATABASE::{db_name} and SCHEMA::{schema_name} are used, respectively.
+
+         For example:
+         SELECT on dbo.myTable by public
+         SELECT on DATABASE::myDatabase by public
+         SELECT on SCHEMA::mySchema by public
+
+         For more information, see `Database-Level Audit Actions
+         <https://docs.microsoft.com/en-us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-actions#database-level-audit-actions>`_.
+        :paramtype audit_actions_and_groups: list[str]
+        :keyword storage_account_subscription_id: Specifies the blob storage subscription Id.
+        :paramtype storage_account_subscription_id: str
+        :keyword is_storage_secondary_key_in_use: Specifies whether storageAccountAccessKey value is
+         the storage's secondary key.
+        :paramtype is_storage_secondary_key_in_use: bool
+        :keyword is_azure_monitor_target_enabled: Specifies whether audit events are sent to Azure
+         Monitor.
+         In order to send the events to Azure Monitor, specify 'state' as 'Enabled' and
+         'isAzureMonitorTargetEnabled' as true.
+
+         When using REST API to configure auditing, Diagnostic Settings with 'SQLSecurityAuditEvents'
+         diagnostic logs category on the database should be also created.
+         Note that for server level audit you should use the 'master' database as {databaseName}.
+
+         Diagnostic Settings URI format:
+         PUT
+         https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/providers/microsoft.insights/diagnosticSettings/{settingsName}?api-version=2017-05-01-preview
+
+         For more information, see `Diagnostic Settings REST API
+         <https://go.microsoft.com/fwlink/?linkid=2033207>`_
+         or `Diagnostic Settings PowerShell <https://go.microsoft.com/fwlink/?linkid=2033043>`_.
+        :paramtype is_azure_monitor_target_enabled: bool
+        :keyword queue_delay_ms: Specifies the amount of time in milliseconds that can elapse before
+         audit actions are forced to be processed.
+         The default minimum value is 1000 (1 second). The maximum is 2,147,483,647.
+        :paramtype queue_delay_ms: int
+        :keyword is_devops_audit_enabled: Specifies the state of devops audit. If state is Enabled,
+         devops logs will be sent to Azure Monitor.
+         In order to send the events to Azure Monitor, specify 'State' as 'Enabled',
+         'IsAzureMonitorTargetEnabled' as true and 'IsDevopsAuditEnabled' as true
+
+         When using REST API to configure auditing, Diagnostic Settings with 'DevOpsOperationsAudit'
+         diagnostic logs category on the master database should also be created.
+
+         Diagnostic Settings URI format:
+         PUT
+         https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Sql/servers/{serverName}/databases/master/providers/microsoft.insights/diagnosticSettings/{settingsName}?api-version=2017-05-01-preview
+
+         For more information, see `Diagnostic Settings REST API
+         <https://go.microsoft.com/fwlink/?linkid=2033207>`_
+         or `Diagnostic Settings PowerShell <https://go.microsoft.com/fwlink/?linkid=2033043>`_.
+        :paramtype is_devops_audit_enabled: bool
+        """
+        super().__init__(**kwargs)
         self.state = state
         self.storage_endpoint = storage_endpoint
         self.storage_account_access_key = storage_account_access_key
@@ -5957,9 +9772,10 @@ class ServerBlobAuditingPolicy(ProxyResource):
         self.is_storage_secondary_key_in_use = is_storage_secondary_key_in_use
         self.is_azure_monitor_target_enabled = is_azure_monitor_target_enabled
         self.queue_delay_ms = queue_delay_ms
+        self.is_devops_audit_enabled = is_devops_audit_enabled
 
 
-class ServerBlobAuditingPolicyListResult(msrest.serialization.Model):
+class ServerBlobAuditingPolicyListResult(_serialization.Model):
     """A list of server auditing settings.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -5971,25 +9787,23 @@ class ServerBlobAuditingPolicyListResult(msrest.serialization.Model):
     """
 
     _validation = {
-        'value': {'readonly': True},
-        'next_link': {'readonly': True},
+        "value": {"readonly": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[ServerBlobAuditingPolicy]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[ServerBlobAuditingPolicy]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(ServerBlobAuditingPolicyListResult, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.value = None
         self.next_link = None
 
 
-class ServerSecurityAlertPolicy(ProxyResource):
+class ServerSecurityAlertPolicy(ProxyResource):  # pylint: disable=too-many-instance-attributes
     """Workspace managed Sql server security alert policy.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -6002,64 +9816,87 @@ class ServerSecurityAlertPolicy(ProxyResource):
     :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
      "Microsoft.Storage/storageAccounts".
     :vartype type: str
-    :param state: Specifies the state of the policy, whether it is enabled or disabled or a policy
-     has not been applied yet on the specific server. Possible values include: "New", "Enabled",
+    :ivar state: Specifies the state of the policy, whether it is enabled or disabled or a policy
+     has not been applied yet on the specific server. Known values are: "New", "Enabled", and
      "Disabled".
-    :type state: str or ~azure.mgmt.synapse.models.SecurityAlertPolicyState
-    :param disabled_alerts: Specifies an array of alerts that are disabled. Allowed values are:
+    :vartype state: str or ~azure.mgmt.synapse.models.SecurityAlertPolicyState
+    :ivar disabled_alerts: Specifies an array of alerts that are disabled. Allowed values are:
      Sql_Injection, Sql_Injection_Vulnerability, Access_Anomaly, Data_Exfiltration, Unsafe_Action.
-    :type disabled_alerts: list[str]
-    :param email_addresses: Specifies an array of e-mail addresses to which the alert is sent.
-    :type email_addresses: list[str]
-    :param email_account_admins: Specifies that the alert is sent to the account administrators.
-    :type email_account_admins: bool
-    :param storage_endpoint: Specifies the blob storage endpoint (e.g.
+    :vartype disabled_alerts: list[str]
+    :ivar email_addresses: Specifies an array of e-mail addresses to which the alert is sent.
+    :vartype email_addresses: list[str]
+    :ivar email_account_admins: Specifies that the alert is sent to the account administrators.
+    :vartype email_account_admins: bool
+    :ivar storage_endpoint: Specifies the blob storage endpoint (e.g.
      https://MyAccount.blob.core.windows.net). This blob storage will hold all Threat Detection
      audit logs.
-    :type storage_endpoint: str
-    :param storage_account_access_key: Specifies the identifier key of the Threat Detection audit
+    :vartype storage_endpoint: str
+    :ivar storage_account_access_key: Specifies the identifier key of the Threat Detection audit
      storage account.
-    :type storage_account_access_key: str
-    :param retention_days: Specifies the number of days to keep in the Threat Detection audit logs.
-    :type retention_days: int
+    :vartype storage_account_access_key: str
+    :ivar retention_days: Specifies the number of days to keep in the Threat Detection audit logs.
+    :vartype retention_days: int
     :ivar creation_time: Specifies the UTC creation time of the policy.
     :vartype creation_time: ~datetime.datetime
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'creation_time': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "creation_time": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'state': {'key': 'properties.state', 'type': 'str'},
-        'disabled_alerts': {'key': 'properties.disabledAlerts', 'type': '[str]'},
-        'email_addresses': {'key': 'properties.emailAddresses', 'type': '[str]'},
-        'email_account_admins': {'key': 'properties.emailAccountAdmins', 'type': 'bool'},
-        'storage_endpoint': {'key': 'properties.storageEndpoint', 'type': 'str'},
-        'storage_account_access_key': {'key': 'properties.storageAccountAccessKey', 'type': 'str'},
-        'retention_days': {'key': 'properties.retentionDays', 'type': 'int'},
-        'creation_time': {'key': 'properties.creationTime', 'type': 'iso-8601'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "state": {"key": "properties.state", "type": "str"},
+        "disabled_alerts": {"key": "properties.disabledAlerts", "type": "[str]"},
+        "email_addresses": {"key": "properties.emailAddresses", "type": "[str]"},
+        "email_account_admins": {"key": "properties.emailAccountAdmins", "type": "bool"},
+        "storage_endpoint": {"key": "properties.storageEndpoint", "type": "str"},
+        "storage_account_access_key": {"key": "properties.storageAccountAccessKey", "type": "str"},
+        "retention_days": {"key": "properties.retentionDays", "type": "int"},
+        "creation_time": {"key": "properties.creationTime", "type": "iso-8601"},
     }
 
     def __init__(
         self,
         *,
-        state: Optional[Union[str, "SecurityAlertPolicyState"]] = None,
+        state: Optional[Union[str, "_models.SecurityAlertPolicyState"]] = None,
         disabled_alerts: Optional[List[str]] = None,
         email_addresses: Optional[List[str]] = None,
         email_account_admins: Optional[bool] = None,
         storage_endpoint: Optional[str] = None,
         storage_account_access_key: Optional[str] = None,
         retention_days: Optional[int] = None,
-        **kwargs
-    ):
-        super(ServerSecurityAlertPolicy, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword state: Specifies the state of the policy, whether it is enabled or disabled or a
+         policy has not been applied yet on the specific server. Known values are: "New", "Enabled", and
+         "Disabled".
+        :paramtype state: str or ~azure.mgmt.synapse.models.SecurityAlertPolicyState
+        :keyword disabled_alerts: Specifies an array of alerts that are disabled. Allowed values are:
+         Sql_Injection, Sql_Injection_Vulnerability, Access_Anomaly, Data_Exfiltration, Unsafe_Action.
+        :paramtype disabled_alerts: list[str]
+        :keyword email_addresses: Specifies an array of e-mail addresses to which the alert is sent.
+        :paramtype email_addresses: list[str]
+        :keyword email_account_admins: Specifies that the alert is sent to the account administrators.
+        :paramtype email_account_admins: bool
+        :keyword storage_endpoint: Specifies the blob storage endpoint (e.g.
+         https://MyAccount.blob.core.windows.net). This blob storage will hold all Threat Detection
+         audit logs.
+        :paramtype storage_endpoint: str
+        :keyword storage_account_access_key: Specifies the identifier key of the Threat Detection audit
+         storage account.
+        :paramtype storage_account_access_key: str
+        :keyword retention_days: Specifies the number of days to keep in the Threat Detection audit
+         logs.
+        :paramtype retention_days: int
+        """
+        super().__init__(**kwargs)
         self.state = state
         self.disabled_alerts = disabled_alerts
         self.email_addresses = email_addresses
@@ -6070,7 +9907,7 @@ class ServerSecurityAlertPolicy(ProxyResource):
         self.creation_time = None
 
 
-class ServerSecurityAlertPolicyListResult(msrest.serialization.Model):
+class ServerSecurityAlertPolicyListResult(_serialization.Model):
     """A list of the workspace managed sql server's security alert policies.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -6082,25 +9919,23 @@ class ServerSecurityAlertPolicyListResult(msrest.serialization.Model):
     """
 
     _validation = {
-        'value': {'readonly': True},
-        'next_link': {'readonly': True},
+        "value": {"readonly": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[ServerSecurityAlertPolicy]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[ServerSecurityAlertPolicy]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(ServerSecurityAlertPolicyListResult, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.value = None
         self.next_link = None
 
 
-class ServerUsage(msrest.serialization.Model):
+class ServerUsage(_serialization.Model):
     """Represents server metrics.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -6122,30 +9957,28 @@ class ServerUsage(msrest.serialization.Model):
     """
 
     _validation = {
-        'name': {'readonly': True},
-        'resource_name': {'readonly': True},
-        'display_name': {'readonly': True},
-        'current_value': {'readonly': True},
-        'limit': {'readonly': True},
-        'unit': {'readonly': True},
-        'next_reset_time': {'readonly': True},
+        "name": {"readonly": True},
+        "resource_name": {"readonly": True},
+        "display_name": {"readonly": True},
+        "current_value": {"readonly": True},
+        "limit": {"readonly": True},
+        "unit": {"readonly": True},
+        "next_reset_time": {"readonly": True},
     }
 
     _attribute_map = {
-        'name': {'key': 'name', 'type': 'str'},
-        'resource_name': {'key': 'resourceName', 'type': 'str'},
-        'display_name': {'key': 'displayName', 'type': 'str'},
-        'current_value': {'key': 'currentValue', 'type': 'float'},
-        'limit': {'key': 'limit', 'type': 'float'},
-        'unit': {'key': 'unit', 'type': 'str'},
-        'next_reset_time': {'key': 'nextResetTime', 'type': 'iso-8601'},
+        "name": {"key": "name", "type": "str"},
+        "resource_name": {"key": "resourceName", "type": "str"},
+        "display_name": {"key": "displayName", "type": "str"},
+        "current_value": {"key": "currentValue", "type": "float"},
+        "limit": {"key": "limit", "type": "float"},
+        "unit": {"key": "unit", "type": "str"},
+        "next_reset_time": {"key": "nextResetTime", "type": "iso-8601"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(ServerUsage, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.name = None
         self.resource_name = None
         self.display_name = None
@@ -6155,36 +9988,35 @@ class ServerUsage(msrest.serialization.Model):
         self.next_reset_time = None
 
 
-class ServerUsageListResult(msrest.serialization.Model):
+class ServerUsageListResult(_serialization.Model):
     """Represents the response to a list server metrics request.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param value: Required. The list of server metrics for the server.
-    :type value: list[~azure.mgmt.synapse.models.ServerUsage]
+    :ivar value: The list of server metrics for the server. Required.
+    :vartype value: list[~azure.mgmt.synapse.models.ServerUsage]
     :ivar next_link: Link to retrieve next page of results.
     :vartype next_link: str
     """
 
     _validation = {
-        'value': {'required': True},
-        'next_link': {'readonly': True},
+        "value": {"required": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[ServerUsage]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[ServerUsage]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        value: List["ServerUsage"],
-        **kwargs
-    ):
-        super(ServerUsageListResult, self).__init__(**kwargs)
+    def __init__(self, *, value: List["_models.ServerUsage"], **kwargs: Any) -> None:
+        """
+        :keyword value: The list of server metrics for the server. Required.
+        :paramtype value: list[~azure.mgmt.synapse.models.ServerUsage]
+        """
+        super().__init__(**kwargs)
         self.value = value
         self.next_link = None
 
@@ -6202,36 +10034,39 @@ class ServerVulnerabilityAssessment(ProxyResource):
     :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
      "Microsoft.Storage/storageAccounts".
     :vartype type: str
-    :param storage_container_path: A blob storage container path to hold the scan results (e.g.
+    :ivar storage_container_path: A blob storage container path to hold the scan results (e.g.
      https://myStorage.blob.core.windows.net/VaScans/).
-    :type storage_container_path: str
-    :param storage_container_sas_key: A shared access signature (SAS Key) that has read and write
+    :vartype storage_container_path: str
+    :ivar storage_container_sas_key: A shared access signature (SAS Key) that has read and write
      access to the blob container specified in 'storageContainerPath' parameter. If
      'storageAccountAccessKey' isn't specified, StorageContainerSasKey is required.
-    :type storage_container_sas_key: str
-    :param storage_account_access_key: Specifies the identifier key of the storage account for
+    :vartype storage_container_sas_key: str
+    :ivar storage_account_access_key: Specifies the identifier key of the storage account for
      vulnerability assessment scan results. If 'StorageContainerSasKey' isn't specified,
      storageAccountAccessKey is required.
-    :type storage_account_access_key: str
-    :param recurring_scans: The recurring scans settings.
-    :type recurring_scans:
+    :vartype storage_account_access_key: str
+    :ivar recurring_scans: The recurring scans settings.
+    :vartype recurring_scans:
      ~azure.mgmt.synapse.models.VulnerabilityAssessmentRecurringScansProperties
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'storage_container_path': {'key': 'properties.storageContainerPath', 'type': 'str'},
-        'storage_container_sas_key': {'key': 'properties.storageContainerSasKey', 'type': 'str'},
-        'storage_account_access_key': {'key': 'properties.storageAccountAccessKey', 'type': 'str'},
-        'recurring_scans': {'key': 'properties.recurringScans', 'type': 'VulnerabilityAssessmentRecurringScansProperties'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "storage_container_path": {"key": "properties.storageContainerPath", "type": "str"},
+        "storage_container_sas_key": {"key": "properties.storageContainerSasKey", "type": "str"},
+        "storage_account_access_key": {"key": "properties.storageAccountAccessKey", "type": "str"},
+        "recurring_scans": {
+            "key": "properties.recurringScans",
+            "type": "VulnerabilityAssessmentRecurringScansProperties",
+        },
     }
 
     def __init__(
@@ -6240,17 +10075,33 @@ class ServerVulnerabilityAssessment(ProxyResource):
         storage_container_path: Optional[str] = None,
         storage_container_sas_key: Optional[str] = None,
         storage_account_access_key: Optional[str] = None,
-        recurring_scans: Optional["VulnerabilityAssessmentRecurringScansProperties"] = None,
-        **kwargs
-    ):
-        super(ServerVulnerabilityAssessment, self).__init__(**kwargs)
+        recurring_scans: Optional["_models.VulnerabilityAssessmentRecurringScansProperties"] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword storage_container_path: A blob storage container path to hold the scan results (e.g.
+         https://myStorage.blob.core.windows.net/VaScans/).
+        :paramtype storage_container_path: str
+        :keyword storage_container_sas_key: A shared access signature (SAS Key) that has read and write
+         access to the blob container specified in 'storageContainerPath' parameter. If
+         'storageAccountAccessKey' isn't specified, StorageContainerSasKey is required.
+        :paramtype storage_container_sas_key: str
+        :keyword storage_account_access_key: Specifies the identifier key of the storage account for
+         vulnerability assessment scan results. If 'StorageContainerSasKey' isn't specified,
+         storageAccountAccessKey is required.
+        :paramtype storage_account_access_key: str
+        :keyword recurring_scans: The recurring scans settings.
+        :paramtype recurring_scans:
+         ~azure.mgmt.synapse.models.VulnerabilityAssessmentRecurringScansProperties
+        """
+        super().__init__(**kwargs)
         self.storage_container_path = storage_container_path
         self.storage_container_sas_key = storage_container_sas_key
         self.storage_account_access_key = storage_account_access_key
         self.recurring_scans = recurring_scans
 
 
-class ServerVulnerabilityAssessmentListResult(msrest.serialization.Model):
+class ServerVulnerabilityAssessmentListResult(_serialization.Model):
     """A list of the server's vulnerability assessments.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -6262,57 +10113,340 @@ class ServerVulnerabilityAssessmentListResult(msrest.serialization.Model):
     """
 
     _validation = {
-        'value': {'readonly': True},
-        'next_link': {'readonly': True},
+        "value": {"readonly": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[ServerVulnerabilityAssessment]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[ServerVulnerabilityAssessment]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(ServerVulnerabilityAssessmentListResult, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.value = None
         self.next_link = None
 
 
-class Sku(msrest.serialization.Model):
+class Sku(_serialization.Model):
     """SQL pool SKU.
 
-    :param tier: The service tier.
-    :type tier: str
-    :param name: The SKU name.
-    :type name: str
-    :param capacity: If the SKU supports scale out/in then the capacity integer should be included.
+    :ivar tier: The service tier.
+    :vartype tier: str
+    :ivar name: The SKU name.
+    :vartype name: str
+    :ivar capacity: If the SKU supports scale out/in then the capacity integer should be included.
      If scale out/in is not possible for the resource this may be omitted.
-    :type capacity: int
+    :vartype capacity: int
     """
 
     _attribute_map = {
-        'tier': {'key': 'tier', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'capacity': {'key': 'capacity', 'type': 'int'},
+        "tier": {"key": "tier", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "capacity": {"key": "capacity", "type": "int"},
     }
 
     def __init__(
-        self,
-        *,
-        tier: Optional[str] = None,
-        name: Optional[str] = None,
-        capacity: Optional[int] = None,
-        **kwargs
-    ):
-        super(Sku, self).__init__(**kwargs)
+        self, *, tier: Optional[str] = None, name: Optional[str] = None, capacity: Optional[int] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword tier: The service tier.
+        :paramtype tier: str
+        :keyword name: The SKU name.
+        :paramtype name: str
+        :keyword capacity: If the SKU supports scale out/in then the capacity integer should be
+         included. If scale out/in is not possible for the resource this may be omitted.
+        :paramtype capacity: int
+        """
+        super().__init__(**kwargs)
         self.tier = tier
         self.name = name
         self.capacity = capacity
 
 
-class SqlPool(TrackedResource):
+class SkuDescription(_serialization.Model):
+    """The Kusto SKU description of given resource type.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    :ivar resource_type: The resource type.
+    :vartype resource_type: str
+    :ivar name: The name of the SKU.
+    :vartype name: str
+    :ivar size: The size of the SKU.
+    :vartype size: str
+    :ivar locations: The set of locations that the SKU is available.
+    :vartype locations: list[str]
+    :ivar location_info: Locations and zones.
+    :vartype location_info: list[~azure.mgmt.synapse.models.SkuLocationInfoItem]
+    :ivar restrictions: The restrictions because of which SKU cannot be used.
+    :vartype restrictions: list[JSON]
+    """
+
+    _validation = {
+        "resource_type": {"readonly": True},
+        "name": {"readonly": True},
+        "size": {"readonly": True},
+        "locations": {"readonly": True},
+        "location_info": {"readonly": True},
+        "restrictions": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "resource_type": {"key": "resourceType", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "size": {"key": "size", "type": "str"},
+        "locations": {"key": "locations", "type": "[str]"},
+        "location_info": {"key": "locationInfo", "type": "[SkuLocationInfoItem]"},
+        "restrictions": {"key": "restrictions", "type": "[object]"},
+    }
+
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
+        self.resource_type = None
+        self.name = None
+        self.size = None
+        self.locations = None
+        self.location_info = None
+        self.restrictions = None
+
+
+class SkuDescriptionList(_serialization.Model):
+    """The list of the SKU descriptions.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    :ivar value: SKU descriptions.
+    :vartype value: list[~azure.mgmt.synapse.models.SkuDescription]
+    """
+
+    _validation = {
+        "value": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "value": {"key": "value", "type": "[SkuDescription]"},
+    }
+
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
+        self.value = None
+
+
+class SkuLocationInfoItem(_serialization.Model):
+    """The locations and zones info for SKU.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :ivar location: The available location of the SKU. Required.
+    :vartype location: str
+    :ivar zones: The available zone of the SKU.
+    :vartype zones: list[str]
+    """
+
+    _validation = {
+        "location": {"required": True},
+    }
+
+    _attribute_map = {
+        "location": {"key": "location", "type": "str"},
+        "zones": {"key": "zones", "type": "[str]"},
+    }
+
+    def __init__(self, *, location: str, zones: Optional[List[str]] = None, **kwargs: Any) -> None:
+        """
+        :keyword location: The available location of the SKU. Required.
+        :paramtype location: str
+        :keyword zones: The available zone of the SKU.
+        :paramtype zones: list[str]
+        """
+        super().__init__(**kwargs)
+        self.location = location
+        self.zones = zones
+
+
+class SparkConfigProperties(_serialization.Model):
+    """SparkConfig Properties for a Big Data pool powered by Apache Spark.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    :ivar time: The last update time of the spark config properties file.
+    :vartype time: ~datetime.datetime
+    :ivar content: The spark config properties.
+    :vartype content: str
+    :ivar filename: The filename of the spark config properties file.
+    :vartype filename: str
+    :ivar configuration_type: The type of the spark config properties file. Known values are:
+     "File" and "Artifact".
+    :vartype configuration_type: str or ~azure.mgmt.synapse.models.ConfigurationType
+    """
+
+    _validation = {
+        "time": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "time": {"key": "time", "type": "iso-8601"},
+        "content": {"key": "content", "type": "str"},
+        "filename": {"key": "filename", "type": "str"},
+        "configuration_type": {"key": "configurationType", "type": "str"},
+    }
+
+    def __init__(
+        self,
+        *,
+        content: Optional[str] = None,
+        filename: Optional[str] = None,
+        configuration_type: Optional[Union[str, "_models.ConfigurationType"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword content: The spark config properties.
+        :paramtype content: str
+        :keyword filename: The filename of the spark config properties file.
+        :paramtype filename: str
+        :keyword configuration_type: The type of the spark config properties file. Known values are:
+         "File" and "Artifact".
+        :paramtype configuration_type: str or ~azure.mgmt.synapse.models.ConfigurationType
+        """
+        super().__init__(**kwargs)
+        self.time = None
+        self.content = content
+        self.filename = filename
+        self.configuration_type = configuration_type
+
+
+class SparkConfigurationListResponse(_serialization.Model):
+    """A list of SparkConfiguration resources.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :ivar value: List of SparkConfiguration. Required.
+    :vartype value: list[~azure.mgmt.synapse.models.SparkConfigurationResource]
+    :ivar next_link: The link to the next page of results, if any remaining results exist.
+    :vartype next_link: str
+    """
+
+    _validation = {
+        "value": {"required": True},
+    }
+
+    _attribute_map = {
+        "value": {"key": "value", "type": "[SparkConfigurationResource]"},
+        "next_link": {"key": "nextLink", "type": "str"},
+    }
+
+    def __init__(
+        self, *, value: List["_models.SparkConfigurationResource"], next_link: Optional[str] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword value: List of SparkConfiguration. Required.
+        :paramtype value: list[~azure.mgmt.synapse.models.SparkConfigurationResource]
+        :keyword next_link: The link to the next page of results, if any remaining results exist.
+        :paramtype next_link: str
+        """
+        super().__init__(**kwargs)
+        self.value = value
+        self.next_link = next_link
+
+
+class SparkConfigurationResource(SubResource):  # pylint: disable=too-many-instance-attributes
+    """SparkConfiguration response details.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    All required parameters must be populated in order to send to Azure.
+
+    :ivar id: Fully qualified resource ID for the resource. Ex -
+     /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}.
+    :vartype id: str
+    :ivar name: The name of the resource.
+    :vartype name: str
+    :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
+     "Microsoft.Storage/storageAccounts".
+    :vartype type: str
+    :ivar etag: Resource Etag.
+    :vartype etag: str
+    :ivar description: Description about the SparkConfiguration.
+    :vartype description: str
+    :ivar configs: SparkConfiguration configs. Required.
+    :vartype configs: dict[str, str]
+    :ivar annotations: Annotations for SparkConfiguration.
+    :vartype annotations: list[str]
+    :ivar notes: additional Notes.
+    :vartype notes: str
+    :ivar created_by: The identity that created the resource.
+    :vartype created_by: str
+    :ivar created: The timestamp of resource creation.
+    :vartype created: ~datetime.datetime
+    :ivar config_merge_rule: SparkConfiguration merge configs.
+    :vartype config_merge_rule: dict[str, str]
+    """
+
+    _validation = {
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "etag": {"readonly": True},
+        "configs": {"required": True},
+    }
+
+    _attribute_map = {
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "etag": {"key": "etag", "type": "str"},
+        "description": {"key": "properties.description", "type": "str"},
+        "configs": {"key": "properties.configs", "type": "{str}"},
+        "annotations": {"key": "properties.annotations", "type": "[str]"},
+        "notes": {"key": "properties.notes", "type": "str"},
+        "created_by": {"key": "properties.createdBy", "type": "str"},
+        "created": {"key": "properties.created", "type": "iso-8601"},
+        "config_merge_rule": {"key": "properties.configMergeRule", "type": "{str}"},
+    }
+
+    def __init__(
+        self,
+        *,
+        configs: Dict[str, str],
+        description: Optional[str] = None,
+        annotations: Optional[List[str]] = None,
+        notes: Optional[str] = None,
+        created_by: Optional[str] = None,
+        created: Optional[datetime.datetime] = None,
+        config_merge_rule: Optional[Dict[str, str]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword description: Description about the SparkConfiguration.
+        :paramtype description: str
+        :keyword configs: SparkConfiguration configs. Required.
+        :paramtype configs: dict[str, str]
+        :keyword annotations: Annotations for SparkConfiguration.
+        :paramtype annotations: list[str]
+        :keyword notes: additional Notes.
+        :paramtype notes: str
+        :keyword created_by: The identity that created the resource.
+        :paramtype created_by: str
+        :keyword created: The timestamp of resource creation.
+        :paramtype created: ~datetime.datetime
+        :keyword config_merge_rule: SparkConfiguration merge configs.
+        :paramtype config_merge_rule: dict[str, str]
+        """
+        super().__init__(**kwargs)
+        self.description = description
+        self.configs = configs
+        self.annotations = annotations
+        self.notes = notes
+        self.created_by = created_by
+        self.created = created
+        self.config_merge_rule = config_merge_rule
+
+
+class SqlPool(TrackedResource):  # pylint: disable=too-many-instance-attributes
     """A SQL Analytics pool.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -6327,59 +10461,78 @@ class SqlPool(TrackedResource):
     :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
      "Microsoft.Storage/storageAccounts".
     :vartype type: str
-    :param tags: A set of tags. Resource tags.
-    :type tags: dict[str, str]
-    :param location: Required. The geo-location where the resource lives.
-    :type location: str
-    :param sku: SQL pool SKU.
-    :type sku: ~azure.mgmt.synapse.models.Sku
-    :param max_size_bytes: Maximum size in bytes.
-    :type max_size_bytes: long
-    :param collation: Collation mode.
-    :type collation: str
-    :param source_database_id: Source database to create from.
-    :type source_database_id: str
-    :param recoverable_database_id: Backup database to restore from.
-    :type recoverable_database_id: str
-    :param provisioning_state: Resource state.
-    :type provisioning_state: str
-    :param status: Resource status.
-    :type status: str
-    :param restore_point_in_time: Snapshot time to restore.
-    :type restore_point_in_time: ~datetime.datetime
-    :param create_mode: What is this?.
-    :type create_mode: str
-    :param creation_date: Date the SQL pool was created.
-    :type creation_date: ~datetime.datetime
-    :param storage_account_type: The storage account type used to store backups for this sql pool.
-     Possible values include: "GRS", "LRS", "ZRS".
-    :type storage_account_type: str or ~azure.mgmt.synapse.models.StorageAccountType
+    :ivar tags: Resource tags.
+    :vartype tags: dict[str, str]
+    :ivar location: The geo-location where the resource lives. Required.
+    :vartype location: str
+    :ivar sku: SQL pool SKU.
+    :vartype sku: ~azure.mgmt.synapse.models.Sku
+    :ivar max_size_bytes: Maximum size in bytes.
+    :vartype max_size_bytes: int
+    :ivar collation: Collation mode.
+    :vartype collation: str
+    :ivar source_database_id: Source database to create from.
+    :vartype source_database_id: str
+    :ivar recoverable_database_id: Backup database to restore from.
+    :vartype recoverable_database_id: str
+    :ivar provisioning_state: Resource state.
+    :vartype provisioning_state: str
+    :ivar status: Resource status.
+    :vartype status: str
+    :ivar restore_point_in_time: Snapshot time to restore.
+    :vartype restore_point_in_time: ~datetime.datetime
+    :ivar create_mode: Specifies the mode of sql pool creation.
+
+     Default: regular sql pool creation.
+
+     PointInTimeRestore: Creates a sql pool by restoring a point in time backup of an existing sql
+     pool. sourceDatabaseId must be specified as the resource ID of the existing sql pool, and
+     restorePointInTime must be specified.
+
+     Recovery: Creates a sql pool by a geo-replicated backup. sourceDatabaseId  must be specified
+     as the recoverableDatabaseId to restore.
+
+     Restore: Creates a sql pool by restoring a backup of a deleted sql  pool. SourceDatabaseId
+     should be the sql pool's original resource ID. SourceDatabaseId and sourceDatabaseDeletionDate
+     must be specified. Known values are: "Default", "PointInTimeRestore", "Recovery", and
+     "Restore".
+    :vartype create_mode: str or ~azure.mgmt.synapse.models.CreateMode
+    :ivar creation_date: Date the SQL pool was created.
+    :vartype creation_date: ~datetime.datetime
+    :ivar storage_account_type: The storage account type used to store backups for this sql pool.
+     Known values are: "GRS" and "LRS".
+    :vartype storage_account_type: str or ~azure.mgmt.synapse.models.StorageAccountType
+    :ivar source_database_deletion_date: Specifies the time that the sql pool was deleted.
+    :vartype source_database_deletion_date: ~datetime.datetime
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'location': {'required': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "location": {"required": True},
+        "status": {"readonly": True},
+        "creation_date": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'tags': {'key': 'tags', 'type': '{str}'},
-        'location': {'key': 'location', 'type': 'str'},
-        'sku': {'key': 'sku', 'type': 'Sku'},
-        'max_size_bytes': {'key': 'properties.maxSizeBytes', 'type': 'long'},
-        'collation': {'key': 'properties.collation', 'type': 'str'},
-        'source_database_id': {'key': 'properties.sourceDatabaseId', 'type': 'str'},
-        'recoverable_database_id': {'key': 'properties.recoverableDatabaseId', 'type': 'str'},
-        'provisioning_state': {'key': 'properties.provisioningState', 'type': 'str'},
-        'status': {'key': 'properties.status', 'type': 'str'},
-        'restore_point_in_time': {'key': 'properties.restorePointInTime', 'type': 'iso-8601'},
-        'create_mode': {'key': 'properties.createMode', 'type': 'str'},
-        'creation_date': {'key': 'properties.creationDate', 'type': 'iso-8601'},
-        'storage_account_type': {'key': 'properties.storageAccountType', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "tags": {"key": "tags", "type": "{str}"},
+        "location": {"key": "location", "type": "str"},
+        "sku": {"key": "sku", "type": "Sku"},
+        "max_size_bytes": {"key": "properties.maxSizeBytes", "type": "int"},
+        "collation": {"key": "properties.collation", "type": "str"},
+        "source_database_id": {"key": "properties.sourceDatabaseId", "type": "str"},
+        "recoverable_database_id": {"key": "properties.recoverableDatabaseId", "type": "str"},
+        "provisioning_state": {"key": "properties.provisioningState", "type": "str"},
+        "status": {"key": "properties.status", "type": "str"},
+        "restore_point_in_time": {"key": "properties.restorePointInTime", "type": "iso-8601"},
+        "create_mode": {"key": "properties.createMode", "type": "str"},
+        "creation_date": {"key": "properties.creationDate", "type": "iso-8601"},
+        "storage_account_type": {"key": "properties.storageAccountType", "type": "str"},
+        "source_database_deletion_date": {"key": "properties.sourceDatabaseDeletionDate", "type": "iso-8601"},
     }
 
     def __init__(
@@ -6387,34 +10540,75 @@ class SqlPool(TrackedResource):
         *,
         location: str,
         tags: Optional[Dict[str, str]] = None,
-        sku: Optional["Sku"] = None,
+        sku: Optional["_models.Sku"] = None,
         max_size_bytes: Optional[int] = None,
-        collation: Optional[str] = None,
+        collation: str = "",
         source_database_id: Optional[str] = None,
         recoverable_database_id: Optional[str] = None,
         provisioning_state: Optional[str] = None,
-        status: Optional[str] = None,
         restore_point_in_time: Optional[datetime.datetime] = None,
-        create_mode: Optional[str] = None,
-        creation_date: Optional[datetime.datetime] = None,
-        storage_account_type: Optional[Union[str, "StorageAccountType"]] = None,
-        **kwargs
-    ):
-        super(SqlPool, self).__init__(tags=tags, location=location, **kwargs)
+        create_mode: Optional[Union[str, "_models.CreateMode"]] = None,
+        storage_account_type: Union[str, "_models.StorageAccountType"] = "GRS",
+        source_database_deletion_date: Optional[datetime.datetime] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword tags: Resource tags.
+        :paramtype tags: dict[str, str]
+        :keyword location: The geo-location where the resource lives. Required.
+        :paramtype location: str
+        :keyword sku: SQL pool SKU.
+        :paramtype sku: ~azure.mgmt.synapse.models.Sku
+        :keyword max_size_bytes: Maximum size in bytes.
+        :paramtype max_size_bytes: int
+        :keyword collation: Collation mode.
+        :paramtype collation: str
+        :keyword source_database_id: Source database to create from.
+        :paramtype source_database_id: str
+        :keyword recoverable_database_id: Backup database to restore from.
+        :paramtype recoverable_database_id: str
+        :keyword provisioning_state: Resource state.
+        :paramtype provisioning_state: str
+        :keyword restore_point_in_time: Snapshot time to restore.
+        :paramtype restore_point_in_time: ~datetime.datetime
+        :keyword create_mode: Specifies the mode of sql pool creation.
+
+         Default: regular sql pool creation.
+
+         PointInTimeRestore: Creates a sql pool by restoring a point in time backup of an existing sql
+         pool. sourceDatabaseId must be specified as the resource ID of the existing sql pool, and
+         restorePointInTime must be specified.
+
+         Recovery: Creates a sql pool by a geo-replicated backup. sourceDatabaseId  must be specified
+         as the recoverableDatabaseId to restore.
+
+         Restore: Creates a sql pool by restoring a backup of a deleted sql  pool. SourceDatabaseId
+         should be the sql pool's original resource ID. SourceDatabaseId and sourceDatabaseDeletionDate
+         must be specified. Known values are: "Default", "PointInTimeRestore", "Recovery", and
+         "Restore".
+        :paramtype create_mode: str or ~azure.mgmt.synapse.models.CreateMode
+        :keyword storage_account_type: The storage account type used to store backups for this sql
+         pool. Known values are: "GRS" and "LRS".
+        :paramtype storage_account_type: str or ~azure.mgmt.synapse.models.StorageAccountType
+        :keyword source_database_deletion_date: Specifies the time that the sql pool was deleted.
+        :paramtype source_database_deletion_date: ~datetime.datetime
+        """
+        super().__init__(tags=tags, location=location, **kwargs)
         self.sku = sku
         self.max_size_bytes = max_size_bytes
         self.collation = collation
         self.source_database_id = source_database_id
         self.recoverable_database_id = recoverable_database_id
         self.provisioning_state = provisioning_state
-        self.status = status
+        self.status = None
         self.restore_point_in_time = restore_point_in_time
         self.create_mode = create_mode
-        self.creation_date = creation_date
+        self.creation_date = None
         self.storage_account_type = storage_account_type
+        self.source_database_deletion_date = source_database_deletion_date
 
 
-class SqlPoolBlobAuditingPolicy(ProxyResource):
+class SqlPoolBlobAuditingPolicy(ProxyResource):  # pylint: disable=too-many-instance-attributes
     """A Sql pool blob auditing policy.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -6429,35 +10623,34 @@ class SqlPoolBlobAuditingPolicy(ProxyResource):
     :vartype type: str
     :ivar kind: Resource kind.
     :vartype kind: str
-    :param state: Specifies the state of the policy. If state is Enabled, storageEndpoint or
-     isAzureMonitorTargetEnabled are required. Possible values include: "Enabled", "Disabled".
-    :type state: str or ~azure.mgmt.synapse.models.BlobAuditingPolicyState
-    :param storage_endpoint: Specifies the blob storage endpoint (e.g.
+    :ivar state: Specifies the state of the policy. If state is Enabled, storageEndpoint or
+     isAzureMonitorTargetEnabled are required. Known values are: "Enabled" and "Disabled".
+    :vartype state: str or ~azure.mgmt.synapse.models.BlobAuditingPolicyState
+    :ivar storage_endpoint: Specifies the blob storage endpoint (e.g.
      https://MyAccount.blob.core.windows.net). If state is Enabled, storageEndpoint is required.
-    :type storage_endpoint: str
-    :param storage_account_access_key: Specifies the identifier key of the auditing storage
-     account. If state is Enabled and storageEndpoint is specified, storageAccountAccessKey is
-     required.
-    :type storage_account_access_key: str
-    :param retention_days: Specifies the number of days to keep in the audit logs in the storage
+    :vartype storage_endpoint: str
+    :ivar storage_account_access_key: Specifies the identifier key of the auditing storage account.
+     If state is Enabled and storageEndpoint is specified, storageAccountAccessKey is required.
+    :vartype storage_account_access_key: str
+    :ivar retention_days: Specifies the number of days to keep in the audit logs in the storage
      account.
-    :type retention_days: int
-    :param audit_actions_and_groups: Specifies the Actions-Groups and Actions to audit.
-    
+    :vartype retention_days: int
+    :ivar audit_actions_and_groups: Specifies the Actions-Groups and Actions to audit.
+
      The recommended set of action groups to use is the following combination - this will audit all
      the queries and stored procedures executed against the database, as well as successful and
      failed logins:
-    
+
      BATCH_COMPLETED_GROUP,
      SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP,
      FAILED_DATABASE_AUTHENTICATION_GROUP.
-    
+
      This above combination is also the set that is configured by default when enabling auditing
      from the Azure portal.
-    
+
      The supported action groups to audit are (note: choose only specific groups that cover your
      auditing needs. Using unnecessary groups could lead to very large quantities of audit records):
-    
+
      APPLICATION_ROLE_CHANGE_PASSWORD_GROUP
      BACKUP_RESTORE_GROUP
      DATABASE_LOGOUT_GROUP
@@ -6478,15 +10671,14 @@ class SqlPoolBlobAuditingPolicy(ProxyResource):
      USER_CHANGE_PASSWORD_GROUP
      BATCH_STARTED_GROUP
      BATCH_COMPLETED_GROUP
-    
+
      These are groups that cover all sql statements and stored procedures executed against the
      database, and should not be used in combination with other groups as this will result in
      duplicate audit logs.
-    
-     For more information, see `Database-Level Audit Action Groups <https://docs.microsoft.com/en-
-     us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-
-     actions#database-level-audit-action-groups>`_.
-    
+
+     For more information, see `Database-Level Audit Action Groups
+     <https://docs.microsoft.com/en-us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-actions#database-level-audit-action-groups>`_.
+
      For Database auditing policy, specific Actions can also be specified (note that Actions cannot
      be specified for Server auditing policy). The supported actions to audit are:
      SELECT
@@ -6496,84 +10688,188 @@ class SqlPoolBlobAuditingPolicy(ProxyResource):
      EXECUTE
      RECEIVE
      REFERENCES
-    
+
      The general form for defining an action to be audited is:
      {action} ON {object} BY {principal}
-    
+
      Note that :code:`<object>` in the above format can refer to an object like a table, view, or
      stored procedure, or an entire database or schema. For the latter cases, the forms
      DATABASE::{db_name} and SCHEMA::{schema_name} are used, respectively.
-    
+
      For example:
      SELECT on dbo.myTable by public
      SELECT on DATABASE::myDatabase by public
      SELECT on SCHEMA::mySchema by public
-    
-     For more information, see `Database-Level Audit Actions <https://docs.microsoft.com/en-
-     us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-
-     actions#database-level-audit-actions>`_.
-    :type audit_actions_and_groups: list[str]
-    :param storage_account_subscription_id: Specifies the blob storage subscription Id.
-    :type storage_account_subscription_id: str
-    :param is_storage_secondary_key_in_use: Specifies whether storageAccountAccessKey value is the
+
+     For more information, see `Database-Level Audit Actions
+     <https://docs.microsoft.com/en-us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-actions#database-level-audit-actions>`_.
+    :vartype audit_actions_and_groups: list[str]
+    :ivar storage_account_subscription_id: Specifies the blob storage subscription Id.
+    :vartype storage_account_subscription_id: str
+    :ivar is_storage_secondary_key_in_use: Specifies whether storageAccountAccessKey value is the
      storage's secondary key.
-    :type is_storage_secondary_key_in_use: bool
-    :param is_azure_monitor_target_enabled: Specifies whether audit events are sent to Azure
+    :vartype is_storage_secondary_key_in_use: bool
+    :ivar is_azure_monitor_target_enabled: Specifies whether audit events are sent to Azure
      Monitor.
      In order to send the events to Azure Monitor, specify 'state' as 'Enabled' and
      'isAzureMonitorTargetEnabled' as true.
-    
+
      When using REST API to configure auditing, Diagnostic Settings with 'SQLSecurityAuditEvents'
      diagnostic logs category on the database should be also created.
      Note that for server level audit you should use the 'master' database as {databaseName}.
-    
+
      Diagnostic Settings URI format:
      PUT
-     https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/providers/microsoft.insights/diagnosticSettings/{settingsName}?api-
-     version=2017-05-01-preview
-    
+     https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/providers/microsoft.insights/diagnosticSettings/{settingsName}?api-version=2017-05-01-preview
+
      For more information, see `Diagnostic Settings REST API
      <https://go.microsoft.com/fwlink/?linkid=2033207>`_
      or `Diagnostic Settings PowerShell <https://go.microsoft.com/fwlink/?linkid=2033043>`_.
-    :type is_azure_monitor_target_enabled: bool
+    :vartype is_azure_monitor_target_enabled: bool
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'kind': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "kind": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'kind': {'key': 'kind', 'type': 'str'},
-        'state': {'key': 'properties.state', 'type': 'str'},
-        'storage_endpoint': {'key': 'properties.storageEndpoint', 'type': 'str'},
-        'storage_account_access_key': {'key': 'properties.storageAccountAccessKey', 'type': 'str'},
-        'retention_days': {'key': 'properties.retentionDays', 'type': 'int'},
-        'audit_actions_and_groups': {'key': 'properties.auditActionsAndGroups', 'type': '[str]'},
-        'storage_account_subscription_id': {'key': 'properties.storageAccountSubscriptionId', 'type': 'str'},
-        'is_storage_secondary_key_in_use': {'key': 'properties.isStorageSecondaryKeyInUse', 'type': 'bool'},
-        'is_azure_monitor_target_enabled': {'key': 'properties.isAzureMonitorTargetEnabled', 'type': 'bool'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "kind": {"key": "kind", "type": "str"},
+        "state": {"key": "properties.state", "type": "str"},
+        "storage_endpoint": {"key": "properties.storageEndpoint", "type": "str"},
+        "storage_account_access_key": {"key": "properties.storageAccountAccessKey", "type": "str"},
+        "retention_days": {"key": "properties.retentionDays", "type": "int"},
+        "audit_actions_and_groups": {"key": "properties.auditActionsAndGroups", "type": "[str]"},
+        "storage_account_subscription_id": {"key": "properties.storageAccountSubscriptionId", "type": "str"},
+        "is_storage_secondary_key_in_use": {"key": "properties.isStorageSecondaryKeyInUse", "type": "bool"},
+        "is_azure_monitor_target_enabled": {"key": "properties.isAzureMonitorTargetEnabled", "type": "bool"},
     }
 
     def __init__(
         self,
         *,
-        state: Optional[Union[str, "BlobAuditingPolicyState"]] = None,
+        state: Optional[Union[str, "_models.BlobAuditingPolicyState"]] = None,
         storage_endpoint: Optional[str] = None,
         storage_account_access_key: Optional[str] = None,
         retention_days: Optional[int] = None,
         audit_actions_and_groups: Optional[List[str]] = None,
         storage_account_subscription_id: Optional[str] = None,
         is_storage_secondary_key_in_use: Optional[bool] = None,
-        is_azure_monitor_target_enabled: Optional[bool] = None,
-        **kwargs
-    ):
-        super(SqlPoolBlobAuditingPolicy, self).__init__(**kwargs)
+        is_azure_monitor_target_enabled: bool = False,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword state: Specifies the state of the policy. If state is Enabled, storageEndpoint or
+         isAzureMonitorTargetEnabled are required. Known values are: "Enabled" and "Disabled".
+        :paramtype state: str or ~azure.mgmt.synapse.models.BlobAuditingPolicyState
+        :keyword storage_endpoint: Specifies the blob storage endpoint (e.g.
+         https://MyAccount.blob.core.windows.net). If state is Enabled, storageEndpoint is required.
+        :paramtype storage_endpoint: str
+        :keyword storage_account_access_key: Specifies the identifier key of the auditing storage
+         account. If state is Enabled and storageEndpoint is specified, storageAccountAccessKey is
+         required.
+        :paramtype storage_account_access_key: str
+        :keyword retention_days: Specifies the number of days to keep in the audit logs in the storage
+         account.
+        :paramtype retention_days: int
+        :keyword audit_actions_and_groups: Specifies the Actions-Groups and Actions to audit.
+
+         The recommended set of action groups to use is the following combination - this will audit all
+         the queries and stored procedures executed against the database, as well as successful and
+         failed logins:
+
+         BATCH_COMPLETED_GROUP,
+         SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP,
+         FAILED_DATABASE_AUTHENTICATION_GROUP.
+
+         This above combination is also the set that is configured by default when enabling auditing
+         from the Azure portal.
+
+         The supported action groups to audit are (note: choose only specific groups that cover your
+         auditing needs. Using unnecessary groups could lead to very large quantities of audit records):
+
+         APPLICATION_ROLE_CHANGE_PASSWORD_GROUP
+         BACKUP_RESTORE_GROUP
+         DATABASE_LOGOUT_GROUP
+         DATABASE_OBJECT_CHANGE_GROUP
+         DATABASE_OBJECT_OWNERSHIP_CHANGE_GROUP
+         DATABASE_OBJECT_PERMISSION_CHANGE_GROUP
+         DATABASE_OPERATION_GROUP
+         DATABASE_PERMISSION_CHANGE_GROUP
+         DATABASE_PRINCIPAL_CHANGE_GROUP
+         DATABASE_PRINCIPAL_IMPERSONATION_GROUP
+         DATABASE_ROLE_MEMBER_CHANGE_GROUP
+         FAILED_DATABASE_AUTHENTICATION_GROUP
+         SCHEMA_OBJECT_ACCESS_GROUP
+         SCHEMA_OBJECT_CHANGE_GROUP
+         SCHEMA_OBJECT_OWNERSHIP_CHANGE_GROUP
+         SCHEMA_OBJECT_PERMISSION_CHANGE_GROUP
+         SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP
+         USER_CHANGE_PASSWORD_GROUP
+         BATCH_STARTED_GROUP
+         BATCH_COMPLETED_GROUP
+
+         These are groups that cover all sql statements and stored procedures executed against the
+         database, and should not be used in combination with other groups as this will result in
+         duplicate audit logs.
+
+         For more information, see `Database-Level Audit Action Groups
+         <https://docs.microsoft.com/en-us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-actions#database-level-audit-action-groups>`_.
+
+         For Database auditing policy, specific Actions can also be specified (note that Actions cannot
+         be specified for Server auditing policy). The supported actions to audit are:
+         SELECT
+         UPDATE
+         INSERT
+         DELETE
+         EXECUTE
+         RECEIVE
+         REFERENCES
+
+         The general form for defining an action to be audited is:
+         {action} ON {object} BY {principal}
+
+         Note that :code:`<object>` in the above format can refer to an object like a table, view, or
+         stored procedure, or an entire database or schema. For the latter cases, the forms
+         DATABASE::{db_name} and SCHEMA::{schema_name} are used, respectively.
+
+         For example:
+         SELECT on dbo.myTable by public
+         SELECT on DATABASE::myDatabase by public
+         SELECT on SCHEMA::mySchema by public
+
+         For more information, see `Database-Level Audit Actions
+         <https://docs.microsoft.com/en-us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-actions#database-level-audit-actions>`_.
+        :paramtype audit_actions_and_groups: list[str]
+        :keyword storage_account_subscription_id: Specifies the blob storage subscription Id.
+        :paramtype storage_account_subscription_id: str
+        :keyword is_storage_secondary_key_in_use: Specifies whether storageAccountAccessKey value is
+         the storage's secondary key.
+        :paramtype is_storage_secondary_key_in_use: bool
+        :keyword is_azure_monitor_target_enabled: Specifies whether audit events are sent to Azure
+         Monitor.
+         In order to send the events to Azure Monitor, specify 'state' as 'Enabled' and
+         'isAzureMonitorTargetEnabled' as true.
+
+         When using REST API to configure auditing, Diagnostic Settings with 'SQLSecurityAuditEvents'
+         diagnostic logs category on the database should be also created.
+         Note that for server level audit you should use the 'master' database as {databaseName}.
+
+         Diagnostic Settings URI format:
+         PUT
+         https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/providers/microsoft.insights/diagnosticSettings/{settingsName}?api-version=2017-05-01-preview
+
+         For more information, see `Diagnostic Settings REST API
+         <https://go.microsoft.com/fwlink/?linkid=2033207>`_
+         or `Diagnostic Settings PowerShell <https://go.microsoft.com/fwlink/?linkid=2033043>`_.
+        :paramtype is_azure_monitor_target_enabled: bool
+        """
+        super().__init__(**kwargs)
         self.kind = None
         self.state = state
         self.storage_endpoint = storage_endpoint
@@ -6585,7 +10881,7 @@ class SqlPoolBlobAuditingPolicy(ProxyResource):
         self.is_azure_monitor_target_enabled = is_azure_monitor_target_enabled
 
 
-class SqlPoolBlobAuditingPolicyListResult(msrest.serialization.Model):
+class SqlPoolBlobAuditingPolicyListResult(_serialization.Model):
     """A list of Sql pool auditing settings.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -6597,25 +10893,23 @@ class SqlPoolBlobAuditingPolicyListResult(msrest.serialization.Model):
     """
 
     _validation = {
-        'value': {'readonly': True},
-        'next_link': {'readonly': True},
+        "value": {"readonly": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[SqlPoolBlobAuditingPolicy]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[SqlPoolBlobAuditingPolicy]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(SqlPoolBlobAuditingPolicyListResult, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.value = None
         self.next_link = None
 
 
-class SqlPoolBlobAuditingPolicySqlPoolOperationListResult(msrest.serialization.Model):
+class SqlPoolBlobAuditingPolicySqlPoolOperationListResult(_serialization.Model):
     """The response to a list Sql pool operations request.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -6627,20 +10921,18 @@ class SqlPoolBlobAuditingPolicySqlPoolOperationListResult(msrest.serialization.M
     """
 
     _validation = {
-        'value': {'readonly': True},
-        'next_link': {'readonly': True},
+        "value": {"readonly": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[SqlPoolOperation]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[SqlPoolOperation]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(SqlPoolBlobAuditingPolicySqlPoolOperationListResult, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.value = None
         self.next_link = None
 
@@ -6658,43 +10950,47 @@ class SqlPoolColumn(ProxyResource):
     :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
      "Microsoft.Storage/storageAccounts".
     :vartype type: str
-    :param column_type: The column data type. Possible values include: "image", "text",
-     "uniqueidentifier", "date", "time", "datetime2", "datetimeoffset", "tinyint", "smallint",
-     "int", "smalldatetime", "real", "money", "datetime", "float", "sql_variant", "ntext", "bit",
-     "decimal", "numeric", "smallmoney", "bigint", "hierarchyid", "geometry", "geography",
-     "varbinary", "varchar", "binary", "char", "timestamp", "nvarchar", "nchar", "xml", "sysname".
-    :type column_type: str or ~azure.mgmt.synapse.models.ColumnDataType
+    :ivar column_type: The column data type. Known values are: "image", "text", "uniqueidentifier",
+     "date", "time", "datetime2", "datetimeoffset", "tinyint", "smallint", "int", "smalldatetime",
+     "real", "money", "datetime", "float", "sql_variant", "ntext", "bit", "decimal", "numeric",
+     "smallmoney", "bigint", "hierarchyid", "geometry", "geography", "varbinary", "varchar",
+     "binary", "char", "timestamp", "nvarchar", "nchar", "xml", and "sysname".
+    :vartype column_type: str or ~azure.mgmt.synapse.models.ColumnDataType
     :ivar is_computed: Indicates whether column value is computed or not.
     :vartype is_computed: bool
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'is_computed': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "is_computed": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'column_type': {'key': 'properties.columnType', 'type': 'str'},
-        'is_computed': {'key': 'properties.isComputed', 'type': 'bool'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "column_type": {"key": "properties.columnType", "type": "str"},
+        "is_computed": {"key": "properties.isComputed", "type": "bool"},
     }
 
-    def __init__(
-        self,
-        *,
-        column_type: Optional[Union[str, "ColumnDataType"]] = None,
-        **kwargs
-    ):
-        super(SqlPoolColumn, self).__init__(**kwargs)
+    def __init__(self, *, column_type: Optional[Union[str, "_models.ColumnDataType"]] = None, **kwargs: Any) -> None:
+        """
+        :keyword column_type: The column data type. Known values are: "image", "text",
+         "uniqueidentifier", "date", "time", "datetime2", "datetimeoffset", "tinyint", "smallint",
+         "int", "smalldatetime", "real", "money", "datetime", "float", "sql_variant", "ntext", "bit",
+         "decimal", "numeric", "smallmoney", "bigint", "hierarchyid", "geometry", "geography",
+         "varbinary", "varchar", "binary", "char", "timestamp", "nvarchar", "nchar", "xml", and
+         "sysname".
+        :paramtype column_type: str or ~azure.mgmt.synapse.models.ColumnDataType
+        """
+        super().__init__(**kwargs)
         self.column_type = column_type
         self.is_computed = None
 
 
-class SqlPoolColumnListResult(msrest.serialization.Model):
+class SqlPoolColumnListResult(_serialization.Model):
     """A list of Sql pool columns.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -6706,25 +11002,23 @@ class SqlPoolColumnListResult(msrest.serialization.Model):
     """
 
     _validation = {
-        'value': {'readonly': True},
-        'next_link': {'readonly': True},
+        "value": {"readonly": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[SqlPoolColumn]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[SqlPoolColumn]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(SqlPoolColumnListResult, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.value = None
         self.next_link = None
 
 
-class SqlPoolConnectionPolicy(ProxyResource):
+class SqlPoolConnectionPolicy(ProxyResource):  # pylint: disable=too-many-instance-attributes
     """A Sql pool connection policy.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -6741,43 +11035,43 @@ class SqlPoolConnectionPolicy(ProxyResource):
     :vartype kind: str
     :ivar location: Resource location.
     :vartype location: str
-    :param security_enabled_access: The state of security access.
-    :type security_enabled_access: str
-    :param proxy_dns_name: The fully qualified host name of the auditing proxy.
-    :type proxy_dns_name: str
-    :param proxy_port: The port number of the auditing proxy.
-    :type proxy_port: str
-    :param visibility: The visibility of the auditing proxy.
-    :type visibility: str
-    :param use_server_default: Whether server default is enabled or disabled.
-    :type use_server_default: str
-    :param redirection_state: The state of proxy redirection.
-    :type redirection_state: str
-    :param state: The connection policy state.
-    :type state: str
+    :ivar security_enabled_access: The state of security access.
+    :vartype security_enabled_access: str
+    :ivar proxy_dns_name: The fully qualified host name of the auditing proxy.
+    :vartype proxy_dns_name: str
+    :ivar proxy_port: The port number of the auditing proxy.
+    :vartype proxy_port: str
+    :ivar visibility: The visibility of the auditing proxy.
+    :vartype visibility: str
+    :ivar use_server_default: Whether server default is enabled or disabled.
+    :vartype use_server_default: str
+    :ivar redirection_state: The state of proxy redirection.
+    :vartype redirection_state: str
+    :ivar state: The connection policy state.
+    :vartype state: str
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'kind': {'readonly': True},
-        'location': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "kind": {"readonly": True},
+        "location": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'kind': {'key': 'kind', 'type': 'str'},
-        'location': {'key': 'location', 'type': 'str'},
-        'security_enabled_access': {'key': 'properties.securityEnabledAccess', 'type': 'str'},
-        'proxy_dns_name': {'key': 'properties.proxyDnsName', 'type': 'str'},
-        'proxy_port': {'key': 'properties.proxyPort', 'type': 'str'},
-        'visibility': {'key': 'properties.visibility', 'type': 'str'},
-        'use_server_default': {'key': 'properties.useServerDefault', 'type': 'str'},
-        'redirection_state': {'key': 'properties.redirectionState', 'type': 'str'},
-        'state': {'key': 'properties.state', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "kind": {"key": "kind", "type": "str"},
+        "location": {"key": "location", "type": "str"},
+        "security_enabled_access": {"key": "properties.securityEnabledAccess", "type": "str"},
+        "proxy_dns_name": {"key": "properties.proxyDnsName", "type": "str"},
+        "proxy_port": {"key": "properties.proxyPort", "type": "str"},
+        "visibility": {"key": "properties.visibility", "type": "str"},
+        "use_server_default": {"key": "properties.useServerDefault", "type": "str"},
+        "redirection_state": {"key": "properties.redirectionState", "type": "str"},
+        "state": {"key": "properties.state", "type": "str"},
     }
 
     def __init__(
@@ -6790,9 +11084,25 @@ class SqlPoolConnectionPolicy(ProxyResource):
         use_server_default: Optional[str] = None,
         redirection_state: Optional[str] = None,
         state: Optional[str] = None,
-        **kwargs
-    ):
-        super(SqlPoolConnectionPolicy, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword security_enabled_access: The state of security access.
+        :paramtype security_enabled_access: str
+        :keyword proxy_dns_name: The fully qualified host name of the auditing proxy.
+        :paramtype proxy_dns_name: str
+        :keyword proxy_port: The port number of the auditing proxy.
+        :paramtype proxy_port: str
+        :keyword visibility: The visibility of the auditing proxy.
+        :paramtype visibility: str
+        :keyword use_server_default: Whether server default is enabled or disabled.
+        :paramtype use_server_default: str
+        :keyword redirection_state: The state of proxy redirection.
+        :paramtype redirection_state: str
+        :keyword state: The connection policy state.
+        :paramtype state: str
+        """
+        super().__init__(**kwargs)
         self.kind = None
         self.location = None
         self.security_enabled_access = security_enabled_access
@@ -6804,33 +11114,35 @@ class SqlPoolConnectionPolicy(ProxyResource):
         self.state = state
 
 
-class SqlPoolInfoListResult(msrest.serialization.Model):
+class SqlPoolInfoListResult(_serialization.Model):
     """List of SQL pools.
 
-    :param next_link: Link to the next page of results.
-    :type next_link: str
-    :param value: List of SQL pools.
-    :type value: list[~azure.mgmt.synapse.models.SqlPool]
+    :ivar next_link: Link to the next page of results.
+    :vartype next_link: str
+    :ivar value: List of SQL pools.
+    :vartype value: list[~azure.mgmt.synapse.models.SqlPool]
     """
 
     _attribute_map = {
-        'next_link': {'key': 'nextLink', 'type': 'str'},
-        'value': {'key': 'value', 'type': '[SqlPool]'},
+        "next_link": {"key": "nextLink", "type": "str"},
+        "value": {"key": "value", "type": "[SqlPool]"},
     }
 
     def __init__(
-        self,
-        *,
-        next_link: Optional[str] = None,
-        value: Optional[List["SqlPool"]] = None,
-        **kwargs
-    ):
-        super(SqlPoolInfoListResult, self).__init__(**kwargs)
+        self, *, next_link: Optional[str] = None, value: Optional[List["_models.SqlPool"]] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword next_link: Link to the next page of results.
+        :paramtype next_link: str
+        :keyword value: List of SQL pools.
+        :paramtype value: list[~azure.mgmt.synapse.models.SqlPool]
+        """
+        super().__init__(**kwargs)
         self.next_link = next_link
         self.value = value
 
 
-class SqlPoolOperation(ProxyResource):
+class SqlPoolOperation(ProxyResource):  # pylint: disable=too-many-instance-attributes
     """A Sql pool operation.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -6855,8 +11167,8 @@ class SqlPoolOperation(ProxyResource):
     :vartype server_name: str
     :ivar start_time: The operation start time.
     :vartype start_time: ~datetime.datetime
-    :ivar state: The operation state. Possible values include: "Pending", "InProgress",
-     "Succeeded", "Failed", "CancelInProgress", "Cancelled".
+    :ivar state: The operation state. Known values are: "Pending", "InProgress", "Succeeded",
+     "Failed", "CancelInProgress", and "Cancelled".
     :vartype state: str or ~azure.mgmt.synapse.models.ManagementOperationState
     :ivar error_code: The operation error code.
     :vartype error_code: int
@@ -6875,50 +11187,48 @@ class SqlPoolOperation(ProxyResource):
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'database_name': {'readonly': True},
-        'operation': {'readonly': True},
-        'operation_friendly_name': {'readonly': True},
-        'percent_complete': {'readonly': True},
-        'server_name': {'readonly': True},
-        'start_time': {'readonly': True},
-        'state': {'readonly': True},
-        'error_code': {'readonly': True},
-        'error_description': {'readonly': True},
-        'error_severity': {'readonly': True},
-        'is_user_error': {'readonly': True},
-        'estimated_completion_time': {'readonly': True},
-        'description': {'readonly': True},
-        'is_cancellable': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "database_name": {"readonly": True},
+        "operation": {"readonly": True},
+        "operation_friendly_name": {"readonly": True},
+        "percent_complete": {"readonly": True},
+        "server_name": {"readonly": True},
+        "start_time": {"readonly": True},
+        "state": {"readonly": True},
+        "error_code": {"readonly": True},
+        "error_description": {"readonly": True},
+        "error_severity": {"readonly": True},
+        "is_user_error": {"readonly": True},
+        "estimated_completion_time": {"readonly": True},
+        "description": {"readonly": True},
+        "is_cancellable": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'database_name': {'key': 'properties.databaseName', 'type': 'str'},
-        'operation': {'key': 'properties.operation', 'type': 'str'},
-        'operation_friendly_name': {'key': 'properties.operationFriendlyName', 'type': 'str'},
-        'percent_complete': {'key': 'properties.percentComplete', 'type': 'int'},
-        'server_name': {'key': 'properties.serverName', 'type': 'str'},
-        'start_time': {'key': 'properties.startTime', 'type': 'iso-8601'},
-        'state': {'key': 'properties.state', 'type': 'str'},
-        'error_code': {'key': 'properties.errorCode', 'type': 'int'},
-        'error_description': {'key': 'properties.errorDescription', 'type': 'str'},
-        'error_severity': {'key': 'properties.errorSeverity', 'type': 'int'},
-        'is_user_error': {'key': 'properties.isUserError', 'type': 'bool'},
-        'estimated_completion_time': {'key': 'properties.estimatedCompletionTime', 'type': 'iso-8601'},
-        'description': {'key': 'properties.description', 'type': 'str'},
-        'is_cancellable': {'key': 'properties.isCancellable', 'type': 'bool'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "database_name": {"key": "properties.databaseName", "type": "str"},
+        "operation": {"key": "properties.operation", "type": "str"},
+        "operation_friendly_name": {"key": "properties.operationFriendlyName", "type": "str"},
+        "percent_complete": {"key": "properties.percentComplete", "type": "int"},
+        "server_name": {"key": "properties.serverName", "type": "str"},
+        "start_time": {"key": "properties.startTime", "type": "iso-8601"},
+        "state": {"key": "properties.state", "type": "str"},
+        "error_code": {"key": "properties.errorCode", "type": "int"},
+        "error_description": {"key": "properties.errorDescription", "type": "str"},
+        "error_severity": {"key": "properties.errorSeverity", "type": "int"},
+        "is_user_error": {"key": "properties.isUserError", "type": "bool"},
+        "estimated_completion_time": {"key": "properties.estimatedCompletionTime", "type": "iso-8601"},
+        "description": {"key": "properties.description", "type": "str"},
+        "is_cancellable": {"key": "properties.isCancellable", "type": "bool"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(SqlPoolOperation, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.database_name = None
         self.operation = None
         self.operation_friendly_name = None
@@ -6935,52 +11245,76 @@ class SqlPoolOperation(ProxyResource):
         self.is_cancellable = None
 
 
-class SqlPoolPatchInfo(msrest.serialization.Model):
+class SqlPoolPatchInfo(_serialization.Model):  # pylint: disable=too-many-instance-attributes
     """A SQL Analytics pool patch info.
 
-    :param tags: A set of tags. Resource tags.
-    :type tags: dict[str, str]
-    :param location: The geo-location where the resource lives.
-    :type location: str
-    :param sku: SQL pool SKU.
-    :type sku: ~azure.mgmt.synapse.models.Sku
-    :param max_size_bytes: Maximum size in bytes.
-    :type max_size_bytes: long
-    :param collation: Collation mode.
-    :type collation: str
-    :param source_database_id: Source database to create from.
-    :type source_database_id: str
-    :param recoverable_database_id: Backup database to restore from.
-    :type recoverable_database_id: str
-    :param provisioning_state: Resource state.
-    :type provisioning_state: str
-    :param status: Resource status.
-    :type status: str
-    :param restore_point_in_time: Snapshot time to restore.
-    :type restore_point_in_time: ~datetime.datetime
-    :param create_mode: What is this?.
-    :type create_mode: str
-    :param creation_date: Date the SQL pool was created.
-    :type creation_date: ~datetime.datetime
-    :param storage_account_type: The storage account type used to store backups for this sql pool.
-     Possible values include: "GRS", "LRS", "ZRS".
-    :type storage_account_type: str or ~azure.mgmt.synapse.models.StorageAccountType
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    :ivar tags: Resource tags.
+    :vartype tags: dict[str, str]
+    :ivar location: The geo-location where the resource lives.
+    :vartype location: str
+    :ivar sku: SQL pool SKU.
+    :vartype sku: ~azure.mgmt.synapse.models.Sku
+    :ivar max_size_bytes: Maximum size in bytes.
+    :vartype max_size_bytes: int
+    :ivar collation: Collation mode.
+    :vartype collation: str
+    :ivar source_database_id: Source database to create from.
+    :vartype source_database_id: str
+    :ivar recoverable_database_id: Backup database to restore from.
+    :vartype recoverable_database_id: str
+    :ivar provisioning_state: Resource state.
+    :vartype provisioning_state: str
+    :ivar status: Resource status.
+    :vartype status: str
+    :ivar restore_point_in_time: Snapshot time to restore.
+    :vartype restore_point_in_time: ~datetime.datetime
+    :ivar create_mode: Specifies the mode of sql pool creation.
+
+     Default: regular sql pool creation.
+
+     PointInTimeRestore: Creates a sql pool by restoring a point in time backup of an existing sql
+     pool. sourceDatabaseId must be specified as the resource ID of the existing sql pool, and
+     restorePointInTime must be specified.
+
+     Recovery: Creates a sql pool by a geo-replicated backup. sourceDatabaseId  must be specified
+     as the recoverableDatabaseId to restore.
+
+     Restore: Creates a sql pool by restoring a backup of a deleted sql  pool. SourceDatabaseId
+     should be the sql pool's original resource ID. SourceDatabaseId and sourceDatabaseDeletionDate
+     must be specified. Known values are: "Default", "PointInTimeRestore", "Recovery", and
+     "Restore".
+    :vartype create_mode: str or ~azure.mgmt.synapse.models.CreateMode
+    :ivar creation_date: Date the SQL pool was created.
+    :vartype creation_date: ~datetime.datetime
+    :ivar storage_account_type: The storage account type used to store backups for this sql pool.
+     Known values are: "GRS" and "LRS".
+    :vartype storage_account_type: str or ~azure.mgmt.synapse.models.StorageAccountType
+    :ivar source_database_deletion_date: Specifies the time that the sql pool was deleted.
+    :vartype source_database_deletion_date: ~datetime.datetime
     """
 
+    _validation = {
+        "status": {"readonly": True},
+        "creation_date": {"readonly": True},
+    }
+
     _attribute_map = {
-        'tags': {'key': 'tags', 'type': '{str}'},
-        'location': {'key': 'location', 'type': 'str'},
-        'sku': {'key': 'sku', 'type': 'Sku'},
-        'max_size_bytes': {'key': 'properties.maxSizeBytes', 'type': 'long'},
-        'collation': {'key': 'properties.collation', 'type': 'str'},
-        'source_database_id': {'key': 'properties.sourceDatabaseId', 'type': 'str'},
-        'recoverable_database_id': {'key': 'properties.recoverableDatabaseId', 'type': 'str'},
-        'provisioning_state': {'key': 'properties.provisioningState', 'type': 'str'},
-        'status': {'key': 'properties.status', 'type': 'str'},
-        'restore_point_in_time': {'key': 'properties.restorePointInTime', 'type': 'iso-8601'},
-        'create_mode': {'key': 'properties.createMode', 'type': 'str'},
-        'creation_date': {'key': 'properties.creationDate', 'type': 'iso-8601'},
-        'storage_account_type': {'key': 'properties.storageAccountType', 'type': 'str'},
+        "tags": {"key": "tags", "type": "{str}"},
+        "location": {"key": "location", "type": "str"},
+        "sku": {"key": "sku", "type": "Sku"},
+        "max_size_bytes": {"key": "properties.maxSizeBytes", "type": "int"},
+        "collation": {"key": "properties.collation", "type": "str"},
+        "source_database_id": {"key": "properties.sourceDatabaseId", "type": "str"},
+        "recoverable_database_id": {"key": "properties.recoverableDatabaseId", "type": "str"},
+        "provisioning_state": {"key": "properties.provisioningState", "type": "str"},
+        "status": {"key": "properties.status", "type": "str"},
+        "restore_point_in_time": {"key": "properties.restorePointInTime", "type": "iso-8601"},
+        "create_mode": {"key": "properties.createMode", "type": "str"},
+        "creation_date": {"key": "properties.creationDate", "type": "iso-8601"},
+        "storage_account_type": {"key": "properties.storageAccountType", "type": "str"},
+        "source_database_deletion_date": {"key": "properties.sourceDatabaseDeletionDate", "type": "iso-8601"},
     }
 
     def __init__(
@@ -6988,20 +11322,60 @@ class SqlPoolPatchInfo(msrest.serialization.Model):
         *,
         tags: Optional[Dict[str, str]] = None,
         location: Optional[str] = None,
-        sku: Optional["Sku"] = None,
+        sku: Optional["_models.Sku"] = None,
         max_size_bytes: Optional[int] = None,
-        collation: Optional[str] = None,
+        collation: str = "",
         source_database_id: Optional[str] = None,
         recoverable_database_id: Optional[str] = None,
         provisioning_state: Optional[str] = None,
-        status: Optional[str] = None,
         restore_point_in_time: Optional[datetime.datetime] = None,
-        create_mode: Optional[str] = None,
-        creation_date: Optional[datetime.datetime] = None,
-        storage_account_type: Optional[Union[str, "StorageAccountType"]] = None,
-        **kwargs
-    ):
-        super(SqlPoolPatchInfo, self).__init__(**kwargs)
+        create_mode: Optional[Union[str, "_models.CreateMode"]] = None,
+        storage_account_type: Union[str, "_models.StorageAccountType"] = "GRS",
+        source_database_deletion_date: Optional[datetime.datetime] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword tags: Resource tags.
+        :paramtype tags: dict[str, str]
+        :keyword location: The geo-location where the resource lives.
+        :paramtype location: str
+        :keyword sku: SQL pool SKU.
+        :paramtype sku: ~azure.mgmt.synapse.models.Sku
+        :keyword max_size_bytes: Maximum size in bytes.
+        :paramtype max_size_bytes: int
+        :keyword collation: Collation mode.
+        :paramtype collation: str
+        :keyword source_database_id: Source database to create from.
+        :paramtype source_database_id: str
+        :keyword recoverable_database_id: Backup database to restore from.
+        :paramtype recoverable_database_id: str
+        :keyword provisioning_state: Resource state.
+        :paramtype provisioning_state: str
+        :keyword restore_point_in_time: Snapshot time to restore.
+        :paramtype restore_point_in_time: ~datetime.datetime
+        :keyword create_mode: Specifies the mode of sql pool creation.
+
+         Default: regular sql pool creation.
+
+         PointInTimeRestore: Creates a sql pool by restoring a point in time backup of an existing sql
+         pool. sourceDatabaseId must be specified as the resource ID of the existing sql pool, and
+         restorePointInTime must be specified.
+
+         Recovery: Creates a sql pool by a geo-replicated backup. sourceDatabaseId  must be specified
+         as the recoverableDatabaseId to restore.
+
+         Restore: Creates a sql pool by restoring a backup of a deleted sql  pool. SourceDatabaseId
+         should be the sql pool's original resource ID. SourceDatabaseId and sourceDatabaseDeletionDate
+         must be specified. Known values are: "Default", "PointInTimeRestore", "Recovery", and
+         "Restore".
+        :paramtype create_mode: str or ~azure.mgmt.synapse.models.CreateMode
+        :keyword storage_account_type: The storage account type used to store backups for this sql
+         pool. Known values are: "GRS" and "LRS".
+        :paramtype storage_account_type: str or ~azure.mgmt.synapse.models.StorageAccountType
+        :keyword source_database_deletion_date: Specifies the time that the sql pool was deleted.
+        :paramtype source_database_deletion_date: ~datetime.datetime
+        """
+        super().__init__(**kwargs)
         self.tags = tags
         self.location = location
         self.sku = sku
@@ -7010,11 +11384,12 @@ class SqlPoolPatchInfo(msrest.serialization.Model):
         self.source_database_id = source_database_id
         self.recoverable_database_id = recoverable_database_id
         self.provisioning_state = provisioning_state
-        self.status = status
+        self.status = None
         self.restore_point_in_time = restore_point_in_time
         self.create_mode = create_mode
-        self.creation_date = creation_date
+        self.creation_date = None
         self.storage_account_type = storage_account_type
+        self.source_database_deletion_date = source_database_deletion_date
 
 
 class SqlPoolSchema(ProxyResource):
@@ -7033,25 +11408,23 @@ class SqlPoolSchema(ProxyResource):
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(SqlPoolSchema, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
 
 
-class SqlPoolSchemaListResult(msrest.serialization.Model):
+class SqlPoolSchemaListResult(_serialization.Model):
     """A list of Sql pool schemas.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -7063,25 +11436,23 @@ class SqlPoolSchemaListResult(msrest.serialization.Model):
     """
 
     _validation = {
-        'value': {'readonly': True},
-        'next_link': {'readonly': True},
+        "value": {"readonly": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[SqlPoolSchema]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[SqlPoolSchema]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(SqlPoolSchemaListResult, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.value = None
         self.next_link = None
 
 
-class SqlPoolSecurityAlertPolicy(ProxyResource):
+class SqlPoolSecurityAlertPolicy(ProxyResource):  # pylint: disable=too-many-instance-attributes
     """A Sql pool security alert policy.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -7094,64 +11465,87 @@ class SqlPoolSecurityAlertPolicy(ProxyResource):
     :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
      "Microsoft.Storage/storageAccounts".
     :vartype type: str
-    :param state: Specifies the state of the policy, whether it is enabled or disabled or a policy
-     has not been applied yet on the specific Sql pool. Possible values include: "New", "Enabled",
+    :ivar state: Specifies the state of the policy, whether it is enabled or disabled or a policy
+     has not been applied yet on the specific Sql pool. Known values are: "New", "Enabled", and
      "Disabled".
-    :type state: str or ~azure.mgmt.synapse.models.SecurityAlertPolicyState
-    :param disabled_alerts: Specifies an array of alerts that are disabled. Allowed values are:
+    :vartype state: str or ~azure.mgmt.synapse.models.SecurityAlertPolicyState
+    :ivar disabled_alerts: Specifies an array of alerts that are disabled. Allowed values are:
      Sql_Injection, Sql_Injection_Vulnerability, Access_Anomaly, Data_Exfiltration, Unsafe_Action.
-    :type disabled_alerts: list[str]
-    :param email_addresses: Specifies an array of e-mail addresses to which the alert is sent.
-    :type email_addresses: list[str]
-    :param email_account_admins: Specifies that the alert is sent to the account administrators.
-    :type email_account_admins: bool
-    :param storage_endpoint: Specifies the blob storage endpoint (e.g.
+    :vartype disabled_alerts: list[str]
+    :ivar email_addresses: Specifies an array of e-mail addresses to which the alert is sent.
+    :vartype email_addresses: list[str]
+    :ivar email_account_admins: Specifies that the alert is sent to the account administrators.
+    :vartype email_account_admins: bool
+    :ivar storage_endpoint: Specifies the blob storage endpoint (e.g.
      https://MyAccount.blob.core.windows.net). This blob storage will hold all Threat Detection
      audit logs.
-    :type storage_endpoint: str
-    :param storage_account_access_key: Specifies the identifier key of the Threat Detection audit
+    :vartype storage_endpoint: str
+    :ivar storage_account_access_key: Specifies the identifier key of the Threat Detection audit
      storage account.
-    :type storage_account_access_key: str
-    :param retention_days: Specifies the number of days to keep in the Threat Detection audit logs.
-    :type retention_days: int
+    :vartype storage_account_access_key: str
+    :ivar retention_days: Specifies the number of days to keep in the Threat Detection audit logs.
+    :vartype retention_days: int
     :ivar creation_time: Specifies the UTC creation time of the policy.
     :vartype creation_time: ~datetime.datetime
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'creation_time': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "creation_time": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'state': {'key': 'properties.state', 'type': 'str'},
-        'disabled_alerts': {'key': 'properties.disabledAlerts', 'type': '[str]'},
-        'email_addresses': {'key': 'properties.emailAddresses', 'type': '[str]'},
-        'email_account_admins': {'key': 'properties.emailAccountAdmins', 'type': 'bool'},
-        'storage_endpoint': {'key': 'properties.storageEndpoint', 'type': 'str'},
-        'storage_account_access_key': {'key': 'properties.storageAccountAccessKey', 'type': 'str'},
-        'retention_days': {'key': 'properties.retentionDays', 'type': 'int'},
-        'creation_time': {'key': 'properties.creationTime', 'type': 'iso-8601'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "state": {"key": "properties.state", "type": "str"},
+        "disabled_alerts": {"key": "properties.disabledAlerts", "type": "[str]"},
+        "email_addresses": {"key": "properties.emailAddresses", "type": "[str]"},
+        "email_account_admins": {"key": "properties.emailAccountAdmins", "type": "bool"},
+        "storage_endpoint": {"key": "properties.storageEndpoint", "type": "str"},
+        "storage_account_access_key": {"key": "properties.storageAccountAccessKey", "type": "str"},
+        "retention_days": {"key": "properties.retentionDays", "type": "int"},
+        "creation_time": {"key": "properties.creationTime", "type": "iso-8601"},
     }
 
     def __init__(
         self,
         *,
-        state: Optional[Union[str, "SecurityAlertPolicyState"]] = None,
+        state: Optional[Union[str, "_models.SecurityAlertPolicyState"]] = None,
         disabled_alerts: Optional[List[str]] = None,
         email_addresses: Optional[List[str]] = None,
         email_account_admins: Optional[bool] = None,
         storage_endpoint: Optional[str] = None,
         storage_account_access_key: Optional[str] = None,
         retention_days: Optional[int] = None,
-        **kwargs
-    ):
-        super(SqlPoolSecurityAlertPolicy, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword state: Specifies the state of the policy, whether it is enabled or disabled or a
+         policy has not been applied yet on the specific Sql pool. Known values are: "New", "Enabled",
+         and "Disabled".
+        :paramtype state: str or ~azure.mgmt.synapse.models.SecurityAlertPolicyState
+        :keyword disabled_alerts: Specifies an array of alerts that are disabled. Allowed values are:
+         Sql_Injection, Sql_Injection_Vulnerability, Access_Anomaly, Data_Exfiltration, Unsafe_Action.
+        :paramtype disabled_alerts: list[str]
+        :keyword email_addresses: Specifies an array of e-mail addresses to which the alert is sent.
+        :paramtype email_addresses: list[str]
+        :keyword email_account_admins: Specifies that the alert is sent to the account administrators.
+        :paramtype email_account_admins: bool
+        :keyword storage_endpoint: Specifies the blob storage endpoint (e.g.
+         https://MyAccount.blob.core.windows.net). This blob storage will hold all Threat Detection
+         audit logs.
+        :paramtype storage_endpoint: str
+        :keyword storage_account_access_key: Specifies the identifier key of the Threat Detection audit
+         storage account.
+        :paramtype storage_account_access_key: str
+        :keyword retention_days: Specifies the number of days to keep in the Threat Detection audit
+         logs.
+        :paramtype retention_days: int
+        """
+        super().__init__(**kwargs)
         self.state = state
         self.disabled_alerts = disabled_alerts
         self.email_addresses = email_addresses
@@ -7178,25 +11572,23 @@ class SqlPoolTable(ProxyResource):
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(SqlPoolTable, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
 
 
-class SqlPoolTableListResult(msrest.serialization.Model):
+class SqlPoolTableListResult(_serialization.Model):
     """A list of Sql pool tables.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -7208,25 +11600,23 @@ class SqlPoolTableListResult(msrest.serialization.Model):
     """
 
     _validation = {
-        'value': {'readonly': True},
-        'next_link': {'readonly': True},
+        "value": {"readonly": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[SqlPoolTable]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[SqlPoolTable]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(SqlPoolTableListResult, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.value = None
         self.next_link = None
 
 
-class SqlPoolUsage(msrest.serialization.Model):
+class SqlPoolUsage(_serialization.Model):
     """The Sql pool usages.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -7248,30 +11638,28 @@ class SqlPoolUsage(msrest.serialization.Model):
     """
 
     _validation = {
-        'name': {'readonly': True},
-        'resource_name': {'readonly': True},
-        'display_name': {'readonly': True},
-        'current_value': {'readonly': True},
-        'limit': {'readonly': True},
-        'unit': {'readonly': True},
-        'next_reset_time': {'readonly': True},
+        "name": {"readonly": True},
+        "resource_name": {"readonly": True},
+        "display_name": {"readonly": True},
+        "current_value": {"readonly": True},
+        "limit": {"readonly": True},
+        "unit": {"readonly": True},
+        "next_reset_time": {"readonly": True},
     }
 
     _attribute_map = {
-        'name': {'key': 'name', 'type': 'str'},
-        'resource_name': {'key': 'resourceName', 'type': 'str'},
-        'display_name': {'key': 'displayName', 'type': 'str'},
-        'current_value': {'key': 'currentValue', 'type': 'float'},
-        'limit': {'key': 'limit', 'type': 'float'},
-        'unit': {'key': 'unit', 'type': 'str'},
-        'next_reset_time': {'key': 'nextResetTime', 'type': 'iso-8601'},
+        "name": {"key": "name", "type": "str"},
+        "resource_name": {"key": "resourceName", "type": "str"},
+        "display_name": {"key": "displayName", "type": "str"},
+        "current_value": {"key": "currentValue", "type": "float"},
+        "limit": {"key": "limit", "type": "float"},
+        "unit": {"key": "unit", "type": "str"},
+        "next_reset_time": {"key": "nextResetTime", "type": "iso-8601"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(SqlPoolUsage, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.name = None
         self.resource_name = None
         self.display_name = None
@@ -7281,36 +11669,35 @@ class SqlPoolUsage(msrest.serialization.Model):
         self.next_reset_time = None
 
 
-class SqlPoolUsageListResult(msrest.serialization.Model):
+class SqlPoolUsageListResult(_serialization.Model):
     """The response to a list Sql pool usages request.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param value: Required. The list of usages for the Sql pool.
-    :type value: list[~azure.mgmt.synapse.models.SqlPoolUsage]
+    :ivar value: The list of usages for the Sql pool. Required.
+    :vartype value: list[~azure.mgmt.synapse.models.SqlPoolUsage]
     :ivar next_link: Link to retrieve next page of results.
     :vartype next_link: str
     """
 
     _validation = {
-        'value': {'required': True},
-        'next_link': {'readonly': True},
+        "value": {"required": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[SqlPoolUsage]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[SqlPoolUsage]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        value: List["SqlPoolUsage"],
-        **kwargs
-    ):
-        super(SqlPoolUsageListResult, self).__init__(**kwargs)
+    def __init__(self, *, value: List["_models.SqlPoolUsage"], **kwargs: Any) -> None:
+        """
+        :keyword value: The list of usages for the Sql pool. Required.
+        :paramtype value: list[~azure.mgmt.synapse.models.SqlPoolUsage]
+        """
+        super().__init__(**kwargs)
         self.value = value
         self.next_link = None
 
@@ -7328,37 +11715,40 @@ class SqlPoolVulnerabilityAssessment(ProxyResource):
     :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
      "Microsoft.Storage/storageAccounts".
     :vartype type: str
-    :param storage_container_path: A blob storage container path to hold the scan results (e.g.
+    :ivar storage_container_path: A blob storage container path to hold the scan results (e.g.
      https://myStorage.blob.core.windows.net/VaScans/).  It is required if server level
      vulnerability assessment policy doesn't set.
-    :type storage_container_path: str
-    :param storage_container_sas_key: A shared access signature (SAS Key) that has write access to
+    :vartype storage_container_path: str
+    :ivar storage_container_sas_key: A shared access signature (SAS Key) that has write access to
      the blob container specified in 'storageContainerPath' parameter. If 'storageAccountAccessKey'
      isn't specified, StorageContainerSasKey is required.
-    :type storage_container_sas_key: str
-    :param storage_account_access_key: Specifies the identifier key of the storage account for
+    :vartype storage_container_sas_key: str
+    :ivar storage_account_access_key: Specifies the identifier key of the storage account for
      vulnerability assessment scan results. If 'StorageContainerSasKey' isn't specified,
      storageAccountAccessKey is required.
-    :type storage_account_access_key: str
-    :param recurring_scans: The recurring scans settings.
-    :type recurring_scans:
+    :vartype storage_account_access_key: str
+    :ivar recurring_scans: The recurring scans settings.
+    :vartype recurring_scans:
      ~azure.mgmt.synapse.models.VulnerabilityAssessmentRecurringScansProperties
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'storage_container_path': {'key': 'properties.storageContainerPath', 'type': 'str'},
-        'storage_container_sas_key': {'key': 'properties.storageContainerSasKey', 'type': 'str'},
-        'storage_account_access_key': {'key': 'properties.storageAccountAccessKey', 'type': 'str'},
-        'recurring_scans': {'key': 'properties.recurringScans', 'type': 'VulnerabilityAssessmentRecurringScansProperties'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "storage_container_path": {"key": "properties.storageContainerPath", "type": "str"},
+        "storage_container_sas_key": {"key": "properties.storageContainerSasKey", "type": "str"},
+        "storage_account_access_key": {"key": "properties.storageAccountAccessKey", "type": "str"},
+        "recurring_scans": {
+            "key": "properties.recurringScans",
+            "type": "VulnerabilityAssessmentRecurringScansProperties",
+        },
     }
 
     def __init__(
@@ -7367,17 +11757,34 @@ class SqlPoolVulnerabilityAssessment(ProxyResource):
         storage_container_path: Optional[str] = None,
         storage_container_sas_key: Optional[str] = None,
         storage_account_access_key: Optional[str] = None,
-        recurring_scans: Optional["VulnerabilityAssessmentRecurringScansProperties"] = None,
-        **kwargs
-    ):
-        super(SqlPoolVulnerabilityAssessment, self).__init__(**kwargs)
+        recurring_scans: Optional["_models.VulnerabilityAssessmentRecurringScansProperties"] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword storage_container_path: A blob storage container path to hold the scan results (e.g.
+         https://myStorage.blob.core.windows.net/VaScans/).  It is required if server level
+         vulnerability assessment policy doesn't set.
+        :paramtype storage_container_path: str
+        :keyword storage_container_sas_key: A shared access signature (SAS Key) that has write access
+         to the blob container specified in 'storageContainerPath' parameter. If
+         'storageAccountAccessKey' isn't specified, StorageContainerSasKey is required.
+        :paramtype storage_container_sas_key: str
+        :keyword storage_account_access_key: Specifies the identifier key of the storage account for
+         vulnerability assessment scan results. If 'StorageContainerSasKey' isn't specified,
+         storageAccountAccessKey is required.
+        :paramtype storage_account_access_key: str
+        :keyword recurring_scans: The recurring scans settings.
+        :paramtype recurring_scans:
+         ~azure.mgmt.synapse.models.VulnerabilityAssessmentRecurringScansProperties
+        """
+        super().__init__(**kwargs)
         self.storage_container_path = storage_container_path
         self.storage_container_sas_key = storage_container_sas_key
         self.storage_account_access_key = storage_account_access_key
         self.recurring_scans = recurring_scans
 
 
-class SqlPoolVulnerabilityAssessmentListResult(msrest.serialization.Model):
+class SqlPoolVulnerabilityAssessmentListResult(_serialization.Model):
     """A list of the Sql pool's vulnerability assessments.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -7389,20 +11796,18 @@ class SqlPoolVulnerabilityAssessmentListResult(msrest.serialization.Model):
     """
 
     _validation = {
-        'value': {'readonly': True},
-        'next_link': {'readonly': True},
+        "value": {"readonly": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[SqlPoolVulnerabilityAssessment]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[SqlPoolVulnerabilityAssessment]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(SqlPoolVulnerabilityAssessmentListResult, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.value = None
         self.next_link = None
 
@@ -7420,58 +11825,65 @@ class SqlPoolVulnerabilityAssessmentRuleBaseline(ProxyResource):
     :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
      "Microsoft.Storage/storageAccounts".
     :vartype type: str
-    :param baseline_results: The rule baseline result.
-    :type baseline_results:
+    :ivar baseline_results: The rule baseline result.
+    :vartype baseline_results:
      list[~azure.mgmt.synapse.models.SqlPoolVulnerabilityAssessmentRuleBaselineItem]
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'baseline_results': {'key': 'properties.baselineResults', 'type': '[SqlPoolVulnerabilityAssessmentRuleBaselineItem]'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "baseline_results": {
+            "key": "properties.baselineResults",
+            "type": "[SqlPoolVulnerabilityAssessmentRuleBaselineItem]",
+        },
     }
 
     def __init__(
         self,
         *,
-        baseline_results: Optional[List["SqlPoolVulnerabilityAssessmentRuleBaselineItem"]] = None,
-        **kwargs
-    ):
-        super(SqlPoolVulnerabilityAssessmentRuleBaseline, self).__init__(**kwargs)
+        baseline_results: Optional[List["_models.SqlPoolVulnerabilityAssessmentRuleBaselineItem"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword baseline_results: The rule baseline result.
+        :paramtype baseline_results:
+         list[~azure.mgmt.synapse.models.SqlPoolVulnerabilityAssessmentRuleBaselineItem]
+        """
+        super().__init__(**kwargs)
         self.baseline_results = baseline_results
 
 
-class SqlPoolVulnerabilityAssessmentRuleBaselineItem(msrest.serialization.Model):
+class SqlPoolVulnerabilityAssessmentRuleBaselineItem(_serialization.Model):
     """Properties for an Sql pool vulnerability assessment rule baseline's result.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param result: Required. The rule baseline result.
-    :type result: list[str]
+    :ivar result: The rule baseline result. Required.
+    :vartype result: list[str]
     """
 
     _validation = {
-        'result': {'required': True},
+        "result": {"required": True},
     }
 
     _attribute_map = {
-        'result': {'key': 'result', 'type': '[str]'},
+        "result": {"key": "result", "type": "[str]"},
     }
 
-    def __init__(
-        self,
-        *,
-        result: List[str],
-        **kwargs
-    ):
-        super(SqlPoolVulnerabilityAssessmentRuleBaselineItem, self).__init__(**kwargs)
+    def __init__(self, *, result: List[str], **kwargs: Any) -> None:
+        """
+        :keyword result: The rule baseline result. Required.
+        :paramtype result: list[str]
+        """
+        super().__init__(**kwargs)
         self.result = result
 
 
@@ -7494,71 +11906,82 @@ class SqlPoolVulnerabilityAssessmentScansExport(ProxyResource):
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'exported_report_location': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "exported_report_location": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'exported_report_location': {'key': 'properties.exportedReportLocation', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "exported_report_location": {"key": "properties.exportedReportLocation", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(SqlPoolVulnerabilityAssessmentScansExport, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.exported_report_location = None
 
 
-class SsisObjectMetadata(msrest.serialization.Model):
+class SsisObjectMetadata(_serialization.Model):
     """SSIS object metadata.
 
-    You probably want to use the sub-classes and not this class directly. Known
-    sub-classes are: SsisEnvironment, SsisFolder, SsisPackage, SsisProject.
+    You probably want to use the sub-classes and not this class directly. Known sub-classes are:
+    SsisEnvironment, SsisFolder, SsisPackage, SsisProject
 
     All required parameters must be populated in order to send to Azure.
 
-    :param type: Required. Type of metadata.Constant filled by server.  Possible values include:
-     "Folder", "Project", "Package", "Environment".
-    :type type: str or ~azure.mgmt.synapse.models.SsisObjectMetadataType
-    :param id: Metadata id.
-    :type id: long
-    :param name: Metadata name.
-    :type name: str
-    :param description: Metadata description.
-    :type description: str
+    :ivar type: Type of metadata. Required. Known values are: "Folder", "Project", "Package", and
+     "Environment".
+    :vartype type: str or ~azure.mgmt.synapse.models.SsisObjectMetadataType
+    :ivar id: Metadata id.
+    :vartype id: int
+    :ivar name: Metadata name.
+    :vartype name: str
+    :ivar description: Metadata description.
+    :vartype description: str
     """
 
     _validation = {
-        'type': {'required': True},
+        "type": {"required": True},
     }
 
     _attribute_map = {
-        'type': {'key': 'type', 'type': 'str'},
-        'id': {'key': 'id', 'type': 'long'},
-        'name': {'key': 'name', 'type': 'str'},
-        'description': {'key': 'description', 'type': 'str'},
+        "type": {"key": "type", "type": "str"},
+        "id": {"key": "id", "type": "int"},
+        "name": {"key": "name", "type": "str"},
+        "description": {"key": "description", "type": "str"},
     }
 
     _subtype_map = {
-        'type': {'Environment': 'SsisEnvironment', 'Folder': 'SsisFolder', 'Package': 'SsisPackage', 'Project': 'SsisProject'}
+        "type": {
+            "Environment": "SsisEnvironment",
+            "Folder": "SsisFolder",
+            "Package": "SsisPackage",
+            "Project": "SsisProject",
+        }
     }
 
     def __init__(
         self,
         *,
-        id: Optional[int] = None,
+        id: Optional[int] = None,  # pylint: disable=redefined-builtin
         name: Optional[str] = None,
         description: Optional[str] = None,
-        **kwargs
-    ):
-        super(SsisObjectMetadata, self).__init__(**kwargs)
-        self.type = None  # type: Optional[str]
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword id: Metadata id.
+        :paramtype id: int
+        :keyword name: Metadata name.
+        :paramtype name: str
+        :keyword description: Metadata description.
+        :paramtype description: str
+        """
+        super().__init__(**kwargs)
+        self.type: Optional[str] = None
         self.id = id
         self.name = name
         self.description = description
@@ -7569,80 +11992,102 @@ class SsisEnvironment(SsisObjectMetadata):
 
     All required parameters must be populated in order to send to Azure.
 
-    :param type: Required. Type of metadata.Constant filled by server.  Possible values include:
-     "Folder", "Project", "Package", "Environment".
-    :type type: str or ~azure.mgmt.synapse.models.SsisObjectMetadataType
-    :param id: Metadata id.
-    :type id: long
-    :param name: Metadata name.
-    :type name: str
-    :param description: Metadata description.
-    :type description: str
-    :param folder_id: Folder id which contains environment.
-    :type folder_id: long
-    :param variables: Variable in environment.
-    :type variables: list[~azure.mgmt.synapse.models.SsisVariable]
+    :ivar type: Type of metadata. Required. Known values are: "Folder", "Project", "Package", and
+     "Environment".
+    :vartype type: str or ~azure.mgmt.synapse.models.SsisObjectMetadataType
+    :ivar id: Metadata id.
+    :vartype id: int
+    :ivar name: Metadata name.
+    :vartype name: str
+    :ivar description: Metadata description.
+    :vartype description: str
+    :ivar folder_id: Folder id which contains environment.
+    :vartype folder_id: int
+    :ivar variables: Variable in environment.
+    :vartype variables: list[~azure.mgmt.synapse.models.SsisVariable]
     """
 
     _validation = {
-        'type': {'required': True},
+        "type": {"required": True},
     }
 
     _attribute_map = {
-        'type': {'key': 'type', 'type': 'str'},
-        'id': {'key': 'id', 'type': 'long'},
-        'name': {'key': 'name', 'type': 'str'},
-        'description': {'key': 'description', 'type': 'str'},
-        'folder_id': {'key': 'folderId', 'type': 'long'},
-        'variables': {'key': 'variables', 'type': '[SsisVariable]'},
+        "type": {"key": "type", "type": "str"},
+        "id": {"key": "id", "type": "int"},
+        "name": {"key": "name", "type": "str"},
+        "description": {"key": "description", "type": "str"},
+        "folder_id": {"key": "folderId", "type": "int"},
+        "variables": {"key": "variables", "type": "[SsisVariable]"},
     }
 
     def __init__(
         self,
         *,
-        id: Optional[int] = None,
+        id: Optional[int] = None,  # pylint: disable=redefined-builtin
         name: Optional[str] = None,
         description: Optional[str] = None,
         folder_id: Optional[int] = None,
-        variables: Optional[List["SsisVariable"]] = None,
-        **kwargs
-    ):
-        super(SsisEnvironment, self).__init__(id=id, name=name, description=description, **kwargs)
-        self.type = 'Environment'  # type: str
+        variables: Optional[List["_models.SsisVariable"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword id: Metadata id.
+        :paramtype id: int
+        :keyword name: Metadata name.
+        :paramtype name: str
+        :keyword description: Metadata description.
+        :paramtype description: str
+        :keyword folder_id: Folder id which contains environment.
+        :paramtype folder_id: int
+        :keyword variables: Variable in environment.
+        :paramtype variables: list[~azure.mgmt.synapse.models.SsisVariable]
+        """
+        super().__init__(id=id, name=name, description=description, **kwargs)
+        self.type: str = "Environment"
         self.folder_id = folder_id
         self.variables = variables
 
 
-class SsisEnvironmentReference(msrest.serialization.Model):
+class SsisEnvironmentReference(_serialization.Model):
     """Ssis environment reference.
 
-    :param id: Environment reference id.
-    :type id: long
-    :param environment_folder_name: Environment folder name.
-    :type environment_folder_name: str
-    :param environment_name: Environment name.
-    :type environment_name: str
-    :param reference_type: Reference type.
-    :type reference_type: str
+    :ivar id: Environment reference id.
+    :vartype id: int
+    :ivar environment_folder_name: Environment folder name.
+    :vartype environment_folder_name: str
+    :ivar environment_name: Environment name.
+    :vartype environment_name: str
+    :ivar reference_type: Reference type.
+    :vartype reference_type: str
     """
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'long'},
-        'environment_folder_name': {'key': 'environmentFolderName', 'type': 'str'},
-        'environment_name': {'key': 'environmentName', 'type': 'str'},
-        'reference_type': {'key': 'referenceType', 'type': 'str'},
+        "id": {"key": "id", "type": "int"},
+        "environment_folder_name": {"key": "environmentFolderName", "type": "str"},
+        "environment_name": {"key": "environmentName", "type": "str"},
+        "reference_type": {"key": "referenceType", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        id: Optional[int] = None,
+        id: Optional[int] = None,  # pylint: disable=redefined-builtin
         environment_folder_name: Optional[str] = None,
         environment_name: Optional[str] = None,
         reference_type: Optional[str] = None,
-        **kwargs
-    ):
-        super(SsisEnvironmentReference, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword id: Environment reference id.
+        :paramtype id: int
+        :keyword environment_folder_name: Environment folder name.
+        :paramtype environment_folder_name: str
+        :keyword environment_name: Environment name.
+        :paramtype environment_name: str
+        :keyword reference_type: Reference type.
+        :paramtype reference_type: str
+        """
+        super().__init__(**kwargs)
         self.id = id
         self.environment_folder_name = environment_folder_name
         self.environment_name = environment_name
@@ -7654,84 +12099,98 @@ class SsisFolder(SsisObjectMetadata):
 
     All required parameters must be populated in order to send to Azure.
 
-    :param type: Required. Type of metadata.Constant filled by server.  Possible values include:
-     "Folder", "Project", "Package", "Environment".
-    :type type: str or ~azure.mgmt.synapse.models.SsisObjectMetadataType
-    :param id: Metadata id.
-    :type id: long
-    :param name: Metadata name.
-    :type name: str
-    :param description: Metadata description.
-    :type description: str
+    :ivar type: Type of metadata. Required. Known values are: "Folder", "Project", "Package", and
+     "Environment".
+    :vartype type: str or ~azure.mgmt.synapse.models.SsisObjectMetadataType
+    :ivar id: Metadata id.
+    :vartype id: int
+    :ivar name: Metadata name.
+    :vartype name: str
+    :ivar description: Metadata description.
+    :vartype description: str
     """
 
     _validation = {
-        'type': {'required': True},
+        "type": {"required": True},
     }
 
     _attribute_map = {
-        'type': {'key': 'type', 'type': 'str'},
-        'id': {'key': 'id', 'type': 'long'},
-        'name': {'key': 'name', 'type': 'str'},
-        'description': {'key': 'description', 'type': 'str'},
+        "type": {"key": "type", "type": "str"},
+        "id": {"key": "id", "type": "int"},
+        "name": {"key": "name", "type": "str"},
+        "description": {"key": "description", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        id: Optional[int] = None,
+        id: Optional[int] = None,  # pylint: disable=redefined-builtin
         name: Optional[str] = None,
         description: Optional[str] = None,
-        **kwargs
-    ):
-        super(SsisFolder, self).__init__(id=id, name=name, description=description, **kwargs)
-        self.type = 'Folder'  # type: str
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword id: Metadata id.
+        :paramtype id: int
+        :keyword name: Metadata name.
+        :paramtype name: str
+        :keyword description: Metadata description.
+        :paramtype description: str
+        """
+        super().__init__(id=id, name=name, description=description, **kwargs)
+        self.type: str = "Folder"
 
 
-class SsisObjectMetadataListResponse(msrest.serialization.Model):
+class SsisObjectMetadataListResponse(_serialization.Model):
     """A list of SSIS object metadata.
 
-    :param value: List of SSIS object metadata.
-    :type value: list[~azure.mgmt.synapse.models.SsisObjectMetadata]
-    :param next_link: The link to the next page of results, if any remaining results exist.
-    :type next_link: str
+    :ivar value: List of SSIS object metadata.
+    :vartype value: list[~azure.mgmt.synapse.models.SsisObjectMetadata]
+    :ivar next_link: The link to the next page of results, if any remaining results exist.
+    :vartype next_link: str
     """
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[SsisObjectMetadata]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[SsisObjectMetadata]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        value: Optional[List["SsisObjectMetadata"]] = None,
+        value: Optional[List["_models.SsisObjectMetadata"]] = None,
         next_link: Optional[str] = None,
-        **kwargs
-    ):
-        super(SsisObjectMetadataListResponse, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword value: List of SSIS object metadata.
+        :paramtype value: list[~azure.mgmt.synapse.models.SsisObjectMetadata]
+        :keyword next_link: The link to the next page of results, if any remaining results exist.
+        :paramtype next_link: str
+        """
+        super().__init__(**kwargs)
         self.value = value
         self.next_link = next_link
 
 
-class SsisObjectMetadataStatusResponse(msrest.serialization.Model):
+class SsisObjectMetadataStatusResponse(_serialization.Model):
     """The status of the operation.
 
-    :param status: The status of the operation.
-    :type status: str
-    :param name: The operation name.
-    :type name: str
-    :param properties: The operation properties.
-    :type properties: str
-    :param error: The operation error message.
-    :type error: str
+    :ivar status: The status of the operation.
+    :vartype status: str
+    :ivar name: The operation name.
+    :vartype name: str
+    :ivar properties: The operation properties.
+    :vartype properties: str
+    :ivar error: The operation error message.
+    :vartype error: str
     """
 
     _attribute_map = {
-        'status': {'key': 'status', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'properties': {'key': 'properties', 'type': 'str'},
-        'error': {'key': 'error', 'type': 'str'},
+        "status": {"key": "status", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "properties": {"key": "properties", "type": "str"},
+        "error": {"key": "error", "type": "str"},
     }
 
     def __init__(
@@ -7741,9 +12200,19 @@ class SsisObjectMetadataStatusResponse(msrest.serialization.Model):
         name: Optional[str] = None,
         properties: Optional[str] = None,
         error: Optional[str] = None,
-        **kwargs
-    ):
-        super(SsisObjectMetadataStatusResponse, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword status: The status of the operation.
+        :paramtype status: str
+        :keyword name: The operation name.
+        :paramtype name: str
+        :keyword properties: The operation properties.
+        :paramtype properties: str
+        :keyword error: The operation error message.
+        :paramtype error: str
+        """
+        super().__init__(**kwargs)
         self.status = status
         self.name = name
         self.properties = properties
@@ -7755,108 +12224,124 @@ class SsisPackage(SsisObjectMetadata):
 
     All required parameters must be populated in order to send to Azure.
 
-    :param type: Required. Type of metadata.Constant filled by server.  Possible values include:
-     "Folder", "Project", "Package", "Environment".
-    :type type: str or ~azure.mgmt.synapse.models.SsisObjectMetadataType
-    :param id: Metadata id.
-    :type id: long
-    :param name: Metadata name.
-    :type name: str
-    :param description: Metadata description.
-    :type description: str
-    :param folder_id: Folder id which contains package.
-    :type folder_id: long
-    :param project_version: Project version which contains package.
-    :type project_version: long
-    :param project_id: Project id which contains package.
-    :type project_id: long
-    :param parameters: Parameters in package.
-    :type parameters: list[~azure.mgmt.synapse.models.SsisParameter]
+    :ivar type: Type of metadata. Required. Known values are: "Folder", "Project", "Package", and
+     "Environment".
+    :vartype type: str or ~azure.mgmt.synapse.models.SsisObjectMetadataType
+    :ivar id: Metadata id.
+    :vartype id: int
+    :ivar name: Metadata name.
+    :vartype name: str
+    :ivar description: Metadata description.
+    :vartype description: str
+    :ivar folder_id: Folder id which contains package.
+    :vartype folder_id: int
+    :ivar project_version: Project version which contains package.
+    :vartype project_version: int
+    :ivar project_id: Project id which contains package.
+    :vartype project_id: int
+    :ivar parameters: Parameters in package.
+    :vartype parameters: list[~azure.mgmt.synapse.models.SsisParameter]
     """
 
     _validation = {
-        'type': {'required': True},
+        "type": {"required": True},
     }
 
     _attribute_map = {
-        'type': {'key': 'type', 'type': 'str'},
-        'id': {'key': 'id', 'type': 'long'},
-        'name': {'key': 'name', 'type': 'str'},
-        'description': {'key': 'description', 'type': 'str'},
-        'folder_id': {'key': 'folderId', 'type': 'long'},
-        'project_version': {'key': 'projectVersion', 'type': 'long'},
-        'project_id': {'key': 'projectId', 'type': 'long'},
-        'parameters': {'key': 'parameters', 'type': '[SsisParameter]'},
+        "type": {"key": "type", "type": "str"},
+        "id": {"key": "id", "type": "int"},
+        "name": {"key": "name", "type": "str"},
+        "description": {"key": "description", "type": "str"},
+        "folder_id": {"key": "folderId", "type": "int"},
+        "project_version": {"key": "projectVersion", "type": "int"},
+        "project_id": {"key": "projectId", "type": "int"},
+        "parameters": {"key": "parameters", "type": "[SsisParameter]"},
     }
 
     def __init__(
         self,
         *,
-        id: Optional[int] = None,
+        id: Optional[int] = None,  # pylint: disable=redefined-builtin
         name: Optional[str] = None,
         description: Optional[str] = None,
         folder_id: Optional[int] = None,
         project_version: Optional[int] = None,
         project_id: Optional[int] = None,
-        parameters: Optional[List["SsisParameter"]] = None,
-        **kwargs
-    ):
-        super(SsisPackage, self).__init__(id=id, name=name, description=description, **kwargs)
-        self.type = 'Package'  # type: str
+        parameters: Optional[List["_models.SsisParameter"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword id: Metadata id.
+        :paramtype id: int
+        :keyword name: Metadata name.
+        :paramtype name: str
+        :keyword description: Metadata description.
+        :paramtype description: str
+        :keyword folder_id: Folder id which contains package.
+        :paramtype folder_id: int
+        :keyword project_version: Project version which contains package.
+        :paramtype project_version: int
+        :keyword project_id: Project id which contains package.
+        :paramtype project_id: int
+        :keyword parameters: Parameters in package.
+        :paramtype parameters: list[~azure.mgmt.synapse.models.SsisParameter]
+        """
+        super().__init__(id=id, name=name, description=description, **kwargs)
+        self.type: str = "Package"
         self.folder_id = folder_id
         self.project_version = project_version
         self.project_id = project_id
         self.parameters = parameters
 
 
-class SsisParameter(msrest.serialization.Model):
+class SsisParameter(_serialization.Model):  # pylint: disable=too-many-instance-attributes
     """Ssis parameter.
 
-    :param id: Parameter id.
-    :type id: long
-    :param name: Parameter name.
-    :type name: str
-    :param description: Parameter description.
-    :type description: str
-    :param data_type: Parameter type.
-    :type data_type: str
-    :param required: Whether parameter is required.
-    :type required: bool
-    :param sensitive: Whether parameter is sensitive.
-    :type sensitive: bool
-    :param design_default_value: Design default value of parameter.
-    :type design_default_value: str
-    :param default_value: Default value of parameter.
-    :type default_value: str
-    :param sensitive_default_value: Default sensitive value of parameter.
-    :type sensitive_default_value: str
-    :param value_type: Parameter value type.
-    :type value_type: str
-    :param value_set: Parameter value set.
-    :type value_set: bool
-    :param variable: Parameter reference variable.
-    :type variable: str
+    :ivar id: Parameter id.
+    :vartype id: int
+    :ivar name: Parameter name.
+    :vartype name: str
+    :ivar description: Parameter description.
+    :vartype description: str
+    :ivar data_type: Parameter type.
+    :vartype data_type: str
+    :ivar required: Whether parameter is required.
+    :vartype required: bool
+    :ivar sensitive: Whether parameter is sensitive.
+    :vartype sensitive: bool
+    :ivar design_default_value: Design default value of parameter.
+    :vartype design_default_value: str
+    :ivar default_value: Default value of parameter.
+    :vartype default_value: str
+    :ivar sensitive_default_value: Default sensitive value of parameter.
+    :vartype sensitive_default_value: str
+    :ivar value_type: Parameter value type.
+    :vartype value_type: str
+    :ivar value_set: Parameter value set.
+    :vartype value_set: bool
+    :ivar variable: Parameter reference variable.
+    :vartype variable: str
     """
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'long'},
-        'name': {'key': 'name', 'type': 'str'},
-        'description': {'key': 'description', 'type': 'str'},
-        'data_type': {'key': 'dataType', 'type': 'str'},
-        'required': {'key': 'required', 'type': 'bool'},
-        'sensitive': {'key': 'sensitive', 'type': 'bool'},
-        'design_default_value': {'key': 'designDefaultValue', 'type': 'str'},
-        'default_value': {'key': 'defaultValue', 'type': 'str'},
-        'sensitive_default_value': {'key': 'sensitiveDefaultValue', 'type': 'str'},
-        'value_type': {'key': 'valueType', 'type': 'str'},
-        'value_set': {'key': 'valueSet', 'type': 'bool'},
-        'variable': {'key': 'variable', 'type': 'str'},
+        "id": {"key": "id", "type": "int"},
+        "name": {"key": "name", "type": "str"},
+        "description": {"key": "description", "type": "str"},
+        "data_type": {"key": "dataType", "type": "str"},
+        "required": {"key": "required", "type": "bool"},
+        "sensitive": {"key": "sensitive", "type": "bool"},
+        "design_default_value": {"key": "designDefaultValue", "type": "str"},
+        "default_value": {"key": "defaultValue", "type": "str"},
+        "sensitive_default_value": {"key": "sensitiveDefaultValue", "type": "str"},
+        "value_type": {"key": "valueType", "type": "str"},
+        "value_set": {"key": "valueSet", "type": "bool"},
+        "variable": {"key": "variable", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        id: Optional[int] = None,
+        id: Optional[int] = None,  # pylint: disable=redefined-builtin
         name: Optional[str] = None,
         description: Optional[str] = None,
         data_type: Optional[str] = None,
@@ -7868,9 +12353,35 @@ class SsisParameter(msrest.serialization.Model):
         value_type: Optional[str] = None,
         value_set: Optional[bool] = None,
         variable: Optional[str] = None,
-        **kwargs
-    ):
-        super(SsisParameter, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword id: Parameter id.
+        :paramtype id: int
+        :keyword name: Parameter name.
+        :paramtype name: str
+        :keyword description: Parameter description.
+        :paramtype description: str
+        :keyword data_type: Parameter type.
+        :paramtype data_type: str
+        :keyword required: Whether parameter is required.
+        :paramtype required: bool
+        :keyword sensitive: Whether parameter is sensitive.
+        :paramtype sensitive: bool
+        :keyword design_default_value: Design default value of parameter.
+        :paramtype design_default_value: str
+        :keyword default_value: Default value of parameter.
+        :paramtype default_value: str
+        :keyword sensitive_default_value: Default sensitive value of parameter.
+        :paramtype sensitive_default_value: str
+        :keyword value_type: Parameter value type.
+        :paramtype value_type: str
+        :keyword value_set: Parameter value set.
+        :paramtype value_set: bool
+        :keyword variable: Parameter reference variable.
+        :paramtype variable: str
+        """
+        super().__init__(**kwargs)
         self.id = id
         self.name = name
         self.description = description
@@ -7890,102 +12401,134 @@ class SsisProject(SsisObjectMetadata):
 
     All required parameters must be populated in order to send to Azure.
 
-    :param type: Required. Type of metadata.Constant filled by server.  Possible values include:
-     "Folder", "Project", "Package", "Environment".
-    :type type: str or ~azure.mgmt.synapse.models.SsisObjectMetadataType
-    :param id: Metadata id.
-    :type id: long
-    :param name: Metadata name.
-    :type name: str
-    :param description: Metadata description.
-    :type description: str
-    :param folder_id: Folder id which contains project.
-    :type folder_id: long
-    :param version: Project version.
-    :type version: long
-    :param environment_refs: Environment reference in project.
-    :type environment_refs: list[~azure.mgmt.synapse.models.SsisEnvironmentReference]
-    :param parameters: Parameters in project.
-    :type parameters: list[~azure.mgmt.synapse.models.SsisParameter]
+    :ivar type: Type of metadata. Required. Known values are: "Folder", "Project", "Package", and
+     "Environment".
+    :vartype type: str or ~azure.mgmt.synapse.models.SsisObjectMetadataType
+    :ivar id: Metadata id.
+    :vartype id: int
+    :ivar name: Metadata name.
+    :vartype name: str
+    :ivar description: Metadata description.
+    :vartype description: str
+    :ivar folder_id: Folder id which contains project.
+    :vartype folder_id: int
+    :ivar version: Project version.
+    :vartype version: int
+    :ivar environment_refs: Environment reference in project.
+    :vartype environment_refs: list[~azure.mgmt.synapse.models.SsisEnvironmentReference]
+    :ivar parameters: Parameters in project.
+    :vartype parameters: list[~azure.mgmt.synapse.models.SsisParameter]
     """
 
     _validation = {
-        'type': {'required': True},
+        "type": {"required": True},
     }
 
     _attribute_map = {
-        'type': {'key': 'type', 'type': 'str'},
-        'id': {'key': 'id', 'type': 'long'},
-        'name': {'key': 'name', 'type': 'str'},
-        'description': {'key': 'description', 'type': 'str'},
-        'folder_id': {'key': 'folderId', 'type': 'long'},
-        'version': {'key': 'version', 'type': 'long'},
-        'environment_refs': {'key': 'environmentRefs', 'type': '[SsisEnvironmentReference]'},
-        'parameters': {'key': 'parameters', 'type': '[SsisParameter]'},
+        "type": {"key": "type", "type": "str"},
+        "id": {"key": "id", "type": "int"},
+        "name": {"key": "name", "type": "str"},
+        "description": {"key": "description", "type": "str"},
+        "folder_id": {"key": "folderId", "type": "int"},
+        "version": {"key": "version", "type": "int"},
+        "environment_refs": {"key": "environmentRefs", "type": "[SsisEnvironmentReference]"},
+        "parameters": {"key": "parameters", "type": "[SsisParameter]"},
     }
 
     def __init__(
         self,
         *,
-        id: Optional[int] = None,
+        id: Optional[int] = None,  # pylint: disable=redefined-builtin
         name: Optional[str] = None,
         description: Optional[str] = None,
         folder_id: Optional[int] = None,
         version: Optional[int] = None,
-        environment_refs: Optional[List["SsisEnvironmentReference"]] = None,
-        parameters: Optional[List["SsisParameter"]] = None,
-        **kwargs
-    ):
-        super(SsisProject, self).__init__(id=id, name=name, description=description, **kwargs)
-        self.type = 'Project'  # type: str
+        environment_refs: Optional[List["_models.SsisEnvironmentReference"]] = None,
+        parameters: Optional[List["_models.SsisParameter"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword id: Metadata id.
+        :paramtype id: int
+        :keyword name: Metadata name.
+        :paramtype name: str
+        :keyword description: Metadata description.
+        :paramtype description: str
+        :keyword folder_id: Folder id which contains project.
+        :paramtype folder_id: int
+        :keyword version: Project version.
+        :paramtype version: int
+        :keyword environment_refs: Environment reference in project.
+        :paramtype environment_refs: list[~azure.mgmt.synapse.models.SsisEnvironmentReference]
+        :keyword parameters: Parameters in project.
+        :paramtype parameters: list[~azure.mgmt.synapse.models.SsisParameter]
+        """
+        super().__init__(id=id, name=name, description=description, **kwargs)
+        self.type: str = "Project"
         self.folder_id = folder_id
         self.version = version
         self.environment_refs = environment_refs
         self.parameters = parameters
 
 
-class SsisVariable(msrest.serialization.Model):
+class SsisVariable(_serialization.Model):
     """Ssis variable.
 
-    :param id: Variable id.
-    :type id: long
-    :param name: Variable name.
-    :type name: str
-    :param description: Variable description.
-    :type description: str
-    :param data_type: Variable type.
-    :type data_type: str
-    :param sensitive: Whether variable is sensitive.
-    :type sensitive: bool
-    :param value: Variable value.
-    :type value: str
-    :param sensitive_value: Variable sensitive value.
-    :type sensitive_value: str
+    :ivar id: Variable id.
+    :vartype id: int
+    :ivar name: Variable name.
+    :vartype name: str
+    :ivar description: Variable description.
+    :vartype description: str
+    :ivar data_type: Variable type.
+    :vartype data_type: str
+    :ivar sensitive: Whether variable is sensitive.
+    :vartype sensitive: bool
+    :ivar value: Variable value.
+    :vartype value: str
+    :ivar sensitive_value: Variable sensitive value.
+    :vartype sensitive_value: str
     """
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'long'},
-        'name': {'key': 'name', 'type': 'str'},
-        'description': {'key': 'description', 'type': 'str'},
-        'data_type': {'key': 'dataType', 'type': 'str'},
-        'sensitive': {'key': 'sensitive', 'type': 'bool'},
-        'value': {'key': 'value', 'type': 'str'},
-        'sensitive_value': {'key': 'sensitiveValue', 'type': 'str'},
+        "id": {"key": "id", "type": "int"},
+        "name": {"key": "name", "type": "str"},
+        "description": {"key": "description", "type": "str"},
+        "data_type": {"key": "dataType", "type": "str"},
+        "sensitive": {"key": "sensitive", "type": "bool"},
+        "value": {"key": "value", "type": "str"},
+        "sensitive_value": {"key": "sensitiveValue", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        id: Optional[int] = None,
+        id: Optional[int] = None,  # pylint: disable=redefined-builtin
         name: Optional[str] = None,
         description: Optional[str] = None,
         data_type: Optional[str] = None,
         sensitive: Optional[bool] = None,
         value: Optional[str] = None,
         sensitive_value: Optional[str] = None,
-        **kwargs
-    ):
-        super(SsisVariable, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword id: Variable id.
+        :paramtype id: int
+        :keyword name: Variable name.
+        :paramtype name: str
+        :keyword description: Variable description.
+        :paramtype description: str
+        :keyword data_type: Variable type.
+        :paramtype data_type: str
+        :keyword sensitive: Whether variable is sensitive.
+        :paramtype sensitive: bool
+        :keyword value: Variable value.
+        :paramtype value: str
+        :keyword sensitive_value: Variable sensitive value.
+        :paramtype sensitive_value: str
+        """
+        super().__init__(**kwargs)
         self.id = id
         self.name = name
         self.description = description
@@ -7995,16 +12538,146 @@ class SsisVariable(msrest.serialization.Model):
         self.sensitive_value = sensitive_value
 
 
-class TopQueries(msrest.serialization.Model):
+class SystemData(_serialization.Model):
+    """Metadata pertaining to creation and last modification of the resource.
+
+    :ivar created_by: The identity that created the resource.
+    :vartype created_by: str
+    :ivar created_by_type: The type of identity that created the resource. Known values are:
+     "User", "Application", "ManagedIdentity", and "Key".
+    :vartype created_by_type: str or ~azure.mgmt.synapse.models.CreatedByType
+    :ivar created_at: The timestamp of resource creation (UTC).
+    :vartype created_at: ~datetime.datetime
+    :ivar last_modified_by: The identity that last modified the resource.
+    :vartype last_modified_by: str
+    :ivar last_modified_by_type: The type of identity that last modified the resource. Known values
+     are: "User", "Application", "ManagedIdentity", and "Key".
+    :vartype last_modified_by_type: str or ~azure.mgmt.synapse.models.CreatedByType
+    :ivar last_modified_at: The timestamp of resource last modification (UTC).
+    :vartype last_modified_at: ~datetime.datetime
+    """
+
+    _attribute_map = {
+        "created_by": {"key": "createdBy", "type": "str"},
+        "created_by_type": {"key": "createdByType", "type": "str"},
+        "created_at": {"key": "createdAt", "type": "iso-8601"},
+        "last_modified_by": {"key": "lastModifiedBy", "type": "str"},
+        "last_modified_by_type": {"key": "lastModifiedByType", "type": "str"},
+        "last_modified_at": {"key": "lastModifiedAt", "type": "iso-8601"},
+    }
+
+    def __init__(
+        self,
+        *,
+        created_by: Optional[str] = None,
+        created_by_type: Optional[Union[str, "_models.CreatedByType"]] = None,
+        created_at: Optional[datetime.datetime] = None,
+        last_modified_by: Optional[str] = None,
+        last_modified_by_type: Optional[Union[str, "_models.CreatedByType"]] = None,
+        last_modified_at: Optional[datetime.datetime] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword created_by: The identity that created the resource.
+        :paramtype created_by: str
+        :keyword created_by_type: The type of identity that created the resource. Known values are:
+         "User", "Application", "ManagedIdentity", and "Key".
+        :paramtype created_by_type: str or ~azure.mgmt.synapse.models.CreatedByType
+        :keyword created_at: The timestamp of resource creation (UTC).
+        :paramtype created_at: ~datetime.datetime
+        :keyword last_modified_by: The identity that last modified the resource.
+        :paramtype last_modified_by: str
+        :keyword last_modified_by_type: The type of identity that last modified the resource. Known
+         values are: "User", "Application", "ManagedIdentity", and "Key".
+        :paramtype last_modified_by_type: str or ~azure.mgmt.synapse.models.CreatedByType
+        :keyword last_modified_at: The timestamp of resource last modification (UTC).
+        :paramtype last_modified_at: ~datetime.datetime
+        """
+        super().__init__(**kwargs)
+        self.created_by = created_by
+        self.created_by_type = created_by_type
+        self.created_at = created_at
+        self.last_modified_by = last_modified_by
+        self.last_modified_by_type = last_modified_by_type
+        self.last_modified_at = last_modified_at
+
+
+class TableLevelSharingProperties(_serialization.Model):
+    """Tables that will be included and excluded in the follower database.
+
+    :ivar tables_to_include: List of tables to include in the follower database.
+    :vartype tables_to_include: list[str]
+    :ivar tables_to_exclude: List of tables to exclude from the follower database.
+    :vartype tables_to_exclude: list[str]
+    :ivar external_tables_to_include: List of external tables to include in the follower database.
+    :vartype external_tables_to_include: list[str]
+    :ivar external_tables_to_exclude: List of external tables exclude from the follower database.
+    :vartype external_tables_to_exclude: list[str]
+    :ivar materialized_views_to_include: List of materialized views to include in the follower
+     database.
+    :vartype materialized_views_to_include: list[str]
+    :ivar materialized_views_to_exclude: List of materialized views exclude from the follower
+     database.
+    :vartype materialized_views_to_exclude: list[str]
+    """
+
+    _attribute_map = {
+        "tables_to_include": {"key": "tablesToInclude", "type": "[str]"},
+        "tables_to_exclude": {"key": "tablesToExclude", "type": "[str]"},
+        "external_tables_to_include": {"key": "externalTablesToInclude", "type": "[str]"},
+        "external_tables_to_exclude": {"key": "externalTablesToExclude", "type": "[str]"},
+        "materialized_views_to_include": {"key": "materializedViewsToInclude", "type": "[str]"},
+        "materialized_views_to_exclude": {"key": "materializedViewsToExclude", "type": "[str]"},
+    }
+
+    def __init__(
+        self,
+        *,
+        tables_to_include: Optional[List[str]] = None,
+        tables_to_exclude: Optional[List[str]] = None,
+        external_tables_to_include: Optional[List[str]] = None,
+        external_tables_to_exclude: Optional[List[str]] = None,
+        materialized_views_to_include: Optional[List[str]] = None,
+        materialized_views_to_exclude: Optional[List[str]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword tables_to_include: List of tables to include in the follower database.
+        :paramtype tables_to_include: list[str]
+        :keyword tables_to_exclude: List of tables to exclude from the follower database.
+        :paramtype tables_to_exclude: list[str]
+        :keyword external_tables_to_include: List of external tables to include in the follower
+         database.
+        :paramtype external_tables_to_include: list[str]
+        :keyword external_tables_to_exclude: List of external tables exclude from the follower
+         database.
+        :paramtype external_tables_to_exclude: list[str]
+        :keyword materialized_views_to_include: List of materialized views to include in the follower
+         database.
+        :paramtype materialized_views_to_include: list[str]
+        :keyword materialized_views_to_exclude: List of materialized views exclude from the follower
+         database.
+        :paramtype materialized_views_to_exclude: list[str]
+        """
+        super().__init__(**kwargs)
+        self.tables_to_include = tables_to_include
+        self.tables_to_exclude = tables_to_exclude
+        self.external_tables_to_include = external_tables_to_include
+        self.external_tables_to_exclude = external_tables_to_exclude
+        self.materialized_views_to_include = materialized_views_to_include
+        self.materialized_views_to_exclude = materialized_views_to_exclude
+
+
+class TopQueries(_serialization.Model):
     """A database query.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
-    :ivar aggregation_function: The function that is used to aggregate each query's metrics.
-     Possible values include: "min", "max", "avg", "sum".
+    :ivar aggregation_function: The function that is used to aggregate each query's metrics. Known
+     values are: "min", "max", "avg", and "sum".
     :vartype aggregation_function: str or ~azure.mgmt.synapse.models.QueryAggregationFunction
     :ivar execution_type: The execution type that is used to filter the query instances that are
-     returned. Possible values include: "any", "regular", "irregular", "aborted", "exception".
+     returned. Known values are: "any", "regular", "irregular", "aborted", and "exception".
     :vartype execution_type: str or ~azure.mgmt.synapse.models.QueryExecutionType
     :ivar interval_type: The duration of the interval (ISO8601 duration format).
     :vartype interval_type: str
@@ -8014,40 +12687,38 @@ class TopQueries(msrest.serialization.Model):
     :vartype observation_start_time: ~datetime.datetime
     :ivar observation_end_time: The end time for queries that are returned (ISO8601 format).
     :vartype observation_end_time: ~datetime.datetime
-    :ivar observed_metric: The type of metric to use for ordering the top metrics. Possible values
-     include: "cpu", "io", "logio", "duration", "executionCount".
+    :ivar observed_metric: The type of metric to use for ordering the top metrics. Known values
+     are: "cpu", "io", "logio", "duration", and "executionCount".
     :vartype observed_metric: str or ~azure.mgmt.synapse.models.QueryObservedMetricType
     :ivar queries: The list of queries.
     :vartype queries: list[~azure.mgmt.synapse.models.QueryStatistic]
     """
 
     _validation = {
-        'aggregation_function': {'readonly': True},
-        'execution_type': {'readonly': True},
-        'interval_type': {'readonly': True},
-        'number_of_top_queries': {'readonly': True},
-        'observation_start_time': {'readonly': True},
-        'observation_end_time': {'readonly': True},
-        'observed_metric': {'readonly': True},
-        'queries': {'readonly': True},
+        "aggregation_function": {"readonly": True},
+        "execution_type": {"readonly": True},
+        "interval_type": {"readonly": True},
+        "number_of_top_queries": {"readonly": True},
+        "observation_start_time": {"readonly": True},
+        "observation_end_time": {"readonly": True},
+        "observed_metric": {"readonly": True},
+        "queries": {"readonly": True},
     }
 
     _attribute_map = {
-        'aggregation_function': {'key': 'aggregationFunction', 'type': 'str'},
-        'execution_type': {'key': 'executionType', 'type': 'str'},
-        'interval_type': {'key': 'intervalType', 'type': 'str'},
-        'number_of_top_queries': {'key': 'numberOfTopQueries', 'type': 'int'},
-        'observation_start_time': {'key': 'observationStartTime', 'type': 'iso-8601'},
-        'observation_end_time': {'key': 'observationEndTime', 'type': 'iso-8601'},
-        'observed_metric': {'key': 'observedMetric', 'type': 'str'},
-        'queries': {'key': 'queries', 'type': '[QueryStatistic]'},
+        "aggregation_function": {"key": "aggregationFunction", "type": "str"},
+        "execution_type": {"key": "executionType", "type": "str"},
+        "interval_type": {"key": "intervalType", "type": "str"},
+        "number_of_top_queries": {"key": "numberOfTopQueries", "type": "int"},
+        "observation_start_time": {"key": "observationStartTime", "type": "iso-8601"},
+        "observation_end_time": {"key": "observationEndTime", "type": "iso-8601"},
+        "observed_metric": {"key": "observedMetric", "type": "str"},
+        "queries": {"key": "queries", "type": "[QueryStatistic]"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(TopQueries, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.aggregation_function = None
         self.execution_type = None
         self.interval_type = None
@@ -8058,30 +12729,29 @@ class TopQueries(msrest.serialization.Model):
         self.queries = None
 
 
-class TopQueriesListResult(msrest.serialization.Model):
+class TopQueriesListResult(_serialization.Model):
     """Represents the response to a get top queries request.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param value: Required. The list of top queries.
-    :type value: list[~azure.mgmt.synapse.models.TopQueries]
+    :ivar value: The list of top queries. Required.
+    :vartype value: list[~azure.mgmt.synapse.models.TopQueries]
     """
 
     _validation = {
-        'value': {'required': True},
+        "value": {"required": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[TopQueries]'},
+        "value": {"key": "value", "type": "[TopQueries]"},
     }
 
-    def __init__(
-        self,
-        *,
-        value: List["TopQueries"],
-        **kwargs
-    ):
-        super(TopQueriesListResult, self).__init__(**kwargs)
+    def __init__(self, *, value: List["_models.TopQueries"], **kwargs: Any) -> None:
+        """
+        :keyword value: The list of top queries. Required.
+        :paramtype value: list[~azure.mgmt.synapse.models.TopQueries]
+        """
+        super().__init__(**kwargs)
         self.value = value
 
 
@@ -8100,38 +12770,40 @@ class TransparentDataEncryption(ProxyResource):
     :vartype type: str
     :ivar location: Resource location.
     :vartype location: str
-    :param status: The status of the database transparent data encryption. Possible values include:
-     "Enabled", "Disabled".
-    :type status: str or ~azure.mgmt.synapse.models.TransparentDataEncryptionStatus
+    :ivar status: The status of the database transparent data encryption. Known values are:
+     "Enabled" and "Disabled".
+    :vartype status: str or ~azure.mgmt.synapse.models.TransparentDataEncryptionStatus
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'location': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "location": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'location': {'key': 'location', 'type': 'str'},
-        'status': {'key': 'properties.status', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "location": {"key": "location", "type": "str"},
+        "status": {"key": "properties.status", "type": "str"},
     }
 
     def __init__(
-        self,
-        *,
-        status: Optional[Union[str, "TransparentDataEncryptionStatus"]] = None,
-        **kwargs
-    ):
-        super(TransparentDataEncryption, self).__init__(**kwargs)
+        self, *, status: Optional[Union[str, "_models.TransparentDataEncryptionStatus"]] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword status: The status of the database transparent data encryption. Known values are:
+         "Enabled" and "Disabled".
+        :paramtype status: str or ~azure.mgmt.synapse.models.TransparentDataEncryptionStatus
+        """
+        super().__init__(**kwargs)
         self.location = None
         self.status = status
 
 
-class TransparentDataEncryptionListResult(msrest.serialization.Model):
+class TransparentDataEncryptionListResult(_serialization.Model):
     """A list of transparent data encryption configurations.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -8143,133 +12815,175 @@ class TransparentDataEncryptionListResult(msrest.serialization.Model):
     """
 
     _validation = {
-        'value': {'readonly': True},
-        'next_link': {'readonly': True},
+        "value": {"readonly": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[TransparentDataEncryption]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[TransparentDataEncryption]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(TransparentDataEncryptionListResult, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.value = None
         self.next_link = None
 
 
-class UpdateIntegrationRuntimeNodeRequest(msrest.serialization.Model):
+class UpdateIntegrationRuntimeNodeRequest(_serialization.Model):
     """Update integration runtime node request.
 
-    :param concurrent_jobs_limit: The number of concurrent jobs permitted to run on the integration
+    :ivar concurrent_jobs_limit: The number of concurrent jobs permitted to run on the integration
      runtime node. Values between 1 and maxConcurrentJobs(inclusive) are allowed.
-    :type concurrent_jobs_limit: int
+    :vartype concurrent_jobs_limit: int
     """
 
     _validation = {
-        'concurrent_jobs_limit': {'minimum': 1},
+        "concurrent_jobs_limit": {"minimum": 1},
     }
 
     _attribute_map = {
-        'concurrent_jobs_limit': {'key': 'concurrentJobsLimit', 'type': 'int'},
+        "concurrent_jobs_limit": {"key": "concurrentJobsLimit", "type": "int"},
     }
 
-    def __init__(
-        self,
-        *,
-        concurrent_jobs_limit: Optional[int] = None,
-        **kwargs
-    ):
-        super(UpdateIntegrationRuntimeNodeRequest, self).__init__(**kwargs)
+    def __init__(self, *, concurrent_jobs_limit: Optional[int] = None, **kwargs: Any) -> None:
+        """
+        :keyword concurrent_jobs_limit: The number of concurrent jobs permitted to run on the
+         integration runtime node. Values between 1 and maxConcurrentJobs(inclusive) are allowed.
+        :paramtype concurrent_jobs_limit: int
+        """
+        super().__init__(**kwargs)
         self.concurrent_jobs_limit = concurrent_jobs_limit
 
 
-class UpdateIntegrationRuntimeRequest(msrest.serialization.Model):
+class UpdateIntegrationRuntimeRequest(_serialization.Model):
     """Update integration runtime request.
 
-    :param auto_update: Enables or disables the auto-update feature of the self-hosted integration
-     runtime. See https://go.microsoft.com/fwlink/?linkid=854189. Possible values include: "On",
-     "Off".
-    :type auto_update: str or ~azure.mgmt.synapse.models.IntegrationRuntimeAutoUpdate
-    :param update_delay_offset: The time offset (in hours) in the day, e.g., PT03H is 3 hours. The
+    :ivar auto_update: Enables or disables the auto-update feature of the self-hosted integration
+     runtime. See https://go.microsoft.com/fwlink/?linkid=854189. Known values are: "On" and "Off".
+    :vartype auto_update: str or ~azure.mgmt.synapse.models.IntegrationRuntimeAutoUpdate
+    :ivar update_delay_offset: The time offset (in hours) in the day, e.g., PT03H is 3 hours. The
      integration runtime auto update will happen on that time.
-    :type update_delay_offset: str
+    :vartype update_delay_offset: str
     """
 
     _attribute_map = {
-        'auto_update': {'key': 'autoUpdate', 'type': 'str'},
-        'update_delay_offset': {'key': 'updateDelayOffset', 'type': 'str'},
+        "auto_update": {"key": "autoUpdate", "type": "str"},
+        "update_delay_offset": {"key": "updateDelayOffset", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        auto_update: Optional[Union[str, "IntegrationRuntimeAutoUpdate"]] = None,
+        auto_update: Optional[Union[str, "_models.IntegrationRuntimeAutoUpdate"]] = None,
         update_delay_offset: Optional[str] = None,
-        **kwargs
-    ):
-        super(UpdateIntegrationRuntimeRequest, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword auto_update: Enables or disables the auto-update feature of the self-hosted
+         integration runtime. See https://go.microsoft.com/fwlink/?linkid=854189. Known values are: "On"
+         and "Off".
+        :paramtype auto_update: str or ~azure.mgmt.synapse.models.IntegrationRuntimeAutoUpdate
+        :keyword update_delay_offset: The time offset (in hours) in the day, e.g., PT03H is 3 hours.
+         The integration runtime auto update will happen on that time.
+        :paramtype update_delay_offset: str
+        """
+        super().__init__(**kwargs)
         self.auto_update = auto_update
         self.update_delay_offset = update_delay_offset
 
 
-class VirtualNetworkProfile(msrest.serialization.Model):
+class UserAssignedManagedIdentity(_serialization.Model):
+    """User Assigned Managed Identity.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    :ivar client_id: The client ID.
+    :vartype client_id: str
+    :ivar principal_id: The principal ID.
+    :vartype principal_id: str
+    """
+
+    _validation = {
+        "client_id": {"readonly": True},
+        "principal_id": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "client_id": {"key": "clientId", "type": "str"},
+        "principal_id": {"key": "principalId", "type": "str"},
+    }
+
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
+        self.client_id = None
+        self.principal_id = None
+
+
+class VirtualNetworkProfile(_serialization.Model):
     """Virtual Network Profile.
 
-    :param compute_subnet_id: Subnet ID used for computes in workspace.
-    :type compute_subnet_id: str
+    :ivar compute_subnet_id: Subnet ID used for computes in workspace.
+    :vartype compute_subnet_id: str
     """
 
     _attribute_map = {
-        'compute_subnet_id': {'key': 'computeSubnetId', 'type': 'str'},
+        "compute_subnet_id": {"key": "computeSubnetId", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        compute_subnet_id: Optional[str] = None,
-        **kwargs
-    ):
-        super(VirtualNetworkProfile, self).__init__(**kwargs)
+    def __init__(self, *, compute_subnet_id: Optional[str] = None, **kwargs: Any) -> None:
+        """
+        :keyword compute_subnet_id: Subnet ID used for computes in workspace.
+        :paramtype compute_subnet_id: str
+        """
+        super().__init__(**kwargs)
         self.compute_subnet_id = compute_subnet_id
 
 
-class VulnerabilityAssessmentRecurringScansProperties(msrest.serialization.Model):
+class VulnerabilityAssessmentRecurringScansProperties(_serialization.Model):
     """Properties of a Vulnerability Assessment recurring scans.
 
-    :param is_enabled: Recurring scans state.
-    :type is_enabled: bool
-    :param email_subscription_admins: Specifies that the schedule scan notification will be is sent
+    :ivar is_enabled: Recurring scans state.
+    :vartype is_enabled: bool
+    :ivar email_subscription_admins: Specifies that the schedule scan notification will be is sent
      to the subscription administrators.
-    :type email_subscription_admins: bool
-    :param emails: Specifies an array of e-mail addresses to which the scan notification is sent.
-    :type emails: list[str]
+    :vartype email_subscription_admins: bool
+    :ivar emails: Specifies an array of e-mail addresses to which the scan notification is sent.
+    :vartype emails: list[str]
     """
 
     _attribute_map = {
-        'is_enabled': {'key': 'isEnabled', 'type': 'bool'},
-        'email_subscription_admins': {'key': 'emailSubscriptionAdmins', 'type': 'bool'},
-        'emails': {'key': 'emails', 'type': '[str]'},
+        "is_enabled": {"key": "isEnabled", "type": "bool"},
+        "email_subscription_admins": {"key": "emailSubscriptionAdmins", "type": "bool"},
+        "emails": {"key": "emails", "type": "[str]"},
     }
 
     def __init__(
         self,
         *,
         is_enabled: Optional[bool] = None,
-        email_subscription_admins: Optional[bool] = True,
+        email_subscription_admins: bool = True,
         emails: Optional[List[str]] = None,
-        **kwargs
-    ):
-        super(VulnerabilityAssessmentRecurringScansProperties, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword is_enabled: Recurring scans state.
+        :paramtype is_enabled: bool
+        :keyword email_subscription_admins: Specifies that the schedule scan notification will be is
+         sent to the subscription administrators.
+        :paramtype email_subscription_admins: bool
+        :keyword emails: Specifies an array of e-mail addresses to which the scan notification is sent.
+        :paramtype emails: list[str]
+        """
+        super().__init__(**kwargs)
         self.is_enabled = is_enabled
         self.email_subscription_admins = email_subscription_admins
         self.emails = emails
 
 
-class VulnerabilityAssessmentScanError(msrest.serialization.Model):
+class VulnerabilityAssessmentScanError(_serialization.Model):
     """Properties of a vulnerability assessment scan error.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -8281,25 +12995,23 @@ class VulnerabilityAssessmentScanError(msrest.serialization.Model):
     """
 
     _validation = {
-        'code': {'readonly': True},
-        'message': {'readonly': True},
+        "code": {"readonly": True},
+        "message": {"readonly": True},
     }
 
     _attribute_map = {
-        'code': {'key': 'code', 'type': 'str'},
-        'message': {'key': 'message', 'type': 'str'},
+        "code": {"key": "code", "type": "str"},
+        "message": {"key": "message", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(VulnerabilityAssessmentScanError, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.code = None
         self.message = None
 
 
-class VulnerabilityAssessmentScanRecord(ProxyResource):
+class VulnerabilityAssessmentScanRecord(ProxyResource):  # pylint: disable=too-many-instance-attributes
     """A vulnerability assessment scan record.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -8314,9 +13026,9 @@ class VulnerabilityAssessmentScanRecord(ProxyResource):
     :vartype type: str
     :ivar scan_id: The scan ID.
     :vartype scan_id: str
-    :ivar trigger_type: The scan trigger type. Possible values include: "OnDemand", "Recurring".
+    :ivar trigger_type: The scan trigger type. Known values are: "OnDemand" and "Recurring".
     :vartype trigger_type: str or ~azure.mgmt.synapse.models.VulnerabilityAssessmentScanTriggerType
-    :ivar state: The scan status. Possible values include: "Passed", "Failed", "FailedToRun",
+    :ivar state: The scan status. Known values are: "Passed", "Failed", "FailedToRun", and
      "InProgress".
     :vartype state: str or ~azure.mgmt.synapse.models.VulnerabilityAssessmentScanState
     :ivar start_time: The scan start time (UTC).
@@ -8332,38 +13044,36 @@ class VulnerabilityAssessmentScanRecord(ProxyResource):
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'scan_id': {'readonly': True},
-        'trigger_type': {'readonly': True},
-        'state': {'readonly': True},
-        'start_time': {'readonly': True},
-        'end_time': {'readonly': True},
-        'errors': {'readonly': True},
-        'storage_container_path': {'readonly': True},
-        'number_of_failed_security_checks': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "scan_id": {"readonly": True},
+        "trigger_type": {"readonly": True},
+        "state": {"readonly": True},
+        "start_time": {"readonly": True},
+        "end_time": {"readonly": True},
+        "errors": {"readonly": True},
+        "storage_container_path": {"readonly": True},
+        "number_of_failed_security_checks": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'scan_id': {'key': 'properties.scanId', 'type': 'str'},
-        'trigger_type': {'key': 'properties.triggerType', 'type': 'str'},
-        'state': {'key': 'properties.state', 'type': 'str'},
-        'start_time': {'key': 'properties.startTime', 'type': 'iso-8601'},
-        'end_time': {'key': 'properties.endTime', 'type': 'iso-8601'},
-        'errors': {'key': 'properties.errors', 'type': '[VulnerabilityAssessmentScanError]'},
-        'storage_container_path': {'key': 'properties.storageContainerPath', 'type': 'str'},
-        'number_of_failed_security_checks': {'key': 'properties.numberOfFailedSecurityChecks', 'type': 'int'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "scan_id": {"key": "properties.scanId", "type": "str"},
+        "trigger_type": {"key": "properties.triggerType", "type": "str"},
+        "state": {"key": "properties.state", "type": "str"},
+        "start_time": {"key": "properties.startTime", "type": "iso-8601"},
+        "end_time": {"key": "properties.endTime", "type": "iso-8601"},
+        "errors": {"key": "properties.errors", "type": "[VulnerabilityAssessmentScanError]"},
+        "storage_container_path": {"key": "properties.storageContainerPath", "type": "str"},
+        "number_of_failed_security_checks": {"key": "properties.numberOfFailedSecurityChecks", "type": "int"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(VulnerabilityAssessmentScanRecord, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.scan_id = None
         self.trigger_type = None
         self.state = None
@@ -8374,7 +13084,7 @@ class VulnerabilityAssessmentScanRecord(ProxyResource):
         self.number_of_failed_security_checks = None
 
 
-class VulnerabilityAssessmentScanRecordListResult(msrest.serialization.Model):
+class VulnerabilityAssessmentScanRecordListResult(_serialization.Model):
     """A list of vulnerability assessment scan records.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -8386,20 +13096,18 @@ class VulnerabilityAssessmentScanRecordListResult(msrest.serialization.Model):
     """
 
     _validation = {
-        'value': {'readonly': True},
-        'next_link': {'readonly': True},
+        "value": {"readonly": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[VulnerabilityAssessmentScanRecord]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[VulnerabilityAssessmentScanRecord]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(VulnerabilityAssessmentScanRecordListResult, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.value = None
         self.next_link = None
 
@@ -8417,36 +13125,36 @@ class WorkloadClassifier(ProxyResource):
     :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
      "Microsoft.Storage/storageAccounts".
     :vartype type: str
-    :param member_name: The workload classifier member name.
-    :type member_name: str
-    :param label: The workload classifier label.
-    :type label: str
-    :param context: The workload classifier context.
-    :type context: str
-    :param start_time: The workload classifier start time for classification.
-    :type start_time: str
-    :param end_time: The workload classifier end time for classification.
-    :type end_time: str
-    :param importance: The workload classifier importance.
-    :type importance: str
+    :ivar member_name: The workload classifier member name.
+    :vartype member_name: str
+    :ivar label: The workload classifier label.
+    :vartype label: str
+    :ivar context: The workload classifier context.
+    :vartype context: str
+    :ivar start_time: The workload classifier start time for classification.
+    :vartype start_time: str
+    :ivar end_time: The workload classifier end time for classification.
+    :vartype end_time: str
+    :ivar importance: The workload classifier importance.
+    :vartype importance: str
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'member_name': {'key': 'properties.memberName', 'type': 'str'},
-        'label': {'key': 'properties.label', 'type': 'str'},
-        'context': {'key': 'properties.context', 'type': 'str'},
-        'start_time': {'key': 'properties.startTime', 'type': 'str'},
-        'end_time': {'key': 'properties.endTime', 'type': 'str'},
-        'importance': {'key': 'properties.importance', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "member_name": {"key": "properties.memberName", "type": "str"},
+        "label": {"key": "properties.label", "type": "str"},
+        "context": {"key": "properties.context", "type": "str"},
+        "start_time": {"key": "properties.startTime", "type": "str"},
+        "end_time": {"key": "properties.endTime", "type": "str"},
+        "importance": {"key": "properties.importance", "type": "str"},
     }
 
     def __init__(
@@ -8458,9 +13166,23 @@ class WorkloadClassifier(ProxyResource):
         start_time: Optional[str] = None,
         end_time: Optional[str] = None,
         importance: Optional[str] = None,
-        **kwargs
-    ):
-        super(WorkloadClassifier, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword member_name: The workload classifier member name.
+        :paramtype member_name: str
+        :keyword label: The workload classifier label.
+        :paramtype label: str
+        :keyword context: The workload classifier context.
+        :paramtype context: str
+        :keyword start_time: The workload classifier start time for classification.
+        :paramtype start_time: str
+        :keyword end_time: The workload classifier end time for classification.
+        :paramtype end_time: str
+        :keyword importance: The workload classifier importance.
+        :paramtype importance: str
+        """
+        super().__init__(**kwargs)
         self.member_name = member_name
         self.label = label
         self.context = context
@@ -8469,7 +13191,7 @@ class WorkloadClassifier(ProxyResource):
         self.importance = importance
 
 
-class WorkloadClassifierListResult(msrest.serialization.Model):
+class WorkloadClassifierListResult(_serialization.Model):
     """A list of workload classifiers for a workload group.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -8481,20 +13203,18 @@ class WorkloadClassifierListResult(msrest.serialization.Model):
     """
 
     _validation = {
-        'value': {'readonly': True},
-        'next_link': {'readonly': True},
+        "value": {"readonly": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[WorkloadClassifier]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[WorkloadClassifier]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(WorkloadClassifierListResult, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.value = None
         self.next_link = None
 
@@ -8512,36 +13232,36 @@ class WorkloadGroup(ProxyResource):
     :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
      "Microsoft.Storage/storageAccounts".
     :vartype type: str
-    :param min_resource_percent: The workload group minimum percentage resource.
-    :type min_resource_percent: int
-    :param max_resource_percent: The workload group cap percentage resource.
-    :type max_resource_percent: int
-    :param min_resource_percent_per_request: The workload group request minimum grant percentage.
-    :type min_resource_percent_per_request: float
-    :param max_resource_percent_per_request: The workload group request maximum grant percentage.
-    :type max_resource_percent_per_request: float
-    :param importance: The workload group importance level.
-    :type importance: str
-    :param query_execution_timeout: The workload group query execution timeout.
-    :type query_execution_timeout: int
+    :ivar min_resource_percent: The workload group minimum percentage resource.
+    :vartype min_resource_percent: int
+    :ivar max_resource_percent: The workload group cap percentage resource.
+    :vartype max_resource_percent: int
+    :ivar min_resource_percent_per_request: The workload group request minimum grant percentage.
+    :vartype min_resource_percent_per_request: float
+    :ivar max_resource_percent_per_request: The workload group request maximum grant percentage.
+    :vartype max_resource_percent_per_request: float
+    :ivar importance: The workload group importance level.
+    :vartype importance: str
+    :ivar query_execution_timeout: The workload group query execution timeout.
+    :vartype query_execution_timeout: int
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'min_resource_percent': {'key': 'properties.minResourcePercent', 'type': 'int'},
-        'max_resource_percent': {'key': 'properties.maxResourcePercent', 'type': 'int'},
-        'min_resource_percent_per_request': {'key': 'properties.minResourcePercentPerRequest', 'type': 'float'},
-        'max_resource_percent_per_request': {'key': 'properties.maxResourcePercentPerRequest', 'type': 'float'},
-        'importance': {'key': 'properties.importance', 'type': 'str'},
-        'query_execution_timeout': {'key': 'properties.queryExecutionTimeout', 'type': 'int'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "min_resource_percent": {"key": "properties.minResourcePercent", "type": "int"},
+        "max_resource_percent": {"key": "properties.maxResourcePercent", "type": "int"},
+        "min_resource_percent_per_request": {"key": "properties.minResourcePercentPerRequest", "type": "float"},
+        "max_resource_percent_per_request": {"key": "properties.maxResourcePercentPerRequest", "type": "float"},
+        "importance": {"key": "properties.importance", "type": "str"},
+        "query_execution_timeout": {"key": "properties.queryExecutionTimeout", "type": "int"},
     }
 
     def __init__(
@@ -8553,9 +13273,23 @@ class WorkloadGroup(ProxyResource):
         max_resource_percent_per_request: Optional[float] = None,
         importance: Optional[str] = None,
         query_execution_timeout: Optional[int] = None,
-        **kwargs
-    ):
-        super(WorkloadGroup, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword min_resource_percent: The workload group minimum percentage resource.
+        :paramtype min_resource_percent: int
+        :keyword max_resource_percent: The workload group cap percentage resource.
+        :paramtype max_resource_percent: int
+        :keyword min_resource_percent_per_request: The workload group request minimum grant percentage.
+        :paramtype min_resource_percent_per_request: float
+        :keyword max_resource_percent_per_request: The workload group request maximum grant percentage.
+        :paramtype max_resource_percent_per_request: float
+        :keyword importance: The workload group importance level.
+        :paramtype importance: str
+        :keyword query_execution_timeout: The workload group query execution timeout.
+        :paramtype query_execution_timeout: int
+        """
+        super().__init__(**kwargs)
         self.min_resource_percent = min_resource_percent
         self.max_resource_percent = max_resource_percent
         self.min_resource_percent_per_request = min_resource_percent_per_request
@@ -8564,7 +13298,7 @@ class WorkloadGroup(ProxyResource):
         self.query_execution_timeout = query_execution_timeout
 
 
-class WorkloadGroupListResult(msrest.serialization.Model):
+class WorkloadGroupListResult(_serialization.Model):
     """A list of workload groups.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -8576,25 +13310,23 @@ class WorkloadGroupListResult(msrest.serialization.Model):
     """
 
     _validation = {
-        'value': {'readonly': True},
-        'next_link': {'readonly': True},
+        "value": {"readonly": True},
+        "next_link": {"readonly": True},
     }
 
     _attribute_map = {
-        'value': {'key': 'value', 'type': '[WorkloadGroup]'},
-        'next_link': {'key': 'nextLink', 'type': 'str'},
+        "value": {"key": "value", "type": "[WorkloadGroup]"},
+        "next_link": {"key": "nextLink", "type": "str"},
     }
 
-    def __init__(
-        self,
-        **kwargs
-    ):
-        super(WorkloadGroupListResult, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        """ """
+        super().__init__(**kwargs)
         self.value = None
         self.next_link = None
 
 
-class Workspace(TrackedResource):
+class Workspace(TrackedResource):  # pylint: disable=too-many-instance-attributes
     """A workspace.
 
     Variables are only populated by the server, and will be ignored when sending a request.
@@ -8609,114 +13341,200 @@ class Workspace(TrackedResource):
     :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
      "Microsoft.Storage/storageAccounts".
     :vartype type: str
-    :param tags: A set of tags. Resource tags.
-    :type tags: dict[str, str]
-    :param location: Required. The geo-location where the resource lives.
-    :type location: str
-    :param identity: Identity of the workspace.
-    :type identity: ~azure.mgmt.synapse.models.ManagedIdentity
-    :param default_data_lake_storage: Workspace default data lake storage account details.
-    :type default_data_lake_storage: ~azure.mgmt.synapse.models.DataLakeStorageAccountDetails
-    :param sql_administrator_login_password: SQL administrator login password.
-    :type sql_administrator_login_password: str
-    :param managed_resource_group_name: Workspace managed resource group. The resource group name
+    :ivar tags: Resource tags.
+    :vartype tags: dict[str, str]
+    :ivar location: The geo-location where the resource lives. Required.
+    :vartype location: str
+    :ivar identity: Identity of the workspace.
+    :vartype identity: ~azure.mgmt.synapse.models.ManagedIdentity
+    :ivar default_data_lake_storage: Workspace default data lake storage account details.
+    :vartype default_data_lake_storage: ~azure.mgmt.synapse.models.DataLakeStorageAccountDetails
+    :ivar sql_administrator_login_password: SQL administrator login password.
+    :vartype sql_administrator_login_password: str
+    :ivar managed_resource_group_name: Workspace managed resource group. The resource group name
      uniquely identifies the resource group within the user subscriptionId. The resource group name
      must be no longer than 90 characters long, and must be alphanumeric characters
      (Char.IsLetterOrDigit()) and '-', '_', '(', ')' and'.'. Note that the name cannot end with '.'.
-    :type managed_resource_group_name: str
+    :vartype managed_resource_group_name: str
     :ivar provisioning_state: Resource provisioning state.
     :vartype provisioning_state: str
-    :param sql_administrator_login: Login for workspace SQL active directory administrator.
-    :type sql_administrator_login: str
-    :param virtual_network_profile: Virtual Network profile.
-    :type virtual_network_profile: ~azure.mgmt.synapse.models.VirtualNetworkProfile
-    :param connectivity_endpoints: Connectivity endpoints.
-    :type connectivity_endpoints: dict[str, str]
-    :param managed_virtual_network: Setting this to 'default' will ensure that all compute for this
+    :ivar sql_administrator_login: Login for workspace SQL active directory administrator.
+    :vartype sql_administrator_login: str
+    :ivar virtual_network_profile: Virtual Network profile.
+    :vartype virtual_network_profile: ~azure.mgmt.synapse.models.VirtualNetworkProfile
+    :ivar connectivity_endpoints: Connectivity endpoints.
+    :vartype connectivity_endpoints: dict[str, str]
+    :ivar managed_virtual_network: Setting this to 'default' will ensure that all compute for this
      workspace is in a virtual network managed on behalf of the user.
-    :type managed_virtual_network: str
-    :param private_endpoint_connections: Private endpoint connections to the workspace.
-    :type private_endpoint_connections: list[~azure.mgmt.synapse.models.PrivateEndpointConnection]
-    :param encryption: The encryption details of the workspace.
-    :type encryption: ~azure.mgmt.synapse.models.EncryptionDetails
+    :vartype managed_virtual_network: str
+    :ivar private_endpoint_connections: Private endpoint connections to the workspace.
+    :vartype private_endpoint_connections:
+     list[~azure.mgmt.synapse.models.PrivateEndpointConnection]
+    :ivar encryption: The encryption details of the workspace.
+    :vartype encryption: ~azure.mgmt.synapse.models.EncryptionDetails
     :ivar workspace_uid: The workspace unique identifier.
     :vartype workspace_uid: str
     :ivar extra_properties: Workspace level configs and feature flags.
-    :vartype extra_properties: dict[str, object]
-    :param managed_virtual_network_settings: Managed Virtual Network Settings.
-    :type managed_virtual_network_settings:
+    :vartype extra_properties: dict[str, JSON]
+    :ivar managed_virtual_network_settings: Managed Virtual Network Settings.
+    :vartype managed_virtual_network_settings:
      ~azure.mgmt.synapse.models.ManagedVirtualNetworkSettings
-    :param workspace_repository_configuration: Git integration settings.
-    :type workspace_repository_configuration:
+    :ivar workspace_repository_configuration: Git integration settings.
+    :vartype workspace_repository_configuration:
      ~azure.mgmt.synapse.models.WorkspaceRepositoryConfiguration
-    :param purview_configuration: Purview Configuration.
-    :type purview_configuration: ~azure.mgmt.synapse.models.PurviewConfiguration
+    :ivar purview_configuration: Purview Configuration.
+    :vartype purview_configuration: ~azure.mgmt.synapse.models.PurviewConfiguration
     :ivar adla_resource_id: The ADLA resource ID.
     :vartype adla_resource_id: str
-    :param public_network_access: Enable or Disable pubic network access to workspace. Possible
-     values include: "Enabled", "Disabled".
-    :type public_network_access: str or ~azure.mgmt.synapse.models.WorkspacePublicNetworkAccess
+    :ivar public_network_access: Enable or Disable public network access to workspace. Known values
+     are: "Enabled" and "Disabled".
+    :vartype public_network_access: str or ~azure.mgmt.synapse.models.WorkspacePublicNetworkAccess
+    :ivar csp_workspace_admin_properties: Initial workspace AAD admin properties for a CSP
+     subscription.
+    :vartype csp_workspace_admin_properties: ~azure.mgmt.synapse.models.CspWorkspaceAdminProperties
+    :ivar settings: Workspace settings.
+    :vartype settings: dict[str, JSON]
+    :ivar azure_ad_only_authentication: Enable or Disable AzureADOnlyAuthentication on All
+     Workspace subresource.
+    :vartype azure_ad_only_authentication: bool
+    :ivar trusted_service_bypass_enabled: Is trustedServiceBypassEnabled for the workspace.
+    :vartype trusted_service_bypass_enabled: bool
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
-        'location': {'required': True},
-        'provisioning_state': {'readonly': True},
-        'workspace_uid': {'readonly': True},
-        'extra_properties': {'readonly': True},
-        'adla_resource_id': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "location": {"required": True},
+        "provisioning_state": {"readonly": True},
+        "workspace_uid": {"readonly": True},
+        "extra_properties": {"readonly": True},
+        "adla_resource_id": {"readonly": True},
+        "settings": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'tags': {'key': 'tags', 'type': '{str}'},
-        'location': {'key': 'location', 'type': 'str'},
-        'identity': {'key': 'identity', 'type': 'ManagedIdentity'},
-        'default_data_lake_storage': {'key': 'properties.defaultDataLakeStorage', 'type': 'DataLakeStorageAccountDetails'},
-        'sql_administrator_login_password': {'key': 'properties.sqlAdministratorLoginPassword', 'type': 'str'},
-        'managed_resource_group_name': {'key': 'properties.managedResourceGroupName', 'type': 'str'},
-        'provisioning_state': {'key': 'properties.provisioningState', 'type': 'str'},
-        'sql_administrator_login': {'key': 'properties.sqlAdministratorLogin', 'type': 'str'},
-        'virtual_network_profile': {'key': 'properties.virtualNetworkProfile', 'type': 'VirtualNetworkProfile'},
-        'connectivity_endpoints': {'key': 'properties.connectivityEndpoints', 'type': '{str}'},
-        'managed_virtual_network': {'key': 'properties.managedVirtualNetwork', 'type': 'str'},
-        'private_endpoint_connections': {'key': 'properties.privateEndpointConnections', 'type': '[PrivateEndpointConnection]'},
-        'encryption': {'key': 'properties.encryption', 'type': 'EncryptionDetails'},
-        'workspace_uid': {'key': 'properties.workspaceUID', 'type': 'str'},
-        'extra_properties': {'key': 'properties.extraProperties', 'type': '{object}'},
-        'managed_virtual_network_settings': {'key': 'properties.managedVirtualNetworkSettings', 'type': 'ManagedVirtualNetworkSettings'},
-        'workspace_repository_configuration': {'key': 'properties.workspaceRepositoryConfiguration', 'type': 'WorkspaceRepositoryConfiguration'},
-        'purview_configuration': {'key': 'properties.purviewConfiguration', 'type': 'PurviewConfiguration'},
-        'adla_resource_id': {'key': 'properties.adlaResourceId', 'type': 'str'},
-        'public_network_access': {'key': 'properties.publicNetworkAccess', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "tags": {"key": "tags", "type": "{str}"},
+        "location": {"key": "location", "type": "str"},
+        "identity": {"key": "identity", "type": "ManagedIdentity"},
+        "default_data_lake_storage": {
+            "key": "properties.defaultDataLakeStorage",
+            "type": "DataLakeStorageAccountDetails",
+        },
+        "sql_administrator_login_password": {"key": "properties.sqlAdministratorLoginPassword", "type": "str"},
+        "managed_resource_group_name": {"key": "properties.managedResourceGroupName", "type": "str"},
+        "provisioning_state": {"key": "properties.provisioningState", "type": "str"},
+        "sql_administrator_login": {"key": "properties.sqlAdministratorLogin", "type": "str"},
+        "virtual_network_profile": {"key": "properties.virtualNetworkProfile", "type": "VirtualNetworkProfile"},
+        "connectivity_endpoints": {"key": "properties.connectivityEndpoints", "type": "{str}"},
+        "managed_virtual_network": {"key": "properties.managedVirtualNetwork", "type": "str"},
+        "private_endpoint_connections": {
+            "key": "properties.privateEndpointConnections",
+            "type": "[PrivateEndpointConnection]",
+        },
+        "encryption": {"key": "properties.encryption", "type": "EncryptionDetails"},
+        "workspace_uid": {"key": "properties.workspaceUID", "type": "str"},
+        "extra_properties": {"key": "properties.extraProperties", "type": "{object}"},
+        "managed_virtual_network_settings": {
+            "key": "properties.managedVirtualNetworkSettings",
+            "type": "ManagedVirtualNetworkSettings",
+        },
+        "workspace_repository_configuration": {
+            "key": "properties.workspaceRepositoryConfiguration",
+            "type": "WorkspaceRepositoryConfiguration",
+        },
+        "purview_configuration": {"key": "properties.purviewConfiguration", "type": "PurviewConfiguration"},
+        "adla_resource_id": {"key": "properties.adlaResourceId", "type": "str"},
+        "public_network_access": {"key": "properties.publicNetworkAccess", "type": "str"},
+        "csp_workspace_admin_properties": {
+            "key": "properties.cspWorkspaceAdminProperties",
+            "type": "CspWorkspaceAdminProperties",
+        },
+        "settings": {"key": "properties.settings", "type": "{object}"},
+        "azure_ad_only_authentication": {"key": "properties.azureADOnlyAuthentication", "type": "bool"},
+        "trusted_service_bypass_enabled": {"key": "properties.trustedServiceBypassEnabled", "type": "bool"},
     }
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-locals
         self,
         *,
         location: str,
         tags: Optional[Dict[str, str]] = None,
-        identity: Optional["ManagedIdentity"] = None,
-        default_data_lake_storage: Optional["DataLakeStorageAccountDetails"] = None,
+        identity: Optional["_models.ManagedIdentity"] = None,
+        default_data_lake_storage: Optional["_models.DataLakeStorageAccountDetails"] = None,
         sql_administrator_login_password: Optional[str] = None,
         managed_resource_group_name: Optional[str] = None,
         sql_administrator_login: Optional[str] = None,
-        virtual_network_profile: Optional["VirtualNetworkProfile"] = None,
+        virtual_network_profile: Optional["_models.VirtualNetworkProfile"] = None,
         connectivity_endpoints: Optional[Dict[str, str]] = None,
         managed_virtual_network: Optional[str] = None,
-        private_endpoint_connections: Optional[List["PrivateEndpointConnection"]] = None,
-        encryption: Optional["EncryptionDetails"] = None,
-        managed_virtual_network_settings: Optional["ManagedVirtualNetworkSettings"] = None,
-        workspace_repository_configuration: Optional["WorkspaceRepositoryConfiguration"] = None,
-        purview_configuration: Optional["PurviewConfiguration"] = None,
-        public_network_access: Optional[Union[str, "WorkspacePublicNetworkAccess"]] = None,
-        **kwargs
-    ):
-        super(Workspace, self).__init__(tags=tags, location=location, **kwargs)
+        private_endpoint_connections: Optional[List["_models.PrivateEndpointConnection"]] = None,
+        encryption: Optional["_models.EncryptionDetails"] = None,
+        managed_virtual_network_settings: Optional["_models.ManagedVirtualNetworkSettings"] = None,
+        workspace_repository_configuration: Optional["_models.WorkspaceRepositoryConfiguration"] = None,
+        purview_configuration: Optional["_models.PurviewConfiguration"] = None,
+        public_network_access: Optional[Union[str, "_models.WorkspacePublicNetworkAccess"]] = None,
+        csp_workspace_admin_properties: Optional["_models.CspWorkspaceAdminProperties"] = None,
+        azure_ad_only_authentication: Optional[bool] = None,
+        trusted_service_bypass_enabled: bool = False,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword tags: Resource tags.
+        :paramtype tags: dict[str, str]
+        :keyword location: The geo-location where the resource lives. Required.
+        :paramtype location: str
+        :keyword identity: Identity of the workspace.
+        :paramtype identity: ~azure.mgmt.synapse.models.ManagedIdentity
+        :keyword default_data_lake_storage: Workspace default data lake storage account details.
+        :paramtype default_data_lake_storage: ~azure.mgmt.synapse.models.DataLakeStorageAccountDetails
+        :keyword sql_administrator_login_password: SQL administrator login password.
+        :paramtype sql_administrator_login_password: str
+        :keyword managed_resource_group_name: Workspace managed resource group. The resource group name
+         uniquely identifies the resource group within the user subscriptionId. The resource group name
+         must be no longer than 90 characters long, and must be alphanumeric characters
+         (Char.IsLetterOrDigit()) and '-', '_', '(', ')' and'.'. Note that the name cannot end with '.'.
+        :paramtype managed_resource_group_name: str
+        :keyword sql_administrator_login: Login for workspace SQL active directory administrator.
+        :paramtype sql_administrator_login: str
+        :keyword virtual_network_profile: Virtual Network profile.
+        :paramtype virtual_network_profile: ~azure.mgmt.synapse.models.VirtualNetworkProfile
+        :keyword connectivity_endpoints: Connectivity endpoints.
+        :paramtype connectivity_endpoints: dict[str, str]
+        :keyword managed_virtual_network: Setting this to 'default' will ensure that all compute for
+         this workspace is in a virtual network managed on behalf of the user.
+        :paramtype managed_virtual_network: str
+        :keyword private_endpoint_connections: Private endpoint connections to the workspace.
+        :paramtype private_endpoint_connections:
+         list[~azure.mgmt.synapse.models.PrivateEndpointConnection]
+        :keyword encryption: The encryption details of the workspace.
+        :paramtype encryption: ~azure.mgmt.synapse.models.EncryptionDetails
+        :keyword managed_virtual_network_settings: Managed Virtual Network Settings.
+        :paramtype managed_virtual_network_settings:
+         ~azure.mgmt.synapse.models.ManagedVirtualNetworkSettings
+        :keyword workspace_repository_configuration: Git integration settings.
+        :paramtype workspace_repository_configuration:
+         ~azure.mgmt.synapse.models.WorkspaceRepositoryConfiguration
+        :keyword purview_configuration: Purview Configuration.
+        :paramtype purview_configuration: ~azure.mgmt.synapse.models.PurviewConfiguration
+        :keyword public_network_access: Enable or Disable public network access to workspace. Known
+         values are: "Enabled" and "Disabled".
+        :paramtype public_network_access: str or
+         ~azure.mgmt.synapse.models.WorkspacePublicNetworkAccess
+        :keyword csp_workspace_admin_properties: Initial workspace AAD admin properties for a CSP
+         subscription.
+        :paramtype csp_workspace_admin_properties:
+         ~azure.mgmt.synapse.models.CspWorkspaceAdminProperties
+        :keyword azure_ad_only_authentication: Enable or Disable AzureADOnlyAuthentication on All
+         Workspace subresource.
+        :paramtype azure_ad_only_authentication: bool
+        :keyword trusted_service_bypass_enabled: Is trustedServiceBypassEnabled for the workspace.
+        :paramtype trusted_service_bypass_enabled: bool
+        """
+        super().__init__(tags=tags, location=location, **kwargs)
         self.identity = identity
         self.default_data_lake_storage = default_data_lake_storage
         self.sql_administrator_login_password = sql_administrator_login_password
@@ -8735,6 +13553,10 @@ class Workspace(TrackedResource):
         self.purview_configuration = purview_configuration
         self.adla_resource_id = None
         self.public_network_access = public_network_access
+        self.csp_workspace_admin_properties = csp_workspace_admin_properties
+        self.settings = None
+        self.azure_ad_only_authentication = azure_ad_only_authentication
+        self.trusted_service_bypass_enabled = trusted_service_bypass_enabled
 
 
 class WorkspaceAadAdminInfo(ProxyResource):
@@ -8750,30 +13572,30 @@ class WorkspaceAadAdminInfo(ProxyResource):
     :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
      "Microsoft.Storage/storageAccounts".
     :vartype type: str
-    :param tenant_id: Tenant ID of the workspace active directory administrator.
-    :type tenant_id: str
-    :param login: Login of the workspace active directory administrator.
-    :type login: str
-    :param administrator_type: Workspace active directory administrator type.
-    :type administrator_type: str
-    :param sid: Object ID of the workspace active directory administrator.
-    :type sid: str
+    :ivar tenant_id: Tenant ID of the workspace active directory administrator.
+    :vartype tenant_id: str
+    :ivar login: Login of the workspace active directory administrator.
+    :vartype login: str
+    :ivar administrator_type: Workspace active directory administrator type.
+    :vartype administrator_type: str
+    :ivar sid: Object ID of the workspace active directory administrator.
+    :vartype sid: str
     """
 
     _validation = {
-        'id': {'readonly': True},
-        'name': {'readonly': True},
-        'type': {'readonly': True},
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'name': {'key': 'name', 'type': 'str'},
-        'type': {'key': 'type', 'type': 'str'},
-        'tenant_id': {'key': 'properties.tenantId', 'type': 'str'},
-        'login': {'key': 'properties.login', 'type': 'str'},
-        'administrator_type': {'key': 'properties.administratorType', 'type': 'str'},
-        'sid': {'key': 'properties.sid', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "tenant_id": {"key": "properties.tenantId", "type": "str"},
+        "login": {"key": "properties.login", "type": "str"},
+        "administrator_type": {"key": "properties.administratorType", "type": "str"},
+        "sid": {"key": "properties.sid", "type": "str"},
     }
 
     def __init__(
@@ -8783,125 +13605,165 @@ class WorkspaceAadAdminInfo(ProxyResource):
         login: Optional[str] = None,
         administrator_type: Optional[str] = None,
         sid: Optional[str] = None,
-        **kwargs
-    ):
-        super(WorkspaceAadAdminInfo, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword tenant_id: Tenant ID of the workspace active directory administrator.
+        :paramtype tenant_id: str
+        :keyword login: Login of the workspace active directory administrator.
+        :paramtype login: str
+        :keyword administrator_type: Workspace active directory administrator type.
+        :paramtype administrator_type: str
+        :keyword sid: Object ID of the workspace active directory administrator.
+        :paramtype sid: str
+        """
+        super().__init__(**kwargs)
         self.tenant_id = tenant_id
         self.login = login
         self.administrator_type = administrator_type
         self.sid = sid
 
 
-class WorkspaceInfoListResult(msrest.serialization.Model):
+class WorkspaceInfoListResult(_serialization.Model):
     """List of workspaces.
 
-    :param next_link: Link to the next page of results.
-    :type next_link: str
-    :param value: List of workspaces.
-    :type value: list[~azure.mgmt.synapse.models.Workspace]
+    :ivar next_link: Link to the next page of results.
+    :vartype next_link: str
+    :ivar value: List of workspaces.
+    :vartype value: list[~azure.mgmt.synapse.models.Workspace]
     """
 
     _attribute_map = {
-        'next_link': {'key': 'nextLink', 'type': 'str'},
-        'value': {'key': 'value', 'type': '[Workspace]'},
+        "next_link": {"key": "nextLink", "type": "str"},
+        "value": {"key": "value", "type": "[Workspace]"},
     }
 
     def __init__(
-        self,
-        *,
-        next_link: Optional[str] = None,
-        value: Optional[List["Workspace"]] = None,
-        **kwargs
-    ):
-        super(WorkspaceInfoListResult, self).__init__(**kwargs)
+        self, *, next_link: Optional[str] = None, value: Optional[List["_models.Workspace"]] = None, **kwargs: Any
+    ) -> None:
+        """
+        :keyword next_link: Link to the next page of results.
+        :paramtype next_link: str
+        :keyword value: List of workspaces.
+        :paramtype value: list[~azure.mgmt.synapse.models.Workspace]
+        """
+        super().__init__(**kwargs)
         self.next_link = next_link
         self.value = value
 
 
-class WorkspaceKeyDetails(msrest.serialization.Model):
+class WorkspaceKeyDetails(_serialization.Model):
     """Details of the customer managed key associated with the workspace.
 
-    :param name: Workspace Key sub-resource name.
-    :type name: str
-    :param key_vault_url: Workspace Key sub-resource key vault url.
-    :type key_vault_url: str
+    :ivar name: Workspace Key sub-resource name.
+    :vartype name: str
+    :ivar key_vault_url: Workspace Key sub-resource key vault url.
+    :vartype key_vault_url: str
     """
 
     _attribute_map = {
-        'name': {'key': 'name', 'type': 'str'},
-        'key_vault_url': {'key': 'keyVaultUrl', 'type': 'str'},
+        "name": {"key": "name", "type": "str"},
+        "key_vault_url": {"key": "keyVaultUrl", "type": "str"},
     }
 
-    def __init__(
-        self,
-        *,
-        name: Optional[str] = None,
-        key_vault_url: Optional[str] = None,
-        **kwargs
-    ):
-        super(WorkspaceKeyDetails, self).__init__(**kwargs)
+    def __init__(self, *, name: Optional[str] = None, key_vault_url: Optional[str] = None, **kwargs: Any) -> None:
+        """
+        :keyword name: Workspace Key sub-resource name.
+        :paramtype name: str
+        :keyword key_vault_url: Workspace Key sub-resource key vault url.
+        :paramtype key_vault_url: str
+        """
+        super().__init__(**kwargs)
         self.name = name
         self.key_vault_url = key_vault_url
 
 
-class WorkspacePatchInfo(msrest.serialization.Model):
+class WorkspacePatchInfo(_serialization.Model):
     """Workspace patch details.
 
     Variables are only populated by the server, and will be ignored when sending a request.
 
-    :param tags: A set of tags. Resource tags.
-    :type tags: dict[str, str]
-    :param identity: The identity of the workspace.
-    :type identity: ~azure.mgmt.synapse.models.ManagedIdentity
-    :param sql_administrator_login_password: SQL administrator login password.
-    :type sql_administrator_login_password: str
-    :param managed_virtual_network_settings: Managed Virtual Network Settings.
-    :type managed_virtual_network_settings:
+    :ivar tags: Resource tags.
+    :vartype tags: dict[str, str]
+    :ivar identity: The identity of the workspace.
+    :vartype identity: ~azure.mgmt.synapse.models.ManagedIdentity
+    :ivar sql_administrator_login_password: SQL administrator login password.
+    :vartype sql_administrator_login_password: str
+    :ivar managed_virtual_network_settings: Managed Virtual Network Settings.
+    :vartype managed_virtual_network_settings:
      ~azure.mgmt.synapse.models.ManagedVirtualNetworkSettings
-    :param workspace_repository_configuration: Git integration settings.
-    :type workspace_repository_configuration:
+    :ivar workspace_repository_configuration: Git integration settings.
+    :vartype workspace_repository_configuration:
      ~azure.mgmt.synapse.models.WorkspaceRepositoryConfiguration
-    :param purview_configuration: Purview Configuration.
-    :type purview_configuration: ~azure.mgmt.synapse.models.PurviewConfiguration
+    :ivar purview_configuration: Purview Configuration.
+    :vartype purview_configuration: ~azure.mgmt.synapse.models.PurviewConfiguration
     :ivar provisioning_state: Resource provisioning state.
     :vartype provisioning_state: str
-    :param encryption: The encryption details of the workspace.
-    :type encryption: ~azure.mgmt.synapse.models.EncryptionDetails
-    :param public_network_access: Enable or Disable pubic network access to workspace. Possible
-     values include: "Enabled", "Disabled".
-    :type public_network_access: str or ~azure.mgmt.synapse.models.WorkspacePublicNetworkAccess
+    :ivar encryption: The encryption details of the workspace.
+    :vartype encryption: ~azure.mgmt.synapse.models.EncryptionDetails
+    :ivar public_network_access: Enable or Disable public network access to workspace. Known values
+     are: "Enabled" and "Disabled".
+    :vartype public_network_access: str or ~azure.mgmt.synapse.models.WorkspacePublicNetworkAccess
     """
 
     _validation = {
-        'provisioning_state': {'readonly': True},
+        "provisioning_state": {"readonly": True},
     }
 
     _attribute_map = {
-        'tags': {'key': 'tags', 'type': '{str}'},
-        'identity': {'key': 'identity', 'type': 'ManagedIdentity'},
-        'sql_administrator_login_password': {'key': 'properties.sqlAdministratorLoginPassword', 'type': 'str'},
-        'managed_virtual_network_settings': {'key': 'properties.managedVirtualNetworkSettings', 'type': 'ManagedVirtualNetworkSettings'},
-        'workspace_repository_configuration': {'key': 'properties.workspaceRepositoryConfiguration', 'type': 'WorkspaceRepositoryConfiguration'},
-        'purview_configuration': {'key': 'properties.purviewConfiguration', 'type': 'PurviewConfiguration'},
-        'provisioning_state': {'key': 'properties.provisioningState', 'type': 'str'},
-        'encryption': {'key': 'properties.encryption', 'type': 'EncryptionDetails'},
-        'public_network_access': {'key': 'properties.publicNetworkAccess', 'type': 'str'},
+        "tags": {"key": "tags", "type": "{str}"},
+        "identity": {"key": "identity", "type": "ManagedIdentity"},
+        "sql_administrator_login_password": {"key": "properties.sqlAdministratorLoginPassword", "type": "str"},
+        "managed_virtual_network_settings": {
+            "key": "properties.managedVirtualNetworkSettings",
+            "type": "ManagedVirtualNetworkSettings",
+        },
+        "workspace_repository_configuration": {
+            "key": "properties.workspaceRepositoryConfiguration",
+            "type": "WorkspaceRepositoryConfiguration",
+        },
+        "purview_configuration": {"key": "properties.purviewConfiguration", "type": "PurviewConfiguration"},
+        "provisioning_state": {"key": "properties.provisioningState", "type": "str"},
+        "encryption": {"key": "properties.encryption", "type": "EncryptionDetails"},
+        "public_network_access": {"key": "properties.publicNetworkAccess", "type": "str"},
     }
 
     def __init__(
         self,
         *,
         tags: Optional[Dict[str, str]] = None,
-        identity: Optional["ManagedIdentity"] = None,
+        identity: Optional["_models.ManagedIdentity"] = None,
         sql_administrator_login_password: Optional[str] = None,
-        managed_virtual_network_settings: Optional["ManagedVirtualNetworkSettings"] = None,
-        workspace_repository_configuration: Optional["WorkspaceRepositoryConfiguration"] = None,
-        purview_configuration: Optional["PurviewConfiguration"] = None,
-        encryption: Optional["EncryptionDetails"] = None,
-        public_network_access: Optional[Union[str, "WorkspacePublicNetworkAccess"]] = None,
-        **kwargs
-    ):
-        super(WorkspacePatchInfo, self).__init__(**kwargs)
+        managed_virtual_network_settings: Optional["_models.ManagedVirtualNetworkSettings"] = None,
+        workspace_repository_configuration: Optional["_models.WorkspaceRepositoryConfiguration"] = None,
+        purview_configuration: Optional["_models.PurviewConfiguration"] = None,
+        encryption: Optional["_models.EncryptionDetails"] = None,
+        public_network_access: Optional[Union[str, "_models.WorkspacePublicNetworkAccess"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword tags: Resource tags.
+        :paramtype tags: dict[str, str]
+        :keyword identity: The identity of the workspace.
+        :paramtype identity: ~azure.mgmt.synapse.models.ManagedIdentity
+        :keyword sql_administrator_login_password: SQL administrator login password.
+        :paramtype sql_administrator_login_password: str
+        :keyword managed_virtual_network_settings: Managed Virtual Network Settings.
+        :paramtype managed_virtual_network_settings:
+         ~azure.mgmt.synapse.models.ManagedVirtualNetworkSettings
+        :keyword workspace_repository_configuration: Git integration settings.
+        :paramtype workspace_repository_configuration:
+         ~azure.mgmt.synapse.models.WorkspaceRepositoryConfiguration
+        :keyword purview_configuration: Purview Configuration.
+        :paramtype purview_configuration: ~azure.mgmt.synapse.models.PurviewConfiguration
+        :keyword encryption: The encryption details of the workspace.
+        :paramtype encryption: ~azure.mgmt.synapse.models.EncryptionDetails
+        :keyword public_network_access: Enable or Disable public network access to workspace. Known
+         values are: "Enabled" and "Disabled".
+        :paramtype public_network_access: str or
+         ~azure.mgmt.synapse.models.WorkspacePublicNetworkAccess
+        """
+        super().__init__(**kwargs)
         self.tags = tags
         self.identity = identity
         self.sql_administrator_login_password = sql_administrator_login_password
@@ -8913,40 +13775,40 @@ class WorkspacePatchInfo(msrest.serialization.Model):
         self.public_network_access = public_network_access
 
 
-class WorkspaceRepositoryConfiguration(msrest.serialization.Model):
+class WorkspaceRepositoryConfiguration(_serialization.Model):
     """Git integration settings.
 
-    :param type: Type of workspace repositoryID configuration. Example WorkspaceVSTSConfiguration,
+    :ivar type: Type of workspace repositoryID configuration. Example WorkspaceVSTSConfiguration,
      WorkspaceGitHubConfiguration.
-    :type type: str
-    :param host_name: GitHub Enterprise host name. For example: https://github.mydomain.com.
-    :type host_name: str
-    :param account_name: Account name.
-    :type account_name: str
-    :param project_name: VSTS project name.
-    :type project_name: str
-    :param repository_name: Repository name.
-    :type repository_name: str
-    :param collaboration_branch: Collaboration branch.
-    :type collaboration_branch: str
-    :param root_folder: Root folder to use in the repository.
-    :type root_folder: str
-    :param last_commit_id: The last commit ID.
-    :type last_commit_id: str
-    :param tenant_id: The VSTS tenant ID.
-    :type tenant_id: str
+    :vartype type: str
+    :ivar host_name: GitHub Enterprise host name. For example: https://github.mydomain.com.
+    :vartype host_name: str
+    :ivar account_name: Account name.
+    :vartype account_name: str
+    :ivar project_name: VSTS project name.
+    :vartype project_name: str
+    :ivar repository_name: Repository name.
+    :vartype repository_name: str
+    :ivar collaboration_branch: Collaboration branch.
+    :vartype collaboration_branch: str
+    :ivar root_folder: Root folder to use in the repository.
+    :vartype root_folder: str
+    :ivar last_commit_id: The last commit ID.
+    :vartype last_commit_id: str
+    :ivar tenant_id: The VSTS tenant ID.
+    :vartype tenant_id: str
     """
 
     _attribute_map = {
-        'type': {'key': 'type', 'type': 'str'},
-        'host_name': {'key': 'hostName', 'type': 'str'},
-        'account_name': {'key': 'accountName', 'type': 'str'},
-        'project_name': {'key': 'projectName', 'type': 'str'},
-        'repository_name': {'key': 'repositoryName', 'type': 'str'},
-        'collaboration_branch': {'key': 'collaborationBranch', 'type': 'str'},
-        'root_folder': {'key': 'rootFolder', 'type': 'str'},
-        'last_commit_id': {'key': 'lastCommitId', 'type': 'str'},
-        'tenant_id': {'key': 'tenantId', 'type': 'str'},
+        "type": {"key": "type", "type": "str"},
+        "host_name": {"key": "hostName", "type": "str"},
+        "account_name": {"key": "accountName", "type": "str"},
+        "project_name": {"key": "projectName", "type": "str"},
+        "repository_name": {"key": "repositoryName", "type": "str"},
+        "collaboration_branch": {"key": "collaborationBranch", "type": "str"},
+        "root_folder": {"key": "rootFolder", "type": "str"},
+        "last_commit_id": {"key": "lastCommitId", "type": "str"},
+        "tenant_id": {"key": "tenantId", "type": "str"},
     }
 
     def __init__(
@@ -8961,9 +13823,30 @@ class WorkspaceRepositoryConfiguration(msrest.serialization.Model):
         root_folder: Optional[str] = None,
         last_commit_id: Optional[str] = None,
         tenant_id: Optional[str] = None,
-        **kwargs
-    ):
-        super(WorkspaceRepositoryConfiguration, self).__init__(**kwargs)
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword type: Type of workspace repositoryID configuration. Example
+         WorkspaceVSTSConfiguration, WorkspaceGitHubConfiguration.
+        :paramtype type: str
+        :keyword host_name: GitHub Enterprise host name. For example: https://github.mydomain.com.
+        :paramtype host_name: str
+        :keyword account_name: Account name.
+        :paramtype account_name: str
+        :keyword project_name: VSTS project name.
+        :paramtype project_name: str
+        :keyword repository_name: Repository name.
+        :paramtype repository_name: str
+        :keyword collaboration_branch: Collaboration branch.
+        :paramtype collaboration_branch: str
+        :keyword root_folder: Root folder to use in the repository.
+        :paramtype root_folder: str
+        :keyword last_commit_id: The last commit ID.
+        :paramtype last_commit_id: str
+        :keyword tenant_id: The VSTS tenant ID.
+        :paramtype tenant_id: str
+        """
+        super().__init__(**kwargs)
         self.type = type
         self.host_name = host_name
         self.account_name = account_name

@@ -9,9 +9,11 @@
 Example to show usage of AutoLockRenewer:
     1. Automatically renew locks on messages received from non-sessionful entity
     2. Automatically renew locks on the session of sessionful entity
-"""
 
-# pylint: disable=C0111
+We do not guarantee that this SDK is thread-safe. We do not recommend reusing the ServiceBusClient,
+ ServiceBusSender, ServiceBusReceiver across threads. It is up to the running 
+ application to use these classes in a thread-safe manner.
+"""
 
 import os
 import time
@@ -19,9 +21,9 @@ import time
 from azure.servicebus import ServiceBusClient, AutoLockRenewer, ServiceBusMessage
 from azure.servicebus.exceptions import ServiceBusError
 
-CONNECTION_STR = os.environ['SERVICE_BUS_CONNECTION_STR']
-QUEUE_NAME = os.environ["SERVICE_BUS_QUEUE_NAME"]
-SESSION_QUEUE_NAME = os.environ['SERVICE_BUS_SESSION_QUEUE_NAME']
+CONNECTION_STR = os.environ['SERVICEBUS_CONNECTION_STR']
+QUEUE_NAME = os.environ["SERVICEBUS_QUEUE_NAME"]
+SESSION_QUEUE_NAME = os.environ['SERVICEBUS_SESSION_QUEUE_NAME']
 
 
 def renew_lock_on_message_received_from_non_sessionful_entity():
@@ -32,7 +34,7 @@ def renew_lock_on_message_received_from_non_sessionful_entity():
             msgs_to_send = [ServiceBusMessage("message: {}".format(i)) for i in range(10)]
             sender.send_messages(msgs_to_send)
             print('Send messages to non-sessionful queue.')
-        
+
         # Can also be called via "with AutoLockRenewer() as renewer" to automate shutdown.
         renewer = AutoLockRenewer()
 
@@ -92,7 +94,7 @@ def renew_lock_with_lock_renewal_failure_callback():
     with servicebus_client:
         with servicebus_client.get_queue_sender(queue_name=QUEUE_NAME) as sender:
             sender.send_messages(ServiceBusMessage("message"))
-        
+
         with AutoLockRenewer() as renewer:
             # For this sample we're going to set the renewal recurrence of the autolockrenewer to greater than the
             # service side message lock duration, to demonstrate failure.  Normally, this should not be adjusted.
@@ -126,7 +128,7 @@ def renew_lock_with_lock_renewal_failure_callback():
                         receiver.complete_message(msg)
                 except ServiceBusError as e:
                     print('Messages cannot be settled if they have timed out. (This is expected)')
-                
+
                 print('Lock renew failure demonstration complete.')
 
 

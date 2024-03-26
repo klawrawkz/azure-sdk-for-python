@@ -23,71 +23,85 @@
 # IN THE SOFTWARE.
 #
 # --------------------------------------------------------------------------
-from typing import Any, Optional
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ._constants import SchemaFormat
 
 
 class SchemaProperties(object):
     """
     Meta properties of a schema.
 
-    :ivar schema_id: References specific schema in registry namespace.
-    :type schema_id: str
-    :ivar location: URL location of schema, identified by schema group, schema name, and version.
-    :type location: str
-    :ivar location_by_id: URL location of schema, identified by schema ID.
-    :type location_by_id: str
-    :ivar serialization_type: Serialization type for the schema being stored.
-    :type serialization_type: str
-    :ivar version: Version of the returned schema.
-    :type version: int
+    :keyword id: References specific schema in registry namespace.
+    :paramtype id: str
+    :keyword format: Format for the schema being stored.
+    :paramtype format: ~azure.schemaregistry.SchemaFormat
+    :keyword group_name: Schema group under which schema is stored.
+    :paramtype group_name: str
+    :keyword name: Name of schema.
+    :paramtype name: str
+    :keyword version: Version of schema.
+    :paramtype version: int
 
-    .. admonition:: Example:
-
-        .. literalinclude:: ../samples/sync_samples/sample_code_schemaregistry.py
-            :start-after: [START print_schema_properties]
-            :end-before: [END print_schema_properties]
-            :language: python
-            :dedent: 4
-            :caption: SchemaProperties object.
-
+    :ivar id: References specific schema in registry namespace.
+    :vartype id: str
+    :ivar format: Format for the schema being stored.
+    :vartype format: ~azure.schemaregistry.SchemaFormat
+    :ivar group_name: Schema group under which schema is stored.
+    :vartype group_name: str
+    :ivar name: Name of schema.
+    :vartype name: str
+    :ivar version: Version of schema.
+    :vartype version: int
     """
+
     def __init__(
         self,
-        schema_id=None,
-        **kwargs
-    ):
-        # type: (Optional[str], Any) -> None
-        self.location = kwargs.get('Location')
-        self.schema_id = schema_id or kwargs.get("X-Schema-Id")
-        self.location_by_id = kwargs.get('X-Schema-Id-Location')
-        self.serialization_type = kwargs.get('X-Schema-Type')
-        self.version = kwargs.get('X-Schema-Version')
+        *,
+        id: str,    # pylint: disable=redefined-builtin
+        format: "SchemaFormat", # pylint: disable=redefined-builtin
+        group_name: str,
+        name: str,
+        version: int,
+    ) -> None:
+        self.id = id
+        self.format = format
+        self.group_name = group_name
+        self.name = name
+        self.version = version
+
+    def __repr__(self) -> str:
+        return (
+            f"SchemaProperties(id={self.id}, format={self.format}, "
+            f"group_name={self.group_name}, name={self.name}, version={self.version})"[
+                :1024
+            ]
+        )
 
 
 class Schema(object):
     """
     The schema content of a schema, along with id and meta properties.
 
-    :ivar schema_content: The content of the schema.
-    :type schema_content: str
-    :ivar schema_properties: The properties of the schema.
-    :type schema_properties: SchemaProperties
+    :keyword definition: The content of the schema.
+    :paramtype definition: str
+    :keyword properties: The properties of the schema.
+    :paramtype properties: SchemaProperties
 
-    .. admonition:: Example:
-
-        .. literalinclude:: ../samples/sync_samples/sample_code_schemaregistry.py
-            :start-after: [START print_schema]
-            :end-before: [END print_schema]
-            :language: python
-            :dedent: 4
-            :caption: Schema object.
-
+    :ivar definition: The content of the schema.
+    :vartype definition: str
+    :ivar properties: The properties of the schema.
+    :vartype properties: SchemaProperties
     """
+
     def __init__(
         self,
-        schema_content,
-        schema_properties,
-    ):
-        # type: (str, SchemaProperties) -> None
-        self.schema_content = schema_content
-        self.schema_properties = schema_properties
+        definition: str,
+        properties: "SchemaProperties",
+    ) -> None:
+        self.definition = definition
+        self.properties = properties
+
+    def __repr__(self) -> str:
+        return f"Schema(definition={self.definition}, properties={self.properties})"[:1024]

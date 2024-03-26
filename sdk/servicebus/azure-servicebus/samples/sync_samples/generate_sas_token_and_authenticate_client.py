@@ -13,10 +13,7 @@ import time
 import hmac
 import hashlib
 import base64
-try:
-    from urllib.parse import quote as url_parse_quote
-except ImportError:
-    from urllib import pathname2url as url_parse_quote
+from urllib.parse import quote as url_parse_quote
 from azure.core.credentials import AccessToken
 
 from azure.servicebus import ServiceBusClient
@@ -46,12 +43,12 @@ class CustomizedSASCredential(object):
         """
         return AccessToken(self.token, self.expiry)
 
-FULLY_QUALIFIED_NAMESPACE = os.environ['SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE']
-SESSION_QUEUE_NAME = os.environ["SERVICE_BUS_SESSION_QUEUE_NAME"]
-SAS_POLICY = os.environ['SERVICE_BUS_SAS_POLICY']
-SAS_KEY = os.environ['SERVICE_BUS_SAS_KEY']
+FULLY_QUALIFIED_NAMESPACE = os.environ['SERVICEBUS_FULLY_QUALIFIED_NAMESPACE']
+QUEUE_NAME = os.environ["SERVICEBUS_QUEUE_NAME"]
+SAS_POLICY = os.environ['SERVICEBUS_SAS_POLICY']
+SAS_KEY = os.environ['SERVICEBUS_SAS_KEY']
 
-auth_uri = "sb://{}/{}".format(FULLY_QUALIFIED_NAMESPACE, SESSION_QUEUE_NAME)
+auth_uri = "sb://{}/{}".format(FULLY_QUALIFIED_NAMESPACE, QUEUE_NAME)
 token_ttl = 3000  # seconds
 
 sas_token = generate_sas_token(auth_uri, SAS_POLICY, SAS_KEY, token_ttl)

@@ -71,6 +71,20 @@ def test_user_agent():
     credential.get_token("scope")
 
 
+def test_tenant_id():
+    transport = validating_transport(
+        requests=[Request()] * 2 + [Request(required_headers={"User-Agent": USER_AGENT})],
+        responses=[get_discovery_response()] * 2
+        + [mock_response(json_payload=build_aad_response(access_token="**", id_token=build_id_token()))],
+    )
+
+    credential = UsernamePasswordCredential(
+        "client-id", "username", "password", transport=transport, additionally_allowed_tenants=["*"]
+    )
+
+    credential.get_token("scope", tenant_id="tenant_id")
+
+
 def test_username_password_credential():
     expected_token = "access-token"
     client_id = "client-id"
@@ -93,7 +107,7 @@ def test_username_password_credential():
         username="user@azure",
         password="secret_password",
         transport=transport,
-        instance_discovery=False,  # kwargs are passed to MSAL; this one prevents an AAD verification request
+        disable_instance_discovery=True,  # kwargs are passed to MSAL; this one prevents a Microsoft Entra verification request
     )
 
     token = credential.get_token("scope")
@@ -110,7 +124,7 @@ def test_authenticate():
     access_token = "***"
     scope = "scope"
 
-    # mock AAD response with id token
+    # mock Microsoft Entra response with id token
     object_id = "object-id"
     home_tenant = "home-tenant-id"
     username = "me@work.com"
@@ -149,17 +163,23 @@ def test_authenticate():
 
 
 def test_client_capabilities():
-    """the credential should configure MSAL for capability CP1 (ability to handle claims challenges)"""
+    """the credential should configure MSAL for capability CP1 only if enable_cae is passed."""
 
     transport = Mock(send=Mock(side_effect=Exception("this test mocks MSAL, so no request should be sent")))
-    credential = UsernamePasswordCredential("client-id", "username", "password", transport=transport)
 
+    credential = UsernamePasswordCredential("client-id", "username", "password", transport=transport)
     with patch("msal.PublicClientApplication") as PublicClientApplication:
         credential._get_app()
 
-    assert PublicClientApplication.call_count == 1
-    _, kwargs = PublicClientApplication.call_args
-    assert kwargs["client_capabilities"] == ["CP1"]
+        assert PublicClientApplication.call_count == 1
+        _, kwargs = PublicClientApplication.call_args
+        assert kwargs["client_capabilities"] == None
+
+        credential._get_app(enable_cae=True)
+
+        assert PublicClientApplication.call_count == 2
+        _, kwargs = PublicClientApplication.call_args
+        assert kwargs["client_capabilities"] == ["CP1"]
 
 
 def test_claims_challenge():

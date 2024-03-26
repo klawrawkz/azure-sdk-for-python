@@ -6,56 +6,74 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
-try:
-    from ._models_py3 import ApplicationInsightsComponent
-    from ._models_py3 import ApplicationInsightsComponentListResult
-    from ._models_py3 import ApplicationInsightsComponentProactiveDetectionConfiguration
-    from ._models_py3 import ApplicationInsightsComponentProactiveDetectionConfigurationPropertiesRuleDefinitions
-    from ._models_py3 import ComponentPurgeBody
-    from ._models_py3 import ComponentPurgeBodyFilters
-    from ._models_py3 import ComponentPurgeResponse
-    from ._models_py3 import ComponentPurgeStatusResponse
-    from ._models_py3 import ComponentsResource
-    from ._models_py3 import PrivateLinkScopedResource
-    from ._models_py3 import TagsResource
-except (SyntaxError, ImportError):
-    from ._models import ApplicationInsightsComponent  # type: ignore
-    from ._models import ApplicationInsightsComponentListResult  # type: ignore
-    from ._models import ApplicationInsightsComponentProactiveDetectionConfiguration  # type: ignore
-    from ._models import ApplicationInsightsComponentProactiveDetectionConfigurationPropertiesRuleDefinitions  # type: ignore
-    from ._models import ComponentPurgeBody  # type: ignore
-    from ._models import ComponentPurgeBodyFilters  # type: ignore
-    from ._models import ComponentPurgeResponse  # type: ignore
-    from ._models import ComponentPurgeStatusResponse  # type: ignore
-    from ._models import ComponentsResource  # type: ignore
-    from ._models import PrivateLinkScopedResource  # type: ignore
-    from ._models import TagsResource  # type: ignore
+from ._models_py3 import ApplicationInsightsComponent
+from ._models_py3 import ApplicationInsightsComponentListResult
+from ._models_py3 import ApplicationInsightsComponentProactiveDetectionConfiguration
+from ._models_py3 import ApplicationInsightsComponentProactiveDetectionConfigurationPropertiesRuleDefinitions
+from ._models_py3 import ComponentPurgeBody
+from ._models_py3 import ComponentPurgeBodyFilters
+from ._models_py3 import ComponentPurgeResponse
+from ._models_py3 import ComponentPurgeStatusResponse
+from ._models_py3 import ComponentsResource
+from ._models_py3 import HeaderField
+from ._models_py3 import Operation
+from ._models_py3 import OperationInfo
+from ._models_py3 import OperationsListResult
+from ._models_py3 import PrivateLinkScopedResource
+from ._models_py3 import TagsResource
+from ._models_py3 import WebTest
+from ._models_py3 import WebTestGeolocation
+from ._models_py3 import WebTestListResult
+from ._models_py3 import WebTestPropertiesConfiguration
+from ._models_py3 import WebTestPropertiesRequest
+from ._models_py3 import WebTestPropertiesValidationRules
+from ._models_py3 import WebTestPropertiesValidationRulesContentValidation
+from ._models_py3 import WebtestsResource
 
-from ._application_insights_management_client_enums import (
-    ApplicationType,
-    FlowType,
-    IngestionMode,
-    PublicNetworkAccessType,
-    PurgeState,
-    RequestSource,
-)
+from ._application_insights_management_client_enums import ApplicationType
+from ._application_insights_management_client_enums import FlowType
+from ._application_insights_management_client_enums import IngestionMode
+from ._application_insights_management_client_enums import PublicNetworkAccessType
+from ._application_insights_management_client_enums import PurgeState
+from ._application_insights_management_client_enums import RequestSource
+from ._application_insights_management_client_enums import WebTestKind
+from ._application_insights_management_client_enums import WebTestKindEnum
+from ._patch import __all__ as _patch_all
+from ._patch import *  # pylint: disable=unused-wildcard-import
+from ._patch import patch_sdk as _patch_sdk
 
 __all__ = [
-    'ApplicationInsightsComponent',
-    'ApplicationInsightsComponentListResult',
-    'ApplicationInsightsComponentProactiveDetectionConfiguration',
-    'ApplicationInsightsComponentProactiveDetectionConfigurationPropertiesRuleDefinitions',
-    'ComponentPurgeBody',
-    'ComponentPurgeBodyFilters',
-    'ComponentPurgeResponse',
-    'ComponentPurgeStatusResponse',
-    'ComponentsResource',
-    'PrivateLinkScopedResource',
-    'TagsResource',
-    'ApplicationType',
-    'FlowType',
-    'IngestionMode',
-    'PublicNetworkAccessType',
-    'PurgeState',
-    'RequestSource',
+    "ApplicationInsightsComponent",
+    "ApplicationInsightsComponentListResult",
+    "ApplicationInsightsComponentProactiveDetectionConfiguration",
+    "ApplicationInsightsComponentProactiveDetectionConfigurationPropertiesRuleDefinitions",
+    "ComponentPurgeBody",
+    "ComponentPurgeBodyFilters",
+    "ComponentPurgeResponse",
+    "ComponentPurgeStatusResponse",
+    "ComponentsResource",
+    "HeaderField",
+    "Operation",
+    "OperationInfo",
+    "OperationsListResult",
+    "PrivateLinkScopedResource",
+    "TagsResource",
+    "WebTest",
+    "WebTestGeolocation",
+    "WebTestListResult",
+    "WebTestPropertiesConfiguration",
+    "WebTestPropertiesRequest",
+    "WebTestPropertiesValidationRules",
+    "WebTestPropertiesValidationRulesContentValidation",
+    "WebtestsResource",
+    "ApplicationType",
+    "FlowType",
+    "IngestionMode",
+    "PublicNetworkAccessType",
+    "PurgeState",
+    "RequestSource",
+    "WebTestKind",
+    "WebTestKindEnum",
 ]
+__all__.extend([p for p in _patch_all if p not in __all__])
+_patch_sdk()

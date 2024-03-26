@@ -1,0 +1,39 @@
+{
+    "displayNames": {
+      "--disablecov": "",
+      "false": "",
+      "true": ""
+    },
+    "matrix": {
+        "Agent": {
+          "Ubuntu-20.04": { "OSVmImage": "env:LINUXVMIMAGE", "Pool": "env:LINUXPOOL" },
+          "windows-2022": { "OSVmImage": "env:WINDOWSVMIMAGE", "Pool": "env:WINDOWSPOOL" },
+          "macos-11": { "OSVmImage": "env:MACVMIMAGE", "Pool": "env:MACPOOL" }
+        },
+        "PythonVersion": [ "3.8", "3.9", "3.10", "3.11" ],
+        "CoverageArg": "--disablecov",
+        "TestSamples": "false",
+        "AZURE_LIVE_TEST_SERVICE_VERSION": [
+            "V2019_02_02",
+            "V2019_07_07",
+            "V2019_12_12",
+            "V2020_02_10",
+            "V2020_04_08",
+            "V2020_06_12",
+            "V2020_08_04"
+        ]
+    },
+    "include": [
+      {
+        "CoverageConfig": {
+          "ubuntu2004_pypy39": {
+            "OSVmImage": "env:LINUXVMIMAGE",
+            "Pool": "env:LINUXPOOL",
+            "PythonVersion": "pypy3.9",
+            "CoverageArg": "--disablecov",
+            "TestSamples": "false"
+          }
+        }
+      }
+    ]
+}

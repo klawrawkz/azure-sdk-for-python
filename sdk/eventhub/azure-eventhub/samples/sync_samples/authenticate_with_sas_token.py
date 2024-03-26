@@ -9,17 +9,12 @@
 Example to demonstrate utilizing SAS (Shared Access Signature) tokens to authenticate with Event Hubs.
 """
 
-# pylint: disable=C0111
-
 import os
 import time
 import hmac
 import hashlib
 import base64
-try:
-    from urllib.parse import quote as url_parse_quote
-except ImportError:
-    from urllib import pathname2url as url_parse_quote
+from urllib.parse import quote as url_parse_quote
 
 from azure.core.credentials import AccessToken
 from azure.eventhub import EventHubProducerClient, EventData
@@ -35,7 +30,7 @@ def generate_sas_token(uri, sas_name, sas_value, token_ttl):
     return 'SharedAccessSignature sr={}&sig={}&se={}&skn={}'.format(uri, signature, expiry, sas_name)
 
 
-class CustomizedSASCredential(object):
+class CustomizedSASCredential:
     def __init__(self, token, expiry):
         """
         :param str token: The token string

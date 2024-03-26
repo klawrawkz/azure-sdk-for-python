@@ -16,26 +16,29 @@
 # Coverage %      : 100
 # ----------------------
 
+import os
 import unittest
+from dotenv import load_dotenv
 
 import azure.mgmt.keyvault
-from devtools_testutils import AzureMgmtTestCase, RandomNameResourceGroupPreparer
+from devtools_testutils import AzureMgmtRecordedTestCase, RandomNameResourceGroupPreparer, recorded_by_proxy
 
 AZURE_LOCATION = 'eastus'
+load_dotenv()
 
-class MgmtKeyVaultTest(AzureMgmtTestCase):
+class TestMgmtKeyVault(AzureMgmtRecordedTestCase):
 
-    def setUp(self):
-        super(MgmtKeyVaultTest, self).setUp()
+    def setup_method(self, method):
         self.mgmt_client = self.create_mgmt_client(
             azure.mgmt.keyvault.KeyVaultManagementClient
         )
     
     @RandomNameResourceGroupPreparer(location=AZURE_LOCATION)
+    @recorded_by_proxy
     def test_keyvault(self, resource_group):
 
-        SUBSCRIPTION_ID = self.settings.SUBSCRIPTION_ID
-        TENANT_ID = "72f988bf-86f1-41af-91ab-2d7cd011db47" # self.settings.TENANT_ID
+        SUBSCRIPTION_ID = self.get_settings_value("SUBSCRIPTION_ID")
+        TENANT_ID = os.environ.get("AZURE_TENANT_ID", "00000000-0000-0000-0000-000000000000")
         RESOURCE_GROUP = resource_group.name
         VAULT_NAME = "myValtZikfikxz"
         OPERATION_KIND = "add"

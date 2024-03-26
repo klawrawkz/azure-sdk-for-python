@@ -1,47 +1,64 @@
-## Microsoft Azure SDK for Python
+# Microsoft Azure SDK for Python
 
-This is the Microsoft Azure Traffic Manager Client Library.
+This is the Microsoft Azure Traffic Manager Management Client Library.
+This package has been tested with Python 3.7+.
+For a more complete view of Azure libraries, see the [azure sdk python release](https://aka.ms/azsdk/python/all).
 
-Azure Resource Manager (ARM) is the next generation of management APIs
-that replace the old Azure Service Management (ASM).
+## _Disclaimer_
 
-This package has been tested with Python 2.7, 3.4, 3.5, 3.6 and 3.7.
+_Azure SDK Python packages support for Python 2.7 has ended 01 January 2022. For more information and questions, please refer to https://github.com/Azure/azure-sdk-for-python/issues/20691_
 
-For the older Azure Service Management (ASM) libraries, see
-[azure-servicemanagement-legacy](https://pypi.python.org/pypi/azure-servicemanagement-legacy)
-library.
+## Getting started
 
-For a more complete set of Azure libraries, see the
-[azure](https://pypi.python.org/pypi/azure) bundle package.
+### Prerequisites
 
-## Compatibility
+- Python 3.7+ is required to use this package.
+- [Azure subscription](https://azure.microsoft.com/free/)
 
-**IMPORTANT**: If you have an earlier version of the azure package
-(version < 1.0), you should uninstall it before installing this
-package.
+### Install the package
 
-You can check the version using pip:
-
-``` shell
-pip freeze
+```bash
+pip install azure-mgmt-trafficmanager
+pip install azure-identity
 ```
 
-If you see azure==0.11.0 (or any version below 1.0), uninstall it first:
+### Authentication
 
-``` shell
-pip uninstall azure
+By default, [Azure Active Directory](https://aka.ms/awps/aad) token authentication depends on correct configure of following environment variables.
+
+- `AZURE_CLIENT_ID` for Azure client ID.
+- `AZURE_TENANT_ID` for Azure tenant ID.
+- `AZURE_CLIENT_SECRET` for Azure client secret.
+
+In addition, Azure subscription ID can be configured via environment variable `AZURE_SUBSCRIPTION_ID`.
+
+With above configuration, client can be authenticated by following code:
+
+```python
+from azure.identity import DefaultAzureCredential
+from azure.mgmt.trafficmanager import TrafficManagerManagementClient
+import os
+
+sub_id = os.getenv("AZURE_SUBSCRIPTION_ID")
+client = TrafficManagerManagementClient(credential=DefaultAzureCredential(), subscription_id=sub_id)
 ```
 
-## Usage
+## Examples
 
-For code examples, see [Traffic
-Manager](https://docs.microsoft.com/python/api/overview/azure/traffic-manager)
-on docs.microsoft.com.
+Code samples for this package can be found at:
+- [Search Traffic Manager Management](https://docs.microsoft.com/samples/browse/?languages=python&term=Getting%20started%20-%20Managing&terms=Getting%20started%20-%20Managing) on docs.microsoft.com
+- [Azure Python Mgmt SDK Samples Repo](https://aka.ms/azsdk/python/mgmt/samples)
+
+
+## Troubleshooting
+
+## Next steps
 
 ## Provide Feedback
 
-If you encounter any bugs or have suggestions, please file an issue in
-the [Issues](https://github.com/Azure/azure-sdk-for-python/issues)
-section of the project.
+If you encounter any bugs or have suggestions, please file an issue in the
+[Issues](https://github.com/Azure/azure-sdk-for-python/issues)
+section of the project. 
 
-![image](https://azure-sdk-impressions.azurewebsites.net/api/impressions/azure-sdk-for-python%2Fazure-mgmt-trafficmanager%2FREADME.png)
+
+![Impressions](https://azure-sdk-impressions.azurewebsites.net/api/impressions/azure-sdk-for-python%2Fazure-mgmt-trafficmanager%2FREADME.png)

@@ -3,18 +3,25 @@
 # Licensed under the MIT License. See License.txt in the project root for
 # license information.
 # --------------------------------------------------------------------------
-from typing import Any
+from typing import (
+    Any, Dict, Optional, Union,
+    TYPE_CHECKING
+)
+from urllib.parse import quote, unquote
 
-try:
-    from urllib.parse import quote, unquote
-except ImportError:
-    from urllib2 import quote, unquote # type: ignore
+from typing_extensions import Self
+
 from azure.core.pipeline import Pipeline
+from azure.core.tracing.decorator import distributed_trace
 from ._deserialize import deserialize_dir_properties
 from ._shared.base_client import TransportWrapper, parse_connection_str
 from ._data_lake_file_client import DataLakeFileClient
 from ._models import DirectoryProperties, FileProperties
 from ._path_client import PathClient
+
+if TYPE_CHECKING:
+    from azure.core.credentials import AzureNamedKeyCredential, AzureSasCredential, TokenCredential
+    from datetime import datetime
 
 
 class DataLakeDirectoryClient(PathClient):
@@ -40,10 +47,18 @@ class DataLakeDirectoryClient(PathClient):
     :param credential:
         The credentials with which to authenticate. This is optional if the
         account URL already has a SAS token. The value can be a SAS token string,
-        an instance of a AzureSasCredential from azure.core.credentials, and account
-        shared access key, or an instance of a TokenCredentials class from azure.identity.
+        an instance of a AzureSasCredential or AzureNamedKeyCredential from azure.core.credentials,
+        an account shared access key, or an instance of a TokenCredentials class from azure.identity.
         If the resource URI already contains a SAS token, this will be ignored in favor of an explicit credential
         - except in the case of AzureSasCredential, where the conflicting SAS tokens will raise a ValueError.
+        If using an instance of AzureNamedKeyCredential, "name" should be the storage account name, and "key"
+        should be the storage account key.
+    :keyword str api_version:
+        The Storage API version to use for requests. Default value is the most recent service version that is
+        compatible with the current SDK. Setting to an older version may result in reduced feature compatibility.
+    :keyword str audience: The audience to use when requesting tokens for Azure Active Directory
+        authentication. Only has an effect when credential is of type TokenCredential. The value could be
+        https://storage.azure.com/ (default) or https://<account>.blob.core.windows.net.
 
     .. admonition:: Example:
 
@@ -55,24 +70,23 @@ class DataLakeDirectoryClient(PathClient):
             :caption: Creating the DataLakeServiceClient from connection string.
     """
     def __init__(
-        self, account_url,  # type: str
-        file_system_name,  # type: str
-        directory_name,  # type: str
-        credential=None,  # type: Optional[Any]
-        **kwargs  # type: Any
-    ):
-        # type: (...) -> None
+        self, account_url: str,
+        file_system_name: str,
+        directory_name: str,
+        credential: Optional[Union[str, Dict[str, str], "AzureNamedKeyCredential", "AzureSasCredential", "TokenCredential"]] = None,  # pylint: disable=line-too-long
+        **kwargs: Any
+    ) -> None:
         super(DataLakeDirectoryClient, self).__init__(account_url, file_system_name, path_name=directory_name,
                                                       credential=credential, **kwargs)
 
     @classmethod
     def from_connection_string(
-            cls, conn_str,  # type: str
-            file_system_name,  # type: str
-            directory_name,  # type: str
-            credential=None,  # type: Optional[Any]
-            **kwargs  # type: Any
-        ):  # type: (...) -> DataLakeDirectoryClient
+            cls, conn_str: str,
+            file_system_name: str,
+            directory_name: str,
+            credential: Optional[Union[str, Dict[str, str], "AzureNamedKeyCredential", "AzureSasCredential", "TokenCredential"]] = None,  # pylint: disable=line-too-long
+            **kwargs: Any
+        ) -> Self:
         """
         Create DataLakeDirectoryClient from a Connection String.
 
@@ -81,24 +95,31 @@ class DataLakeDirectoryClient(PathClient):
         :param file_system_name:
             The name of file system to interact with.
         :type file_system_name: str
+        :param credential:
+            The credentials with which to authenticate. This is optional if the
+            account URL already has a SAS token. The value can be a SAS token string,
+            an instance of a AzureSasCredential or AzureNamedKeyCredential from azure.core.credentials,
+            an account shared access key, or an instance of a TokenCredentials class from azure.identity.
+            If the resource URI already contains a SAS token, this will be ignored in favor of an explicit credential
+            - except in the case of AzureSasCredential, where the conflicting SAS tokens will raise a ValueError.
+            If using an instance of AzureNamedKeyCredential, "name" should be the storage account name, and "key"
+            should be the storage account key.
+        :paramtype credential: Optional[Union[str, Dict[str, str], "AzureNamedKeyCredential", "AzureSasCredential", "TokenCredential"]] = None,  # pylint: disable=line-too-long
         :param directory_name:
             The name of directory to interact with. The directory is under file system.
         :type directory_name: str
-        :param credential:
-            The credentials with which to authenticate. This is optional if the
-            account URL already has a SAS token, or the connection string already has shared
-            access key values. The value can be a SAS token string,
-            an instance of a AzureSasCredential from azure.core.credentials, and account shared access
-            key, or an instance of a TokenCredentials class from azure.identity.
-            Credentials provided here will take precedence over those in the connection string.
-        :return a DataLakeDirectoryClient
-        :rtype ~azure.storage.filedatalake.DataLakeDirectoryClient
+        :keyword str audience: The audience to use when requesting tokens for Azure Active Directory
+            authentication. Only has an effect when credential is of type TokenCredential. The value could be
+            https://storage.azure.com/ (default) or https://<account>.blob.core.windows.net.
+        :return: a DataLakeDirectoryClient
+        :rtype: ~azure.storage.filedatalake.DataLakeDirectoryClient
         """
         account_url, _, credential = parse_connection_str(conn_str, credential, 'dfs')
         return cls(
             account_url, file_system_name=file_system_name, directory_name=directory_name,
             credential=credential, **kwargs)
 
+    @distributed_trace
     def create_directory(self, metadata=None,  # type: Optional[Dict[str, str]]
                          **kwargs):
         # type: (...) -> Dict[str, Union[str, datetime]]
@@ -122,6 +143,23 @@ class DataLakeDirectoryClient(PathClient):
             For example, if p is 0777 and u is 0057, then the resulting permission is 0720.
             The default permission is 0777 for a directory and 0666 for a file. The default umask is 0027.
             The umask must be specified in 4-digit octal notation (e.g. 0766).
+        :keyword str owner:
+            The owner of the file or directory.
+        :keyword str group:
+            The owning group of the file or directory.
+        :keyword str acl:
+            Sets POSIX access control rights on files and directories. The value is a
+            comma-separated list of access control entries. Each access control entry (ACE) consists of a
+            scope, a type, a user or group identifier, and permissions in the format
+            "[scope:][type]:[id]:[permissions]".
+        :keyword str lease_id:
+            Proposed lease ID, in a GUID string format. The DataLake service returns
+            400 (Invalid request) if the proposed lease ID is not in the correct format.
+        :keyword int lease_duration:
+            Specifies the duration of the lease, in seconds, or negative one
+            (-1) for a lease that never expires. A non-infinite lease can be
+            between 15 and 60 seconds. A lease duration cannot be changed
+            using renew or change.
         :keyword str permissions:
             Optional and only valid if Hierarchical Namespace
             is enabled for the account. Sets POSIX access permissions for the file
@@ -146,9 +184,17 @@ class DataLakeDirectoryClient(PathClient):
             and act according to the condition specified by the `match_condition` parameter.
         :keyword ~azure.core.MatchConditions match_condition:
             The match condition to use upon the etag.
+        :keyword ~azure.storage.filedatalake.CustomerProvidedEncryptionKey cpk:
+            Encrypts the data on the service-side with the given key.
+            Use of customer-provided keys must be done over HTTPS.
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
-        :return: response dict (Etag and last modified).
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-blob-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-datalake
+            #other-client--per-operation-configuration>`_.
+        :return: A dictionary of response headers.
+        :rtype: Dict[str, Union[str, datetime]]
 
         .. admonition:: Example:
 
@@ -161,6 +207,7 @@ class DataLakeDirectoryClient(PathClient):
         """
         return self._create('directory', metadata=metadata, **kwargs)
 
+    @distributed_trace
     def delete_directory(self, **kwargs):
         # type: (...) -> None
         """
@@ -188,7 +235,11 @@ class DataLakeDirectoryClient(PathClient):
         :keyword ~azure.core.MatchConditions match_condition:
             The match condition to use upon the etag.
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-blob-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-datalake
+            #other-client--per-operation-configuration>`_.
         :return: None
 
         .. admonition:: Example:
@@ -202,6 +253,7 @@ class DataLakeDirectoryClient(PathClient):
         """
         return self._delete(recursive=True, **kwargs)
 
+    @distributed_trace
     def get_directory_properties(self, **kwargs):
         # type: (**Any) -> DirectoryProperties
         """Returns all user-defined metadata, standard HTTP properties, and
@@ -228,8 +280,16 @@ class DataLakeDirectoryClient(PathClient):
             and act according to the condition specified by the `match_condition` parameter.
         :keyword ~azure.core.MatchConditions match_condition:
             The match condition to use upon the etag.
+        :keyword ~azure.storage.filedatalake.CustomerProvidedEncryptionKey cpk:
+            Decrypts the data on the service-side with the given key.
+            Use of customer-provided keys must be done over HTTPS.
+            Required if the directory was created with a customer-provided key.
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-blob-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-datalake
+            #other-client--per-operation-configuration>`_.
         :rtype: DirectoryProperties
 
         .. admonition:: Example:
@@ -243,17 +303,24 @@ class DataLakeDirectoryClient(PathClient):
         """
         return self._get_path_properties(cls=deserialize_dir_properties, **kwargs)  # pylint: disable=protected-access
 
+    @distributed_trace
     def exists(self, **kwargs):
         # type: (**Any) -> bool
         """
         Returns True if a directory exists and returns False otherwise.
 
-        :kwarg int timeout:
-            The timeout parameter is expressed in seconds.
-        :returns: boolean
+        :keyword int timeout:
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-blob-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-datalake
+            #other-client--per-operation-configuration>`_.
+        :returns: True if a directory exists, False otherwise.
+        :rtype: bool
         """
         return self._exists(**kwargs)
 
+    @distributed_trace
     def rename_directory(self, new_name, **kwargs):
         # type: (str, **Any) -> DataLakeDirectoryClient
         """
@@ -264,7 +331,7 @@ class DataLakeDirectoryClient(PathClient):
             The value must have the following format: "{filesystem}/{directory}/{subdirectory}".
         :keyword source_lease:
             A lease ID for the source path. If specified,
-            the source path must have an active lease and the leaase ID must
+            the source path must have an active lease and the lease ID must
             match.
         :paramtype source_lease: ~azure.storage.filedatalake.DataLakeLeaseClient or str
         :keyword lease:
@@ -306,7 +373,11 @@ class DataLakeDirectoryClient(PathClient):
         :keyword ~azure.core.MatchConditions source_match_condition:
             The source match condition to use upon the etag.
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-blob-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-datalake
+            #other-client--per-operation-configuration>`_.
         :return: DataLakeDirectoryClient
 
         .. admonition:: Example:
@@ -318,32 +389,17 @@ class DataLakeDirectoryClient(PathClient):
                 :dedent: 4
                 :caption: Rename the source directory.
         """
-        new_name = new_name.strip('/')
-        new_file_system = new_name.split('/')[0]
-        new_path_and_token = new_name[len(new_file_system):].strip('/').split('?')
-        new_path = new_path_and_token[0]
-        try:
-            new_dir_sas = new_path_and_token[1] or self._query_str.strip('?')
-        except IndexError:
-            if not self._raw_credential and new_file_system != self.file_system_name:
-                raise ValueError("please provide the sas token for the new file")
-            if not self._raw_credential and new_file_system == self.file_system_name:
-                new_dir_sas = self._query_str.strip('?')
+        new_file_system, new_path, new_dir_sas = self._parse_rename_path(new_name)
 
         new_directory_client = DataLakeDirectoryClient(
-            "{}://{}".format(self.scheme, self.primary_hostname), new_file_system, directory_name=new_path,
-            credential=self._raw_credential or new_dir_sas,
-            _hosts=self._hosts, _configuration=self._config, _pipeline=self._pipeline,
-            require_encryption=self.require_encryption,
-            key_encryption_key=self.key_encryption_key,
-            key_resolver_function=self.key_resolver_function)
+            f"{self.scheme}://{self.primary_hostname}", new_file_system, directory_name=new_path,
+            credential=self._raw_credential or new_dir_sas, _hosts=self._hosts, _configuration=self._config,
+            _pipeline=self._pipeline)
         new_directory_client._rename_path(  # pylint: disable=protected-access
-            '/{}/{}{}'.format(quote(unquote(self.file_system_name)),
-                              quote(unquote(self.path_name)),
-                              self._query_str),
-            **kwargs)
+            f'/{quote(unquote(self.file_system_name))}/{quote(unquote(self.path_name))}{self._query_str}', **kwargs)
         return new_directory_client
 
+    @distributed_trace
     def create_sub_directory(self, sub_directory,  # type: Union[DirectoryProperties, str]
                              metadata=None,  # type: Optional[Dict[str, str]]
                              **kwargs):
@@ -372,6 +428,23 @@ class DataLakeDirectoryClient(PathClient):
             For example, if p is 0777 and u is 0057, then the resulting permission is 0720.
             The default permission is 0777 for a directory and 0666 for a file. The default umask is 0027.
             The umask must be specified in 4-digit octal notation (e.g. 0766).
+        :keyword str owner:
+            The owner of the file or directory.
+        :keyword str group:
+            The owning group of the file or directory.
+        :keyword str acl:
+            Sets POSIX access control rights on files and directories. The value is a
+            comma-separated list of access control entries. Each access control entry (ACE) consists of a
+            scope, a type, a user or group identifier, and permissions in the format
+            "[scope:][type]:[id]:[permissions]".
+        :keyword str lease_id:
+            Proposed lease ID, in a GUID string format. The DataLake service returns
+            400 (Invalid request) if the proposed lease ID is not in the correct format.
+        :keyword int lease_duration:
+            Specifies the duration of the lease, in seconds, or negative one
+            (-1) for a lease that never expires. A non-infinite lease can be
+            between 15 and 60 seconds. A lease duration cannot be changed
+            using renew or change.
         :keyword str permissions:
             Optional and only valid if Hierarchical Namespace
             is enabled for the account. Sets POSIX access permissions for the file
@@ -396,14 +469,22 @@ class DataLakeDirectoryClient(PathClient):
             and act according to the condition specified by the `match_condition` parameter.
         :keyword ~azure.core.MatchConditions match_condition:
             The match condition to use upon the etag.
+        :keyword ~azure.storage.filedatalake.CustomerProvidedEncryptionKey cpk:
+            Encrypts the data on the service-side with the given key.
+            Use of customer-provided keys must be done over HTTPS.
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-blob-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-datalake
+            #other-client--per-operation-configuration>`_.
         :return: DataLakeDirectoryClient for the subdirectory.
         """
         subdir = self.get_sub_directory_client(sub_directory)
         subdir.create_directory(metadata=metadata, **kwargs)
         return subdir
 
+    @distributed_trace
     def delete_sub_directory(self, sub_directory,  # type: Union[DirectoryProperties, str]
                              **kwargs):
         # type: (...) -> DataLakeDirectoryClient
@@ -436,13 +517,18 @@ class DataLakeDirectoryClient(PathClient):
         :keyword ~azure.core.MatchConditions match_condition:
             The match condition to use upon the etag.
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-blob-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-datalake
+            #other-client--per-operation-configuration>`_.
         :return: DataLakeDirectoryClient for the subdirectory
         """
         subdir = self.get_sub_directory_client(sub_directory)
         subdir.delete_directory(**kwargs)
         return subdir
 
+    @distributed_trace
     def create_file(self, file,  # type: Union[FileProperties, str]
                     **kwargs):
         # type: (...) -> DataLakeFileClient
@@ -470,6 +556,31 @@ class DataLakeDirectoryClient(PathClient):
             For example, if p is 0777 and u is 0057, then the resulting permission is 0720.
             The default permission is 0777 for a directory and 0666 for a file. The default umask is 0027.
             The umask must be specified in 4-digit octal notation (e.g. 0766).
+        :keyword str owner:
+            The owner of the file or directory.
+        :keyword str group:
+            The owning group of the file or directory.
+        :keyword str acl:
+            Sets POSIX access control rights on files and directories. The value is a
+            comma-separated list of access control entries. Each access control entry (ACE) consists of a
+            scope, a type, a user or group identifier, and permissions in the format
+            "[scope:][type]:[id]:[permissions]".
+        :keyword str lease_id:
+            Proposed lease ID, in a GUID string format. The DataLake service returns
+            400 (Invalid request) if the proposed lease ID is not in the correct format.
+        :keyword int lease_duration:
+            Specifies the duration of the lease, in seconds, or negative one
+            (-1) for a lease that never expires. A non-infinite lease can be
+            between 15 and 60 seconds. A lease duration cannot be changed
+            using renew or change.
+        :keyword expires_on:
+            The time to set the file to expiry.
+            If the type of expires_on is an int, expiration time will be set
+            as the number of milliseconds elapsed from creation time.
+            If the type of expires_on is datetime, expiration time will be set
+            absolute to the time provided. If no time zone info is provided, this
+            will be interpreted as UTC.
+        :paramtype expires_on: datetime or int
         :keyword str permissions:
             Optional and only valid if Hierarchical Namespace
             is enabled for the account. Sets POSIX access permissions for the file
@@ -494,8 +605,15 @@ class DataLakeDirectoryClient(PathClient):
             and act according to the condition specified by the `match_condition` parameter.
         :keyword ~azure.core.MatchConditions match_condition:
             The match condition to use upon the etag.
+        :keyword ~azure.storage.filedatalake.CustomerProvidedEncryptionKey cpk:
+            Encrypts the data on the service-side with the given key.
+            Use of customer-provided keys must be done over HTTPS.
         :keyword int timeout:
-            The timeout parameter is expressed in seconds.
+            Sets the server-side timeout for the operation in seconds. For more details see
+            https://learn.microsoft.com/rest/api/storageservices/setting-timeouts-for-blob-service-operations.
+            This value is not tracked or validated on the client. To configure client-side network timesouts
+            see `here <https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/storage/azure-storage-file-datalake
+            #other-client--per-operation-configuration>`_.
         :return: DataLakeFileClient
         """
         file_client = self.get_file_client(file)
@@ -527,10 +645,8 @@ class DataLakeDirectoryClient(PathClient):
         )
         return DataLakeFileClient(
             self.url, self.file_system_name, file_path=file_path, credential=self._raw_credential,
-            _hosts=self._hosts, _configuration=self._config, _pipeline=self._pipeline,
-            require_encryption=self.require_encryption,
-            key_encryption_key=self.key_encryption_key,
-            key_resolver_function=self.key_resolver_function)
+            api_version=self.api_version,
+            _hosts=self._hosts, _configuration=self._config, _pipeline=_pipeline)
 
     def get_sub_directory_client(self, sub_directory  # type: Union[DirectoryProperties, str]
                                  ):
@@ -557,7 +673,5 @@ class DataLakeDirectoryClient(PathClient):
         )
         return DataLakeDirectoryClient(
             self.url, self.file_system_name, directory_name=subdir_path, credential=self._raw_credential,
-            _hosts=self._hosts, _configuration=self._config, _pipeline=self._pipeline,
-            require_encryption=self.require_encryption,
-            key_encryption_key=self.key_encryption_key,
-            key_resolver_function=self.key_resolver_function)
+            api_version=self.api_version,
+            _hosts=self._hosts, _configuration=self._config, _pipeline=_pipeline)

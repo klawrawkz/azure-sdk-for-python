@@ -1,4 +1,5 @@
 # coding=utf-8
+# pylint: disable=too-many-lines
 # --------------------------------------------------------------------------
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
@@ -6,27 +7,28 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, TYPE_CHECKING, Union
 
-from azure.core.exceptions import HttpResponseError
-import msrest.serialization
+from ... import _serialization
 
-from ._text_analytics_client_enums import *
+if TYPE_CHECKING:
+    # pylint: disable=unused-import,ungrouped-imports
+    from .. import models as _models
 
 
-class DetectedLanguage(msrest.serialization.Model):
+class DetectedLanguage(_serialization.Model):
     """DetectedLanguage.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param name: Required. Long name of a detected language (e.g. English, French).
-    :type name: str
-    :param iso6391_name: Required. A two letter representation of the detected language according
-     to the ISO 639-1 standard (e.g. en, fr).
-    :type iso6391_name: str
-    :param confidence_score: Required. A confidence score between 0 and 1. Scores close to 1
-     indicate 100% certainty that the identified language is true.
-    :type confidence_score: float
+    :ivar name: Long name of a detected language (e.g. English, French). Required.
+    :vartype name: str
+    :ivar iso6391_name: A two letter representation of the detected language according to the ISO
+     639-1 standard (e.g. en, fr). Required.
+    :vartype iso6391_name: str
+    :ivar confidence_score: A confidence score between 0 and 1. Scores close to 1 indicate 100%
+     certainty that the identified language is true. Required.
+    :vartype confidence_score: float
     """
 
     _validation = {
@@ -36,9 +38,9 @@ class DetectedLanguage(msrest.serialization.Model):
     }
 
     _attribute_map = {
-        'name': {'key': 'name', 'type': 'str'},
-        'iso6391_name': {'key': 'iso6391Name', 'type': 'str'},
-        'confidence_score': {'key': 'confidenceScore', 'type': 'float'},
+        "name": {"key": "name", "type": "str"},
+        "iso6391_name": {"key": "iso6391Name", "type": "str"},
+        "confidence_score": {"key": "confidenceScore", "type": "float"},
     }
 
     def __init__(
@@ -49,26 +51,36 @@ class DetectedLanguage(msrest.serialization.Model):
         confidence_score: float,
         **kwargs
     ):
-        super(DetectedLanguage, self).__init__(**kwargs)
+        """
+        :keyword name: Long name of a detected language (e.g. English, French). Required.
+        :paramtype name: str
+        :keyword iso6391_name: A two letter representation of the detected language according to the
+         ISO 639-1 standard (e.g. en, fr). Required.
+        :paramtype iso6391_name: str
+        :keyword confidence_score: A confidence score between 0 and 1. Scores close to 1 indicate 100%
+         certainty that the identified language is true. Required.
+        :paramtype confidence_score: float
+        """
+        super().__init__(**kwargs)
         self.name = name
         self.iso6391_name = iso6391_name
         self.confidence_score = confidence_score
 
 
-class DocumentEntities(msrest.serialization.Model):
+class DocumentEntities(_serialization.Model):
     """DocumentEntities.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param id: Required. Unique, non-empty document identifier.
-    :type id: str
-    :param entities: Required. Recognized entities in the document.
-    :type entities: list[~azure.ai.textanalytics.v3_0.models.Entity]
-    :param warnings: Required. Warnings encountered while processing document.
-    :type warnings: list[~azure.ai.textanalytics.v3_0.models.TextAnalyticsWarning]
-    :param statistics: if showStats=true was specified in the request this field will contain
+    :ivar id: Unique, non-empty document identifier. Required.
+    :vartype id: str
+    :ivar entities: Recognized entities in the document. Required.
+    :vartype entities: list[~azure.ai.textanalytics.v3_0.models.Entity]
+    :ivar warnings: Warnings encountered while processing document. Required.
+    :vartype warnings: list[~azure.ai.textanalytics.v3_0.models.TextAnalyticsWarning]
+    :ivar statistics: if showStats=true was specified in the request this field will contain
      information about the document payload.
-    :type statistics: ~azure.ai.textanalytics.v3_0.models.DocumentStatistics
+    :vartype statistics: ~azure.ai.textanalytics.v3_0.models.DocumentStatistics
     """
 
     _validation = {
@@ -78,37 +90,48 @@ class DocumentEntities(msrest.serialization.Model):
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'entities': {'key': 'entities', 'type': '[Entity]'},
-        'warnings': {'key': 'warnings', 'type': '[TextAnalyticsWarning]'},
-        'statistics': {'key': 'statistics', 'type': 'DocumentStatistics'},
+        "id": {"key": "id", "type": "str"},
+        "entities": {"key": "entities", "type": "[Entity]"},
+        "warnings": {"key": "warnings", "type": "[TextAnalyticsWarning]"},
+        "statistics": {"key": "statistics", "type": "DocumentStatistics"},
     }
 
     def __init__(
         self,
         *,
-        id: str,
-        entities: List["Entity"],
-        warnings: List["TextAnalyticsWarning"],
-        statistics: Optional["DocumentStatistics"] = None,
+        id: str,  # pylint: disable=redefined-builtin
+        entities: List["_models.Entity"],
+        warnings: List["_models.TextAnalyticsWarning"],
+        statistics: Optional["_models.DocumentStatistics"] = None,
         **kwargs
     ):
-        super(DocumentEntities, self).__init__(**kwargs)
+        """
+        :keyword id: Unique, non-empty document identifier. Required.
+        :paramtype id: str
+        :keyword entities: Recognized entities in the document. Required.
+        :paramtype entities: list[~azure.ai.textanalytics.v3_0.models.Entity]
+        :keyword warnings: Warnings encountered while processing document. Required.
+        :paramtype warnings: list[~azure.ai.textanalytics.v3_0.models.TextAnalyticsWarning]
+        :keyword statistics: if showStats=true was specified in the request this field will contain
+         information about the document payload.
+        :paramtype statistics: ~azure.ai.textanalytics.v3_0.models.DocumentStatistics
+        """
+        super().__init__(**kwargs)
         self.id = id
         self.entities = entities
         self.warnings = warnings
         self.statistics = statistics
 
 
-class DocumentError(msrest.serialization.Model):
+class DocumentError(_serialization.Model):
     """DocumentError.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param id: Required. Document Id.
-    :type id: str
-    :param error: Required. Document Error.
-    :type error: ~azure.ai.textanalytics.v3_0.models.TextAnalyticsError
+    :ivar id: Document Id. Required.
+    :vartype id: str
+    :ivar error: Document Error. Required.
+    :vartype error: ~azure.ai.textanalytics.v3_0.models.TextAnalyticsError
     """
 
     _validation = {
@@ -117,37 +140,43 @@ class DocumentError(msrest.serialization.Model):
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'error': {'key': 'error', 'type': 'TextAnalyticsError'},
+        "id": {"key": "id", "type": "str"},
+        "error": {"key": "error", "type": "TextAnalyticsError"},
     }
 
     def __init__(
         self,
         *,
-        id: str,
-        error: "TextAnalyticsError",
+        id: str,  # pylint: disable=redefined-builtin
+        error: "_models.TextAnalyticsError",
         **kwargs
     ):
-        super(DocumentError, self).__init__(**kwargs)
+        """
+        :keyword id: Document Id. Required.
+        :paramtype id: str
+        :keyword error: Document Error. Required.
+        :paramtype error: ~azure.ai.textanalytics.v3_0.models.TextAnalyticsError
+        """
+        super().__init__(**kwargs)
         self.id = id
         self.error = error
 
 
-class DocumentKeyPhrases(msrest.serialization.Model):
+class DocumentKeyPhrases(_serialization.Model):
     """DocumentKeyPhrases.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param id: Required. Unique, non-empty document identifier.
-    :type id: str
-    :param key_phrases: Required. A list of representative words or phrases. The number of key
-     phrases returned is proportional to the number of words in the input document.
-    :type key_phrases: list[str]
-    :param warnings: Required. Warnings encountered while processing document.
-    :type warnings: list[~azure.ai.textanalytics.v3_0.models.TextAnalyticsWarning]
-    :param statistics: if showStats=true was specified in the request this field will contain
+    :ivar id: Unique, non-empty document identifier. Required.
+    :vartype id: str
+    :ivar key_phrases: A list of representative words or phrases. The number of key phrases
+     returned is proportional to the number of words in the input document. Required.
+    :vartype key_phrases: list[str]
+    :ivar warnings: Warnings encountered while processing document. Required.
+    :vartype warnings: list[~azure.ai.textanalytics.v3_0.models.TextAnalyticsWarning]
+    :ivar statistics: if showStats=true was specified in the request this field will contain
      information about the document payload.
-    :type statistics: ~azure.ai.textanalytics.v3_0.models.DocumentStatistics
+    :vartype statistics: ~azure.ai.textanalytics.v3_0.models.DocumentStatistics
     """
 
     _validation = {
@@ -157,42 +186,54 @@ class DocumentKeyPhrases(msrest.serialization.Model):
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'key_phrases': {'key': 'keyPhrases', 'type': '[str]'},
-        'warnings': {'key': 'warnings', 'type': '[TextAnalyticsWarning]'},
-        'statistics': {'key': 'statistics', 'type': 'DocumentStatistics'},
+        "id": {"key": "id", "type": "str"},
+        "key_phrases": {"key": "keyPhrases", "type": "[str]"},
+        "warnings": {"key": "warnings", "type": "[TextAnalyticsWarning]"},
+        "statistics": {"key": "statistics", "type": "DocumentStatistics"},
     }
 
     def __init__(
         self,
         *,
-        id: str,
+        id: str,  # pylint: disable=redefined-builtin
         key_phrases: List[str],
-        warnings: List["TextAnalyticsWarning"],
-        statistics: Optional["DocumentStatistics"] = None,
+        warnings: List["_models.TextAnalyticsWarning"],
+        statistics: Optional["_models.DocumentStatistics"] = None,
         **kwargs
     ):
-        super(DocumentKeyPhrases, self).__init__(**kwargs)
+        """
+        :keyword id: Unique, non-empty document identifier. Required.
+        :paramtype id: str
+        :keyword key_phrases: A list of representative words or phrases. The number of key phrases
+         returned is proportional to the number of words in the input document. Required.
+        :paramtype key_phrases: list[str]
+        :keyword warnings: Warnings encountered while processing document. Required.
+        :paramtype warnings: list[~azure.ai.textanalytics.v3_0.models.TextAnalyticsWarning]
+        :keyword statistics: if showStats=true was specified in the request this field will contain
+         information about the document payload.
+        :paramtype statistics: ~azure.ai.textanalytics.v3_0.models.DocumentStatistics
+        """
+        super().__init__(**kwargs)
         self.id = id
         self.key_phrases = key_phrases
         self.warnings = warnings
         self.statistics = statistics
 
 
-class DocumentLanguage(msrest.serialization.Model):
+class DocumentLanguage(_serialization.Model):
     """DocumentLanguage.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param id: Required. Unique, non-empty document identifier.
-    :type id: str
-    :param detected_language: Required. Detected Language.
-    :type detected_language: ~azure.ai.textanalytics.v3_0.models.DetectedLanguage
-    :param warnings: Required. Warnings encountered while processing document.
-    :type warnings: list[~azure.ai.textanalytics.v3_0.models.TextAnalyticsWarning]
-    :param statistics: if showStats=true was specified in the request this field will contain
+    :ivar id: Unique, non-empty document identifier. Required.
+    :vartype id: str
+    :ivar detected_language: Detected Language. Required.
+    :vartype detected_language: ~azure.ai.textanalytics.v3_0.models.DetectedLanguage
+    :ivar warnings: Warnings encountered while processing document. Required.
+    :vartype warnings: list[~azure.ai.textanalytics.v3_0.models.TextAnalyticsWarning]
+    :ivar statistics: if showStats=true was specified in the request this field will contain
      information about the document payload.
-    :type statistics: ~azure.ai.textanalytics.v3_0.models.DocumentStatistics
+    :vartype statistics: ~azure.ai.textanalytics.v3_0.models.DocumentStatistics
     """
 
     _validation = {
@@ -202,42 +243,53 @@ class DocumentLanguage(msrest.serialization.Model):
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'detected_language': {'key': 'detectedLanguage', 'type': 'DetectedLanguage'},
-        'warnings': {'key': 'warnings', 'type': '[TextAnalyticsWarning]'},
-        'statistics': {'key': 'statistics', 'type': 'DocumentStatistics'},
+        "id": {"key": "id", "type": "str"},
+        "detected_language": {"key": "detectedLanguage", "type": "DetectedLanguage"},
+        "warnings": {"key": "warnings", "type": "[TextAnalyticsWarning]"},
+        "statistics": {"key": "statistics", "type": "DocumentStatistics"},
     }
 
     def __init__(
         self,
         *,
-        id: str,
-        detected_language: "DetectedLanguage",
-        warnings: List["TextAnalyticsWarning"],
-        statistics: Optional["DocumentStatistics"] = None,
+        id: str,  # pylint: disable=redefined-builtin
+        detected_language: "_models.DetectedLanguage",
+        warnings: List["_models.TextAnalyticsWarning"],
+        statistics: Optional["_models.DocumentStatistics"] = None,
         **kwargs
     ):
-        super(DocumentLanguage, self).__init__(**kwargs)
+        """
+        :keyword id: Unique, non-empty document identifier. Required.
+        :paramtype id: str
+        :keyword detected_language: Detected Language. Required.
+        :paramtype detected_language: ~azure.ai.textanalytics.v3_0.models.DetectedLanguage
+        :keyword warnings: Warnings encountered while processing document. Required.
+        :paramtype warnings: list[~azure.ai.textanalytics.v3_0.models.TextAnalyticsWarning]
+        :keyword statistics: if showStats=true was specified in the request this field will contain
+         information about the document payload.
+        :paramtype statistics: ~azure.ai.textanalytics.v3_0.models.DocumentStatistics
+        """
+        super().__init__(**kwargs)
         self.id = id
         self.detected_language = detected_language
         self.warnings = warnings
         self.statistics = statistics
 
 
-class DocumentLinkedEntities(msrest.serialization.Model):
+class DocumentLinkedEntities(_serialization.Model):
     """DocumentLinkedEntities.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param id: Required. Unique, non-empty document identifier.
-    :type id: str
-    :param entities: Required. Recognized well-known entities in the document.
-    :type entities: list[~azure.ai.textanalytics.v3_0.models.LinkedEntity]
-    :param warnings: Required. Warnings encountered while processing document.
-    :type warnings: list[~azure.ai.textanalytics.v3_0.models.TextAnalyticsWarning]
-    :param statistics: if showStats=true was specified in the request this field will contain
+    :ivar id: Unique, non-empty document identifier. Required.
+    :vartype id: str
+    :ivar entities: Recognized well-known entities in the document. Required.
+    :vartype entities: list[~azure.ai.textanalytics.v3_0.models.LinkedEntity]
+    :ivar warnings: Warnings encountered while processing document. Required.
+    :vartype warnings: list[~azure.ai.textanalytics.v3_0.models.TextAnalyticsWarning]
+    :ivar statistics: if showStats=true was specified in the request this field will contain
      information about the document payload.
-    :type statistics: ~azure.ai.textanalytics.v3_0.models.DocumentStatistics
+    :vartype statistics: ~azure.ai.textanalytics.v3_0.models.DocumentStatistics
     """
 
     _validation = {
@@ -247,48 +299,60 @@ class DocumentLinkedEntities(msrest.serialization.Model):
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'entities': {'key': 'entities', 'type': '[LinkedEntity]'},
-        'warnings': {'key': 'warnings', 'type': '[TextAnalyticsWarning]'},
-        'statistics': {'key': 'statistics', 'type': 'DocumentStatistics'},
+        "id": {"key": "id", "type": "str"},
+        "entities": {"key": "entities", "type": "[LinkedEntity]"},
+        "warnings": {"key": "warnings", "type": "[TextAnalyticsWarning]"},
+        "statistics": {"key": "statistics", "type": "DocumentStatistics"},
     }
 
     def __init__(
         self,
         *,
-        id: str,
-        entities: List["LinkedEntity"],
-        warnings: List["TextAnalyticsWarning"],
-        statistics: Optional["DocumentStatistics"] = None,
+        id: str,  # pylint: disable=redefined-builtin
+        entities: List["_models.LinkedEntity"],
+        warnings: List["_models.TextAnalyticsWarning"],
+        statistics: Optional["_models.DocumentStatistics"] = None,
         **kwargs
     ):
-        super(DocumentLinkedEntities, self).__init__(**kwargs)
+        """
+        :keyword id: Unique, non-empty document identifier. Required.
+        :paramtype id: str
+        :keyword entities: Recognized well-known entities in the document. Required.
+        :paramtype entities: list[~azure.ai.textanalytics.v3_0.models.LinkedEntity]
+        :keyword warnings: Warnings encountered while processing document. Required.
+        :paramtype warnings: list[~azure.ai.textanalytics.v3_0.models.TextAnalyticsWarning]
+        :keyword statistics: if showStats=true was specified in the request this field will contain
+         information about the document payload.
+        :paramtype statistics: ~azure.ai.textanalytics.v3_0.models.DocumentStatistics
+        """
+        super().__init__(**kwargs)
         self.id = id
         self.entities = entities
         self.warnings = warnings
         self.statistics = statistics
 
 
-class DocumentSentiment(msrest.serialization.Model):
+class DocumentSentiment(_serialization.Model):
     """DocumentSentiment.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param id: Required. Unique, non-empty document identifier.
-    :type id: str
-    :param sentiment: Required. Predicted sentiment for document (Negative, Neutral, Positive, or
-     Mixed). Possible values include: "positive", "neutral", "negative", "mixed".
-    :type sentiment: str or ~azure.ai.textanalytics.v3_0.models.DocumentSentimentValue
-    :param statistics: if showStats=true was specified in the request this field will contain
+    :ivar id: Unique, non-empty document identifier. Required.
+    :vartype id: str
+    :ivar sentiment: Predicted sentiment for document (Negative, Neutral, Positive, or Mixed).
+     Required. Known values are: "positive", "neutral", "negative", and "mixed".
+    :vartype sentiment: str or ~azure.ai.textanalytics.v3_0.models.DocumentSentimentValue
+    :ivar statistics: if showStats=true was specified in the request this field will contain
      information about the document payload.
-    :type statistics: ~azure.ai.textanalytics.v3_0.models.DocumentStatistics
-    :param confidence_scores: Required. Document level sentiment confidence scores between 0 and 1
-     for each sentiment class.
-    :type confidence_scores: ~azure.ai.textanalytics.v3_0.models.SentimentConfidenceScorePerLabel
-    :param sentences: Required. Sentence level sentiment analysis.
-    :type sentences: list[~azure.ai.textanalytics.v3_0.models.SentenceSentiment]
-    :param warnings: Required. Warnings encountered while processing document.
-    :type warnings: list[~azure.ai.textanalytics.v3_0.models.TextAnalyticsWarning]
+    :vartype statistics: ~azure.ai.textanalytics.v3_0.models.DocumentStatistics
+    :ivar confidence_scores: Document level sentiment confidence scores between 0 and 1 for each
+     sentiment class. Required.
+    :vartype confidence_scores:
+     ~azure.ai.textanalytics.v3_0.models.SentimentConfidenceScorePerLabel
+    :ivar sentences: Sentence level sentiment analysis. Required.
+    :vartype sentences: list[~azure.ai.textanalytics.v3_0.models.SentenceSentiment]
+    :ivar warnings: Warnings encountered while processing document. Required.
+    :vartype warnings: list[~azure.ai.textanalytics.v3_0.models.TextAnalyticsWarning]
     """
 
     _validation = {
@@ -300,26 +364,44 @@ class DocumentSentiment(msrest.serialization.Model):
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'sentiment': {'key': 'sentiment', 'type': 'str'},
-        'statistics': {'key': 'statistics', 'type': 'DocumentStatistics'},
-        'confidence_scores': {'key': 'confidenceScores', 'type': 'SentimentConfidenceScorePerLabel'},
-        'sentences': {'key': 'sentences', 'type': '[SentenceSentiment]'},
-        'warnings': {'key': 'warnings', 'type': '[TextAnalyticsWarning]'},
+        "id": {"key": "id", "type": "str"},
+        "sentiment": {"key": "sentiment", "type": "str"},
+        "statistics": {"key": "statistics", "type": "DocumentStatistics"},
+        "confidence_scores": {"key": "confidenceScores", "type": "SentimentConfidenceScorePerLabel"},
+        "sentences": {"key": "sentences", "type": "[SentenceSentiment]"},
+        "warnings": {"key": "warnings", "type": "[TextAnalyticsWarning]"},
     }
 
     def __init__(
         self,
         *,
-        id: str,
-        sentiment: Union[str, "DocumentSentimentValue"],
-        confidence_scores: "SentimentConfidenceScorePerLabel",
-        sentences: List["SentenceSentiment"],
-        warnings: List["TextAnalyticsWarning"],
-        statistics: Optional["DocumentStatistics"] = None,
+        id: str,  # pylint: disable=redefined-builtin
+        sentiment: Union[str, "_models.DocumentSentimentValue"],
+        confidence_scores: "_models.SentimentConfidenceScorePerLabel",
+        sentences: List["_models.SentenceSentiment"],
+        warnings: List["_models.TextAnalyticsWarning"],
+        statistics: Optional["_models.DocumentStatistics"] = None,
         **kwargs
     ):
-        super(DocumentSentiment, self).__init__(**kwargs)
+        """
+        :keyword id: Unique, non-empty document identifier. Required.
+        :paramtype id: str
+        :keyword sentiment: Predicted sentiment for document (Negative, Neutral, Positive, or Mixed).
+         Required. Known values are: "positive", "neutral", "negative", and "mixed".
+        :paramtype sentiment: str or ~azure.ai.textanalytics.v3_0.models.DocumentSentimentValue
+        :keyword statistics: if showStats=true was specified in the request this field will contain
+         information about the document payload.
+        :paramtype statistics: ~azure.ai.textanalytics.v3_0.models.DocumentStatistics
+        :keyword confidence_scores: Document level sentiment confidence scores between 0 and 1 for each
+         sentiment class. Required.
+        :paramtype confidence_scores:
+         ~azure.ai.textanalytics.v3_0.models.SentimentConfidenceScorePerLabel
+        :keyword sentences: Sentence level sentiment analysis. Required.
+        :paramtype sentences: list[~azure.ai.textanalytics.v3_0.models.SentenceSentiment]
+        :keyword warnings: Warnings encountered while processing document. Required.
+        :paramtype warnings: list[~azure.ai.textanalytics.v3_0.models.TextAnalyticsWarning]
+        """
+        super().__init__(**kwargs)
         self.id = id
         self.sentiment = sentiment
         self.statistics = statistics
@@ -328,15 +410,15 @@ class DocumentSentiment(msrest.serialization.Model):
         self.warnings = warnings
 
 
-class DocumentStatistics(msrest.serialization.Model):
+class DocumentStatistics(_serialization.Model):
     """if showStats=true was specified in the request this field will contain information about the document payload.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param characters_count: Required. Number of text elements recognized in the document.
-    :type characters_count: int
-    :param transactions_count: Required. Number of transactions for the document.
-    :type transactions_count: int
+    :ivar characters_count: Number of text elements recognized in the document. Required.
+    :vartype characters_count: int
+    :ivar transactions_count: Number of transactions for the document. Required.
+    :vartype transactions_count: int
     """
 
     _validation = {
@@ -345,8 +427,8 @@ class DocumentStatistics(msrest.serialization.Model):
     }
 
     _attribute_map = {
-        'characters_count': {'key': 'charactersCount', 'type': 'int'},
-        'transactions_count': {'key': 'transactionsCount', 'type': 'int'},
+        "characters_count": {"key": "charactersCount", "type": "int"},
+        "transactions_count": {"key": "transactionsCount", "type": "int"},
     }
 
     def __init__(
@@ -356,25 +438,31 @@ class DocumentStatistics(msrest.serialization.Model):
         transactions_count: int,
         **kwargs
     ):
-        super(DocumentStatistics, self).__init__(**kwargs)
+        """
+        :keyword characters_count: Number of text elements recognized in the document. Required.
+        :paramtype characters_count: int
+        :keyword transactions_count: Number of transactions for the document. Required.
+        :paramtype transactions_count: int
+        """
+        super().__init__(**kwargs)
         self.characters_count = characters_count
         self.transactions_count = transactions_count
 
 
-class EntitiesResult(msrest.serialization.Model):
+class EntitiesResult(_serialization.Model):
     """EntitiesResult.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param documents: Required. Response by document.
-    :type documents: list[~azure.ai.textanalytics.v3_0.models.DocumentEntities]
-    :param errors: Required. Errors by document id.
-    :type errors: list[~azure.ai.textanalytics.v3_0.models.DocumentError]
-    :param statistics: if showStats=true was specified in the request this field will contain
+    :ivar documents: Response by document. Required.
+    :vartype documents: list[~azure.ai.textanalytics.v3_0.models.DocumentEntities]
+    :ivar errors: Errors by document id. Required.
+    :vartype errors: list[~azure.ai.textanalytics.v3_0.models.DocumentError]
+    :ivar statistics: if showStats=true was specified in the request this field will contain
      information about the request payload.
-    :type statistics: ~azure.ai.textanalytics.v3_0.models.RequestStatistics
-    :param model_version: Required. This field indicates which model is used for scoring.
-    :type model_version: str
+    :vartype statistics: ~azure.ai.textanalytics.v3_0.models.RequestStatistics
+    :ivar model_version: This field indicates which model is used for scoring. Required.
+    :vartype model_version: str
     """
 
     _validation = {
@@ -384,45 +472,56 @@ class EntitiesResult(msrest.serialization.Model):
     }
 
     _attribute_map = {
-        'documents': {'key': 'documents', 'type': '[DocumentEntities]'},
-        'errors': {'key': 'errors', 'type': '[DocumentError]'},
-        'statistics': {'key': 'statistics', 'type': 'RequestStatistics'},
-        'model_version': {'key': 'modelVersion', 'type': 'str'},
+        "documents": {"key": "documents", "type": "[DocumentEntities]"},
+        "errors": {"key": "errors", "type": "[DocumentError]"},
+        "statistics": {"key": "statistics", "type": "RequestStatistics"},
+        "model_version": {"key": "modelVersion", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        documents: List["DocumentEntities"],
-        errors: List["DocumentError"],
+        documents: List["_models.DocumentEntities"],
+        errors: List["_models.DocumentError"],
         model_version: str,
-        statistics: Optional["RequestStatistics"] = None,
+        statistics: Optional["_models.RequestStatistics"] = None,
         **kwargs
     ):
-        super(EntitiesResult, self).__init__(**kwargs)
+        """
+        :keyword documents: Response by document. Required.
+        :paramtype documents: list[~azure.ai.textanalytics.v3_0.models.DocumentEntities]
+        :keyword errors: Errors by document id. Required.
+        :paramtype errors: list[~azure.ai.textanalytics.v3_0.models.DocumentError]
+        :keyword statistics: if showStats=true was specified in the request this field will contain
+         information about the request payload.
+        :paramtype statistics: ~azure.ai.textanalytics.v3_0.models.RequestStatistics
+        :keyword model_version: This field indicates which model is used for scoring. Required.
+        :paramtype model_version: str
+        """
+        super().__init__(**kwargs)
         self.documents = documents
         self.errors = errors
         self.statistics = statistics
         self.model_version = model_version
 
 
-class Entity(msrest.serialization.Model):
+class Entity(_serialization.Model):
     """Entity.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param text: Required. Entity text as appears in the request.
-    :type text: str
-    :param category: Required. Entity type, such as Person/Location/Org/SSN etc.
-    :type category: str
-    :param subcategory: Entity sub type, such as Age/Year/TimeRange etc.
-    :type subcategory: str
-    :param offset: Required. Start position (in Unicode characters) for the entity text.
-    :type offset: int
-    :param length: Required. Length (in Unicode characters) for the entity text.
-    :type length: int
-    :param confidence_score: Required. Confidence score between 0 and 1 of the extracted entity.
-    :type confidence_score: float
+    :ivar text: Entity text as appears in the request. Required.
+    :vartype text: str
+    :ivar category: Entity type, such as Person/Location/Org/SSN etc. Required.
+    :vartype category: str
+    :ivar subcategory: Entity sub type, such as Age/Year/TimeRange etc.
+    :vartype subcategory: str
+    :ivar offset: Start position (in Unicode characters) for the entity text. Required.
+    :vartype offset: int
+    :ivar length: Length (in Unicode characters) for the entity text. Required.
+    :vartype length: int
+    :ivar confidence_score: Confidence score between 0 and 1 of the extracted entity. Required.
+    :vartype confidence_score: float
     """
 
     _validation = {
@@ -434,12 +533,12 @@ class Entity(msrest.serialization.Model):
     }
 
     _attribute_map = {
-        'text': {'key': 'text', 'type': 'str'},
-        'category': {'key': 'category', 'type': 'str'},
-        'subcategory': {'key': 'subcategory', 'type': 'str'},
-        'offset': {'key': 'offset', 'type': 'int'},
-        'length': {'key': 'length', 'type': 'int'},
-        'confidence_score': {'key': 'confidenceScore', 'type': 'float'},
+        "text": {"key": "text", "type": "str"},
+        "category": {"key": "category", "type": "str"},
+        "subcategory": {"key": "subcategory", "type": "str"},
+        "offset": {"key": "offset", "type": "int"},
+        "length": {"key": "length", "type": "int"},
+        "confidence_score": {"key": "confidenceScore", "type": "float"},
     }
 
     def __init__(
@@ -453,7 +552,21 @@ class Entity(msrest.serialization.Model):
         subcategory: Optional[str] = None,
         **kwargs
     ):
-        super(Entity, self).__init__(**kwargs)
+        """
+        :keyword text: Entity text as appears in the request. Required.
+        :paramtype text: str
+        :keyword category: Entity type, such as Person/Location/Org/SSN etc. Required.
+        :paramtype category: str
+        :keyword subcategory: Entity sub type, such as Age/Year/TimeRange etc.
+        :paramtype subcategory: str
+        :keyword offset: Start position (in Unicode characters) for the entity text. Required.
+        :paramtype offset: int
+        :keyword length: Length (in Unicode characters) for the entity text. Required.
+        :paramtype length: int
+        :keyword confidence_score: Confidence score between 0 and 1 of the extracted entity. Required.
+        :paramtype confidence_score: float
+        """
+        super().__init__(**kwargs)
         self.text = text
         self.category = category
         self.subcategory = subcategory
@@ -462,20 +575,20 @@ class Entity(msrest.serialization.Model):
         self.confidence_score = confidence_score
 
 
-class EntityLinkingResult(msrest.serialization.Model):
+class EntityLinkingResult(_serialization.Model):
     """EntityLinkingResult.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param documents: Required. Response by document.
-    :type documents: list[~azure.ai.textanalytics.v3_0.models.DocumentLinkedEntities]
-    :param errors: Required. Errors by document id.
-    :type errors: list[~azure.ai.textanalytics.v3_0.models.DocumentError]
-    :param statistics: if showStats=true was specified in the request this field will contain
+    :ivar documents: Response by document. Required.
+    :vartype documents: list[~azure.ai.textanalytics.v3_0.models.DocumentLinkedEntities]
+    :ivar errors: Errors by document id. Required.
+    :vartype errors: list[~azure.ai.textanalytics.v3_0.models.DocumentError]
+    :ivar statistics: if showStats=true was specified in the request this field will contain
      information about the request payload.
-    :type statistics: ~azure.ai.textanalytics.v3_0.models.RequestStatistics
-    :param model_version: Required. This field indicates which model is used for scoring.
-    :type model_version: str
+    :vartype statistics: ~azure.ai.textanalytics.v3_0.models.RequestStatistics
+    :ivar model_version: This field indicates which model is used for scoring. Required.
+    :vartype model_version: str
     """
 
     _validation = {
@@ -485,35 +598,46 @@ class EntityLinkingResult(msrest.serialization.Model):
     }
 
     _attribute_map = {
-        'documents': {'key': 'documents', 'type': '[DocumentLinkedEntities]'},
-        'errors': {'key': 'errors', 'type': '[DocumentError]'},
-        'statistics': {'key': 'statistics', 'type': 'RequestStatistics'},
-        'model_version': {'key': 'modelVersion', 'type': 'str'},
+        "documents": {"key": "documents", "type": "[DocumentLinkedEntities]"},
+        "errors": {"key": "errors", "type": "[DocumentError]"},
+        "statistics": {"key": "statistics", "type": "RequestStatistics"},
+        "model_version": {"key": "modelVersion", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        documents: List["DocumentLinkedEntities"],
-        errors: List["DocumentError"],
+        documents: List["_models.DocumentLinkedEntities"],
+        errors: List["_models.DocumentError"],
         model_version: str,
-        statistics: Optional["RequestStatistics"] = None,
+        statistics: Optional["_models.RequestStatistics"] = None,
         **kwargs
     ):
-        super(EntityLinkingResult, self).__init__(**kwargs)
+        """
+        :keyword documents: Response by document. Required.
+        :paramtype documents: list[~azure.ai.textanalytics.v3_0.models.DocumentLinkedEntities]
+        :keyword errors: Errors by document id. Required.
+        :paramtype errors: list[~azure.ai.textanalytics.v3_0.models.DocumentError]
+        :keyword statistics: if showStats=true was specified in the request this field will contain
+         information about the request payload.
+        :paramtype statistics: ~azure.ai.textanalytics.v3_0.models.RequestStatistics
+        :keyword model_version: This field indicates which model is used for scoring. Required.
+        :paramtype model_version: str
+        """
+        super().__init__(**kwargs)
         self.documents = documents
         self.errors = errors
         self.statistics = statistics
         self.model_version = model_version
 
 
-class ErrorResponse(msrest.serialization.Model):
+class ErrorResponse(_serialization.Model):
     """ErrorResponse.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param error: Required. Document Error.
-    :type error: ~azure.ai.textanalytics.v3_0.models.TextAnalyticsError
+    :ivar error: Document Error. Required.
+    :vartype error: ~azure.ai.textanalytics.v3_0.models.TextAnalyticsError
     """
 
     _validation = {
@@ -521,37 +645,41 @@ class ErrorResponse(msrest.serialization.Model):
     }
 
     _attribute_map = {
-        'error': {'key': 'error', 'type': 'TextAnalyticsError'},
+        "error": {"key": "error", "type": "TextAnalyticsError"},
     }
 
     def __init__(
         self,
         *,
-        error: "TextAnalyticsError",
+        error: "_models.TextAnalyticsError",
         **kwargs
     ):
-        super(ErrorResponse, self).__init__(**kwargs)
+        """
+        :keyword error: Document Error. Required.
+        :paramtype error: ~azure.ai.textanalytics.v3_0.models.TextAnalyticsError
+        """
+        super().__init__(**kwargs)
         self.error = error
 
 
-class InnerError(msrest.serialization.Model):
+class InnerError(_serialization.Model):
     """InnerError.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param code: Required. Error code. Possible values include: "invalidParameterValue",
+    :ivar code: Error code. Required. Known values are: "invalidParameterValue",
      "invalidRequestBodyFormat", "emptyRequest", "missingInputRecords", "invalidDocument",
-     "modelVersionIncorrect", "invalidDocumentBatch", "unsupportedLanguageCode",
+     "modelVersionIncorrect", "invalidDocumentBatch", "unsupportedLanguageCode", and
      "invalidCountryHint".
-    :type code: str or ~azure.ai.textanalytics.v3_0.models.InnerErrorCodeValue
-    :param message: Required. Error message.
-    :type message: str
-    :param details: Error details.
-    :type details: dict[str, str]
-    :param target: Error target.
-    :type target: str
-    :param innererror: Inner error contains more specific information.
-    :type innererror: ~azure.ai.textanalytics.v3_0.models.InnerError
+    :vartype code: str or ~azure.ai.textanalytics.v3_0.models.InnerErrorCodeValue
+    :ivar message: Error message. Required.
+    :vartype message: str
+    :ivar details: Error details.
+    :vartype details: dict[str, str]
+    :ivar target: Error target.
+    :vartype target: str
+    :ivar innererror: Inner error contains more specific information.
+    :vartype innererror: ~azure.ai.textanalytics.v3_0.models.InnerError
     """
 
     _validation = {
@@ -560,24 +688,39 @@ class InnerError(msrest.serialization.Model):
     }
 
     _attribute_map = {
-        'code': {'key': 'code', 'type': 'str'},
-        'message': {'key': 'message', 'type': 'str'},
-        'details': {'key': 'details', 'type': '{str}'},
-        'target': {'key': 'target', 'type': 'str'},
-        'innererror': {'key': 'innererror', 'type': 'InnerError'},
+        "code": {"key": "code", "type": "str"},
+        "message": {"key": "message", "type": "str"},
+        "details": {"key": "details", "type": "{str}"},
+        "target": {"key": "target", "type": "str"},
+        "innererror": {"key": "innererror", "type": "InnerError"},
     }
 
     def __init__(
         self,
         *,
-        code: Union[str, "InnerErrorCodeValue"],
+        code: Union[str, "_models.InnerErrorCodeValue"],
         message: str,
         details: Optional[Dict[str, str]] = None,
         target: Optional[str] = None,
-        innererror: Optional["InnerError"] = None,
+        innererror: Optional["_models.InnerError"] = None,
         **kwargs
     ):
-        super(InnerError, self).__init__(**kwargs)
+        """
+        :keyword code: Error code. Required. Known values are: "invalidParameterValue",
+         "invalidRequestBodyFormat", "emptyRequest", "missingInputRecords", "invalidDocument",
+         "modelVersionIncorrect", "invalidDocumentBatch", "unsupportedLanguageCode", and
+         "invalidCountryHint".
+        :paramtype code: str or ~azure.ai.textanalytics.v3_0.models.InnerErrorCodeValue
+        :keyword message: Error message. Required.
+        :paramtype message: str
+        :keyword details: Error details.
+        :paramtype details: dict[str, str]
+        :keyword target: Error target.
+        :paramtype target: str
+        :keyword innererror: Inner error contains more specific information.
+        :paramtype innererror: ~azure.ai.textanalytics.v3_0.models.InnerError
+        """
+        super().__init__(**kwargs)
         self.code = code
         self.message = message
         self.details = details
@@ -585,20 +728,20 @@ class InnerError(msrest.serialization.Model):
         self.innererror = innererror
 
 
-class KeyPhraseResult(msrest.serialization.Model):
+class KeyPhraseResult(_serialization.Model):
     """KeyPhraseResult.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param documents: Required. Response by document.
-    :type documents: list[~azure.ai.textanalytics.v3_0.models.DocumentKeyPhrases]
-    :param errors: Required. Errors by document id.
-    :type errors: list[~azure.ai.textanalytics.v3_0.models.DocumentError]
-    :param statistics: if showStats=true was specified in the request this field will contain
+    :ivar documents: Response by document. Required.
+    :vartype documents: list[~azure.ai.textanalytics.v3_0.models.DocumentKeyPhrases]
+    :ivar errors: Errors by document id. Required.
+    :vartype errors: list[~azure.ai.textanalytics.v3_0.models.DocumentError]
+    :ivar statistics: if showStats=true was specified in the request this field will contain
      information about the request payload.
-    :type statistics: ~azure.ai.textanalytics.v3_0.models.RequestStatistics
-    :param model_version: Required. This field indicates which model is used for scoring.
-    :type model_version: str
+    :vartype statistics: ~azure.ai.textanalytics.v3_0.models.RequestStatistics
+    :ivar model_version: This field indicates which model is used for scoring. Required.
+    :vartype model_version: str
     """
 
     _validation = {
@@ -608,35 +751,46 @@ class KeyPhraseResult(msrest.serialization.Model):
     }
 
     _attribute_map = {
-        'documents': {'key': 'documents', 'type': '[DocumentKeyPhrases]'},
-        'errors': {'key': 'errors', 'type': '[DocumentError]'},
-        'statistics': {'key': 'statistics', 'type': 'RequestStatistics'},
-        'model_version': {'key': 'modelVersion', 'type': 'str'},
+        "documents": {"key": "documents", "type": "[DocumentKeyPhrases]"},
+        "errors": {"key": "errors", "type": "[DocumentError]"},
+        "statistics": {"key": "statistics", "type": "RequestStatistics"},
+        "model_version": {"key": "modelVersion", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        documents: List["DocumentKeyPhrases"],
-        errors: List["DocumentError"],
+        documents: List["_models.DocumentKeyPhrases"],
+        errors: List["_models.DocumentError"],
         model_version: str,
-        statistics: Optional["RequestStatistics"] = None,
+        statistics: Optional["_models.RequestStatistics"] = None,
         **kwargs
     ):
-        super(KeyPhraseResult, self).__init__(**kwargs)
+        """
+        :keyword documents: Response by document. Required.
+        :paramtype documents: list[~azure.ai.textanalytics.v3_0.models.DocumentKeyPhrases]
+        :keyword errors: Errors by document id. Required.
+        :paramtype errors: list[~azure.ai.textanalytics.v3_0.models.DocumentError]
+        :keyword statistics: if showStats=true was specified in the request this field will contain
+         information about the request payload.
+        :paramtype statistics: ~azure.ai.textanalytics.v3_0.models.RequestStatistics
+        :keyword model_version: This field indicates which model is used for scoring. Required.
+        :paramtype model_version: str
+        """
+        super().__init__(**kwargs)
         self.documents = documents
         self.errors = errors
         self.statistics = statistics
         self.model_version = model_version
 
 
-class LanguageBatchInput(msrest.serialization.Model):
+class LanguageBatchInput(_serialization.Model):
     """LanguageBatchInput.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param documents: Required.
-    :type documents: list[~azure.ai.textanalytics.v3_0.models.LanguageInput]
+    :ivar documents: Required.
+    :vartype documents: list[~azure.ai.textanalytics.v3_0.models.LanguageInput]
     """
 
     _validation = {
@@ -644,30 +798,34 @@ class LanguageBatchInput(msrest.serialization.Model):
     }
 
     _attribute_map = {
-        'documents': {'key': 'documents', 'type': '[LanguageInput]'},
+        "documents": {"key": "documents", "type": "[LanguageInput]"},
     }
 
     def __init__(
         self,
         *,
-        documents: List["LanguageInput"],
+        documents: List["_models.LanguageInput"],
         **kwargs
     ):
-        super(LanguageBatchInput, self).__init__(**kwargs)
+        """
+        :keyword documents: Required.
+        :paramtype documents: list[~azure.ai.textanalytics.v3_0.models.LanguageInput]
+        """
+        super().__init__(**kwargs)
         self.documents = documents
 
 
-class LanguageInput(msrest.serialization.Model):
+class LanguageInput(_serialization.Model):
     """LanguageInput.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param id: Required. Unique, non-empty document identifier.
-    :type id: str
-    :param text: Required.
-    :type text: str
-    :param country_hint:
-    :type country_hint: str
+    :ivar id: Unique, non-empty document identifier. Required.
+    :vartype id: str
+    :ivar text: Required.
+    :vartype text: str
+    :ivar country_hint:
+    :vartype country_hint: str
     """
 
     _validation = {
@@ -676,39 +834,47 @@ class LanguageInput(msrest.serialization.Model):
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'text': {'key': 'text', 'type': 'str'},
-        'country_hint': {'key': 'countryHint', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "text": {"key": "text", "type": "str"},
+        "country_hint": {"key": "countryHint", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        id: str,
+        id: str,  # pylint: disable=redefined-builtin
         text: str,
         country_hint: Optional[str] = None,
         **kwargs
     ):
-        super(LanguageInput, self).__init__(**kwargs)
+        """
+        :keyword id: Unique, non-empty document identifier. Required.
+        :paramtype id: str
+        :keyword text: Required.
+        :paramtype text: str
+        :keyword country_hint:
+        :paramtype country_hint: str
+        """
+        super().__init__(**kwargs)
         self.id = id
         self.text = text
         self.country_hint = country_hint
 
 
-class LanguageResult(msrest.serialization.Model):
+class LanguageResult(_serialization.Model):
     """LanguageResult.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param documents: Required. Response by document.
-    :type documents: list[~azure.ai.textanalytics.v3_0.models.DocumentLanguage]
-    :param errors: Required. Errors by document id.
-    :type errors: list[~azure.ai.textanalytics.v3_0.models.DocumentError]
-    :param statistics: if showStats=true was specified in the request this field will contain
+    :ivar documents: Response by document. Required.
+    :vartype documents: list[~azure.ai.textanalytics.v3_0.models.DocumentLanguage]
+    :ivar errors: Errors by document id. Required.
+    :vartype errors: list[~azure.ai.textanalytics.v3_0.models.DocumentError]
+    :ivar statistics: if showStats=true was specified in the request this field will contain
      information about the request payload.
-    :type statistics: ~azure.ai.textanalytics.v3_0.models.RequestStatistics
-    :param model_version: Required. This field indicates which model is used for scoring.
-    :type model_version: str
+    :vartype statistics: ~azure.ai.textanalytics.v3_0.models.RequestStatistics
+    :ivar model_version: This field indicates which model is used for scoring. Required.
+    :vartype model_version: str
     """
 
     _validation = {
@@ -718,46 +884,56 @@ class LanguageResult(msrest.serialization.Model):
     }
 
     _attribute_map = {
-        'documents': {'key': 'documents', 'type': '[DocumentLanguage]'},
-        'errors': {'key': 'errors', 'type': '[DocumentError]'},
-        'statistics': {'key': 'statistics', 'type': 'RequestStatistics'},
-        'model_version': {'key': 'modelVersion', 'type': 'str'},
+        "documents": {"key": "documents", "type": "[DocumentLanguage]"},
+        "errors": {"key": "errors", "type": "[DocumentError]"},
+        "statistics": {"key": "statistics", "type": "RequestStatistics"},
+        "model_version": {"key": "modelVersion", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        documents: List["DocumentLanguage"],
-        errors: List["DocumentError"],
+        documents: List["_models.DocumentLanguage"],
+        errors: List["_models.DocumentError"],
         model_version: str,
-        statistics: Optional["RequestStatistics"] = None,
+        statistics: Optional["_models.RequestStatistics"] = None,
         **kwargs
     ):
-        super(LanguageResult, self).__init__(**kwargs)
+        """
+        :keyword documents: Response by document. Required.
+        :paramtype documents: list[~azure.ai.textanalytics.v3_0.models.DocumentLanguage]
+        :keyword errors: Errors by document id. Required.
+        :paramtype errors: list[~azure.ai.textanalytics.v3_0.models.DocumentError]
+        :keyword statistics: if showStats=true was specified in the request this field will contain
+         information about the request payload.
+        :paramtype statistics: ~azure.ai.textanalytics.v3_0.models.RequestStatistics
+        :keyword model_version: This field indicates which model is used for scoring. Required.
+        :paramtype model_version: str
+        """
+        super().__init__(**kwargs)
         self.documents = documents
         self.errors = errors
         self.statistics = statistics
         self.model_version = model_version
 
 
-class LinkedEntity(msrest.serialization.Model):
+class LinkedEntity(_serialization.Model):
     """LinkedEntity.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param name: Required. Entity Linking formal name.
-    :type name: str
-    :param matches: Required. List of instances this entity appears in the text.
-    :type matches: list[~azure.ai.textanalytics.v3_0.models.Match]
-    :param language: Required. Language used in the data source.
-    :type language: str
-    :param id: Unique identifier of the recognized entity from the data source.
-    :type id: str
-    :param url: Required. URL for the entity's page from the data source.
-    :type url: str
-    :param data_source: Required. Data source used to extract entity linking, such as Wiki/Bing
-     etc.
-    :type data_source: str
+    :ivar name: Entity Linking formal name. Required.
+    :vartype name: str
+    :ivar matches: List of instances this entity appears in the text. Required.
+    :vartype matches: list[~azure.ai.textanalytics.v3_0.models.Match]
+    :ivar language: Language used in the data source. Required.
+    :vartype language: str
+    :ivar id: Unique identifier of the recognized entity from the data source.
+    :vartype id: str
+    :ivar url: URL for the entity's page from the data source. Required.
+    :vartype url: str
+    :ivar data_source: Data source used to extract entity linking, such as Wiki/Bing etc. Required.
+    :vartype data_source: str
     """
 
     _validation = {
@@ -769,26 +945,41 @@ class LinkedEntity(msrest.serialization.Model):
     }
 
     _attribute_map = {
-        'name': {'key': 'name', 'type': 'str'},
-        'matches': {'key': 'matches', 'type': '[Match]'},
-        'language': {'key': 'language', 'type': 'str'},
-        'id': {'key': 'id', 'type': 'str'},
-        'url': {'key': 'url', 'type': 'str'},
-        'data_source': {'key': 'dataSource', 'type': 'str'},
+        "name": {"key": "name", "type": "str"},
+        "matches": {"key": "matches", "type": "[Match]"},
+        "language": {"key": "language", "type": "str"},
+        "id": {"key": "id", "type": "str"},
+        "url": {"key": "url", "type": "str"},
+        "data_source": {"key": "dataSource", "type": "str"},
     }
 
     def __init__(
         self,
         *,
         name: str,
-        matches: List["Match"],
+        matches: List["_models.Match"],
         language: str,
         url: str,
         data_source: str,
-        id: Optional[str] = None,
+        id: Optional[str] = None,  # pylint: disable=redefined-builtin
         **kwargs
     ):
-        super(LinkedEntity, self).__init__(**kwargs)
+        """
+        :keyword name: Entity Linking formal name. Required.
+        :paramtype name: str
+        :keyword matches: List of instances this entity appears in the text. Required.
+        :paramtype matches: list[~azure.ai.textanalytics.v3_0.models.Match]
+        :keyword language: Language used in the data source. Required.
+        :paramtype language: str
+        :keyword id: Unique identifier of the recognized entity from the data source.
+        :paramtype id: str
+        :keyword url: URL for the entity's page from the data source. Required.
+        :paramtype url: str
+        :keyword data_source: Data source used to extract entity linking, such as Wiki/Bing etc.
+         Required.
+        :paramtype data_source: str
+        """
+        super().__init__(**kwargs)
         self.name = name
         self.matches = matches
         self.language = language
@@ -797,20 +988,20 @@ class LinkedEntity(msrest.serialization.Model):
         self.data_source = data_source
 
 
-class Match(msrest.serialization.Model):
+class Match(_serialization.Model):
     """Match.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param confidence_score: Required. If a well-known item is recognized, a decimal number
-     denoting the confidence level between 0 and 1 will be returned.
-    :type confidence_score: float
-    :param text: Required. Entity text as appears in the request.
-    :type text: str
-    :param offset: Required. Start position (in Unicode characters) for the entity match text.
-    :type offset: int
-    :param length: Required. Length (in Unicode characters) for the entity match text.
-    :type length: int
+    :ivar confidence_score: If a well-known item is recognized, a decimal number denoting the
+     confidence level between 0 and 1 will be returned. Required.
+    :vartype confidence_score: float
+    :ivar text: Entity text as appears in the request. Required.
+    :vartype text: str
+    :ivar offset: Start position (in Unicode characters) for the entity match text. Required.
+    :vartype offset: int
+    :ivar length: Length (in Unicode characters) for the entity match text. Required.
+    :vartype length: int
     """
 
     _validation = {
@@ -821,10 +1012,10 @@ class Match(msrest.serialization.Model):
     }
 
     _attribute_map = {
-        'confidence_score': {'key': 'confidenceScore', 'type': 'float'},
-        'text': {'key': 'text', 'type': 'str'},
-        'offset': {'key': 'offset', 'type': 'int'},
-        'length': {'key': 'length', 'type': 'int'},
+        "confidence_score": {"key": "confidenceScore", "type": "float"},
+        "text": {"key": "text", "type": "str"},
+        "offset": {"key": "offset", "type": "int"},
+        "length": {"key": "length", "type": "int"},
     }
 
     def __init__(
@@ -836,20 +1027,31 @@ class Match(msrest.serialization.Model):
         length: int,
         **kwargs
     ):
-        super(Match, self).__init__(**kwargs)
+        """
+        :keyword confidence_score: If a well-known item is recognized, a decimal number denoting the
+         confidence level between 0 and 1 will be returned. Required.
+        :paramtype confidence_score: float
+        :keyword text: Entity text as appears in the request. Required.
+        :paramtype text: str
+        :keyword offset: Start position (in Unicode characters) for the entity match text. Required.
+        :paramtype offset: int
+        :keyword length: Length (in Unicode characters) for the entity match text. Required.
+        :paramtype length: int
+        """
+        super().__init__(**kwargs)
         self.confidence_score = confidence_score
         self.text = text
         self.offset = offset
         self.length = length
 
 
-class MultiLanguageBatchInput(msrest.serialization.Model):
+class MultiLanguageBatchInput(_serialization.Model):
     """Contains a set of input documents to be analyzed by the service.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param documents: Required. The set of documents to process as part of this batch.
-    :type documents: list[~azure.ai.textanalytics.v3_0.models.MultiLanguageInput]
+    :ivar documents: The set of documents to process as part of this batch. Required.
+    :vartype documents: list[~azure.ai.textanalytics.v3_0.models.MultiLanguageInput]
     """
 
     _validation = {
@@ -857,32 +1059,36 @@ class MultiLanguageBatchInput(msrest.serialization.Model):
     }
 
     _attribute_map = {
-        'documents': {'key': 'documents', 'type': '[MultiLanguageInput]'},
+        "documents": {"key": "documents", "type": "[MultiLanguageInput]"},
     }
 
     def __init__(
         self,
         *,
-        documents: List["MultiLanguageInput"],
+        documents: List["_models.MultiLanguageInput"],
         **kwargs
     ):
-        super(MultiLanguageBatchInput, self).__init__(**kwargs)
+        """
+        :keyword documents: The set of documents to process as part of this batch. Required.
+        :paramtype documents: list[~azure.ai.textanalytics.v3_0.models.MultiLanguageInput]
+        """
+        super().__init__(**kwargs)
         self.documents = documents
 
 
-class MultiLanguageInput(msrest.serialization.Model):
+class MultiLanguageInput(_serialization.Model):
     """Contains an input document to be analyzed by the service.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param id: Required. A unique, non-empty document identifier.
-    :type id: str
-    :param text: Required. The input text to process.
-    :type text: str
-    :param language: (Optional) This is the 2 letter ISO 639-1 representation of a language. For
+    :ivar id: A unique, non-empty document identifier. Required.
+    :vartype id: str
+    :ivar text: The input text to process. Required.
+    :vartype text: str
+    :ivar language: (Optional) This is the 2 letter ISO 639-1 representation of a language. For
      example, use "en" for English; "es" for Spanish etc. If not set, use "en" for English as
      default.
-    :type language: str
+    :vartype language: str
     """
 
     _validation = {
@@ -891,40 +1097,50 @@ class MultiLanguageInput(msrest.serialization.Model):
     }
 
     _attribute_map = {
-        'id': {'key': 'id', 'type': 'str'},
-        'text': {'key': 'text', 'type': 'str'},
-        'language': {'key': 'language', 'type': 'str'},
+        "id": {"key": "id", "type": "str"},
+        "text": {"key": "text", "type": "str"},
+        "language": {"key": "language", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        id: str,
+        id: str,  # pylint: disable=redefined-builtin
         text: str,
         language: Optional[str] = None,
         **kwargs
     ):
-        super(MultiLanguageInput, self).__init__(**kwargs)
+        """
+        :keyword id: A unique, non-empty document identifier. Required.
+        :paramtype id: str
+        :keyword text: The input text to process. Required.
+        :paramtype text: str
+        :keyword language: (Optional) This is the 2 letter ISO 639-1 representation of a language. For
+         example, use "en" for English; "es" for Spanish etc. If not set, use "en" for English as
+         default.
+        :paramtype language: str
+        """
+        super().__init__(**kwargs)
         self.id = id
         self.text = text
         self.language = language
 
 
-class RequestStatistics(msrest.serialization.Model):
+class RequestStatistics(_serialization.Model):
     """if showStats=true was specified in the request this field will contain information about the request payload.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param documents_count: Required. Number of documents submitted in the request.
-    :type documents_count: int
-    :param valid_documents_count: Required. Number of valid documents. This excludes empty, over-
-     size limit or non-supported languages documents.
-    :type valid_documents_count: int
-    :param erroneous_documents_count: Required. Number of invalid documents. This includes empty,
-     over-size limit or non-supported languages documents.
-    :type erroneous_documents_count: int
-    :param transactions_count: Required. Number of transactions for the request.
-    :type transactions_count: long
+    :ivar documents_count: Number of documents submitted in the request. Required.
+    :vartype documents_count: int
+    :ivar valid_documents_count: Number of valid documents. This excludes empty, over-size limit or
+     non-supported languages documents. Required.
+    :vartype valid_documents_count: int
+    :ivar erroneous_documents_count: Number of invalid documents. This includes empty, over-size
+     limit or non-supported languages documents. Required.
+    :vartype erroneous_documents_count: int
+    :ivar transactions_count: Number of transactions for the request. Required.
+    :vartype transactions_count: int
     """
 
     _validation = {
@@ -935,10 +1151,10 @@ class RequestStatistics(msrest.serialization.Model):
     }
 
     _attribute_map = {
-        'documents_count': {'key': 'documentsCount', 'type': 'int'},
-        'valid_documents_count': {'key': 'validDocumentsCount', 'type': 'int'},
-        'erroneous_documents_count': {'key': 'erroneousDocumentsCount', 'type': 'int'},
-        'transactions_count': {'key': 'transactionsCount', 'type': 'long'},
+        "documents_count": {"key": "documentsCount", "type": "int"},
+        "valid_documents_count": {"key": "validDocumentsCount", "type": "int"},
+        "erroneous_documents_count": {"key": "erroneousDocumentsCount", "type": "int"},
+        "transactions_count": {"key": "transactionsCount", "type": "int"},
     }
 
     def __init__(
@@ -950,30 +1166,43 @@ class RequestStatistics(msrest.serialization.Model):
         transactions_count: int,
         **kwargs
     ):
-        super(RequestStatistics, self).__init__(**kwargs)
+        """
+        :keyword documents_count: Number of documents submitted in the request. Required.
+        :paramtype documents_count: int
+        :keyword valid_documents_count: Number of valid documents. This excludes empty, over-size limit
+         or non-supported languages documents. Required.
+        :paramtype valid_documents_count: int
+        :keyword erroneous_documents_count: Number of invalid documents. This includes empty, over-size
+         limit or non-supported languages documents. Required.
+        :paramtype erroneous_documents_count: int
+        :keyword transactions_count: Number of transactions for the request. Required.
+        :paramtype transactions_count: int
+        """
+        super().__init__(**kwargs)
         self.documents_count = documents_count
         self.valid_documents_count = valid_documents_count
         self.erroneous_documents_count = erroneous_documents_count
         self.transactions_count = transactions_count
 
 
-class SentenceSentiment(msrest.serialization.Model):
+class SentenceSentiment(_serialization.Model):
     """SentenceSentiment.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param text: Required. The sentence text.
-    :type text: str
-    :param sentiment: Required. The predicted Sentiment for the sentence. Possible values include:
-     "positive", "neutral", "negative".
-    :type sentiment: str or ~azure.ai.textanalytics.v3_0.models.SentenceSentimentValue
-    :param confidence_scores: Required. The sentiment confidence score between 0 and 1 for the
-     sentence for all classes.
-    :type confidence_scores: ~azure.ai.textanalytics.v3_0.models.SentimentConfidenceScorePerLabel
-    :param offset: Required. The sentence offset from the start of the document.
-    :type offset: int
-    :param length: Required. The length of the sentence by Unicode standard.
-    :type length: int
+    :ivar text: The sentence text. Required.
+    :vartype text: str
+    :ivar sentiment: The predicted Sentiment for the sentence. Required. Known values are:
+     "positive", "neutral", and "negative".
+    :vartype sentiment: str or ~azure.ai.textanalytics.v3_0.models.SentenceSentimentValue
+    :ivar confidence_scores: The sentiment confidence score between 0 and 1 for the sentence for
+     all classes. Required.
+    :vartype confidence_scores:
+     ~azure.ai.textanalytics.v3_0.models.SentimentConfidenceScorePerLabel
+    :ivar offset: The sentence offset from the start of the document. Required.
+    :vartype offset: int
+    :ivar length: The length of the sentence by Unicode standard. Required.
+    :vartype length: int
     """
 
     _validation = {
@@ -985,24 +1214,39 @@ class SentenceSentiment(msrest.serialization.Model):
     }
 
     _attribute_map = {
-        'text': {'key': 'text', 'type': 'str'},
-        'sentiment': {'key': 'sentiment', 'type': 'str'},
-        'confidence_scores': {'key': 'confidenceScores', 'type': 'SentimentConfidenceScorePerLabel'},
-        'offset': {'key': 'offset', 'type': 'int'},
-        'length': {'key': 'length', 'type': 'int'},
+        "text": {"key": "text", "type": "str"},
+        "sentiment": {"key": "sentiment", "type": "str"},
+        "confidence_scores": {"key": "confidenceScores", "type": "SentimentConfidenceScorePerLabel"},
+        "offset": {"key": "offset", "type": "int"},
+        "length": {"key": "length", "type": "int"},
     }
 
     def __init__(
         self,
         *,
         text: str,
-        sentiment: Union[str, "SentenceSentimentValue"],
-        confidence_scores: "SentimentConfidenceScorePerLabel",
+        sentiment: Union[str, "_models.SentenceSentimentValue"],
+        confidence_scores: "_models.SentimentConfidenceScorePerLabel",
         offset: int,
         length: int,
         **kwargs
     ):
-        super(SentenceSentiment, self).__init__(**kwargs)
+        """
+        :keyword text: The sentence text. Required.
+        :paramtype text: str
+        :keyword sentiment: The predicted Sentiment for the sentence. Required. Known values are:
+         "positive", "neutral", and "negative".
+        :paramtype sentiment: str or ~azure.ai.textanalytics.v3_0.models.SentenceSentimentValue
+        :keyword confidence_scores: The sentiment confidence score between 0 and 1 for the sentence for
+         all classes. Required.
+        :paramtype confidence_scores:
+         ~azure.ai.textanalytics.v3_0.models.SentimentConfidenceScorePerLabel
+        :keyword offset: The sentence offset from the start of the document. Required.
+        :paramtype offset: int
+        :keyword length: The length of the sentence by Unicode standard. Required.
+        :paramtype length: int
+        """
+        super().__init__(**kwargs)
         self.text = text
         self.sentiment = sentiment
         self.confidence_scores = confidence_scores
@@ -1010,17 +1254,17 @@ class SentenceSentiment(msrest.serialization.Model):
         self.length = length
 
 
-class SentimentConfidenceScorePerLabel(msrest.serialization.Model):
+class SentimentConfidenceScorePerLabel(_serialization.Model):
     """Represents the confidence scores between 0 and 1 across all sentiment classes: positive, neutral, negative.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param positive: Required.
-    :type positive: float
-    :param neutral: Required.
-    :type neutral: float
-    :param negative: Required.
-    :type negative: float
+    :ivar positive: Required.
+    :vartype positive: float
+    :ivar neutral: Required.
+    :vartype neutral: float
+    :ivar negative: Required.
+    :vartype negative: float
     """
 
     _validation = {
@@ -1030,9 +1274,9 @@ class SentimentConfidenceScorePerLabel(msrest.serialization.Model):
     }
 
     _attribute_map = {
-        'positive': {'key': 'positive', 'type': 'float'},
-        'neutral': {'key': 'neutral', 'type': 'float'},
-        'negative': {'key': 'negative', 'type': 'float'},
+        "positive": {"key": "positive", "type": "float"},
+        "neutral": {"key": "neutral", "type": "float"},
+        "negative": {"key": "negative", "type": "float"},
     }
 
     def __init__(
@@ -1043,26 +1287,34 @@ class SentimentConfidenceScorePerLabel(msrest.serialization.Model):
         negative: float,
         **kwargs
     ):
-        super(SentimentConfidenceScorePerLabel, self).__init__(**kwargs)
+        """
+        :keyword positive: Required.
+        :paramtype positive: float
+        :keyword neutral: Required.
+        :paramtype neutral: float
+        :keyword negative: Required.
+        :paramtype negative: float
+        """
+        super().__init__(**kwargs)
         self.positive = positive
         self.neutral = neutral
         self.negative = negative
 
 
-class SentimentResponse(msrest.serialization.Model):
+class SentimentResponse(_serialization.Model):
     """SentimentResponse.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param documents: Required. Sentiment analysis per document.
-    :type documents: list[~azure.ai.textanalytics.v3_0.models.DocumentSentiment]
-    :param errors: Required. Errors by document id.
-    :type errors: list[~azure.ai.textanalytics.v3_0.models.DocumentError]
-    :param statistics: if showStats=true was specified in the request this field will contain
+    :ivar documents: Sentiment analysis per document. Required.
+    :vartype documents: list[~azure.ai.textanalytics.v3_0.models.DocumentSentiment]
+    :ivar errors: Errors by document id. Required.
+    :vartype errors: list[~azure.ai.textanalytics.v3_0.models.DocumentError]
+    :ivar statistics: if showStats=true was specified in the request this field will contain
      information about the request payload.
-    :type statistics: ~azure.ai.textanalytics.v3_0.models.RequestStatistics
-    :param model_version: Required. This field indicates which model is used for scoring.
-    :type model_version: str
+    :vartype statistics: ~azure.ai.textanalytics.v3_0.models.RequestStatistics
+    :ivar model_version: This field indicates which model is used for scoring. Required.
+    :vartype model_version: str
     """
 
     _validation = {
@@ -1072,44 +1324,55 @@ class SentimentResponse(msrest.serialization.Model):
     }
 
     _attribute_map = {
-        'documents': {'key': 'documents', 'type': '[DocumentSentiment]'},
-        'errors': {'key': 'errors', 'type': '[DocumentError]'},
-        'statistics': {'key': 'statistics', 'type': 'RequestStatistics'},
-        'model_version': {'key': 'modelVersion', 'type': 'str'},
+        "documents": {"key": "documents", "type": "[DocumentSentiment]"},
+        "errors": {"key": "errors", "type": "[DocumentError]"},
+        "statistics": {"key": "statistics", "type": "RequestStatistics"},
+        "model_version": {"key": "modelVersion", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        documents: List["DocumentSentiment"],
-        errors: List["DocumentError"],
+        documents: List["_models.DocumentSentiment"],
+        errors: List["_models.DocumentError"],
         model_version: str,
-        statistics: Optional["RequestStatistics"] = None,
+        statistics: Optional["_models.RequestStatistics"] = None,
         **kwargs
     ):
-        super(SentimentResponse, self).__init__(**kwargs)
+        """
+        :keyword documents: Sentiment analysis per document. Required.
+        :paramtype documents: list[~azure.ai.textanalytics.v3_0.models.DocumentSentiment]
+        :keyword errors: Errors by document id. Required.
+        :paramtype errors: list[~azure.ai.textanalytics.v3_0.models.DocumentError]
+        :keyword statistics: if showStats=true was specified in the request this field will contain
+         information about the request payload.
+        :paramtype statistics: ~azure.ai.textanalytics.v3_0.models.RequestStatistics
+        :keyword model_version: This field indicates which model is used for scoring. Required.
+        :paramtype model_version: str
+        """
+        super().__init__(**kwargs)
         self.documents = documents
         self.errors = errors
         self.statistics = statistics
         self.model_version = model_version
 
 
-class TextAnalyticsError(msrest.serialization.Model):
+class TextAnalyticsError(_serialization.Model):
     """TextAnalyticsError.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param code: Required. Error code. Possible values include: "invalidRequest",
-     "invalidArgument", "internalServerError", "serviceUnavailable".
-    :type code: str or ~azure.ai.textanalytics.v3_0.models.ErrorCodeValue
-    :param message: Required. Error message.
-    :type message: str
-    :param target: Error target.
-    :type target: str
-    :param innererror: Inner error contains more specific information.
-    :type innererror: ~azure.ai.textanalytics.v3_0.models.InnerError
-    :param details: Details about specific errors that led to this reported error.
-    :type details: list[~azure.ai.textanalytics.v3_0.models.TextAnalyticsError]
+    :ivar code: Error code. Required. Known values are: "invalidRequest", "invalidArgument",
+     "internalServerError", and "serviceUnavailable".
+    :vartype code: str or ~azure.ai.textanalytics.v3_0.models.ErrorCodeValue
+    :ivar message: Error message. Required.
+    :vartype message: str
+    :ivar target: Error target.
+    :vartype target: str
+    :ivar innererror: Inner error contains more specific information.
+    :vartype innererror: ~azure.ai.textanalytics.v3_0.models.InnerError
+    :ivar details: Details about specific errors that led to this reported error.
+    :vartype details: list[~azure.ai.textanalytics.v3_0.models.TextAnalyticsError]
     """
 
     _validation = {
@@ -1118,24 +1381,37 @@ class TextAnalyticsError(msrest.serialization.Model):
     }
 
     _attribute_map = {
-        'code': {'key': 'code', 'type': 'str'},
-        'message': {'key': 'message', 'type': 'str'},
-        'target': {'key': 'target', 'type': 'str'},
-        'innererror': {'key': 'innererror', 'type': 'InnerError'},
-        'details': {'key': 'details', 'type': '[TextAnalyticsError]'},
+        "code": {"key": "code", "type": "str"},
+        "message": {"key": "message", "type": "str"},
+        "target": {"key": "target", "type": "str"},
+        "innererror": {"key": "innererror", "type": "InnerError"},
+        "details": {"key": "details", "type": "[TextAnalyticsError]"},
     }
 
     def __init__(
         self,
         *,
-        code: Union[str, "ErrorCodeValue"],
+        code: Union[str, "_models.ErrorCodeValue"],
         message: str,
         target: Optional[str] = None,
-        innererror: Optional["InnerError"] = None,
-        details: Optional[List["TextAnalyticsError"]] = None,
+        innererror: Optional["_models.InnerError"] = None,
+        details: Optional[List["_models.TextAnalyticsError"]] = None,
         **kwargs
     ):
-        super(TextAnalyticsError, self).__init__(**kwargs)
+        """
+        :keyword code: Error code. Required. Known values are: "invalidRequest", "invalidArgument",
+         "internalServerError", and "serviceUnavailable".
+        :paramtype code: str or ~azure.ai.textanalytics.v3_0.models.ErrorCodeValue
+        :keyword message: Error message. Required.
+        :paramtype message: str
+        :keyword target: Error target.
+        :paramtype target: str
+        :keyword innererror: Inner error contains more specific information.
+        :paramtype innererror: ~azure.ai.textanalytics.v3_0.models.InnerError
+        :keyword details: Details about specific errors that led to this reported error.
+        :paramtype details: list[~azure.ai.textanalytics.v3_0.models.TextAnalyticsError]
+        """
+        super().__init__(**kwargs)
         self.code = code
         self.message = message
         self.target = target
@@ -1143,18 +1419,18 @@ class TextAnalyticsError(msrest.serialization.Model):
         self.details = details
 
 
-class TextAnalyticsWarning(msrest.serialization.Model):
+class TextAnalyticsWarning(_serialization.Model):
     """TextAnalyticsWarning.
 
     All required parameters must be populated in order to send to Azure.
 
-    :param code: Required. Error code. Possible values include: "LongWordsInDocument",
+    :ivar code: Error code. Required. Known values are: "LongWordsInDocument" and
      "DocumentTruncated".
-    :type code: str or ~azure.ai.textanalytics.v3_0.models.WarningCodeValue
-    :param message: Required. Warning message.
-    :type message: str
-    :param target_ref: A JSON pointer reference indicating the target object.
-    :type target_ref: str
+    :vartype code: str or ~azure.ai.textanalytics.v3_0.models.WarningCodeValue
+    :ivar message: Warning message. Required.
+    :vartype message: str
+    :ivar target_ref: A JSON pointer reference indicating the target object.
+    :vartype target_ref: str
     """
 
     _validation = {
@@ -1163,20 +1439,29 @@ class TextAnalyticsWarning(msrest.serialization.Model):
     }
 
     _attribute_map = {
-        'code': {'key': 'code', 'type': 'str'},
-        'message': {'key': 'message', 'type': 'str'},
-        'target_ref': {'key': 'targetRef', 'type': 'str'},
+        "code": {"key": "code", "type": "str"},
+        "message": {"key": "message", "type": "str"},
+        "target_ref": {"key": "targetRef", "type": "str"},
     }
 
     def __init__(
         self,
         *,
-        code: Union[str, "WarningCodeValue"],
+        code: Union[str, "_models.WarningCodeValue"],
         message: str,
         target_ref: Optional[str] = None,
         **kwargs
     ):
-        super(TextAnalyticsWarning, self).__init__(**kwargs)
+        """
+        :keyword code: Error code. Required. Known values are: "LongWordsInDocument" and
+         "DocumentTruncated".
+        :paramtype code: str or ~azure.ai.textanalytics.v3_0.models.WarningCodeValue
+        :keyword message: Warning message. Required.
+        :paramtype message: str
+        :keyword target_ref: A JSON pointer reference indicating the target object.
+        :paramtype target_ref: str
+        """
+        super().__init__(**kwargs)
         self.code = code
         self.message = message
         self.target_ref = target_ref

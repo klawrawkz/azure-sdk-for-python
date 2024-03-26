@@ -26,7 +26,6 @@ import numbers
 import copy
 import hashlib
 import json
-import six
 
 from azure.cosmos._execution_context.aggregators import (
     _AverageAggregator,
@@ -112,7 +111,7 @@ class _QueryExecutionDistinctUnorderedEndpointComponent(_QueryExecutionEndpointC
 
     def make_hash(self, value):
         if isinstance(value, (set, tuple, list)):
-            return tuple([self.make_hash(v) for v in value])
+            return tuple([self.make_hash(v) for v in value])  # pylint: disable=consider-using-generator
         if not isinstance(value, dict):
             if isinstance(value, numbers.Number):
                 return float(value)
@@ -127,8 +126,7 @@ class _QueryExecutionDistinctUnorderedEndpointComponent(_QueryExecutionEndpointC
         res = next(self._execution_context)
 
         json_repr = json.dumps(self.make_hash(res))
-        if six.PY3:
-            json_repr = json_repr.encode("utf-8")
+        json_repr = json_repr.encode("utf-8")
 
         hash_object = hashlib.sha1(json_repr)   # nosec
         hashed_result = hash_object.hexdigest()
@@ -136,8 +134,7 @@ class _QueryExecutionDistinctUnorderedEndpointComponent(_QueryExecutionEndpointC
         while hashed_result in self.last_result:
             res = next(self._execution_context)
             json_repr = json.dumps(self.make_hash(res))
-            if six.PY3:
-                json_repr = json_repr.encode("utf-8")
+            json_repr = json_repr.encode("utf-8")
 
             hash_object = hashlib.sha1(json_repr)   # nosec
             hashed_result = hash_object.hexdigest()
@@ -171,7 +168,7 @@ class _QueryExecutionOffsetEndpointComponent(_QueryExecutionEndpointComponent):
 class _QueryExecutionAggregateEndpointComponent(_QueryExecutionEndpointComponent):
     """Represents an endpoint in handling aggregate query.
 
-    It returns only aggreated values.
+    It returns only aggregated values.
     """
 
     def __init__(self, execution_context, aggregate_operators):
@@ -196,7 +193,10 @@ class _QueryExecutionAggregateEndpointComponent(_QueryExecutionEndpointComponent
             for item in res:
                 for operator in self._local_aggregators:
                     if isinstance(item, dict) and item:
-                        operator.aggregate(item["item"])
+                        try:
+                            operator.aggregate(item["item"])
+                        except KeyError:
+                            pass
                     elif isinstance(item, numbers.Number):
                         operator.aggregate(item)
         if self._results is None:

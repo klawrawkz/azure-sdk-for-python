@@ -3,16 +3,12 @@
 # Licensed under the MIT License. See License.txt in the project root for
 # license information.
 # --------------------------------------------------------------------------
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse # type: ignore
+from urllib.parse import urlparse
 
 # pylint: disable=unused-import,ungrouped-imports
 from typing import Any, Callable, Dict, Generic, List, Optional, TypeVar, Union, Tuple
 from datetime import datetime
 
-import six
 from azure.core.tracing.decorator import distributed_trace
 from azure.core.tracing.decorator_async import distributed_trace_async
 from azure.core.pipeline.policies import AsyncBearerTokenCredentialPolicy
@@ -24,6 +20,7 @@ from .._generated.models import (
     AddChatParticipantsRequest,
     SendReadReceiptRequest,
     SendChatMessageRequest,
+    SendTypingNotificationRequest,
     UpdateChatMessageRequest,
     UpdateChatThreadRequest,
     SendChatMessageResult,
@@ -42,7 +39,7 @@ from .._utils import CommunicationErrorResponseConverter
 from .._version import SDK_MONIKER
 
 
-class ChatThreadClient(object):
+class ChatThreadClient(object): # pylint: disable=client-accepts-api-version-keyword
     """A client to interact with the AzureCommunicationService Chat gateway.
     Instances of this class is normally retrieved by ChatClient.get_chat_thread_client()
 
@@ -77,7 +74,7 @@ class ChatThreadClient(object):
             credential: CommunicationTokenCredential,
             thread_id: str,
             **kwargs: Any
-    ): # type: (...) -> None
+    ) -> None:
         if not thread_id:
             raise ValueError("thread_id can not be None or empty")
 
@@ -88,7 +85,7 @@ class ChatThreadClient(object):
             if not endpoint.lower().startswith('http'):
                 endpoint = "https://" + endpoint
         except AttributeError:
-            raise ValueError("Host URL must be a string")
+            raise ValueError("Host URL must be a string") # pylint:disable=raise-missing-from
 
         parsed_url = urlparse(endpoint.rstrip('/'))
         if not parsed_url.netloc:
@@ -99,14 +96,13 @@ class ChatThreadClient(object):
         self._credential = credential
 
         self._client = AzureCommunicationChatService(
-            endpoint,
+            endpoint=self._endpoint,
             authentication_policy=AsyncBearerTokenCredentialPolicy(self._credential),
             sdk_moniker=SDK_MONIKER,
             **kwargs)
 
     @property
-    def thread_id(self):
-        # type: () -> str
+    def thread_id(self) -> str:
         """
         Gets the thread id from the client.
 
@@ -118,7 +114,7 @@ class ChatThreadClient(object):
     async def get_properties(
         self,
         **kwargs
-    ): # type: (...) -> ChatThreadProperties
+    ) -> ChatThreadProperties:
 
         """Gets the properties of the chat thread.
 
@@ -207,7 +203,7 @@ class ChatThreadClient(object):
     def list_read_receipts(
         self,
         **kwargs: Any
-    ): # type: (...) -> AsyncItemPaged[ChatMessageReadReceipt]
+    ) -> AsyncItemPaged[ChatMessageReadReceipt]:
         """Gets read receipts for a thread.
 
         :keyword int results_per_page: The maximum number of chat message read receipts to be returned per page.
@@ -238,10 +234,14 @@ class ChatThreadClient(object):
     @distributed_trace_async
     async def send_typing_notification(
         self,
+        *,
+        sender_display_name: Optional[str] = None,
         **kwargs
     ) -> None:
         """Posts a typing event to a thread, on behalf of a user.
 
+        :keyword str sender_display_name: The display name of the typing notification sender. This property
+         is used to populate sender name for push notifications.
         :return: None
         :rtype: None
         :raises: ~azure.core.exceptions.HttpResponseError, ValueError
@@ -255,12 +255,20 @@ class ChatThreadClient(object):
                 :dedent: 12
                 :caption: Send typing notification.
         """
-        return await self._client.chat_thread.send_typing_notification(self._thread_id, **kwargs)
+
+        send_typing_notification_request = SendTypingNotificationRequest(sender_display_name=sender_display_name)
+
+        return await self._client.chat_thread.send_typing_notification(
+            chat_thread_id=self._thread_id,
+            send_typing_notification_request=send_typing_notification_request,
+            **kwargs)
 
     @distributed_trace_async
     async def send_message(
         self,
         content: str,
+        *,
+        metadata: Dict[str, str] = None,
         **kwargs
     ) -> SendChatMessageResult:
         """Sends a message to a thread.
@@ -272,6 +280,7 @@ class ChatThreadClient(object):
         :paramtype chat_message_type: Union[str, ~azure.communication.chat.ChatMessageType]
         :keyword str sender_display_name: The display name of the message sender. This property is used to
             populate sender name for push notifications.
+        :keyword dict[str, str] metadata: Message metadata.
         :return: SendChatMessageResult
         :rtype: ~azure.communication.chat.SendChatMessageResult
         :raises: ~azure.core.exceptions.HttpResponseError, ValueError
@@ -295,7 +304,7 @@ class ChatThreadClient(object):
             try:
                 chat_message_type = ChatMessageType.__getattr__(chat_message_type)  # pylint:disable=protected-access
             except Exception:
-                raise ValueError(
+                raise ValueError( # pylint:disable=raise-missing-from
                     "chat_message_type: {message_type} is not acceptable".format(message_type=chat_message_type))
 
         if chat_message_type not in [ChatMessageType.TEXT, ChatMessageType.HTML]:
@@ -307,7 +316,8 @@ class ChatThreadClient(object):
         create_message_request = SendChatMessageRequest(
             content=content,
             type=chat_message_type,
-            sender_display_name=sender_display_name
+            sender_display_name=sender_display_name,
+            metadata=metadata
         )
         send_chat_message_result = await self._client.chat_thread.send_chat_message(
             chat_thread_id=self._thread_id,
@@ -349,7 +359,7 @@ class ChatThreadClient(object):
     def list_messages(
         self,
         **kwargs: Any
-    ): # type: (...) -> AsyncItemPaged[ChatMessage]
+    ) -> AsyncItemPaged[ChatMessage]:
         """Gets a list of messages from a thread.
 
         :keyword int results_per_page: The maximum number of messages to be returned per page.
@@ -382,14 +392,16 @@ class ChatThreadClient(object):
             self,
             message_id: str,
             content: str = None,
+            *,
+            metadata: Dict[str, str] = None,
             **kwargs
     ) -> None:
         """Updates a message.
 
         :param message_id: Required. The message id.
         :type message_id: str
-        :param content: Chat message content.
-        :type content: str
+        :param str content: Chat message content
+        :keyword dict[str, str] metadata: Message metadata.
         :return: None
         :rtype: None
         :raises: ~azure.core.exceptions.HttpResponseError, ValueError
@@ -406,7 +418,7 @@ class ChatThreadClient(object):
         if not message_id:
             raise ValueError("message_id cannot be None.")
 
-        update_message_request = UpdateChatMessageRequest(content=content)
+        update_message_request = UpdateChatMessageRequest(content=content, metadata=metadata)
 
         return await self._client.chat_thread.update_chat_message(
             chat_thread_id=self._thread_id,
@@ -449,7 +461,7 @@ class ChatThreadClient(object):
     def list_participants(
         self,
         **kwargs: Any
-    ): # type: (...) -> AsyncItemPaged[ChatParticipant]
+    ) -> AsyncItemPaged[ChatParticipant]:
         """Gets the participants of a thread.
 
         :keyword int results_per_page: The maximum number of participants to be returned per page.
@@ -485,8 +497,6 @@ class ChatThreadClient(object):
         thread_participants: List[ChatParticipant],
         **kwargs
     ) -> List[Tuple[ChatParticipant, ChatError]]:
-
-        # type: (...) -> List[Tuple[ChatParticipant, ChatError]]
         """Adds thread participants to a thread. If participants already exist, no change occurs.
 
         If all participants are added successfully, then an empty list is returned;
@@ -518,14 +528,11 @@ class ChatThreadClient(object):
                 add_chat_participants_request=add_thread_participants_request,
                 **kwargs)
 
-
-            if hasattr(add_chat_participants_result, 'invalid_participants') and \
-                    add_chat_participants_result.invalid_participants is not None:
-                response = CommunicationErrorResponseConverter._convert(  # pylint:disable=protected-access
+            if hasattr(add_chat_participants_result, 'invalid_participants'):
+                response = CommunicationErrorResponseConverter.convert(
                     participants=thread_participants,
                     chat_errors=add_chat_participants_result.invalid_participants
                 )
-
         return response
 
     @distributed_trace_async
@@ -566,6 +573,5 @@ class ChatThreadClient(object):
         await self._client.__aenter__()
         return self
 
-    async def __aexit__(self, *args):
-        # type: (*Any) -> None
+    async def __aexit__(self, *args) -> None:
         await self._client.__aexit__(*args)

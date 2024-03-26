@@ -23,8 +23,10 @@
 """
 
 import time
+from typing import Optional
 
 from azure.core.exceptions import AzureError, ClientAuthenticationError
+from azure.core.pipeline import PipelineRequest
 from azure.core.pipeline.policies import RetryPolicy
 
 from . import exceptions
@@ -32,7 +34,10 @@ from . import _endpoint_discovery_retry_policy
 from . import _resource_throttle_retry_policy
 from . import _default_retry_policy
 from . import _session_retry_policy
+from . import _gone_retry_policy
+from . import _timeout_failover_retry_policy
 from .http_constants import HttpHeaders, StatusCodes, SubStatusCodes
+
 
 # pylint: disable=protected-access
 
@@ -46,9 +51,9 @@ def Execute(client, global_endpoint_manager, function, *args, **kwargs):
         Instance of _GlobalEndpointManager class
     :param function function:
         Function to be called wrapped with retries
-    :param (non-keyworded, variable number of arguments list) *args:
-    :param (keyworded, variable number of arguments list) **kwargs:
-
+    :param list args:
+    :returns: the result of running the passed in function as a (result, headers) tuple
+    :rtype: tuple of (dict, dict)
     """
     # instantiate all retry policies here to be applied for each request execution
     endpointDiscovery_retry_policy = _endpoint_discovery_retry_policy.EndpointDiscoveryRetryPolicy(
@@ -65,10 +70,17 @@ def Execute(client, global_endpoint_manager, function, *args, **kwargs):
     sessionRetry_policy = _session_retry_policy._SessionRetryPolicy(
         client.connection_policy.EnableEndpointDiscovery, global_endpoint_manager, *args
     )
+
+    partition_key_range_gone_retry_policy = _gone_retry_policy.PartitionKeyRangeGoneRetryPolicy(client, *args)
+
+    timeout_failover_retry_policy = _timeout_failover_retry_policy._TimeoutFailoverRetryPolicy(
+        client.connection_policy, global_endpoint_manager, *args
+    )
+
     while True:
+        client_timeout = kwargs.get('timeout')
+        start_time = time.time()
         try:
-            client_timeout = kwargs.get('timeout')
-            start_time = time.time()
             if args:
                 result = ExecuteFunction(function, global_endpoint_manager, *args, **kwargs)
             else:
@@ -82,11 +94,12 @@ def Execute(client, global_endpoint_manager, function, *args, **kwargs):
             ] = resourceThrottle_retry_policy.current_retry_attempt_count
             client.last_response_headers[
                 HttpHeaders.ThrottleRetryWaitTimeInMs
-            ] = resourceThrottle_retry_policy.cummulative_wait_time_in_milliseconds
+            ] = resourceThrottle_retry_policy.cumulative_wait_time_in_milliseconds
 
             return result
         except exceptions.CosmosHttpResponseError as e:
-            retry_policy = None
+            retry_policy = defaultRetry_policy
+            # Re-assign retry policy based on error code
             if e.status_code == StatusCodes.FORBIDDEN and e.sub_status == SubStatusCodes.WRITE_FORBIDDEN:
                 retry_policy = endpointDiscovery_retry_policy
             elif e.status_code == StatusCodes.TOO_MANY_REQUESTS:
@@ -97,11 +110,13 @@ def Execute(client, global_endpoint_manager, function, *args, **kwargs):
                 and e.sub_status == SubStatusCodes.READ_SESSION_NOTAVAILABLE
             ):
                 retry_policy = sessionRetry_policy
-            else:
-                retry_policy = defaultRetry_policy
+            elif exceptions._partition_range_is_gone(e):
+                retry_policy = partition_key_range_gone_retry_policy
+            elif e.status_code in (StatusCodes.REQUEST_TIMEOUT, e.status_code == StatusCodes.SERVICE_UNAVAILABLE):
+                retry_policy = timeout_failover_retry_policy
 
             # If none of the retry policies applies or there is no retry needed, set the
-            # throttle related response hedaers and re-throw the exception back arg[0]
+            # throttle related response headers and re-throw the exception back arg[0]
             # is the request. It needs to be modified for write forbidden exception
             if not retry_policy.ShouldRetry(e):
                 if not client.last_response_headers:
@@ -111,7 +126,7 @@ def Execute(client, global_endpoint_manager, function, *args, **kwargs):
                 ] = resourceThrottle_retry_policy.current_retry_attempt_count
                 client.last_response_headers[
                     HttpHeaders.ThrottleRetryWaitTimeInMs
-                ] = resourceThrottle_retry_policy.cummulative_wait_time_in_milliseconds
+                ] = resourceThrottle_retry_policy.cumulative_wait_time_in_milliseconds
                 if args and args[0].should_clear_session_token_on_session_read_failure:
                     client.session.clear_session_token(client.last_response_headers)
                 raise
@@ -126,12 +141,15 @@ def Execute(client, global_endpoint_manager, function, *args, **kwargs):
 
 def ExecuteFunction(function, *args, **kwargs):
     """Stub method so that it can be used for mocking purposes as well.
+    :param Callable function: the function to execute.
+    :param list args: the explicit arguments for the function.
+    :returns: the result of executing the function with the passed in arguments
+    :rtype: tuple(dict, dict)
     """
     return function(*args, **kwargs)
 
 
-def _configure_timeout(request, absolute, per_request):
-    # type: (azure.core.pipeline.PipelineRequest, Optional[int], int) -> Optional[AzureError]
+def _configure_timeout(request: PipelineRequest, absolute: Optional[int], per_request: int) -> None:
     if absolute is not None:
         if absolute <= 0:
             raise exceptions.CosmosClientTimeoutError()
@@ -172,8 +190,8 @@ class ConnectionRetryPolicy(RetryPolicy):
         response = None
         retry_settings = self.configure_retries(request.context.options)
         while retry_active:
+            start_time = time.time()
             try:
-                start_time = time.time()
                 _configure_timeout(request, absolute_timeout, per_request_timeout)
 
                 response = self.next.send(request)

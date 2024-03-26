@@ -3,29 +3,18 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 # ------------------------------------
-from datetime import datetime
-import json
+import logging
 import os
-import re
-import six
 
-from azure.containerregistry.aio import (
-    ContainerRepositoryClient,
-    ContainerRegistryClient,
-)
-from azure.containerregistry import (
-    TagProperties,
-    ContentPermissions,
-    RegistryArtifactProperties,
-)
+from azure.containerregistry.aio import ContainerRegistryClient
 
 from azure.core.credentials import AccessToken
-from azure.identity.aio import DefaultAzureCredential
+from azure.identity.aio import DefaultAzureCredential, ClientSecretCredential
+from azure.identity import AzureAuthorityHosts
 
-from azure_devtools.scenario_tests import RecordingProcessor
-from devtools_testutils import AzureTestCase
+from testcase import ContainerRegistryTestClass, get_audience, get_authority
 
-from testcase import ContainerRegistryTestClass
+logger = logging.getLogger()
 
 
 class AsyncFakeTokenCredential(object):
@@ -36,30 +25,50 @@ class AsyncFakeTokenCredential(object):
     def __init__(self):
         self.token = AccessToken("YOU SHALL NOT PASS", 0)
 
-    async def get_token(self, *args):
+    async def get_token(self, *args, **kwargs):
         return self.token
 
 
 class AsyncContainerRegistryTestClass(ContainerRegistryTestClass):
-    def __init__(self, method_name):
-        super(AsyncContainerRegistryTestClass, self).__init__(method_name)
-
-    def get_credential(self):
+    def get_credential(self, authority=None, **kwargs):
         if self.is_live:
-            return DefaultAzureCredential()
+            if authority != AzureAuthorityHosts.AZURE_PUBLIC_CLOUD:
+                return ClientSecretCredential(
+                    tenant_id=os.environ["CONTAINERREGISTRY_TENANT_ID"],
+                    client_id=os.environ["CONTAINERREGISTRY_CLIENT_ID"],
+                    client_secret=os.environ["CONTAINERREGISTRY_CLIENT_SECRET"],
+                    authority=authority,
+                )
+            return DefaultAzureCredential(**kwargs)
         return AsyncFakeTokenCredential()
 
     def create_registry_client(self, endpoint, **kwargs):
-        return ContainerRegistryClient(
-            endpoint=endpoint,
-            credential=self.get_credential(),
-            **kwargs,
-        )
+        authority = get_authority(endpoint)
+        audience = kwargs.pop("audience", None)
+        if not audience:
+            audience = get_audience(authority)
+        credential = self.get_credential(authority=authority)
+        return ContainerRegistryClient(endpoint=endpoint, credential=credential, audience=audience, **kwargs)
 
-    def create_repository_client(self, endpoint, name, **kwargs):
-        return ContainerRepositoryClient(
-            endpoint=endpoint,
-            repository=name,
-            credential=self.get_credential(),
-            **kwargs,
-        )
+    def create_anon_client(self, endpoint, **kwargs):
+        authority = get_authority(endpoint)
+        audience = get_audience(authority)
+        return ContainerRegistryClient(endpoint=endpoint, credential=None, audience=audience, **kwargs)
+
+    async def upload_oci_manifest_prerequisites(self, repo, client):
+        layer = "654b93f61054e4ce90ed203bb8d556a6200d5f906cf3eca0620738d6dc18cbed"
+        config = "config.json"
+        base_path = os.path.join(self.get_test_directory(), "data", "oci_artifact")
+        # upload config
+        await client.upload_blob(repo, open(os.path.join(base_path, config), "rb"))
+        # upload layers
+        await client.upload_blob(repo, open(os.path.join(base_path, layer), "rb"))
+
+    async def upload_docker_manifest_prerequisites(self, repo, client):
+        layer = "2db29710123e3e53a794f2694094b9b4338aa9ee5c40b930cb8063a1be392c54"
+        config = "config.json"
+        base_path = os.path.join(self.get_test_directory(), "data", "docker_artifact")
+        # upload config
+        await client.upload_blob(repo, open(os.path.join(base_path, config), "rb"))
+        # upload layers
+        await client.upload_blob(repo, open(os.path.join(base_path, layer), "rb"))

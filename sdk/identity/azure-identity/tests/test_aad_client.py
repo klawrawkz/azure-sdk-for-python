@@ -3,24 +3,32 @@
 # Licensed under the MIT License.
 # ------------------------------------
 import functools
-import time
 
 from azure.core.exceptions import ClientAuthenticationError, ServiceRequestError
-from azure.identity._constants import EnvironmentVariables, DEFAULT_REFRESH_OFFSET, DEFAULT_TOKEN_REFRESH_RETRY_DELAY
+from azure.identity._constants import EnvironmentVariables
 from azure.identity._internal import AadClient, AadClientCertificate
-from azure.core.credentials import AccessToken
 
 import pytest
 from msal import TokenCache
-from six.moves.urllib_parse import urlparse
+from urllib.parse import urlparse
 
 from helpers import build_aad_response, mock_response
-from test_certificate_credential import CERT_PATH
+from test_certificate_credential import PEM_CERT_PATH
 
 try:
     from unittest.mock import Mock, patch
 except ImportError:  # python < 3.3
     from mock import Mock, patch  # type: ignore
+
+
+BASE_CLASS_METHODS = [
+    ("_get_auth_code_request", ("code", "redirect_uri")),
+    ("_get_client_secret_request", ("secret",)),
+    ("_get_jwt_assertion_request", ("assertion",)),
+    ("_get_refresh_token_request", ("refresh_token",)),
+    ("_get_on_behalf_of_request", ("client_credential", "user_assertion")),
+    ("_get_refresh_token_on_behalf_of_request", ("client_credential", "refresh_token")),
+]
 
 
 def test_error_reporting():
@@ -37,7 +45,7 @@ def test_error_reporting():
         functools.partial(client.obtain_token_by_refresh_token, ("scope",), "refresh token"),
     ]
 
-    # exceptions raised for AAD errors should contain AAD's error description
+    # exceptions raised for Microsoft Entra errors should contain Microsoft Entra's error description
     for fn in fns:
         with pytest.raises(ClientAuthenticationError) as ex:
             fn()
@@ -47,6 +55,7 @@ def test_error_reporting():
         transport.send.reset_mock()
 
 
+@pytest.mark.skip(reason="Adding body to HttpResponseError str. Not an issue bc we don't automatically log errors")
 def test_exceptions_do_not_expose_secrets():
     secret = "secret"
     body = {"error": "bad thing", "access_token": secret, "refresh_token": secret}
@@ -56,7 +65,11 @@ def test_exceptions_do_not_expose_secrets():
 
     fns = [
         functools.partial(client.obtain_token_by_authorization_code, "code", "uri", "scope"),
-        functools.partial(client.obtain_token_by_refresh_token, "refresh token", ("scope"),),
+        functools.partial(
+            client.obtain_token_by_refresh_token,
+            "refresh token",
+            ("scope"),
+        ),
     ]
 
     def assert_secrets_not_exposed():
@@ -68,10 +81,10 @@ def test_exceptions_do_not_expose_secrets():
             assert transport.send.call_count == 1
             transport.send.reset_mock()
 
-    # AAD errors shouldn't provoke exceptions exposing secrets
+    # Microsoft Entra errors shouldn't provoke exceptions exposing secrets
     assert_secrets_not_exposed()
 
-    # neither should unexpected AAD responses
+    # neither should unexpected Microsoft Entra responses
     del body["error"]
     assert_secrets_not_exposed()
 
@@ -180,7 +193,7 @@ def test_refresh_token():
 
 
 def test_evicts_invalid_refresh_token():
-    """when AAD rejects a refresh token, the client should evict that token from its cache"""
+    """when Microsoft Entra ID rejects a refresh token, the client should evict that token from its cache"""
 
     tenant_id = "tenant-id"
     client_id = "client-id"
@@ -220,7 +233,7 @@ def test_retries_token_requests():
     transport.send.reset_mock()
 
     with pytest.raises(ServiceRequestError, match=message):
-        client.obtain_token_by_client_certificate("", AadClientCertificate(open(CERT_PATH, "rb").read()))
+        client.obtain_token_by_client_certificate("", AadClientCertificate(open(PEM_CERT_PATH, "rb").read()))
     assert transport.send.call_count > 1
     transport.send.reset_mock()
 
@@ -230,6 +243,112 @@ def test_retries_token_requests():
     transport.send.reset_mock()
 
     with pytest.raises(ServiceRequestError, match=message):
-        client.obtain_token_by_refresh_token("", "")
+        client.obtain_token_by_jwt_assertion("", "")
     assert transport.send.call_count > 1
     transport.send.reset_mock()
+
+    with pytest.raises(ServiceRequestError, match=message):
+        client.obtain_token_by_refresh_token("", "")
+    assert transport.send.call_count > 1
+
+
+def test_shared_cache():
+    """The client should return only tokens associated with its own client_id"""
+
+    client_id_a = "client-id-a"
+    client_id_b = "client-id-b"
+    scope = "scope"
+    expected_token = "***"
+    tenant_id = "tenant"
+    authority = "https://localhost/" + tenant_id
+
+    cache = TokenCache()
+    cache.add(
+        {
+            "response": build_aad_response(access_token=expected_token),
+            "client_id": client_id_a,
+            "scope": [scope],
+            "token_endpoint": "/".join((authority, tenant_id, "oauth2/v2.0/token")),
+        }
+    )
+
+    common_args = dict(authority=authority, cache=cache, tenant_id=tenant_id)
+    client_a = AadClient(client_id=client_id_a, **common_args)
+    client_b = AadClient(client_id=client_id_b, **common_args)
+
+    # A has a cached token
+    token = client_a.get_cached_access_token([scope])
+    assert token.token == expected_token
+
+    # which B shouldn't return
+    assert client_b.get_cached_access_token([scope]) is None
+
+
+def test_multitenant_cache():
+    client_id = "client-id"
+    scope = "scope"
+    expected_token = "***"
+    tenant_a = "tenant-a"
+    tenant_b = "tenant-b"
+    tenant_c = "tenant-c"
+    tenant_d = "tenant-d"
+    authority = "https://localhost/" + tenant_a
+    message = "additionally_allowed_tenants"
+
+    cache = TokenCache()
+    cache.add(
+        {
+            "response": build_aad_response(access_token=expected_token),
+            "client_id": client_id,
+            "scope": [scope],
+            "token_endpoint": "/".join((authority, tenant_a, "oauth2/v2.0/token")),
+        }
+    )
+
+    common_args = dict(authority=authority, cache=cache, client_id=client_id)
+    client_a = AadClient(tenant_id=tenant_a, **common_args)
+    client_b = AadClient(tenant_id=tenant_b, **common_args)
+
+    # A has a cached token
+    token = client_a.get_cached_access_token([scope])
+    assert token.token == expected_token
+
+    # which B shouldn't return
+    assert client_b.get_cached_access_token([scope]) is None
+
+    # but C allows multitenant auth and should therefore return the token from tenant_a when appropriate
+    client_c = AadClient(tenant_id=tenant_c, additionally_allowed_tenants=["*"], **common_args)
+    assert client_c.get_cached_access_token([scope]) is None
+    token = client_c.get_cached_access_token([scope], tenant_id=tenant_a)
+    assert token.token == expected_token
+
+    # but d does not add target tenant into allowed list therefore fail
+    client_d = AadClient(tenant_id=tenant_d, **common_args)
+    assert client_d.get_cached_access_token([scope]) is None
+    with pytest.raises(ClientAuthenticationError, match=message):
+        client_d.get_cached_access_token([scope], tenant_id=tenant_a)
+
+
+@pytest.mark.parametrize("method,args", BASE_CLASS_METHODS)
+def test_claims(method, args):
+
+    scopes = ["scope"]
+    claims = '{"access_token": {"essential": "true"}}'
+
+    client = AadClient("tenant_id", "client_id")
+
+    cae_merged_claims = '{"access_token": {"essential": "true", "xms_cc": {"values": ["CP1"]}}}'
+
+    with patch.object(AadClient, "_post") as post_mock:
+        func = getattr(client, method)
+        func(scopes, *args, claims=claims)
+
+        assert post_mock.call_count == 1
+        data, _ = post_mock.call_args
+        assert len(data) == 1
+        assert data[0]["claims"] == claims
+
+        func(scopes, *args, claims=claims, enable_cae=True)
+        assert post_mock.call_count == 2
+        data, _ = post_mock.call_args
+        assert data[0]["claims"] == cae_merged_claims

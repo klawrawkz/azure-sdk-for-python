@@ -8,42 +8,40 @@
 # Changes may cause incorrect behavior and will be lost if the code is
 # regenerated.
 # --------------------------------------------------------------------------
-from msrest import Serializer, Deserializer
-from typing import TYPE_CHECKING
-import warnings
+from ._serialization import Serializer, Deserializer
+from typing import Any, Iterable
 
-from azure.core.exceptions import ClientAuthenticationError, HttpResponseError, ResourceExistsError, ResourceNotFoundError, map_error
 from azure.core.paging import ItemPaged
-from azure.core.pipeline import PipelineResponse
-from azure.core.pipeline.transport import HttpRequest, HttpResponse
-from azure.mgmt.core.exceptions import ARMErrorFormat
 
-if TYPE_CHECKING:
-    # pylint: disable=unused-import,ungrouped-imports
-    from typing import Any, Callable, Dict, Generic, Iterable, Optional, TypeVar
+from . import models as _models
 
 
 class FeatureClientOperationsMixin(object):
 
     def list_operations(
         self,
-        **kwargs  # type: Any
-    ):
+        **kwargs: Any
+    ) -> Iterable["_models.Operation"]:
         """Lists all of the available Microsoft.Features REST API operations.
 
         :keyword callable cls: A custom type or function that will be passed the direct response
-        :return: An iterator like instance of either OperationListResult or the result of cls(response)
-        :rtype: ~azure.core.paging.ItemPaged[~azure.mgmt.resource.features.v2015_12_01.models.OperationListResult]
-        :raises: ~azure.core.exceptions.HttpResponseError
+        :return: An iterator like instance of either Operation or the result of cls(response)
+        :rtype:
+         ~azure.core.paging.ItemPaged[~azure.mgmt.resource.features.v2021_07_01.models.Operation]
+        :raises ~azure.core.exceptions.HttpResponseError:
         """
         api_version = self._get_api_version('list_operations')
         if api_version == '2015-12-01':
             from .v2015_12_01.operations import FeatureClientOperationsMixin as OperationClass
+        elif api_version == '2021-07-01':
+            from .v2021_07_01.operations import FeatureClientOperationsMixin as OperationClass
         else:
             raise ValueError("API version {} does not have operation 'list_operations'".format(api_version))
         mixin_instance = OperationClass()
         mixin_instance._client = self._client
         mixin_instance._config = self._config
+        mixin_instance._config.api_version = api_version
         mixin_instance._serialize = Serializer(self._models_dict(api_version))
+        mixin_instance._serialize.client_side_validation = False
         mixin_instance._deserialize = Deserializer(self._models_dict(api_version))
         return mixin_instance.list_operations(**kwargs)

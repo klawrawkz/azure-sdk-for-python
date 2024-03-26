@@ -192,7 +192,7 @@ class CommonBlobSamples(object):
         try:
             # [START copy_blob_from_url]
             # Get the blob client with the source blob
-            source_blob = "http://www.gutenberg.org/files/59466/59466-0.txt"
+            source_blob = "https://www.gutenberg.org/files/59466/59466-0.txt"
             copied_blob = blob_service_client.get_blob_client("copyblobcontainer", '59466-0.txt')
 
             # start copy and check copy status
@@ -204,7 +204,8 @@ class CommonBlobSamples(object):
             copy_id = props.copy.id
             # [START abort_copy_blob_from_url]
             # Passing in copy id to abort copy operation
-            copied_blob.abort_copy(copy_id)
+            if props.copy.status != "success":
+                copied_blob.abort_copy(copy_id)
 
             # check copy status
             props = copied_blob.get_blob_properties()

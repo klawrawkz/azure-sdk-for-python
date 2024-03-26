@@ -6,26 +6,22 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
-from ._registries_operations import RegistriesOperations
-from ._operations import Operations
-from ._replications_operations import ReplicationsOperations
-from ._webhooks_operations import WebhooksOperations
 from ._agent_pools_operations import AgentPoolsOperations
+from ._registries_operations import RegistriesOperations
 from ._runs_operations import RunsOperations
 from ._task_runs_operations import TaskRunsOperations
 from ._tasks_operations import TasksOperations
-from ._scope_maps_operations import ScopeMapsOperations
-from ._tokens_operations import TokensOperations
+
+from ._patch import __all__ as _patch_all
+from ._patch import *  # pylint: disable=unused-wildcard-import
+from ._patch import patch_sdk as _patch_sdk
 
 __all__ = [
-    'RegistriesOperations',
-    'Operations',
-    'ReplicationsOperations',
-    'WebhooksOperations',
-    'AgentPoolsOperations',
-    'RunsOperations',
-    'TaskRunsOperations',
-    'TasksOperations',
-    'ScopeMapsOperations',
-    'TokensOperations',
+    "AgentPoolsOperations",
+    "RegistriesOperations",
+    "RunsOperations",
+    "TaskRunsOperations",
+    "TasksOperations",
 ]
+__all__.extend([p for p in _patch_all if p not in __all__])
+_patch_sdk()

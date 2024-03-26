@@ -1,9 +1,8 @@
 trigger: none
 
-stages:
-  - template: ../../../eng/pipelines/templates/stages/archetype-sdk-tests.yml
+extemds:
+    template: ../../../eng/pipelines/templates/stages/archetype-sdk-tests.yml
     parameters:
-      AllocateResourceGroup: false
       ServiceDirectory: eventhub
       BuildTargetingString: azure-mgmt-eventhub
       EnvVars:

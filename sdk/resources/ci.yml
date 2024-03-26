@@ -3,7 +3,6 @@
 trigger:
   branches:
     include:
-    - master
     - main
     - hotfix/*
     - release/*
@@ -15,7 +14,6 @@ trigger:
 pr:
   branches:
     include:
-    - master
     - main
     - feature/*
     - hotfix/*
@@ -29,10 +27,11 @@ extends:
   template: ../../eng/pipelines/templates/stages/archetype-sdk-client.yml
   parameters:
     ServiceDirectory: resources
+    TestProxy: true
     Artifacts:
-    - name: azure-mgmt-msi
-      safeName: azuremgmtmsi
     - name: azure-mgmt-resource
       safeName: azuremgmtresource
     - name: azure-mgmt-resourcegraph
       safeName: azuremgmtresourcegraph
+    - name: azure-mgmt-msi
+      safeName: azuremgmtmsi

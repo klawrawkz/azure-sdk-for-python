@@ -13,17 +13,18 @@
 #   gallery_images: 5/5
 #   gallery_image_versions: 5/5
 
+import os
 import unittest
 
+import pytest
 import azure.mgmt.compute
-from devtools_testutils import AzureMgmtTestCase, RandomNameResourceGroupPreparer
+from devtools_testutils import AzureMgmtRecordedTestCase, RandomNameResourceGroupPreparer, recorded_by_proxy
 
-AZURE_LOCATION = 'eastus'
+AZURE_LOCATION = 'eastus2'
 
-class MgmtComputeTest(AzureMgmtTestCase):
+class TestMgmtCompute(AzureMgmtRecordedTestCase):
 
-    def setUp(self):
-        super(MgmtComputeTest, self).setUp()
+    def setup_method(self, method):
         self.mgmt_client = self.create_mgmt_client(
             azure.mgmt.compute.ComputeManagementClient
         )
@@ -37,7 +38,7 @@ class MgmtComputeTest(AzureMgmtTestCase):
     def create_snapshot(self, group_name, disk_name, snapshot_name):
         # Create an empty managed disk.[put]
         BODY = {
-          "location": "eastus",
+          "location": AZURE_LOCATION,
           "creation_data": {
             "create_option": "Empty"
           },
@@ -48,7 +49,7 @@ class MgmtComputeTest(AzureMgmtTestCase):
 
       # Create a snapshot by copying a disk.
         BODY = {
-          "location": "eastus",
+          "location": AZURE_LOCATION,
           "creation_data": {
             "create_option": "Copy",
             # "source_uri": "/subscriptions/" + SUBSCRIPTION_ID + "/resourceGroups/" + RESOURCE_GROUP + "/providers/Microsoft.Compute/disks/" + DISK_NAME
@@ -69,8 +70,9 @@ class MgmtComputeTest(AzureMgmtTestCase):
         result = result.result()
 
     @RandomNameResourceGroupPreparer(location=AZURE_LOCATION)
+    @recorded_by_proxy
     def test_compute_galleries(self, resource_group):
-        SUBSCRIPTION_ID = self.settings.SUBSCRIPTION_ID
+        SUBSCRIPTION_ID = self.get_settings_value("SUBSCRIPTION_ID")
         RESOURCE_GROUP = resource_group.name
         GALLERY_NAME = self.get_resource_name("galleryname")
         APPLICATION_NAME = self.get_resource_name("applicationname")
@@ -84,7 +86,7 @@ class MgmtComputeTest(AzureMgmtTestCase):
 
         # Create or update a simple gallery.[put]
         BODY = {
-          "location": "eastus",
+          "location": AZURE_LOCATION,
           "description": "This is the gallery description."
         }
         result = self.mgmt_client.galleries.begin_create_or_update(resource_group.name, GALLERY_NAME, BODY)
@@ -92,7 +94,7 @@ class MgmtComputeTest(AzureMgmtTestCase):
 
         # Create or update a simple gallery Application.[put]
         BODY = {
-          "location": "eastus",
+          "location": AZURE_LOCATION,
           "description": "This is the gallery application description.",
           "eula": "This is the gallery application EULA.",
           # "privacy_statement_uri": "myPrivacyStatementUri}",
@@ -128,10 +130,10 @@ class MgmtComputeTest(AzureMgmtTestCase):
 
         # Create or update a simple gallery image.[put]
         BODY = {
-          "location": "eastus",
+          "location": AZURE_LOCATION,
           "os_type": "Windows",
           "os_state": "Generalized",
-          "hyper_vgeneration": "V1",
+          "hyper_v_generation": "V1",
           "identifier": {
             "publisher": "myPublisherName",
             "offer": "myOfferName",
@@ -143,11 +145,11 @@ class MgmtComputeTest(AzureMgmtTestCase):
 
         # Create or update a simple Gallery Image Version using snapshots as a source.[put]
         BODY = {
-          "location": "eastus",
+          "location": AZURE_LOCATION,
           "publishing_profile": {
             "target_regions": [
               {
-                "name": "East US",
+                "name": AZURE_LOCATION,
                 "regional_replica_count": "2",
                 "storage_account_type": "Standard_ZRS"
               }
@@ -209,7 +211,7 @@ class MgmtComputeTest(AzureMgmtTestCase):
               #   "regional_replica_count": "1"
               # },
               {
-                "name": "East US",
+                "name": AZURE_LOCATION,
                 "regional_replica_count": "2",
                 "storage_account_type": "Standard_ZRS"
               }
@@ -235,7 +237,7 @@ class MgmtComputeTest(AzureMgmtTestCase):
         BODY = {
           "os_type": "Windows",
           "os_state": "Generalized",
-          "hyper_vgeneration": "V1",
+          "hyper_v_generation": "V1",
           "identifier": {
             "publisher": "myPublisherName",
             "offer": "myOfferName",
@@ -305,6 +307,9 @@ class MgmtComputeTest(AzureMgmtTestCase):
         # Delete a gallery image.[delete]
         result = self.mgmt_client.gallery_images.begin_delete(resource_group.name, GALLERY_NAME, IMAGE_NAME)
         result = result.result()
+
+        import time
+        time.sleep(180)
 
         # TODO: need finish
         # # Delete a gallery Application Version.[delete]

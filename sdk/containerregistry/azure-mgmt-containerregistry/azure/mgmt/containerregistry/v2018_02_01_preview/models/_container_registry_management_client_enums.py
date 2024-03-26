@@ -6,56 +6,33 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
-from enum import Enum, EnumMeta
-from six import with_metaclass
-
-class _CaseInsensitiveEnumMeta(EnumMeta):
-    def __getitem__(self, name):
-        return super().__getitem__(name.upper())
-
-    def __getattr__(cls, name):
-        """Return the enum member matching `name`
-        We use __getattr__ instead of descriptors or inserting into the enum
-        class' __dict__ in order to support `name` and `value` being both
-        properties for enum members (which live in the class' __dict__) and
-        enum members themselves.
-        """
-        try:
-            return cls._member_map_[name.upper()]
-        except KeyError:
-            raise AttributeError(name)
+from enum import Enum
+from azure.core import CaseInsensitiveEnumMeta
 
 
-class Action(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The action of virtual network rule.
-    """
-
-    ALLOW = "Allow"
-
-class BaseImageDependencyType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The type of the base image dependency.
-    """
+class BaseImageDependencyType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The type of the base image dependency."""
 
     BUILD_TIME = "BuildTime"
     RUN_TIME = "RunTime"
 
-class BaseImageTriggerType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The type of the auto trigger for base image dependency updates.
-    """
+
+class BaseImageTriggerType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The type of the auto trigger for base image dependency updates."""
 
     ALL = "All"
     RUNTIME = "Runtime"
     NONE = "None"
 
-class BuildArgumentType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The type of the argument.
-    """
+
+class BuildArgumentType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The type of the argument."""
 
     DOCKER_BUILD_ARGUMENT = "DockerBuildArgument"
 
-class BuildStatus(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The current status of the build.
-    """
+
+class BuildStatus(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The current status of the build."""
 
     QUEUED = "Queued"
     STARTED = "Started"
@@ -66,65 +43,36 @@ class BuildStatus(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
     ERROR = "Error"
     TIMEOUT = "Timeout"
 
-class BuildStepType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The type of the step.
-    """
+
+class BuildStepType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The type of the step."""
 
     DOCKER = "Docker"
 
-class BuildTaskStatus(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The current status of build task.
-    """
+
+class BuildTaskStatus(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The current status of build task."""
 
     DISABLED = "Disabled"
     ENABLED = "Enabled"
 
-class BuildType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The type of build.
-    """
+
+class BuildType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The type of build."""
 
     AUTO_BUILD = "AutoBuild"
     QUICK_BUILD = "QuickBuild"
 
-class DefaultAction(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The default action of allow or deny when no other rules match.
-    """
 
-    ALLOW = "Allow"
-    DENY = "Deny"
-
-class ImportMode(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """When Force, any existing target tags will be overwritten. When NoForce, any existing target
-    tags will fail the operation before any copying begins.
-    """
-
-    NO_FORCE = "NoForce"
-    FORCE = "Force"
-
-class OsType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The operating system type required for the build.
-    """
+class OsType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The operating system type required for the build."""
 
     WINDOWS = "Windows"
     LINUX = "Linux"
 
-class PasswordName(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The password name.
-    """
 
-    PASSWORD = "password"
-    PASSWORD2 = "password2"
-
-class PolicyStatus(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The value that indicates whether the policy is enabled or not.
-    """
-
-    ENABLED = "enabled"
-    DISABLED = "disabled"
-
-class ProvisioningState(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The provisioning state of the container registry at the time the operation was called.
-    """
+class ProvisioningState(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The provisioning state of a build."""
 
     CREATING = "Creating"
     UPDATING = "Updating"
@@ -133,62 +81,16 @@ class ProvisioningState(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
     FAILED = "Failed"
     CANCELED = "Canceled"
 
-class RegistryUsageUnit(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The unit of measurement.
-    """
 
-    COUNT = "Count"
-    BYTES = "Bytes"
-
-class SkuName(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The SKU name of the container registry. Required for registry creation.
-    """
-
-    CLASSIC = "Classic"
-    BASIC = "Basic"
-    STANDARD = "Standard"
-    PREMIUM = "Premium"
-
-class SkuTier(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The SKU tier based on the SKU name.
-    """
-
-    CLASSIC = "Classic"
-    BASIC = "Basic"
-    STANDARD = "Standard"
-    PREMIUM = "Premium"
-
-class SourceControlType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The type of source control service.
-    """
+class SourceControlType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The type of source control service."""
 
     GITHUB = "Github"
     VISUAL_STUDIO_TEAM_SERVICE = "VisualStudioTeamService"
 
-class TokenType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The type of Auth token.
-    """
+
+class TokenType(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    """The type of Auth token."""
 
     PAT = "PAT"
     O_AUTH = "OAuth"
-
-class TrustPolicyType(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The type of trust policy.
-    """
-
-    NOTARY = "Notary"
-
-class WebhookAction(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-
-    PUSH = "push"
-    DELETE = "delete"
-    QUARANTINE = "quarantine"
-    CHART_PUSH = "chart_push"
-    CHART_DELETE = "chart_delete"
-
-class WebhookStatus(with_metaclass(_CaseInsensitiveEnumMeta, str, Enum)):
-    """The status of the webhook at the time the operation was called.
-    """
-
-    ENABLED = "enabled"
-    DISABLED = "disabled"

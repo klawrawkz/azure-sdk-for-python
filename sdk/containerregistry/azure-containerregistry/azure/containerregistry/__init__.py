@@ -7,28 +7,34 @@
 # --------------------------------------------------------------------------
 
 from ._container_registry_client import ContainerRegistryClient
-from ._container_repository_client import ContainerRepositoryClient
-from ._models import (
-    ContentPermissions,
-    DeletedRepositoryResult,
-    RegistryArtifactOrderBy,
-    RegistryArtifactProperties,
-    RepositoryProperties,
-    TagOrderBy,
-    TagProperties,
+from ._generated.models import (
+    ArtifactManifestOrder,
+    ArtifactTagOrder,
 )
+from ._models import (
+    ArtifactArchitecture,
+    ArtifactOperatingSystem,
+    ArtifactManifestProperties,
+    RepositoryProperties,
+    ArtifactTagProperties,
+    GetManifestResult,
+    DigestValidationError,
+)
+from ._download_stream import DownloadBlobStream
 from ._version import VERSION
 
 __version__ = VERSION
 
 __all__ = [
+    "ArtifactArchitecture",
+    "ArtifactOperatingSystem",
     "ContainerRegistryClient",
-    "ContainerRepositoryClient",
-    "ContentPermissions",
-    "DeletedRepositoryResult",
-    "RegistryArtifactOrderBy",
-    "RegistryArtifactProperties",
+    "ArtifactManifestOrder",
+    "ArtifactManifestProperties",
     "RepositoryProperties",
-    "TagOrderBy",
-    "TagProperties",
+    "ArtifactTagOrder",
+    "ArtifactTagProperties",
+    "GetManifestResult",
+    "DownloadBlobStream",
+    "DigestValidationError",
 ]

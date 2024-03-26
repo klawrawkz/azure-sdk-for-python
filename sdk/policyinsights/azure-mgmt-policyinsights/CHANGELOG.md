@@ -1,5 +1,60 @@
 # Release History
 
+## 1.1.0b4 (2022-12-29)
+
+### Features Added
+
+  - Added operation group ComponentPolicyStatesOperations
+  - Model Operation has a new parameter is_data_action
+
+## 1.1.0b3 (2022-10-10)
+
+### Features Added
+
+  - Added operation PolicyRestrictionsOperations.check_at_management_group_scope
+  - Model Attestation has a new parameter assessment_date
+  - Model Attestation has a new parameter metadata
+
+### Breaking Changes
+
+  - Operation PolicyEventsOperations.list_query_results_for_management_group has a new parameter policy_events_resource
+  - Operation PolicyEventsOperations.list_query_results_for_policy_definition has a new parameter policy_events_resource
+  - Operation PolicyEventsOperations.list_query_results_for_policy_set_definition has a new parameter policy_events_resource
+  - Operation PolicyEventsOperations.list_query_results_for_resource has a new parameter policy_events_resource
+  - Operation PolicyEventsOperations.list_query_results_for_resource_group has a new parameter policy_events_resource
+  - Operation PolicyEventsOperations.list_query_results_for_resource_group_level_policy_assignment has a new parameter policy_events_resource
+  - Operation PolicyEventsOperations.list_query_results_for_subscription has a new parameter policy_events_resource
+  - Operation PolicyEventsOperations.list_query_results_for_subscription_level_policy_assignment has a new parameter policy_events_resource
+  - Operation PolicyStatesOperations.summarize_for_management_group has a new parameter policy_states_summary_resource
+  - Operation PolicyStatesOperations.summarize_for_policy_definition has a new parameter policy_states_summary_resource
+  - Operation PolicyStatesOperations.summarize_for_policy_set_definition has a new parameter policy_states_summary_resource
+  - Operation PolicyStatesOperations.summarize_for_resource has a new parameter policy_states_summary_resource
+  - Operation PolicyStatesOperations.summarize_for_resource_group has a new parameter policy_states_summary_resource
+  - Operation PolicyStatesOperations.summarize_for_resource_group_level_policy_assignment has a new parameter policy_states_summary_resource
+  - Operation PolicyStatesOperations.summarize_for_subscription has a new parameter policy_states_summary_resource
+  - Operation PolicyStatesOperations.summarize_for_subscription_level_policy_assignment has a new parameter policy_states_summary_resource
+  - Operation PolicyTrackedResourcesOperations.list_query_results_for_management_group has a new parameter policy_tracked_resources_resource
+  - Operation PolicyTrackedResourcesOperations.list_query_results_for_resource has a new parameter policy_tracked_resources_resource
+  - Operation PolicyTrackedResourcesOperations.list_query_results_for_resource_group has a new parameter policy_tracked_resources_resource
+  - Operation PolicyTrackedResourcesOperations.list_query_results_for_subscription has a new parameter policy_tracked_resources_resource
+
+## 1.1.0b2 (2021-12-04)
+
+**Features**
+
+  - Model Remediation has a new parameter failure_threshold
+  - Model Remediation has a new parameter parallel_deployments
+  - Model Remediation has a new parameter status_message
+  - Model Remediation has a new parameter system_data
+  - Model Remediation has a new parameter correlation_id
+  - Model Remediation has a new parameter resource_count
+
+## 1.1.0b1 (2021-08-23)
+
+**Features**
+
+  - Added operation group AttestationsOperations
+
 ## 1.0.0 (2020-12-22)
 
 **Features**
@@ -21,7 +76,7 @@ This version uses a next-generation code generator that introduces important bre
   - `credentials` parameter has been renamed `credential`
 
 - The `config` attribute no longer exists on a client, configuration should be passed as kwarg. Example: `MyClient(credential, subscription_id, enable_logging=True)`. For a complete set of
-  supported options, see the [parameters accept in init documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
+  supported options, see the [parameters accept in init documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
 - You can't import a `version` module anymore, use `__version__` instead
 - Operations that used to return a `msrest.polling.LROPoller` now returns a `azure.core.polling.LROPoller` and are prefixed with `begin_`.
 - Exceptions tree have been simplified and most exceptions are now `azure.core.exceptions.HttpResponseError` (`CloudError` has been removed).
@@ -29,13 +84,13 @@ This version uses a next-generation code generator that introduces important bre
 
   - `raw` has been removed. Equivalent feature can be found using `cls`, a callback that will give access to internal HTTP response for advanced user
   - For a complete set of
-  supported options, see the [parameters accept in Request documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/master/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
+  supported options, see the [parameters accept in Request documentation of azure-core](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md#available-policies)
 
 **General new features**
 
 - Type annotations support using `typing`. SDKs are mypy ready.
 - This client has now stable and official support for async. Check the `aio` namespace of your package to find the async client.
-- This client now support natively tracing library like OpenCensus or OpenTelemetry. See this [tracing quickstart](https://github.com/Azure/azure-sdk-for-python/tree/master/sdk/core/azure-core-tracing-opentelemetry) for an overview.
+- This client now support natively tracing library like OpenCensus or OpenTelemetry. See this [tracing quickstart](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/core/azure-core-tracing-opentelemetry) for an overview.
 
 ## 0.5.0 (2020-03-20)
 

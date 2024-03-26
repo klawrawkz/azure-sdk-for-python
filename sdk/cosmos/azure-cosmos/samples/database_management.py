@@ -1,10 +1,16 @@
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See LICENSE.txt in the project root for
+# license information.
+# -------------------------------------------------------------------------
 import azure.cosmos.cosmos_client as cosmos_client
 import azure.cosmos.exceptions as exceptions
+from azure.cosmos import ThroughputProperties
 
 import config
 
 # ----------------------------------------------------------------------------------------------------------
-# Prerequistes -
+# Prerequisites -
 #
 # 1. An Azure Cosmos account -
 #    https://docs.microsoft.com/azure/cosmos-db/create-sql-api-python#create-a-database-account
@@ -55,12 +61,24 @@ def create_database(client, id):
     except exceptions.CosmosResourceExistsError:
         print('A database with id \'{0}\' already exists'.format(id))
 
+    print("\n2.8 Create Database - With autoscale settings")
+
+    try:
+        client.create_database(
+            id=id,
+            offer_throughput=ThroughputProperties(auto_scale_max_throughput=5000, auto_scale_increment_percent=0))
+        print('Database with id \'{0}\' created'.format(id))
+
+    except exceptions.CosmosResourceExistsError:
+        print('A database with id \'{0}\' already exists'.format(id))
+
 
 def read_database(client, id):
     print("\n3. Get a Database by id")
 
     try:
         database = client.get_database_client(id)
+        database.read()
         print('Database with id \'{0}\' was found, it\'s link is {1}'.format(id, database.database_link))
 
     except exceptions.CosmosResourceNotFoundError:

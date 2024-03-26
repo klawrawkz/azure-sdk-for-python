@@ -5,10 +5,7 @@
 # --------------------------------------------------------------------------
 from typing import TYPE_CHECKING
 
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse # type: ignore
+from urllib.parse import urlparse
 
 from azure.core.tracing.decorator import distributed_trace
 from azure.core.pipeline.policies import BearerTokenCredentialPolicy
@@ -20,6 +17,7 @@ from ._generated.models import (
     AddChatParticipantsRequest,
     SendReadReceiptRequest,
     SendChatMessageRequest,
+    SendTypingNotificationRequest,
     UpdateChatMessageRequest,
     UpdateChatThreadRequest,
     ChatMessageType,
@@ -43,7 +41,7 @@ if TYPE_CHECKING:
     from azure.core.paging import ItemPaged
 
 
-class ChatThreadClient(object):
+class ChatThreadClient(object): # pylint: disable=client-accepts-api-version-keyword
     """A client to interact with the AzureCommunicationService Chat gateway.
     Instances of this class is normally retrieved by ChatClient.get_chat_thread_client()
 
@@ -90,7 +88,7 @@ class ChatThreadClient(object):
             if not endpoint.lower().startswith('http'):
                 endpoint = "https://" + endpoint
         except AttributeError:
-            raise ValueError("Host URL must be a string")
+            raise ValueError("Host URL must be a string") # pylint: disable=raise-missing-from
 
         parsed_url = urlparse(endpoint.rstrip('/'))
         if not parsed_url.netloc:
@@ -101,7 +99,7 @@ class ChatThreadClient(object):
         self._credential = credential
 
         self._client = AzureCommunicationChatService(
-            endpoint,
+            endpoint=self._endpoint,
             authentication_policy=BearerTokenCredentialPolicy(self._credential),
             sdk_moniker=SDK_MONIKER,
             **kwargs
@@ -249,6 +247,8 @@ class ChatThreadClient(object):
         # type: (...) -> None
         """Posts a typing event to a thread, on behalf of a user.
 
+        :keyword str sender_display_name: The display name of the typing notification sender. This property
+         is used to populate sender name for push notifications.
         :return: None
         :rtype: None
         :raises: ~azure.core.exceptions.HttpResponseError, ValueError
@@ -262,7 +262,13 @@ class ChatThreadClient(object):
                 :dedent: 8
                 :caption: Send typing notification.
         """
-        return self._client.chat_thread.send_typing_notification(self._thread_id, **kwargs)
+
+        sender_display_name = kwargs.pop("sender_display_name", None)
+        send_typing_notification_request = SendTypingNotificationRequest(sender_display_name=sender_display_name)
+        return self._client.chat_thread.send_typing_notification(
+            chat_thread_id=self._thread_id,
+            send_typing_notification_request=send_typing_notification_request,
+            **kwargs)
 
     @distributed_trace
     def send_message(
@@ -280,6 +286,7 @@ class ChatThreadClient(object):
         :paramtype chat_message_type: Union[str, ~azure.communication.chat.ChatMessageType]
         :keyword str sender_display_name: The display name of the message sender. This property is used to
             populate sender name for push notifications.
+        :keyword dict[str, str] metadata: Message metadata.
         :return: SendChatMessageResult
         :rtype: ~azure.communication.chat.SendChatMessageResult
         :raises: ~azure.core.exceptions.HttpResponseError, ValueError
@@ -303,7 +310,7 @@ class ChatThreadClient(object):
             try:
                 chat_message_type = ChatMessageType.__getattr__(chat_message_type) # pylint:disable=protected-access
             except Exception:
-                raise ValueError(
+                raise ValueError( # pylint:disable=raise-missing-from
                     "chat_message_type: {message_type} is not acceptable".format(message_type=chat_message_type))
 
         if chat_message_type not in [ChatMessageType.TEXT, ChatMessageType.HTML]:
@@ -311,11 +318,13 @@ class ChatThreadClient(object):
                 "chat_message_type: {message_type} can be only 'text' or 'html'".format(message_type=chat_message_type))
 
         sender_display_name = kwargs.pop("sender_display_name", None)
+        metadata = kwargs.pop("metadata", None)
 
         create_message_request = SendChatMessageRequest(
             content=content,
             type=chat_message_type,
-            sender_display_name=sender_display_name
+            sender_display_name=sender_display_name,
+            metadata=metadata
         )
 
         send_chat_message_result = self._client.chat_thread.send_chat_message(
@@ -403,6 +412,7 @@ class ChatThreadClient(object):
         :type message_id: str
         :param content: Chat message content.
         :type content: str
+        :keyword dict[str, str] metadata: Message metadata.
         :return: None
         :rtype: None
         :raises: ~azure.core.exceptions.HttpResponseError, ValueError
@@ -419,7 +429,8 @@ class ChatThreadClient(object):
         if not message_id:
             raise ValueError("message_id cannot be None.")
 
-        update_message_request = UpdateChatMessageRequest(content=content)
+        metadata = kwargs.pop("metadata", None)
+        update_message_request = UpdateChatMessageRequest(content=content, metadata=metadata)
 
         return self._client.chat_thread.update_chat_message(
             chat_thread_id=self._thread_id,
@@ -532,14 +543,11 @@ class ChatThreadClient(object):
                 add_chat_participants_request=add_thread_participants_request,
                 **kwargs)
 
-
-            if hasattr(add_chat_participants_result, 'invalid_participants') and \
-                    add_chat_participants_result.invalid_participants is not None:
-                response = CommunicationErrorResponseConverter._convert( # pylint:disable=protected-access
+            if hasattr(add_chat_participants_result, 'invalid_participants'):
+                response = CommunicationErrorResponseConverter.convert(
                     participants=thread_participants,
                     chat_errors=add_chat_participants_result.invalid_participants
                 )
-
         return response
 
     @distributed_trace

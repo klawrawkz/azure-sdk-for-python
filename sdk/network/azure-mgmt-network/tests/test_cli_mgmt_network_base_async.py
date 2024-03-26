@@ -12,28 +12,30 @@
 
 import unittest
 import time
+import pytest
 
 import azure.mgmt.network.aio
 from azure.core.exceptions import HttpResponseError
-from devtools_testutils import AzureMgmtTestCase, RandomNameResourceGroupPreparer
+from devtools_testutils import AzureMgmtRecordedTestCase, RandomNameResourceGroupPreparer, recorded_by_proxy
 
-from _aio_testcase import AzureMgmtAsyncTestCase
+from _aio_testcase import AzureMgmtRecordedAsyncTestCase
 
 AZURE_LOCATION = 'eastus'
 
-class MgmtNetworkTest(AzureMgmtAsyncTestCase):
+@pytest.mark.live_test_only
+class TestMgmtNetwork(AzureMgmtRecordedAsyncTestCase):
 
-    def setUp(self):
-        super(MgmtNetworkTest, self).setUp()
+    def setup_method(self, method):
         self.mgmt_client = self.create_mgmt_aio_client(
             azure.mgmt.network.aio.NetworkManagementClient
         )
 
     @RandomNameResourceGroupPreparer(location=AZURE_LOCATION)
+    @recorded_by_proxy
     def test_network(self, resource_group):
 
         SERVICE_NAME = "myapimrndxyz"
-        SUBSCRIPTION_ID = self.settings.SUBSCRIPTION_ID
+        SUBSCRIPTION_ID = self.get_settings_value("SUBSCRIPTION_ID")
         RESOURCE_GROUP = resource_group.name
         
         VIRTUAL_NETWORK_NAME = "virtualnetworkname"
@@ -69,7 +71,7 @@ class MgmtNetworkTest(AzureMgmtAsyncTestCase):
         # Check IP address availability[get]
         IP_ADDRESS = "10.0.0.4"
         result = self.event_loop.run_until_complete(
-            self.mgmt_client.virtual_networks.check_ip_address_availability(resource_group.name, VIRTUAL_NETWORK_NAME, IP_ADDRESS)
+            self.mgmt_client.virtual_networks.check_ip_address_availability(resource_group.name, VIRTUAL_NETWORK_NAME, ip_address=IP_ADDRESS)
         )
 
         # Get subnet[get]

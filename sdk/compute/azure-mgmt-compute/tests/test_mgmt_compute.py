@@ -14,101 +14,100 @@
 #   proximity_placement_groups: 6/6
 #   resource_skus: 1/1
 
+import os
 import datetime as dt
 import unittest
 
+import pytest
 import azure.mgmt.compute
 from azure.core.exceptions import HttpResponseError
-from devtools_testutils import AzureMgmtTestCase, RandomNameResourceGroupPreparer
+from devtools_testutils import AzureMgmtRecordedTestCase, RandomNameResourceGroupPreparer, recorded_by_proxy
 
 AZURE_LOCATION = 'eastus'
 
-class MgmtComputeTest(AzureMgmtTestCase):
+class TestMgmtCompute(AzureMgmtRecordedTestCase):
 
-    def setUp(self):
-        super(MgmtComputeTest, self).setUp()
+    def setup_method(self, method):
+        # self.re_replacer.register_pattern_pair('"value":".{88}"', '"value":"FakeValue"')
         self.mgmt_client = self.create_mgmt_client(
             azure.mgmt.compute.ComputeManagementClient
         )
 
-        if self.is_live:
-            from azure.mgmt.storage import StorageManagementClient
-            self.storage_client = self.create_mgmt_client(
-                StorageManagementClient
-            )
+        from azure.mgmt.storage import StorageManagementClient
+        self.storage_client = self.create_mgmt_client(
+            StorageManagementClient
+        )
 
     def create_sas_uri(self, group_name, location, storage_account_name):
-        if self.is_live:
-            from azure.mgmt.storage.models import BlobContainer
-            from azure.storage.blob import generate_account_sas, AccountSasPermissions, ContainerClient, ResourceTypes
-            BODY = {
-              "sku": {
-                "name": "Standard_GRS"
+        from azure.mgmt.storage.models import BlobContainer
+        from azure.storage.blob import generate_account_sas, AccountSasPermissions, ContainerClient, ResourceTypes
+        BODY = {
+          "sku": {
+            "name": "Standard_GRS"
+          },
+          "kind": "StorageV2",  # Storage v2 support policy
+          "location": location,
+          "encryption": {
+            "services": {
+              "file": {
+                "key_type": "Account",
+                "enabled": True
               },
-              "kind": "StorageV2",  # Storage v2 support policy
-              "location": location,
-              "encryption": {
-                "services": {
-                  "file": {
-                    "key_type": "Account",
-                    "enabled": True
-                  },
-                  "blob": {
-                    "key_type": "Account",
-                    "enabled": True
-                  }
-                },
-                "key_source": "Microsoft.Storage"
-              },
-
-              "tags": {
-                "key1": "value1",
-                "key2": "value2"
+              "blob": {
+                "key_type": "Account",
+                "enabled": True
               }
-            }
-            result = self.storage_client.storage_accounts.begin_create(
-                group_name,
-                storage_account_name,
-                BODY
-            )
-            storage_account = result.result()
+            },
+            "key_source": "Microsoft.Storage"
+          },
 
-            # result = self.storage_client.blob_containers.create(
-            #     group_name,
-            #     storage_account_name,
-            #     "foo",
-            #     {}
-            # )
-            # result = result.result()
+          "tags": {
+            "key1": "value1",
+            "key2": "value2"
+          }
+        }
+        result = self.storage_client.storage_accounts.begin_create(
+            group_name,
+            storage_account_name,
+            BODY
+        )
+        storage_account = result.result()
 
-            keys = self.storage_client.storage_accounts.list_keys(
-                group_name,
-                storage_account_name
-            ).keys
+        # result = self.storage_client.blob_containers.create(
+        #     group_name,
+        #     storage_account_name,
+        #     "foo",
+        #     {}
+        # )
+        # result = result.result()
 
-            sas_token = generate_account_sas(
-                account_name=storage_account_name,
-                account_key=keys[0].value,
-                resource_types=ResourceTypes(object=True),
-                permission=AccountSasPermissions(read=True, list=True),
-                start=dt.datetime.now() - dt.timedelta(hours=24),
-                expiry=dt.datetime.now() - dt.timedelta(days=8)
-            )
-            
-            container_client = ContainerClient(
-                storage_account.primary_endpoints.blob.rstrip("/"),
-                credential="?" + sas_token,
-                container_name="foo",
-                blob_name="default"
-            )
-            self.scrubber.register_name_pair(container_client.url, "fakeuri")
-            return container_client.url
-            # container_client.create_container()
-            # return container_client.url + "?" + sas_token
-        else:
-            return "fakeuri"
+        keys = self.storage_client.storage_accounts.list_keys(
+            group_name,
+            storage_account_name
+        ).keys
+
+        sas_token = generate_account_sas(
+            account_name=storage_account_name,
+            account_key=keys[0].value,
+            resource_types=ResourceTypes(object=True),
+            permission=AccountSasPermissions(read=True, list=True),
+            start=dt.datetime.now() - dt.timedelta(hours=24),
+            expiry=dt.datetime.now() - dt.timedelta(days=8)
+        )
+        
+        container_client = ContainerClient(
+            storage_account.primary_endpoints.blob.rstrip("/"),
+            credential="?" + sas_token,
+            container_name="foo",
+            blob_name="default"
+        )
+        # self.scrubber.register_name_pair(container_client.url, "fakeuri")
+        return container_client.url
+        # container_client.create_container()
+        # return container_client.url + "?" + sas_token
 
     @RandomNameResourceGroupPreparer(location=AZURE_LOCATION)
+    @recorded_by_proxy
     def test_compute(self, resource_group):
 
         # List operations (TODO: need swagger file)
@@ -121,6 +120,7 @@ class MgmtComputeTest(AzureMgmtTestCase):
         result = self.mgmt_client.resource_skus.list()
 
     @RandomNameResourceGroupPreparer(location=AZURE_LOCATION)
+    @recorded_by_proxy
     def test_compute_availability_sets(self, resource_group):
         AVAILABILITY_SET_NAME = self.get_resource_name("availabilitysets")
 
@@ -155,6 +155,7 @@ class MgmtComputeTest(AzureMgmtTestCase):
         resout = self.mgmt_client.availability_sets.delete(resource_group.name, AVAILABILITY_SET_NAME)
 
     @RandomNameResourceGroupPreparer(location=AZURE_LOCATION)
+    @recorded_by_proxy
     def test_compute_proximity_placement_groups(self, resource_group):
         PROXIMITY_PLACEMENT_GROUP_NAME = self.get_resource_name("proximiityplacementgroups")
         
@@ -183,57 +184,3 @@ class MgmtComputeTest(AzureMgmtTestCase):
 
         # Delete a proximity placement group.[delete]
         result = self.mgmt_client.proximity_placement_groups.delete(resource_group.name, PROXIMITY_PLACEMENT_GROUP_NAME)
-
-    @RandomNameResourceGroupPreparer(location=AZURE_LOCATION)
-    def test_compute_log_analytics(self, resource_group):
-        RESOURCE_GROUP = resource_group.name
-        STORAGE_ACCOUNT_NAME = self.get_resource_name("accountxyz")
-        LOG_ANALYTIC_NAME = self.get_resource_name("loganalyticx")
-
-        sas_uri = self.create_sas_uri(RESOURCE_GROUP, AZURE_LOCATION, STORAGE_ACCOUNT_NAME)
-
-        try:
-            # TODO: Always failed: {\r\n  \"startTime\": \"2020-05-06T05:59:03.3142927+00:00\",\r\n  \"\
-            # endTime\": \"2020-05-06T05:59:03.6424477+00:00\",\r\n  \"status\": \"Failed\"\
-            # ,\r\n  \"error\": {\r\n    \"code\": \"InternalOperationError\",\r\n    \"\
-            # message\": \"Log analytics lookup query execution has failed.\"\r\n  },\r\n\
-            # \  \"name\": \"a9fe9ec5-6941-4a05-86bd-3167e7a247b2\"\r\n}"
-            # same as : 
-            # Export logs which contain all Api requests made to Compute Resource Provider within the given time period broken down by intervals.[post]
-            BODY = {
-              "interval_length": "SixtyMins",
-              # "blob_container_sas_uri": "https://somesasuri",
-              "blob_container_sas_uri": sas_uri,
-              # "from_time": "2020-04-30T01:54:06.862601Z",
-              "from_time": dt.datetime.utcnow() - dt.timedelta(days=2),
-              # "to_time": "2020-05-01T01:54:06.862601Z",
-              "to_time": dt.datetime.utcnow() - dt.timedelta(days=0),
-              "group_by_resource_name": True
-            }
-            result = self.mgmt_client.log_analytics.begin_export_request_rate_by_interval(AZURE_LOCATION, BODY)
-            result = result.result()
-        except HttpResponseError:
-            pass
-
-        try:
-            # TODO: Always failed: {\r\n  \"startTime\": \"2020-05-06T05:59:03.3142927+00:00\",\r\n  \"\
-            # endTime\": \"2020-05-06T05:59:03.6424477+00:00\",\r\n  \"status\": \"Failed\"\
-            # ,\r\n  \"error\": {\r\n    \"code\": \"InternalOperationError\",\r\n    \"\
-            # message\": \"Log analytics lookup query execution has failed.\"\r\n  },\r\n\
-            # \  \"name\": \"a9fe9ec5-6941-4a05-86bd-3167e7a247b2\"\r\n}"
-            # Export logs which contain all throttled Api requests made to Compute Resource Provider within the given time period.[post]
-            BODY = {
-              # "blob_container_sas_uri": "https://somesasuri",
-              "blob_container_sas_uri": sas_uri,
-              # "from_time": "2020-04-30T01:54:06.862601Z",
-              "from_time": dt.datetime.utcnow() - dt.timedelta(days=2),
-              # "to_time": "2020-05-01T01:54:06.862601Z",
-              "to_time": dt.datetime.utcnow() - dt.timedelta(days=0),
-              "group_by_operation_name": True,
-              "group_by_resource_name": False
-            }
-            result = self.mgmt_client.log_analytics.begin_export_throttled_requests(AZURE_LOCATION, BODY)
-            result = result.result()
-        except HttpResponseError:
-            pass
- 

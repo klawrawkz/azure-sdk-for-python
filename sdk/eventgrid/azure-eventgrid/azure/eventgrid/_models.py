@@ -3,10 +3,10 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 # pylint:disable=protected-access
-from typing import Any
+from typing import Any, cast
 import datetime as dt
 import uuid
-from msrest.serialization import UTC
+from ._messaging_shared import _get_json_content
 from ._generated.models import (
     EventGridEvent as InternalEventGridEvent,
 )
@@ -86,7 +86,7 @@ class EventGridEvent(InternalEventGridEvent):
         kwargs.setdefault("id", uuid.uuid4())
         kwargs.setdefault("subject", subject)
         kwargs.setdefault("event_type", event_type)
-        kwargs.setdefault("event_time", dt.datetime.now(UTC()).isoformat())
+        kwargs.setdefault("event_time", dt.datetime.now(dt.timezone.utc).isoformat())
         kwargs.setdefault("data", data)
         kwargs.setdefault("data_version", data_version)
 
@@ -96,3 +96,19 @@ class EventGridEvent(InternalEventGridEvent):
         return "EventGridEvent(subject={}, event_type={}, id={}, event_time={})".format(
             self.subject, self.event_type, self.id, self.event_time
         )[:1024]
+
+    @classmethod
+    def from_json(cls, event):
+        # type: (Any) -> EventGridEvent
+        """
+        Returns the deserialized EventGridEvent object when a json payload is provided.
+        :param event: The json string that should be converted into a EventGridEvent. This can also be
+        a storage QueueMessage, eventhub's EventData or ServiceBusMessage
+        :type event: object
+        :rtype: EventGridEvent
+        :return: An EventGridEvent object.
+        :raises ValueError: If the provided JSON is invalid.
+
+        """
+        dict_event = _get_json_content(event)
+        return cast(EventGridEvent, EventGridEvent.from_dict(dict_event))

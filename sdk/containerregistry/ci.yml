@@ -3,7 +3,6 @@
 trigger:
   branches:
     include:
-    - master
     - main
     - hotfix/*
     - release/*
@@ -12,13 +11,10 @@ trigger:
     include:
     - sdk/containerregistry/
     - sdk/core/
-    - tools/
-    - eng/
 
 pr:
   branches:
     include:
-    - master
     - main
     - feature/*
     - hotfix/*
@@ -28,14 +24,13 @@ pr:
     include:
     - sdk/containerregistry/
     - sdk/core/
-    - tools/
-    - eng/
-
 
 extends:
   template: ../../eng/pipelines/templates/stages/archetype-sdk-client.yml
   parameters:
+    TestProxy: true
     ServiceDirectory: containerregistry
+    ValidateFormatting: true
     Artifacts:
     - name: azure-mgmt-containerregistry
       safeName: azuremgmtcontainerregistry

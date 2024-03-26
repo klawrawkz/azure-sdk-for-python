@@ -4,7 +4,6 @@
 trigger:
   branches:
     include:
-    - master
     - main
     - hotfix/*
     - release/*
@@ -16,7 +15,6 @@ trigger:
 pr:
   branches:
     include:
-    - master
     - main
     - feature/*
     - hotfix/*
@@ -30,6 +28,19 @@ extends:
   template: ../../eng/pipelines/templates/stages/archetype-sdk-client.yml
   parameters:
     ServiceDirectory: purview
+    TestProxy: true
     Artifacts:
     - name: azure-mgmt-purview
       safeName: azuremgmtpurview
+    - name: azure-purview-scanning
+      safeName: azurepurviewscanning
+    - name: azure-purview-catalog
+      safeName: azurepurviewcatalog
+    - name: azure-purview-datamap
+      safeName: azurepurviewdatamap
+    - name: azure-purview-administration
+      safeName: azurepurviewadministration
+    - name: azure-purview-workflow
+      safeName: azurepurviewworkflow
+    - name: azure-purview-sharing
+      safeNAme: azurepurviewsharing

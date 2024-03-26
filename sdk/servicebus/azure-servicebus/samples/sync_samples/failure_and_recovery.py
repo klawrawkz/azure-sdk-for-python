@@ -12,8 +12,6 @@ Many of these catches are present for illustrative or duplicate purposes, and co
 in a production scenario depending on the system design.
 """
 
-# pylint: disable=C0111
-
 import os
 from azure.servicebus import ServiceBusClient, ServiceBusMessage
 from azure.servicebus.exceptions import (
@@ -29,8 +27,8 @@ from azure.servicebus.exceptions import (
     MessageNotFoundError
 )
 
-CONNECTION_STR = os.environ['SERVICE_BUS_CONNECTION_STR']
-QUEUE_NAME = os.environ["SERVICE_BUS_QUEUE_NAME"]
+CONNECTION_STR = os.environ['SERVICEBUS_CONNECTION_STR']
+QUEUE_NAME = os.environ["SERVICEBUS_QUEUE_NAME"]
 
 def send_batch_messages(sender):
     batch_message = sender.create_message_batch()

@@ -1,15 +1,14 @@
 {
   "advancedOptions": {
     "createSdkPullRequests": true,
-    "generationCallMode": "one-for-all-configs"
+    "generationCallMode": "one-for-all-configs",
+    "breakingChangeTracking": true
   },
-
   "initOptions": {
     "initScript": {
       "path": "sh scripts/automation_init.sh"
     }
   },
-
   "generateOptions": {
     "generateScript": {
       "path": "sh scripts/automation_generate.sh",
@@ -20,7 +19,10 @@
         "showInComment": "^\\[Autorest\\]"
       }
     },
-
     "parseGenerateOutput": true
+  },
+  "packageOptions": {
+    "breakingChangeLabel": "CI-BreakingChange-Python",
+    "breakingChangesLabel": "BreakingChange-Python-Sdk"
   }
 }
